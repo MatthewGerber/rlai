@@ -11,7 +11,8 @@ INSTALL_REQUIREMENTS = [
 TEST_REQUIREMENTS = [
     'pytest~=5.3',
     'pytest-cov~=2.8',
-    'pytest-runner~=5.2'
+    'pytest-runner~=5.2',
+    'nose~=1.3.7'
 ]
 
 DEV_REQUIREMENTS = [

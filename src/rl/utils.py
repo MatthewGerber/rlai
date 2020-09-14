@@ -1,6 +1,9 @@
 
 
-class IncrementalAverager:
+class OnlineSampleAverager:
+    """
+    An online, constant-time and -memory sample averager.
+    """
 
     def __init__(
             self
@@ -12,13 +15,24 @@ class IncrementalAverager:
             self,
             value: float
     ) -> float:
+        """
+        Update the sample average.
+
+        :param value: Sample value.
+        :return: Updated sample average.
+        """
 
         self.n += 1.0
         self.average = self.average + (1 / self.n) * (value - self.average)
 
         return self.average
 
-    def value(
+    def get_value(
             self
-    ):
+    ) -> float:
+        """
+        Get current average value.
+        :return: Average.
+        """
+
         return self.average
