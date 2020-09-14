@@ -1,100 +1,24 @@
 import sys
-from typing import List
 
 import matplotlib.pyplot as plt
 from numpy.random import RandomState
 from scipy import stats
 
+from rl.agents.base import Agent
+from rl.agents.nonassociative import EpsilonGreedy
 from rl.utils import OnlineSampleAverager
-
-
-class Agent:
-    """
-    An agent for playing a `KArmedBandit`.
-    """
-
-    def reset_action_value_function(
-            self
-    ):
-        """
-        Reset the action-value funtion.
-        """
-
-        self.Q = {
-            a: OnlineSampleAverager()
-            for a in self.AA
-        }
-
-        self.greedy_action = list(self.Q.keys())[0]
-
-    def act(
-            self
-    ) -> int:
-        """
-        Act in an epsilon-greedy fashion.
-
-        :return: Action number.
-        """
-
-        if self.random_state.random_sample() < self.epsilon:
-            a = self.random_state.choice(self.AA)
-            self.epsilon *= (1 - self.epsilon_reduction_rate)
-        else:
-            a = self.greedy_action
-
-        return a
-
-    def reward(
-            self,
-            a: int,
-            r: float
-    ):
-        """
-        Reward the current `Agent`.
-
-        :param a: Action that produced the reward.
-        :param r: Reward value.
-        """
-
-        self.Q[a].update(r)
-        self.greedy_action = max(self.Q.items(), key=lambda action_value: action_value[1].get_value())[0]
-
-    def __init__(
-            self,
-            AA: List[int],
-            epsilon: float,
-            epsilon_reduction_rate: float,
-            random_state: RandomState
-    ):
-        """
-        Initialize the `Agent`.
-
-        :param AA: Set of all possible actions.
-        :param epsilon: Epsilon.
-        :param epsilon_reduction_rate: Epsilon reduction rate (per time tick).
-        :param random_state: Random state.
-        """
-
-        self.AA = AA
-        self.epsilon = epsilon
-        self.epsilon_reduction_rate = epsilon_reduction_rate
-        self.random_state = random_state
-
-        self.Q = {}
-        self.greedy_action = None
-        self.reset_action_value_function()
 
 
 class Arm:
     """
-    Arm of a bandit.
+    Bandit arm.
     """
 
     def reset(
             self
     ):
         """
-        Reset the `Arm`.
+        Reset the arm.
         """
 
         self.q_star_buffer = []
@@ -104,7 +28,8 @@ class Arm:
             self
     ) -> float:
         """
-        Pull the `Arm`.
+        Pull the arm.
+
         :return: Reward value.
         """
 
@@ -127,7 +52,7 @@ class Arm:
             random_state: RandomState
     ):
         """
-        Initialize the `Arm`.
+        Initialize the arm.
 
         :param i: Arm index.
         :param mean: Mean reward value.
@@ -160,7 +85,7 @@ class KArmedBandit:
             self
     ):
         """
-        Reset the arms of the `KArmedBandit`.
+        Reset the arms of the bandit, initializing them to new expected values.
         """
 
         # get new arm reward means and initialize new arms
@@ -206,9 +131,6 @@ class KArmedBandit:
 
         for i in range(n_runs):
 
-            if (i % 100) == 0:
-                print(f'Starting run {i + 1} of {n_runs}...')
-
             for t in range(T):
 
                 if self.random_state.random_sample() < self.reset_probability:
@@ -216,12 +138,17 @@ class KArmedBandit:
 
                 action = agent.act()
                 reward = self.pull(action)
-                agent.reward(action, reward)
+                agent.reward(reward)
 
                 t_average_reward[t].update(reward)
 
+            runs_finished = i + 1
+            if (runs_finished % 100) == 0:
+                percent_done = 100 * (runs_finished / n_runs)
+                print(f'{percent_done:.0f}% complete ({runs_finished} of {n_runs})...')
+
             self.reset_arms()
-            agent.reset_action_value_function()
+            agent.reset()
 
         return t_average_reward
 
@@ -244,40 +171,3 @@ class KArmedBandit:
         self.arms = []
         self.best_arm = None
         self.reset_arms()
-
-
-def main(
-        argv
-):
-    k = 10
-
-    random_state = RandomState(12345)
-
-    bandit = KArmedBandit(
-        k=k,
-        q_star_mean=0,
-        q_star_variance=1,
-        reward_variance=1,
-        reset_probability=0,
-        random_state=random_state
-    )
-
-    agent = Agent(
-        AA=list(range(k)),
-        epsilon=0.1,
-        epsilon_reduction_rate=0,
-        random_state=random_state
-    )
-
-    t_average_reward = bandit.run(
-        agent=agent,
-        T=1000,
-        n_runs=2000
-    )
-
-    plt.plot([averager.get_value() for averager in t_average_reward])
-    plt.show()
-
-
-if __name__ == '__main__':
-    main(sys.argv[1:])
