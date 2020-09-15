@@ -1,58 +1,79 @@
 import sys
 from argparse import ArgumentParser
-from typing import List
 
 import matplotlib.pyplot as plt
-from numpy.random.mtrand import RandomState
+from numpy.random import RandomState
 
 from rl.agents.action import Action
 from rl.agents.nonassociative import EpsilonGreedy
 from rl.environments.bandit import KArmedBandit
-from rl.utils import IncrementalSampleAverager
+from rl.runners.monitor import Monitor
 
 
 def k_armed_bandit_with_nonassociative_epsilon_greedy_agent():
 
     k = 10
+    T = 1000
+    n_runs = 2000
 
     random_state = RandomState(12345)
 
-    bandit = KArmedBandit(
-        k=k,
-        q_star_mean=0,
-        q_star_variance=1,
-        reward_variance=1,
-        reset_probability=0,
-        random_state=random_state
+    agents = [
+        EpsilonGreedy(
+            AA=[Action(i) for i in range(k)],
+            epsilon=epsilon,
+            epsilon_reduction_rate=0,
+            random_state=random_state,
+            name=f'Epsilon-greedy (e={epsilon:0.5f})'
+        )
+        for epsilon in [0.1, 0.01, 0]
+    ]
+
+    bandits = [
+        KArmedBandit(
+            k=k,
+            q_star_mean=0,
+            q_star_variance=1,
+            reward_variance=1,
+            reset_probability=0,
+            random_state=random_state,
+            name=f'{k}-armed bandit'
+        )
+        for _ in range(len(agents))
+    ]
+
+    monitor = Monitor(
+        T=T
     )
 
-    agent = EpsilonGreedy(
-        AA=[Action(i) for i in range(k)],
-        epsilon=0.1,
-        epsilon_reduction_rate=0,
-        random_state=random_state
-    )
+    for agent, bandit in zip(agents, bandits):
 
-    t_average_reward = bandit.run(
-        agent=agent,
-        T=1000,
-        n_runs=2000,
-        update_ui=plot_t_average_reward
-    )
+        print(f'Running {agent} in {bandit}...')
 
-    plot_t_average_reward(t_average_reward)
+        monitor.reset()
 
+        for run in range(n_runs):
 
-def plot_t_average_reward(
-        t_average_reward: List[IncrementalSampleAverager]
-):
-    """
-    Plot the average reward obtained per tick.
+            agent.reset()
+            bandit.reset()
 
-    :param t_average_reward: List of reward averagers.
-    """
+            bandit.run(
+                agent=agent,
+                T=T,
+                monitor=monitor
+            )
 
-    plt.plot([averager.get_value() for averager in t_average_reward])
+            runs_finished = run + 1
+            if (runs_finished % 100) == 0:
+                percent_done = 100 * (runs_finished / n_runs)
+                print(f'{percent_done:.0f}% complete (finished {runs_finished} of {n_runs} runs)...')
+
+        plt.plot([averager.get_value() for averager in monitor.t_average_reward], label=agent.name)
+
+        print()
+
+    plt.grid()
+    plt.legend()
     plt.show()
 
 

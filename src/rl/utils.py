@@ -7,7 +7,7 @@ class IncrementalSampleAverager:
     An incremental, constant-time and -memory sample averager.
     """
 
-    def __init__(
+    def reset(
             self
     ):
         self.average = 0.0
@@ -38,3 +38,9 @@ class IncrementalSampleAverager:
         """
 
         return self.average
+
+    def __init__(
+            self
+    ):
+        self.average = 0.0
+        self.n = 0

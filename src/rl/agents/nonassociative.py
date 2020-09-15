@@ -1,6 +1,6 @@
-from typing import List, Set, Dict, Optional
+from typing import List, Dict, Optional
 
-from numpy.random.mtrand import RandomState
+from numpy.random import RandomState
 
 from rl.agents.action import Action
 from rl.agents.base import Agent
@@ -22,10 +22,8 @@ class EpsilonGreedy(Agent):
         Reset the action-value funtion.
         """
 
-        self.Q = {
-            a: IncrementalSampleAverager()
-            for a in self.AA
-        }
+        for averager in self.Q.values():
+            averager.reset()
 
         self.greedy_action = list(self.Q.keys())[0]
 
@@ -78,9 +76,10 @@ class EpsilonGreedy(Agent):
     def __init__(
             self,
             AA: List[Action],
+            name: str,
             epsilon: float,
             epsilon_reduction_rate: float,
-            random_state: RandomState
+            random_state: RandomState,
     ):
         """
         Initialize the agent.
@@ -89,17 +88,23 @@ class EpsilonGreedy(Agent):
         :param epsilon: Epsilon.
         :param epsilon_reduction_rate: Epsilon reduction rate (per time tick).
         :param random_state: Random state.
+        :param name: Name of agent.
         """
 
         super().__init__(
-            AA=AA
+            AA=AA,
+            name=name
         )
 
         self.epsilon = epsilon
         self.epsilon_reduction_rate = epsilon_reduction_rate
         self.random_state = random_state
 
-        self.Q: Dict[Action, IncrementalSampleAverager] = {}
+        self.Q: Dict[Action, IncrementalSampleAverager] = {
+            a: IncrementalSampleAverager()
+            for a in self.AA
+        }
+
         self.greedy_action: Optional[Action] = None
         self.most_recent_action: Optional[Action] = None
         self.reset()

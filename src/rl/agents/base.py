@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Set
+from typing import List
 
 from rl.agents.action import Action
 from rl.environments.state import State
@@ -34,6 +34,7 @@ class Agent(ABC):
     ) -> Action:
         """
         Request an action from the agent.
+
         :return: Action
         """
         pass
@@ -52,12 +53,26 @@ class Agent(ABC):
 
     def __init__(
             self,
-            AA: List[Action]
+            AA: List[Action],
+            name: str
     ):
         """
         Initialize the agent.
 
         :param AA: List of all possible actions.
+        :param name: Name of the agent.
         """
 
         self.AA = AA
+        self.name = name
+
+    def __str__(
+            self
+    ):
+        """
+        Return name.
+
+        :return: Name.
+        """
+
+        return self.name
