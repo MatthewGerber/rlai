@@ -123,7 +123,8 @@ class KArmedBandit:
             self,
             agent: Agent,
             T: int,
-            n_runs: int
+            n_runs: int,
+            update_ui: callable = None
     ):
         t_average_reward = [
             IncrementalSampleAverager()
@@ -147,6 +148,8 @@ class KArmedBandit:
             if (runs_finished % 100) == 0:
                 percent_done = 100 * (runs_finished / n_runs)
                 print(f'{percent_done:.0f}% complete (finished {runs_finished} of {n_runs} runs)...')
+                if update_ui is not None:
+                    update_ui(t_average_reward)
 
             self.reset_arms()
             agent.reset()

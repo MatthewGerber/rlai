@@ -1,5 +1,6 @@
 import sys
 from argparse import ArgumentParser
+from typing import List
 
 import matplotlib.pyplot as plt
 from numpy.random.mtrand import RandomState
@@ -7,6 +8,7 @@ from numpy.random.mtrand import RandomState
 from rl.agents.action import Action
 from rl.agents.nonassociative import EpsilonGreedy
 from rl.environments.bandit import KArmedBandit
+from rl.utils import IncrementalSampleAverager
 
 
 def k_armed_bandit_with_nonassociative_epsilon_greedy_agent():
@@ -34,8 +36,21 @@ def k_armed_bandit_with_nonassociative_epsilon_greedy_agent():
     t_average_reward = bandit.run(
         agent=agent,
         T=1000,
-        n_runs=2000
+        n_runs=2000,
+        update_ui=plot_t_average_reward
     )
+
+    plot_t_average_reward(t_average_reward)
+
+
+def plot_t_average_reward(
+        t_average_reward: List[IncrementalSampleAverager]
+):
+    """
+    Plot the average reward obtained per tick.
+
+    :param t_average_reward: List of reward averagers.
+    """
 
     plt.plot([averager.get_value() for averager in t_average_reward])
     plt.show()
