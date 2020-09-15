@@ -1,5 +1,7 @@
+from rl.meta import rl_text
 
 
+@rl_text(page=15)
 class OnlineSampleAverager:
     """
     An online, constant-time and -memory sample averager.

@@ -4,9 +4,11 @@ from numpy.random.mtrand import RandomState
 
 from rl.agents.base import Agent
 from rl.environments.state import State
+from rl.meta import rl_text
 from rl.utils import OnlineSampleAverager
 
 
+@rl_text(page=20)
 class EpsilonGreedy(Agent):
     """
     An epsilon-greedy agent.

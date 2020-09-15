@@ -1,11 +1,7 @@
-import sys
-
-import matplotlib.pyplot as plt
 from numpy.random import RandomState
 from scipy import stats
 
 from rl.agents.base import Agent
-from rl.agents.nonassociative import EpsilonGreedy
 from rl.utils import OnlineSampleAverager
 
 

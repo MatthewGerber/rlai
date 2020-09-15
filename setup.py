@@ -29,7 +29,6 @@ setup(
     url='https://github.com/MatthewGerber/rl',
     packages=find_namespace_packages(where='src'),
     package_dir={'': 'src'},
-    namespace_packages=['rl'],
     python_requires='~=3.7',
     install_requires=[
         INSTALL_REQUIREMENTS
