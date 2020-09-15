@@ -1,10 +1,14 @@
+from typing import List, Optional
+
 from numpy.random import RandomState
 from scipy import stats
 
 from rl.agents.base import Agent
-from rl.utils import OnlineSampleAverager
+from rl.meta import rl_text
+from rl.utils import IncrementalSampleAverager
 
 
+@rl_text(page=25)
 class Arm:
     """
     Bandit arm.
@@ -56,14 +60,14 @@ class Arm:
         :param random_state: Random state.
         """
 
-        self.i = i
-        self.mean = mean
-        self.variance = variance
-        self.random_state = random_state
+        self.i: int = i
+        self.mean: float = mean
+        self.variance: float = variance
+        self.random_state: RandomState = random_state
 
         self.q_star = stats.norm(loc=mean, scale=variance)
-        self.q_star_buffer = []
-        self.q_star_buffer_idx = None
+        self.q_star_buffer: List[float] = []
+        self.q_star_buffer_idx: Optional[int] = None
         self.reset()
 
     def __str__(
@@ -72,6 +76,7 @@ class Arm:
         return f'Mean:  {self.mean}, Variance:  {self.variance}'
 
 
+@rl_text(page=28)
 class KArmedBandit:
     """
     K-armed bandit.
@@ -121,7 +126,7 @@ class KArmedBandit:
             n_runs: int
     ):
         t_average_reward = [
-            OnlineSampleAverager()
+            IncrementalSampleAverager()
             for _ in range(T)
         ]
 
@@ -133,7 +138,7 @@ class KArmedBandit:
                     self.reset_arms()
 
                 action = agent.act()
-                reward = self.pull(action)
+                reward = self.pull(action.i)
                 agent.reward(reward)
 
                 t_average_reward[t].update(reward)
@@ -141,7 +146,7 @@ class KArmedBandit:
             runs_finished = i + 1
             if (runs_finished % 100) == 0:
                 percent_done = 100 * (runs_finished / n_runs)
-                print(f'{percent_done:.0f}% complete ({runs_finished} of {n_runs})...')
+                print(f'{percent_done:.0f}% complete (finished {runs_finished} of {n_runs} runs)...')
 
             self.reset_arms()
             agent.reset()
@@ -164,6 +169,6 @@ class KArmedBandit:
         self.reset_probability = reset_probability
         self.random_state = random_state
 
-        self.arms = []
-        self.best_arm = None
+        self.arms: List[Arm] = []
+        self.best_arm: Optional[Arm] = None
         self.reset_arms()

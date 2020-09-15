@@ -4,6 +4,7 @@ from argparse import ArgumentParser
 import matplotlib.pyplot as plt
 from numpy.random.mtrand import RandomState
 
+from rl.agents.action import Action
 from rl.agents.nonassociative import EpsilonGreedy
 from rl.environments.bandit import KArmedBandit
 
@@ -24,7 +25,7 @@ def k_armed_bandit_with_nonassociative_epsilon_greedy_agent():
     )
 
     agent = EpsilonGreedy(
-        AA=list(range(k)),
+        AA=[Action(i) for i in range(k)],
         epsilon=0.1,
         epsilon_reduction_rate=0,
         random_state=random_state

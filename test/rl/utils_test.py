@@ -2,7 +2,7 @@ from statistics import mean
 
 from numpy.random import RandomState
 
-from rl.utils import OnlineSampleAverager
+from rl.utils import IncrementalSampleAverager
 
 
 def test_incremental_averager():
@@ -14,7 +14,7 @@ def test_incremental_averager():
         for value in rng.randint(0, 1000, 100)
     ]
 
-    averager = OnlineSampleAverager()
+    averager = IncrementalSampleAverager()
 
     for value in sample:
         averager.update(value)

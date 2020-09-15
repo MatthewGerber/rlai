@@ -1,10 +1,10 @@
 from rl.meta import rl_text
 
 
-@rl_text(page=15)
-class OnlineSampleAverager:
+@rl_text(page=30)
+class IncrementalSampleAverager:
     """
-    An online, constant-time and -memory sample averager.
+    An incremental, constant-time and -memory sample averager.
     """
 
     def __init__(

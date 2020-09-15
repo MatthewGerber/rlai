@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, Set
 
+from rl.agents.action import Action
 from rl.environments.state import State
 
 
@@ -10,6 +11,9 @@ class Agent(ABC):
     def reset(
             self
     ):
+        """
+        Reset the agent to a state prior to any learning.
+        """
         pass
 
     @abstractmethod
@@ -17,12 +21,21 @@ class Agent(ABC):
             self,
             state: State
     ):
+        """
+        Pass the agent state information to sense.
+
+        :param state: State.
+        """
         pass
 
     @abstractmethod
     def act(
             self
-    ) -> int:
+    ) -> Action:
+        """
+        Request an action from the agent.
+        :return: Action
+        """
         pass
 
     @abstractmethod
@@ -30,10 +43,21 @@ class Agent(ABC):
             self,
             r: float
     ):
+        """
+        Reward the agent.
+
+        :param r: Reward.
+        """
         pass
 
     def __init__(
             self,
-            AA: List[int]
+            AA: List[Action]
     ):
+        """
+        Initialize the agent.
+
+        :param AA: List of all possible actions.
+        """
+
         self.AA = AA

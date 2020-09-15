@@ -4,20 +4,16 @@ from typing import Set
 
 
 def rl_text(
-        chapter: int = None,
         page: int = None
 ):
     """
     Decorator for RL text references.
 
-    :param chapter:
-    :param page:
-    :return:
+    :param page: Page within RL text that describes the Python element being decorated.
+    :return: Decorator function.
     """
 
     description = 'RL 2nd Edition'
-    if chapter is not None:
-        description += f', ch. {chapter}'
 
     if page is not None:
         description += f', p. {page}'
@@ -35,6 +31,13 @@ def summarize(
         pkg,
         paths_summarized: Set[str] = None
 ):
+    """
+    Summarize all code decorated.
+
+    :param pkg: Top-level package.
+    :param paths_summarized: Paths summarized so far.
+    """
+
     if paths_summarized is None:
         paths_summarized = set()
 

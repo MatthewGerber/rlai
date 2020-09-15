@@ -1,14 +1,15 @@
-from typing import List
+from typing import List, Set, Dict, Optional
 
 from numpy.random.mtrand import RandomState
 
+from rl.agents.action import Action
 from rl.agents.base import Agent
 from rl.environments.state import State
 from rl.meta import rl_text
-from rl.utils import OnlineSampleAverager
+from rl.utils import IncrementalSampleAverager
 
 
-@rl_text(page=20)
+@rl_text(page=27)
 class EpsilonGreedy(Agent):
     """
     An epsilon-greedy agent.
@@ -22,7 +23,7 @@ class EpsilonGreedy(Agent):
         """
 
         self.Q = {
-            a: OnlineSampleAverager()
+            a: IncrementalSampleAverager()
             for a in self.AA
         }
 
@@ -32,15 +33,20 @@ class EpsilonGreedy(Agent):
             self,
             state: State
     ):
+        """
+        No effect (the agent is nonassociative).
+
+        :param state: State.
+        """
         pass
 
     def act(
             self
-    ) -> int:
+    ) -> Action:
         """
         Act in an epsilon-greedy fashion.
 
-        :return: Action number.
+        :return: Action.
         """
 
         if self.random_state.random_sample() < self.epsilon:
@@ -66,11 +72,12 @@ class EpsilonGreedy(Agent):
         if self.most_recent_action is not None:
             self.Q[self.most_recent_action].update(r)
 
+        # get new greedy action, which might have changed
         self.greedy_action = max(self.Q.items(), key=lambda action_value: action_value[1].get_value())[0]
 
     def __init__(
             self,
-            AA: List[int],
+            AA: List[Action],
             epsilon: float,
             epsilon_reduction_rate: float,
             random_state: RandomState
@@ -78,7 +85,7 @@ class EpsilonGreedy(Agent):
         """
         Initialize the agent.
 
-        :param AA: Set of all possible actions.
+        :param AA: List of all possible actions.
         :param epsilon: Epsilon.
         :param epsilon_reduction_rate: Epsilon reduction rate (per time tick).
         :param random_state: Random state.
@@ -92,7 +99,7 @@ class EpsilonGreedy(Agent):
         self.epsilon_reduction_rate = epsilon_reduction_rate
         self.random_state = random_state
 
-        self.Q = {}
-        self.greedy_action = None
-        self.most_recent_action = None
+        self.Q: Dict[Action, IncrementalSampleAverager] = {}
+        self.greedy_action: Optional[Action] = None
+        self.most_recent_action: Optional[Action] = None
         self.reset()
