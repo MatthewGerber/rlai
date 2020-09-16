@@ -3,13 +3,14 @@ from typing import List, Optional
 from numpy.random import RandomState
 from scipy import stats
 
+from rl.agents.action import Action
 from rl.agents.base import Agent
 from rl.environments.base import Environment
 from rl.meta import rl_text
 from rl.runners.monitor import Monitor
 
 
-@rl_text(page=25)
+@rl_text(chapter=2, page=25)
 class Arm:
     """
     Bandit arm.
@@ -77,7 +78,7 @@ class Arm:
         return f'Mean:  {self.mean}, Variance:  {self.variance}'
 
 
-@rl_text(page=28)
+@rl_text(chapter=2, page=28)
 class KArmedBandit(Environment):
     """
     K-armed bandit.
@@ -141,7 +142,7 @@ class KArmedBandit(Environment):
                 self.reset()
 
             action = agent.act()
-            monitor.report(t=t, agent_action=action)
+            monitor.report(t=t, agent_action=action, optimal_action=Action(self.best_arm))
 
             reward = self.pull(action.i)
             monitor.report(t=t, action_reward=reward)

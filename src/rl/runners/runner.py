@@ -10,11 +10,18 @@ from rl.environments.bandit import KArmedBandit
 from rl.runners.monitor import Monitor
 
 
-def k_armed_bandit_with_nonassociative_epsilon_greedy_agent():
+def k_armed_bandit_with_nonassociative_epsilon_greedy_agent(
+        k: int = 10,
+        T: int = 1000,
+        n_runs: int = 2000
+):
+    """
+    Run a k-armed bandit environment with a nonassociative, epsilon-greedy agent.
 
-    k = 10
-    T = 1000
-    n_runs = 2000
+    :param k: Number of bandit arms.
+    :param T: Number of time steps per run.
+    :param n_runs: Number of runs.
+    """
 
     random_state = RandomState(12345)
 
@@ -24,7 +31,7 @@ def k_armed_bandit_with_nonassociative_epsilon_greedy_agent():
             epsilon=epsilon,
             epsilon_reduction_rate=0,
             random_state=random_state,
-            name=f'Epsilon-greedy (e={epsilon:0.5f})'
+            name=f'epsilon-greedy (e={epsilon:0.2f})'
         )
         for epsilon in [0.1, 0.01, 0]
     ]
@@ -45,6 +52,11 @@ def k_armed_bandit_with_nonassociative_epsilon_greedy_agent():
     monitor = Monitor(
         T=T
     )
+
+    fig, axs = plt.subplots(2, 1, sharex='all', figsize=(10, 10))
+
+    reward_ax = axs[0]
+    optimal_action_ax = axs[1]
 
     for agent, bandit in zip(agents, bandits):
 
@@ -68,12 +80,28 @@ def k_armed_bandit_with_nonassociative_epsilon_greedy_agent():
                 percent_done = 100 * (runs_finished / n_runs)
                 print(f'{percent_done:.0f}% complete (finished {runs_finished} of {n_runs} runs)...')
 
-        plt.plot([averager.get_value() for averager in monitor.t_average_reward], label=agent.name)
+        reward_ax.plot([
+            averager.get_value()
+            for averager in monitor.t_average_reward
+        ], label=agent.name)
+
+        optimal_action_ax.plot([
+            count_optimal_action / n_runs
+            for count_optimal_action in monitor.t_count_optimal_action
+        ], label=agent.name)
 
         print()
 
-    plt.grid()
-    plt.legend()
+    reward_ax.set_xlabel('Time step')
+    reward_ax.set_ylabel(f'Per-step reward (averaged over {n_runs} runs)')
+    reward_ax.grid()
+    reward_ax.legend()
+
+    optimal_action_ax.set_xlabel('Time step')
+    optimal_action_ax.set_ylabel(f'% optimal action selected')
+    optimal_action_ax.grid()
+    optimal_action_ax.legend()
+
     plt.show()
 
 

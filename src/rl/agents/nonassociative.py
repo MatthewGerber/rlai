@@ -9,7 +9,7 @@ from rl.meta import rl_text
 from rl.utils import IncrementalSampleAverager
 
 
-@rl_text(page=27)
+@rl_text(chapter=2, page=27)
 class EpsilonGreedy(Agent):
     """
     An epsilon-greedy agent.

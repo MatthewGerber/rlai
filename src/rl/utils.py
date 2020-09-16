@@ -1,7 +1,7 @@
 from rl.meta import rl_text
 
 
-@rl_text(page=30)
+@rl_text(chapter=2, page=30)
 class IncrementalSampleAverager:
     """
     An incremental, constant-time and -memory sample averager.

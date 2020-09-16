@@ -4,23 +4,20 @@ from typing import Set
 
 
 def rl_text(
-        page: int = None
+        chapter: int,
+        page: int
 ):
     """
     Decorator for RL text references.
 
+    :param chapter: Chapter within RL text that describes the Python element being decorated.
     :param page: Page within RL text that describes the Python element being decorated.
     :return: Decorator function.
     """
 
-    description = 'RL 2nd Edition'
-
-    if page is not None:
-        description += f', p. {page}'
-
     def inner(func):
 
-        func.rl_text_description = description
+        func.rl_text_description = f'RL 2nd Edition, ch. {chapter}, p. {page}'
 
         return func
 
