@@ -11,49 +11,84 @@ from rl.runners.monitor import Monitor
 
 
 def k_armed_bandit_with_nonassociative_epsilon_greedy_agent(
-        k: int = 10,
-        T: int = 1000,
-        n_runs: int = 2000
+        args
 ):
     """
     Run a k-armed bandit environment with a nonassociative, epsilon-greedy agent.
 
-    :param k: Number of bandit arms.
-    :param T: Number of time steps per run.
-    :param n_runs: Number of runs.
+    :param args: Arguments.
     """
+
+    parser = ArgumentParser(description='Run a k-armed bandit environment with a nonassociative, epsilon-greedy agent.')
+
+    parser.add_argument(
+        '--k',
+        type=int,
+        default=10,
+        help='Number of bandit arms.'
+    )
+
+    parser.add_argument(
+        '--T',
+        type=int,
+        default=1000,
+        help='Number of time steps.'
+    )
+
+    parser.add_argument(
+        '--n-runs',
+        type=int,
+        default=2000,
+        help='Number of runs.'
+    )
+
+    parser.add_argument(
+        '--reset-probability',
+        type=float,
+        default=0.0,
+        help="Probability of resetting the bandit's arms at each time step. This effectively creates a nonstationary environment."
+    )
+
+    parser.add_argument(
+        '--name',
+        type=str,
+        default=None,
+        help='Name of experiment.'
+    )
+
+    args = parser.parse_args(args)
 
     random_state = RandomState(12345)
 
     agents = [
         EpsilonGreedy(
-            AA=[Action(i) for i in range(k)],
+            AA=[Action(i) for i in range(args.k)],
             epsilon=epsilon,
             epsilon_reduction_rate=0,
             random_state=random_state,
             name=f'epsilon-greedy (e={epsilon:0.2f})'
         )
-        for epsilon in [0.1, 0.01, 0]
+        for epsilon in [0.2, 0.1, 0.01, 0]
     ]
 
     bandits = [
         KArmedBandit(
-            k=k,
+            name=f'{args.k}-armed bandit',
+            k=args.k,
             q_star_mean=0,
             q_star_variance=1,
             reward_variance=1,
-            reset_probability=0,
-            random_state=random_state,
-            name=f'{k}-armed bandit'
+            reset_probability=args.reset_probability,
+            random_state=random_state
         )
         for _ in range(len(agents))
     ]
 
     monitor = Monitor(
-        T=T
+        T=args.T
     )
 
-    fig, axs = plt.subplots(2, 1, sharex='all', figsize=(8, 9))
+    fig, axs = plt.subplots(2, 1, sharex='all', figsize=(6, 9))
 
     reward_ax = axs[0]
     optimal_action_ax = axs[1]
@@ -64,21 +99,21 @@ def k_armed_bandit_with_nonassociative_epsilon_greedy_agent(
 
         monitor.reset()
 
-        for run in range(n_runs):
+        for run in range(args.n_runs):
 
             agent.reset()
             bandit.reset()
 
             bandit.run(
                 agent=agent,
-                T=T,
+                T=args.T,
                 monitor=monitor
             )
 
             runs_finished = run + 1
             if (runs_finished % 100) == 0:
-                percent_done = 100 * (runs_finished / n_runs)
-                print(f'{percent_done:.0f}% complete (finished {runs_finished} of {n_runs} runs)...')
+                percent_done = 100 * (runs_finished / args.n_runs)
+                print(f'{percent_done:.0f}% complete (finished {runs_finished} of {args.n_runs} runs)...')
 
         reward_ax.plot([
             averager.get_value()
@@ -86,14 +121,15 @@ def k_armed_bandit_with_nonassociative_epsilon_greedy_agent(
         ], label=agent.name)
 
         optimal_action_ax.plot([
-            count_optimal_action / n_runs
+            count_optimal_action / args.n_runs
             for count_optimal_action in monitor.t_count_optimal_action
         ], label=agent.name)
 
         print()
 
+    reward_ax.set_title(args.name)
     reward_ax.set_xlabel('Time step')
-    reward_ax.set_ylabel(f'Per-step reward (averaged over {n_runs} runs)')
+    reward_ax.set_ylabel(f'Per-step reward (averaged over {args.n_runs} runs)')
     reward_ax.grid()
     reward_ax.legend()
 
@@ -105,27 +141,21 @@ def k_armed_bandit_with_nonassociative_epsilon_greedy_agent(
     plt.show()
 
 
-def parse_arguments(
-        arguments
-):
-    parser = ArgumentParser(description='Run a scenario.')
-
-    parser.add_argument(
-        'scenario_name',
-        type=str,
-        help='Scenario name.'
-    )
-
-    return parser.parse_args(arguments)
-
-
 def main(argv):
 
-    args = parse_arguments(argv)
+    parser = ArgumentParser(description='Run an experiment.')
 
-    scenario = globals()[args.scenario_name]
+    parser.add_argument(
+        'runner_name',
+        type=str,
+        help='Runner name.'
+    )
 
-    scenario()
+    args, unknown_args = parser.parse_known_args(argv)
+
+    runner = globals()[args.runner_name]
+
+    runner(unknown_args)
 
 
 if __name__ == '__main__':
