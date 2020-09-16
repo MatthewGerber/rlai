@@ -53,7 +53,7 @@ def k_armed_bandit_with_nonassociative_epsilon_greedy_agent(
         T=T
     )
 
-    fig, axs = plt.subplots(2, 1, sharex='all', figsize=(10, 10))
+    fig, axs = plt.subplots(2, 1, sharex='all', figsize=(8, 9))
 
     reward_ax = axs[0]
     optimal_action_ax = axs[1]

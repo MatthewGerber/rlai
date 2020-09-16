@@ -107,7 +107,7 @@ class KArmedBandit(Environment):
             for i, mean in enumerate(q_star_means)
         ])
 
-        self.best_arm = max(self.arms, key=lambda arm: arm.mean).i
+        self.best_arm = max(self.arms, key=lambda arm: arm.mean)
 
     def pull(
             self,
@@ -142,7 +142,7 @@ class KArmedBandit(Environment):
                 self.reset()
 
             action = agent.act()
-            monitor.report(t=t, agent_action=action, optimal_action=Action(self.best_arm))
+            monitor.report(t=t, agent_action=action, optimal_action=Action(self.best_arm.i))
 
             reward = self.pull(action.i)
             monitor.report(t=t, action_reward=reward)
