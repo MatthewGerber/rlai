@@ -24,11 +24,19 @@ def k_armed_bandit_with_nonassociative_epsilon_greedy_agent(
 
     parser = ArgumentParser(description='Run a k-armed bandit environment with a nonassociative, epsilon-greedy agent.')
 
+    # agent arguments
     parser.add_argument(
         '--epsilons',
         type=str,
         default='0',
         help='Comma-separated list of epsilon values to evaluate.'
+    )
+
+    parser.add_argument(
+        '--epsilon-reduction-rate',
+        type=float,
+        default=0.0,
+        help='Percentage reduction of epsilon from its initial value. This is applied at each time step when the agent explores. For example, pass 0 for no reduction and 0.01 for a 1-percent reduction at each exploration step.'
     )
 
     parser.add_argument(
@@ -38,6 +46,7 @@ def k_armed_bandit_with_nonassociative_epsilon_greedy_agent(
         help='Step-size to use in incremental reward averaging. Pass None for decreasing (i.e., unweighted average) or a constant in (0, 1] for recency weighted.'
     )
 
+    # environment arguments
     parser.add_argument(
         '--k',
         type=int,
@@ -45,6 +54,14 @@ def k_armed_bandit_with_nonassociative_epsilon_greedy_agent(
         help='Number of bandit arms.'
     )
 
+    parser.add_argument(
+        '--reset-probability',
+        type=float,
+        default=0.0,
+        help="Probability of resetting the bandit's arms at each time step. This effectively creates a nonstationary environment."
+    )
+
+    # runner arguments
     parser.add_argument(
         '--T',
         type=int,
@@ -57,13 +74,6 @@ def k_armed_bandit_with_nonassociative_epsilon_greedy_agent(
         type=int,
         default=2000,
         help='Number of runs.'
-    )
-
-    parser.add_argument(
-        '--reset-probability',
-        type=float,
-        default=0.0,
-        help="Probability of resetting the bandit's arms at each time step. This effectively creates a nonstationary environment."
     )
 
     args = parser.parse_args(args)
@@ -79,7 +89,7 @@ def k_armed_bandit_with_nonassociative_epsilon_greedy_agent(
         EpsilonGreedy(
             AA=[Action(i) for i in range(args.k)],
             epsilon=epsilon,
-            epsilon_reduction_rate=0,
+            epsilon_reduction_rate=args.epsilon_reduction_rate,
             random_state=random_state,
             alpha=args.alpha,
             name=f'epsilon-greedy (e={epsilon:0.2f})'

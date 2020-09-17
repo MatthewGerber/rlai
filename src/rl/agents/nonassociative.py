@@ -22,10 +22,13 @@ class EpsilonGreedy(Agent):
         Reset the action-value funtion.
         """
 
+        self.epsilon = self.original_epsilon
+
         for averager in self.Q.values():
             averager.reset()
 
         self.greedy_action = list(self.Q.keys())[0]
+        self.most_recent_action = None
 
     def sense(
             self,
@@ -88,7 +91,9 @@ class EpsilonGreedy(Agent):
         :param AA: List of all possible actions.
         :param name: Name of agent.
         :param epsilon: Epsilon.
-        :param epsilon_reduction_rate: Epsilon reduction rate (per time tick).
+        :param epsilon_reduction_rate: Rate at which `epsilon` is reduced from its initial value to zero. This is the
+        percentage reduction, and it is applied at each time step when the agent explores. For example, pass 0 for no
+        reduction and 0.01 for a 1-percent reduction at each exploration step.
         :param alpha: Step-size parameter for incremental reward averaging. See `IncrementalSampleAverager` for details.
         :param random_state: Random state.
         """
@@ -98,7 +103,7 @@ class EpsilonGreedy(Agent):
             name=name
         )
 
-        self.epsilon = epsilon
+        self.epsilon = self.original_epsilon = epsilon
         self.epsilon_reduction_rate = epsilon_reduction_rate
         self.random_state = random_state
 
