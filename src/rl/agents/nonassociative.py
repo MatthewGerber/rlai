@@ -79,16 +79,18 @@ class EpsilonGreedy(Agent):
             name: str,
             epsilon: float,
             epsilon_reduction_rate: float,
-            random_state: RandomState,
+            alpha: float,
+            random_state: RandomState
     ):
         """
         Initialize the agent.
 
         :param AA: List of all possible actions.
+        :param name: Name of agent.
         :param epsilon: Epsilon.
         :param epsilon_reduction_rate: Epsilon reduction rate (per time tick).
+        :param alpha: Step-size parameter for incremental reward averaging. See `IncrementalSampleAverager` for details.
         :param random_state: Random state.
-        :param name: Name of agent.
         """
 
         super().__init__(
@@ -101,7 +103,9 @@ class EpsilonGreedy(Agent):
         self.random_state = random_state
 
         self.Q: Dict[Action, IncrementalSampleAverager] = {
-            a: IncrementalSampleAverager()
+            a: IncrementalSampleAverager(
+                alpha=alpha
+            )
             for a in self.AA
         }
 
