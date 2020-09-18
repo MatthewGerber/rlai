@@ -1,0 +1,1 @@
+FIGURES_DIRECTORY = '../figures'

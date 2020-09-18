@@ -1,13 +1,16 @@
+import os
 import sys
 from argparse import ArgumentParser
 from typing import List
 
 import matplotlib.pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
 from numpy.random import RandomState
 
 from rl.agents.action import Action
 from rl.agents.nonassociative import EpsilonGreedy
 from rl.environments.bandit import KArmedBandit
+from rl.runners import FIGURES_DIRECTORY
 from rl.runners.monitor import Monitor
 
 
@@ -37,6 +40,13 @@ def k_armed_bandit_with_nonassociative_epsilon_greedy_agent(
         type=float,
         default=0.0,
         help='Percentage reduction of epsilon from its initial value. This is applied at each time step when the agent explores. For example, pass 0 for no reduction and 0.01 for a 1-percent reduction at each exploration step.'
+    )
+
+    parser.add_argument(
+        '--initial-q-value',
+        type=float,
+        default=0.0,
+        help='Initial Q-value to use for all actions. Use values greater than zero to encourage exploration in the early stages of the run.'
     )
 
     parser.add_argument(
@@ -91,6 +101,7 @@ def k_armed_bandit_with_nonassociative_epsilon_greedy_agent(
             epsilon=epsilon,
             epsilon_reduction_rate=args.epsilon_reduction_rate,
             random_state=random_state,
+            initial_q_value=args.initial_q_value,
             alpha=args.alpha,
             name=f'epsilon-greedy (e={epsilon:0.2f})'
         )
@@ -114,6 +125,7 @@ def k_armed_bandit_with_nonassociative_epsilon_greedy_agent(
         T=args.T
     )
 
+    pdf = PdfPages(os.path.join(FIGURES_DIRECTORY, output_name + '.pdf'))
     fig, axs = plt.subplots(2, 1, sharex='all', figsize=(6, 9))
 
     reward_ax = axs[0]
@@ -164,7 +176,8 @@ def k_armed_bandit_with_nonassociative_epsilon_greedy_agent(
     optimal_action_ax.grid()
     optimal_action_ax.legend()
 
-    plt.show()
+    pdf.savefig()
+    pdf.close()
 
 
 def main(

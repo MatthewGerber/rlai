@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="epsilon-greedy, unweighted reward average, stationary" type="PythonConfigurationType" factoryName="Python" folderName="Chapter 2">
+  <configuration default="false" name="Figure 2.3:  epsilon-greedy, optimistic initial values, recency-weighted reward average, stationary" type="PythonConfigurationType" factoryName="Python" folderName="Chapter 2">
     <module name="rl" />
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />
@@ -13,7 +13,7 @@
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
     <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/rl/runners/runner.py" />
-    <option name="PARAMETERS" value="k_armed_bandit_with_nonassociative_epsilon_greedy_agent --epsilons=0.2,0.1,0.01,0.0 --k=10 --T=1000 --n-runs=2000 --reset-probability=0" />
+    <option name="PARAMETERS" value="k_armed_bandit_with_nonassociative_epsilon_greedy_agent --epsilons=0.0 --initial-q-value=5 --alpha=0.1 --k=10 --T=1000 --n-runs=2000 --reset-probability=0 --output-name=&quot;Figure 2.3&quot;" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />

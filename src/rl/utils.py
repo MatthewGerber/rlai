@@ -11,7 +11,7 @@ class IncrementalSampleAverager:
     def reset(
             self
     ):
-        self.average = 0.0
+        self.average = self.initial_value
         self.n = 0
 
     def update(
@@ -49,11 +49,14 @@ class IncrementalSampleAverager:
 
     def __init__(
             self,
+            initial_value: float = 0.0,
             alpha: float = None
     ):
         """
         Initialize the averager.
 
+        :param initial_value: Initial value of the averager. Use values greater than zero to implement optimistic
+        initial values, which encourages exploration in the early stages of the run.
         :param alpha: Constant step-size value. If provided, the sample average becomes a recency-weighted average with
         the weight of previous values decreasing according to `alpha^i`, where `i` is the number of time steps prior to
         the current when a previous value was obtained. If `None` is passed, then the unweighted sample average will be
@@ -63,6 +66,13 @@ class IncrementalSampleAverager:
         if alpha is not None and alpha <= 0:
             raise ValueError('alpha must be > 0')
 
+        self.initial_value = initial_value
         self.alpha = alpha
         self.average = 0.0
-        self.n = 0
+        self.n = initial_value
+
+    def __str__(
+            self
+    ) -> str:
+
+        return str(self.average)

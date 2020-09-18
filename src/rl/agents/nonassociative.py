@@ -82,6 +82,7 @@ class EpsilonGreedy(Agent):
             name: str,
             epsilon: float,
             epsilon_reduction_rate: float,
+            initial_q_value: float,
             alpha: float,
             random_state: RandomState
     ):
@@ -94,6 +95,8 @@ class EpsilonGreedy(Agent):
         :param epsilon_reduction_rate: Rate at which `epsilon` is reduced from its initial value to zero. This is the
         percentage reduction, and it is applied at each time step when the agent explores. For example, pass 0 for no
         reduction and 0.01 for a 1-percent reduction at each exploration step.
+        :param initial_q_value: Initial Q-value to use for all actions. Use values greater than zero to encourage
+        exploration in the early stages of the run.
         :param alpha: Step-size parameter for incremental reward averaging. See `IncrementalSampleAverager` for details.
         :param random_state: Random state.
         """
@@ -109,6 +112,7 @@ class EpsilonGreedy(Agent):
 
         self.Q: Dict[Action, IncrementalSampleAverager] = {
             a: IncrementalSampleAverager(
+                initial_value=initial_q_value,
                 alpha=alpha
             )
             for a in self.AA
