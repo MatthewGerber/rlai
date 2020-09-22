@@ -5,7 +5,8 @@ from setuptools import (
 
 INSTALL_REQUIREMENTS = [
     'scipy~=1.5.2',
-    'matplotlib~=3.3.1'
+    'matplotlib~=3.3.1',
+    'numpy~=1.19.0'
 ]
 
 TEST_REQUIREMENTS = [
@@ -29,13 +30,13 @@ setup(
     url='https://github.com/MatthewGerber/rl',
     packages=find_namespace_packages(where='src'),
     package_dir={'': 'src'},
-    python_requires='~=3.7',
+    python_requires='~=3.8',
     install_requires=[
         INSTALL_REQUIREMENTS
     ],
     tests_require=TEST_REQUIREMENTS,
     extras_require={
-        'test:python_version ~= "3.7"': TEST_REQUIREMENTS,
-        'dev:python_version ~= "3.7"': TEST_REQUIREMENTS + DEV_REQUIREMENTS
+        'test:python_version ~= "3.8"': TEST_REQUIREMENTS,
+        'dev:python_version ~= "3.8"': TEST_REQUIREMENTS + DEV_REQUIREMENTS
     }
 )

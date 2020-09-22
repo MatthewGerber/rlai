@@ -13,7 +13,7 @@
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
     <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/rl/runners/runner.py" />
-    <option name="PARAMETERS" value="k_armed_bandit_with_nonassociative_epsilon_greedy_agent --epsilons=0.0 --initial-q-value=5 --alpha=0.1 --k=10 --T=1000 --n-runs=2000 --reset-probability=0 --output-name=&quot;Figure 2.3&quot;" />
+    <option name="PARAMETERS" value="k_armed_bandit_with_nonassociative_epsilon_greedy_agent --epsilons=0.0 --initial-q-value=5 --alpha=0.1 --k=10 --T=1000 --n-runs=2000 --reset-probability=0 --figure-name=&quot;Figure 2.3&quot; --save-to-pdf=True" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />

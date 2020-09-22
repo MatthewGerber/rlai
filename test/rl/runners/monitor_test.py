@@ -1,4 +1,4 @@
-from numpy.random.mtrand import RandomState
+from numpy.random import RandomState
 import numpy as np
 from rl.runners.monitor import Monitor
 
@@ -30,3 +30,5 @@ def test_monitor():
         1 if action == optimal else 0
         for action, optimal in zip(actions, optimal_actions)
     ])
+
+    assert np.array_equal([averager.get_value() for averager in monitor.t_average_cumulative_reward], np.cumsum(rewards))

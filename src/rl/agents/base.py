@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, Optional, final
+
+from numpy.random import RandomState
 
 from rl.agents.action import Action
 from rl.environments.state import State
@@ -7,14 +9,14 @@ from rl.environments.state import State
 
 class Agent(ABC):
 
-    @abstractmethod
-    def reset(
+    def reset_for_new_run(
             self
     ):
         """
         Reset the agent to a state prior to any learning.
         """
-        pass
+
+        self.most_recent_action = None
 
     @abstractmethod
     def sense(
@@ -28,8 +30,22 @@ class Agent(ABC):
         """
         pass
 
-    @abstractmethod
+    @final
     def act(
+            self
+    ) -> Action:
+        """
+        Request an action from the agent.
+
+        :return: Action
+        """
+
+        a = self.__act__()
+        self.most_recent_action = a
+        return a
+
+    @abstractmethod
+    def __act__(
             self
     ) -> Action:
         """
@@ -54,17 +70,22 @@ class Agent(ABC):
     def __init__(
             self,
             AA: List[Action],
-            name: str
+            name: str,
+            random_state: RandomState
     ):
         """
         Initialize the agent.
 
         :param AA: List of all possible actions.
         :param name: Name of the agent.
+        :param random_state: Random State.
         """
 
         self.AA = AA
         self.name = name
+        self.random_state = random_state
+
+        self.most_recent_action: Optional[Action] = None
 
     def __str__(
             self

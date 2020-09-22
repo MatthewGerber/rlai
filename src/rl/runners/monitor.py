@@ -1,5 +1,3 @@
-from typing import Dict
-
 from rl.agents.action import Action
 from rl.utils import IncrementalSampleAverager
 
@@ -9,18 +7,14 @@ class Monitor:
     Monitor for runs of an environment with an agent.
     """
 
-    def reset(
+    def reset_for_new_run(
             self
     ):
         """
-        Reset the monitor.
+        Reset the monitor for a new run.
         """
 
-        for averager in self.t_average_reward:
-            averager.reset()
-
-        for t in range(self.T):
-            self.t_count_optimal_action[t] = 0
+        self.cumulative_reward = 0
 
     def report(
             self,
@@ -43,6 +37,8 @@ class Monitor:
 
         if action_reward is not None:
             self.t_average_reward[t].update(action_reward)
+            self.cumulative_reward += action_reward
+            self.t_average_cumulative_reward[t].update(self.cumulative_reward)
 
     def __init__(
             self,
@@ -56,9 +52,13 @@ class Monitor:
 
         self.T = T
 
+        self.t_count_optimal_action = [0] * self.T
         self.t_average_reward = [
             IncrementalSampleAverager()
             for _ in range(self.T)
         ]
-
-        self.t_count_optimal_action = [0] * self.T
+        self.cumulative_reward = 0.0
+        self.t_average_cumulative_reward = [
+            IncrementalSampleAverager()
+            for _ in range(self.T)
+        ]

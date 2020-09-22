@@ -84,7 +84,7 @@ class KArmedBandit(Environment):
     K-armed bandit.
     """
 
-    def reset(
+    def reset_for_new_run(
             self
     ):
         """
@@ -96,14 +96,12 @@ class KArmedBandit(Environment):
 
         self.arms.clear()
         self.arms.extend([
-
             Arm(
                 i=i,
                 mean=q_star_means[i],
                 variance=self.reward_variance,
                 random_state=self.random_state
             )
-
             for i, mean in enumerate(q_star_means)
         ])
 
@@ -139,7 +137,7 @@ class KArmedBandit(Environment):
         for t in range(T):
 
             if self.random_state.random_sample() < self.reset_probability:
-                self.reset()
+                self.reset_for_new_run()
 
             action = agent.act()
             monitor.report(t=t, agent_action=action, optimal_action=Action(self.best_arm.i))
@@ -184,4 +182,4 @@ class KArmedBandit(Environment):
 
         self.arms: List[Arm] = []
         self.best_arm: Optional[Arm] = None
-        self.reset()
+        self.reset_for_new_run()

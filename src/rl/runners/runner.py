@@ -8,7 +8,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 from numpy.random import RandomState
 
 from rl.agents.action import Action
-from rl.agents.nonassociative import EpsilonGreedy
+from rl.agents.epsilon_greedy import EpsilonGreedy
 from rl.environments.bandit import KArmedBandit
 from rl.runners import FIGURES_DIRECTORY
 from rl.runners.monitor import Monitor
@@ -16,13 +16,15 @@ from rl.runners.monitor import Monitor
 
 def k_armed_bandit_with_nonassociative_epsilon_greedy_agent(
         args: List[str],
-        output_name: str
+        figure_name: str,
+        save_to_pdf: bool
 ):
     """
     Run a k-armed bandit environment with a nonassociative, epsilon-greedy agent.
 
     :param args: Arguments.
-    :param output_name: Output name.
+    :param figure_name: Name of figure to generate.
+    :param save_to_pdf: Whether or not to save the figure to disk as a PDF.
     """
 
     parser = ArgumentParser(description='Run a k-armed bandit environment with a nonassociative, epsilon-greedy agent.')
@@ -98,12 +100,12 @@ def k_armed_bandit_with_nonassociative_epsilon_greedy_agent(
     agents = [
         EpsilonGreedy(
             AA=[Action(i) for i in range(args.k)],
-            epsilon=epsilon,
-            epsilon_reduction_rate=args.epsilon_reduction_rate,
+            name=f'epsilon-greedy (e={epsilon:0.2f})',
             random_state=random_state,
             initial_q_value=args.initial_q_value,
             alpha=args.alpha,
-            name=f'epsilon-greedy (e={epsilon:0.2f})'
+            epsilon=epsilon,
+            epsilon_reduction_rate=args.epsilon_reduction_rate,
         )
         for epsilon in epsilons
     ]
@@ -121,26 +123,29 @@ def k_armed_bandit_with_nonassociative_epsilon_greedy_agent(
         for _ in range(len(agents))
     ]
 
-    monitor = Monitor(
-        T=args.T
-    )
+    pdf = None
+    if save_to_pdf:
+        pdf = PdfPages(os.path.join(FIGURES_DIRECTORY, figure_name + '.pdf'))
 
-    pdf = PdfPages(os.path.join(FIGURES_DIRECTORY, output_name + '.pdf'))
     fig, axs = plt.subplots(2, 1, sharex='all', figsize=(6, 9))
 
     reward_ax = axs[0]
+    cum_reward_ax = reward_ax.twinx()
     optimal_action_ax = axs[1]
 
     for agent, bandit in zip(agents, bandits):
 
         print(f'Running {agent} in {bandit}...')
 
-        monitor.reset()
+        monitor = Monitor(
+            T=args.T
+        )
 
         for run in range(args.n_runs):
 
-            agent.reset()
-            bandit.reset()
+            agent.reset_for_new_run()
+            bandit.reset_for_new_run()
+            monitor.reset_for_new_run()
 
             bandit.run(
                 agent=agent,
@@ -158,6 +163,11 @@ def k_armed_bandit_with_nonassociative_epsilon_greedy_agent(
             for averager in monitor.t_average_reward
         ], label=agent.name)
 
+        cum_reward_ax.plot([
+            averager.get_value()
+            for averager in monitor.t_average_cumulative_reward
+        ], linestyle='--', label=agent.name)
+
         optimal_action_ax.plot([
             count_optimal_action / args.n_runs
             for count_optimal_action in monitor.t_count_optimal_action
@@ -165,19 +175,24 @@ def k_armed_bandit_with_nonassociative_epsilon_greedy_agent(
 
         print()
 
-    reward_ax.set_title(output_name)
+    reward_ax.set_title(figure_name)
     reward_ax.set_xlabel('Time step')
     reward_ax.set_ylabel(f'Per-step reward (averaged over {args.n_runs} runs)')
     reward_ax.grid()
     reward_ax.legend()
+    cum_reward_ax.set_ylabel(f'Cumulative reward (averaged over {args.n_runs} runs)')
+    cum_reward_ax.legend(loc='lower right')
 
     optimal_action_ax.set_xlabel('Time step')
     optimal_action_ax.set_ylabel(f'% optimal action selected')
     optimal_action_ax.grid()
     optimal_action_ax.legend()
 
-    pdf.savefig()
-    pdf.close()
+    if pdf is None:
+        plt.show()
+    else:
+        pdf.savefig()
+        pdf.close()
 
 
 def main(
@@ -193,10 +208,17 @@ def main(
     )
 
     parser.add_argument(
-        '--output-name',
+        '--figure-name',
         type=str,
         default='_'.join(argv),
-        help='Name of output.'
+        help='Name of output figure.'
+    )
+
+    parser.add_argument(
+        '--save-to-pdf',
+        type=bool,
+        default=False,
+        help='Whether or not to save the output figure to disk as a PDF.'
     )
 
     args, unknown_args = parser.parse_known_args(argv)
@@ -205,7 +227,8 @@ def main(
 
     runner(
         args=unknown_args,
-        output_name=args.output_name
+        figure_name=args.figure_name,
+        save_to_pdf=args.save_to_pdf
     )
 
 
