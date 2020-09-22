@@ -38,7 +38,8 @@ class Nonassociative(Agent, ABC):
 
         :param state: State.
         """
-        pass
+
+        super().sense(state)
 
     def reward(
             self,
@@ -49,6 +50,8 @@ class Nonassociative(Agent, ABC):
 
         :param r: Reward value.
         """
+
+        super().reward(r)
 
         self.Q[self.most_recent_action].update(r)
 
