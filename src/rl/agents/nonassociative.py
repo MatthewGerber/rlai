@@ -1,5 +1,6 @@
 from abc import ABC
-from typing import List, Dict, final
+from argparse import Namespace, ArgumentParser
+from typing import List, Dict, final, Tuple
 
 from numpy.random import RandomState
 
@@ -15,6 +16,38 @@ class Nonassociative(Agent, ABC):
     """
     A nonassociative agent.
     """
+
+    @classmethod
+    def parse_arguments(
+            cls,
+            args
+    ) -> Tuple[Namespace, List[str]]:
+        """
+        Parse arguments.
+
+        :param args: Arguments.
+        :return: 2-tuple of parsed and unparsed arguments.
+        """
+
+        parsed_args, unparsed_args = super().parse_arguments(args)
+
+        parser = ArgumentParser(allow_abbrev=False)
+
+        parser.add_argument(
+            '--initial-q-value',
+            type=float,
+            default=0.0,
+            help='Initial Q-value to use for all actions. Use values greater than zero to encourage exploration in the early stages of the run.'
+        )
+
+        parser.add_argument(
+            '--alpha',
+            type=float,
+            default=None,
+            help='Step-size to use in incremental reward averaging. Pass None for decreasing (i.e., unweighted average) or a constant in (0, 1] for recency weighted.'
+        )
+
+        return parser.parse_known_args(unparsed_args, parsed_args)
 
     def reset_for_new_run(
             self

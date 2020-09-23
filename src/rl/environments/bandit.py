@@ -1,4 +1,5 @@
-from typing import List, Optional
+from argparse import Namespace, ArgumentParser
+from typing import List, Optional, Tuple
 
 from numpy.random import RandomState
 from scipy import stats
@@ -84,6 +85,82 @@ class KArmedBandit(Environment):
     K-armed bandit.
     """
 
+    @classmethod
+    def parse_arguments(
+            cls,
+            args
+    ) -> Tuple[Namespace, List[str]]:
+        """
+        Parse arguments.
+
+        :param args: Arguments.
+        :return: 2-tuple of parsed and unparsed arguments.
+        """
+
+        parsed_args, unparsed_args = super().parse_arguments(args)
+
+        parser = ArgumentParser(allow_abbrev=False)
+
+        parser.add_argument(
+            '--k',
+            type=int,
+            default=10,
+            help='Number of bandit arms.'
+        )
+
+        parser.add_argument(
+            '--reset-probability',
+            type=float,
+            default=0.0,
+            help="Probability of resetting the bandit's arms at each time step. This effectively creates a nonstationary environment."
+        )
+
+        parser.add_argument(
+            '--q-star-mean',
+            type=float,
+            default=0.0,
+            help='Mean of q-star (true reward mean) distribution.'
+        )
+
+        parser.add_argument(
+            '--q-star-variance',
+            type=float,
+            default=1.0,
+            help='Variance of q-star (true reward mean) distribution.'
+        )
+
+        parser.add_argument(
+            '--reward-variance',
+            type=float,
+            default=1.0,
+            help='Variance of rewards.'
+        )
+
+        return parser.parse_known_args(unparsed_args, parsed_args)
+
+    @classmethod
+    def init_from_arguments(
+            cls,
+            args: List[str],
+            random_state: RandomState
+    ) -> Tuple[Environment, List[str]]:
+        """
+        Initialize an environment from arguments.
+
+        :param args: Arguments.
+        :param random_state: Random state.
+        :return: 2-tuple of an environment and a list of unparsed arguments.
+        """
+
+        parsed_args, unparsed_args = cls.parse_arguments(args)
+
+        bandit = KArmedBandit(
+            random_state=random_state,
+            **dict(parsed_args._get_kwargs())
+        )
+
+        return bandit, unparsed_args
+
     def reset_for_new_run(
             self
     ):
@@ -139,7 +216,7 @@ class KArmedBandit(Environment):
             if self.random_state.random_sample() < self.reset_probability:
                 self.reset_for_new_run()
 
-            action = agent.act()
+            action = agent.act(t=t)
             monitor.report(t=t, agent_action=action, optimal_action=Action(self.best_arm.i))
 
             reward = self.pull(action.i)
@@ -149,18 +226,16 @@ class KArmedBandit(Environment):
 
     def __init__(
             self,
-            name: str,
+            random_state: RandomState,
             k: int,
             q_star_mean: float,
             q_star_variance: float,
             reward_variance: float,
-            reset_probability: float,
-            random_state: RandomState
+            reset_probability: float
     ):
         """
         Initialize the bandit.
 
-        :param name: Name of the environment.
         :param k: Number of arms.
         :param q_star_mean: Mean of q_star.
         :param q_star_variance: Variance of q_star.
@@ -170,7 +245,9 @@ class KArmedBandit(Environment):
         """
 
         super().__init__(
-            name=name
+            name=f'{k}-armed bandit',
+            AA=[Action(i) for i in range(k)],
+            random_state=random_state
         )
 
         self.k = k
@@ -178,8 +255,6 @@ class KArmedBandit(Environment):
         self.q_star_variance = q_star_variance
         self.reward_variance = reward_variance
         self.reset_probability = reset_probability
-        self.random_state = random_state
 
         self.arms: List[Arm] = []
         self.best_arm: Optional[Arm] = None
-        self.reset_for_new_run()

@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional, final
+from argparse import ArgumentParser, Namespace
+from typing import List, Optional, final, Dict, Tuple
 
 from numpy.random import RandomState
 
@@ -8,6 +9,43 @@ from rl.environments.state import State
 
 
 class Agent(ABC):
+    """
+    Abstract base class for all agents.
+    """
+
+    @classmethod
+    def parse_arguments(
+            cls,
+            args
+    ) -> Tuple[Namespace, List[str]]:
+        """
+        Parse arguments.
+
+        :param args: Arguments.
+        :return: 2-tuple of parsed and unparsed arguments.
+        """
+
+        parser = ArgumentParser(allow_abbrev=False)
+
+        return parser.parse_known_args(args)
+
+    @classmethod
+    @abstractmethod
+    def init_from_arguments(
+            cls,
+            args: List[str],
+            AA: List[Action],
+            random_state: RandomState
+    ) -> List:
+        """
+        Initialize a list of agents from arguments.
+
+        :param args: Arguments.
+        :param AA: List of possible actions.
+        :param random_state: Random state.
+        :return: List of agents.
+        """
+        pass
 
     def reset_for_new_run(
             self
@@ -17,6 +55,9 @@ class Agent(ABC):
         """
 
         self.most_recent_action = None
+
+        for a in self.N_t_a:
+            self.N_t_a[a] = 0
 
     @abstractmethod
     def sense(
@@ -32,25 +73,32 @@ class Agent(ABC):
 
     @final
     def act(
-            self
+            self,
+            t
     ) -> Action:
         """
         Request an action from the agent.
 
+        :param t: Current time step.
         :return: Action
         """
 
-        a = self.__act__()
+        a = self.__act__(t=t)
+
         self.most_recent_action = a
+        self.N_t_a[a] += 1
+
         return a
 
     @abstractmethod
     def __act__(
-            self
+            self,
+            t: int
     ) -> Action:
         """
         Request an action from the agent.
 
+        :param t: Current time step.
         :return: Action
         """
         pass
@@ -86,6 +134,10 @@ class Agent(ABC):
         self.random_state = random_state
 
         self.most_recent_action: Optional[Action] = None
+        self.N_t_a: Dict[Action, int] = {
+            a: 0
+            for a in self.AA
+        }
 
     def __str__(
             self

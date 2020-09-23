@@ -1,8 +1,10 @@
-from typing import List
+from argparse import Namespace, ArgumentParser
+from typing import List, Tuple
 
 from numpy.random import RandomState
 
 from rl.agents.action import Action
+from rl.agents.base import Agent
 from rl.agents.nonassociative import Nonassociative
 from rl.meta import rl_text
 
@@ -12,6 +14,76 @@ class EpsilonGreedy(Nonassociative):
     """
     An epsilon-greedy agent.
     """
+
+    @classmethod
+    def parse_arguments(
+            cls,
+            args
+    ) -> Tuple[Namespace, List[str]]:
+        """
+        Parse arguments.
+
+        :param args: Arguments.
+        :return: 2-tuple of parsed and unparsed arguments.
+        """
+
+        parsed_args, unparsed_args = super().parse_arguments(args)
+
+        parser = ArgumentParser(allow_abbrev=False)
+
+        parser.add_argument(
+            '--epsilon',
+            type=float,
+            nargs='+',
+            help='Space-separated list of epsilon values to evaluate.'
+        )
+
+        parser.add_argument(
+            '--epsilon-reduction-rate',
+            type=float,
+            default=0.0,
+            help='Percentage reduction of epsilon from its initial value. This is applied at each time step when the agent explores. For example, pass 0 for no reduction and 0.01 for a 1-percent reduction at each exploration step.'
+        )
+
+        parsed_args, unparsed_args = parser.parse_known_args(unparsed_args, parsed_args)
+
+        return parsed_args, unparsed_args
+
+    @classmethod
+    def init_from_arguments(
+            cls,
+            args: List[str],
+            AA: List[Action],
+            random_state: RandomState
+    ) -> Tuple[List[Agent], List[str]]:
+        """
+        Initialize a list of agents from arguments.
+
+        :param args: Arguments.
+        :param AA: List of possible actions.
+        :param random_state: Random state.
+        :return: 2-tuple of a list of agents and a list of unparsed arguments.
+        """
+
+        parsed_args, unparsed_args = cls.parse_arguments(args)
+
+        # grab and delete epsilons from parsed arguments
+        epsilons = parsed_args.epsilon
+        del parsed_args.epsilon
+
+        # initialize agents
+        agents = [
+            EpsilonGreedy(
+                AA=AA,
+                name=f'epsilon-greedy (e={epsilon:0.2f})',
+                random_state=random_state,
+                epsilon=epsilon,
+                **dict(parsed_args._get_kwargs())
+            )
+            for epsilon in epsilons
+        ]
+
+        return agents, unparsed_args
 
     def reset_for_new_run(
             self
@@ -26,11 +98,13 @@ class EpsilonGreedy(Nonassociative):
         self.greedy_action = list(self.Q.keys())[0]
 
     def __act__(
-            self
+            self,
+            t: int
     ) -> Action:
         """
         Act in an epsilon-greedy fashion.
 
+        :param t: Current time step.
         :return: Action.
         """
 

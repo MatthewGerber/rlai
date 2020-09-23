@@ -1,3 +1,4 @@
+import importlib
 import os
 import sys
 from argparse import ArgumentParser
@@ -7,79 +8,33 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 from numpy.random import RandomState
 
-from rl.agents.action import Action
-from rl.agents.epsilon_greedy import EpsilonGreedy
-from rl.environments.bandit import KArmedBandit
 from rl.runners import FIGURES_DIRECTORY
 from rl.runners.monitor import Monitor
 
 
-def k_armed_bandit_with_nonassociative_epsilon_greedy_agent(
-        args: List[str],
-        figure_name: str,
-        save_to_pdf: bool
+def load_class(
+        fully_qualified_class_name: str
 ):
     """
-    Run a k-armed bandit environment with a nonassociative, epsilon-greedy agent.
+    Load class from its fully-qualified name (e.g., xxx.yyy.Class).
 
-    :param args: Arguments.
-    :param figure_name: Name of figure to generate.
-    :param save_to_pdf: Whether or not to save the figure to disk as a PDF.
+    :param fully_qualified_class_name: Name.
+    :return: Class reference.
     """
 
-    parser = ArgumentParser(description='Run a k-armed bandit environment with a nonassociative, epsilon-greedy agent.')
+    (module_name, fully_qualified_class_name) = fully_qualified_class_name.rsplit('.', 1)
+    module_ref = importlib.import_module(module_name)
+    class_ref = getattr(module_ref, fully_qualified_class_name)
 
-    # agent arguments
-    parser.add_argument(
-        '--epsilons',
-        type=str,
-        default='0',
-        help='Comma-separated list of epsilon values to evaluate.'
-    )
+    return class_ref
 
-    parser.add_argument(
-        '--epsilon-reduction-rate',
-        type=float,
-        default=0.0,
-        help='Percentage reduction of epsilon from its initial value. This is applied at each time step when the agent explores. For example, pass 0 for no reduction and 0.01 for a 1-percent reduction at each exploration step.'
-    )
 
-    parser.add_argument(
-        '--initial-q-value',
-        type=float,
-        default=0.0,
-        help='Initial Q-value to use for all actions. Use values greater than zero to encourage exploration in the early stages of the run.'
-    )
+def main(
+        args: List[str]
+):
+    random_state = RandomState(12345)
 
-    parser.add_argument(
-        '--alpha',
-        type=float,
-        default=None,
-        help='Step-size to use in incremental reward averaging. Pass None for decreasing (i.e., unweighted average) or a constant in (0, 1] for recency weighted.'
-    )
-
-    # environment arguments
-    parser.add_argument(
-        '--k',
-        type=int,
-        default=10,
-        help='Number of bandit arms.'
-    )
-
-    parser.add_argument(
-        '--reset-probability',
-        type=float,
-        default=0.0,
-        help="Probability of resetting the bandit's arms at each time step. This effectively creates a nonstationary environment."
-    )
-
-    # runner arguments
-    parser.add_argument(
-        '--T',
-        type=int,
-        default=1000,
-        help='Number of time steps.'
-    )
+    parser = ArgumentParser(description='Run an experiment.', allow_abbrev=False)
 
     parser.add_argument(
         '--n-runs',
@@ -88,44 +43,65 @@ def k_armed_bandit_with_nonassociative_epsilon_greedy_agent(
         help='Number of runs.'
     )
 
-    args = parser.parse_args(args)
+    parser.add_argument(
+        '--T',
+        type=int,
+        default=1000,
+        help='Number of time steps per run.'
+    )
 
-    epsilons = [
-        float(epsilon_str)
-        for epsilon_str in args.epsilons.split(',')
-    ]
+    parser.add_argument(
+        '--figure-name',
+        type=str,
+        default='_'.join(args),
+        help='Name of output figure.'
+    )
 
-    random_state = RandomState(12345)
+    parser.add_argument(
+        '--save-to-pdf',
+        action='store_true',
+        help='Whether or not to save the output figure to disk as a PDF.'
+    )
 
-    agents = [
-        EpsilonGreedy(
-            AA=[Action(i) for i in range(args.k)],
-            name=f'epsilon-greedy (e={epsilon:0.2f})',
-            random_state=random_state,
-            initial_q_value=args.initial_q_value,
-            alpha=args.alpha,
-            epsilon=epsilon,
-            epsilon_reduction_rate=args.epsilon_reduction_rate,
-        )
-        for epsilon in epsilons
-    ]
+    parser.add_argument(
+        '--environment',
+        type=str,
+        default='rl.environments.bandit.KArmedBandit',
+        help='Fully-qualified class name of environment.'
+    )
 
-    bandits = [
-        KArmedBandit(
-            name=f'{args.k}-armed bandit',
-            k=args.k,
-            q_star_mean=0,
-            q_star_variance=1,
-            reward_variance=1,
-            reset_probability=args.reset_probability,
-            random_state=random_state
-        )
-        for _ in range(len(agents))
-    ]
+    parser.add_argument(
+        '--agent',
+        type=str,
+        default='rl.agents.greedy.EpsilonGreedy',
+        help='Fully-qualified class name of agent.'
+    )
 
+    parsed_args, unparsed_args = parser.parse_known_args(args)
+
+    # init environment
+    environment_class = load_class(parsed_args.environment)
+    environment, unparsed_args = environment_class.init_from_arguments(
+        args=unparsed_args,
+        random_state=random_state
+    )
+
+    # init agent(s)
+    agent_class = load_class(parsed_args.agent)
+    agents, unparsed_args = agent_class.init_from_arguments(
+        args=unparsed_args,
+        AA=environment.AA,
+        random_state=random_state
+    )
+
+    # no unparsed arguments should remain
+    if len(unparsed_args) > 0:
+        raise ValueError(f'Unparsed arguments:  {unparsed_args}')
+
+    # set up plot
     pdf = None
-    if save_to_pdf:
-        pdf = PdfPages(os.path.join(FIGURES_DIRECTORY, figure_name + '.pdf'))
+    if parsed_args.save_to_pdf:
+        pdf = PdfPages(os.path.join(FIGURES_DIRECTORY, parsed_args.figure_name + '.pdf'))
 
     fig, axs = plt.subplots(2, 1, sharex='all', figsize=(6, 9))
 
@@ -133,30 +109,31 @@ def k_armed_bandit_with_nonassociative_epsilon_greedy_agent(
     cum_reward_ax = reward_ax.twinx()
     optimal_action_ax = axs[1]
 
-    for agent, bandit in zip(agents, bandits):
+    # run each agent in the environment
+    for agent in agents:
 
-        print(f'Running {agent} in {bandit}...')
+        print(f'Running {agent} in {environment}...')
 
         monitor = Monitor(
-            T=args.T
+            T=parsed_args.T
         )
 
-        for run in range(args.n_runs):
+        for run in range(parsed_args.n_runs):
 
             agent.reset_for_new_run()
-            bandit.reset_for_new_run()
+            environment.reset_for_new_run()
             monitor.reset_for_new_run()
 
-            bandit.run(
+            environment.run(
                 agent=agent,
-                T=args.T,
+                T=parsed_args.T,
                 monitor=monitor
             )
 
             runs_finished = run + 1
             if (runs_finished % 100) == 0:
-                percent_done = 100 * (runs_finished / args.n_runs)
-                print(f'{percent_done:.0f}% complete (finished {runs_finished} of {args.n_runs} runs)...')
+                percent_done = 100 * (runs_finished / parsed_args.n_runs)
+                print(f'{percent_done:.0f}% complete (finished {runs_finished} of {parsed_args.n_runs} runs)...')
 
         reward_ax.plot([
             averager.get_value()
@@ -169,18 +146,18 @@ def k_armed_bandit_with_nonassociative_epsilon_greedy_agent(
         ], linestyle='--', label=agent.name)
 
         optimal_action_ax.plot([
-            count_optimal_action / args.n_runs
+            count_optimal_action / parsed_args.n_runs
             for count_optimal_action in monitor.t_count_optimal_action
         ], label=agent.name)
 
         print()
 
-    reward_ax.set_title(figure_name)
+    reward_ax.set_title(parsed_args.figure_name)
     reward_ax.set_xlabel('Time step')
-    reward_ax.set_ylabel(f'Per-step reward (averaged over {args.n_runs} runs)')
+    reward_ax.set_ylabel(f'Per-step reward (averaged over {parsed_args.n_runs} runs)')
     reward_ax.grid()
     reward_ax.legend()
-    cum_reward_ax.set_ylabel(f'Cumulative reward (averaged over {args.n_runs} runs)')
+    cum_reward_ax.set_ylabel(f'Cumulative reward (averaged over {parsed_args.n_runs} runs)')
     cum_reward_ax.legend(loc='lower right')
 
     optimal_action_ax.set_xlabel('Time step')
@@ -193,43 +170,6 @@ def k_armed_bandit_with_nonassociative_epsilon_greedy_agent(
     else:
         pdf.savefig()
         pdf.close()
-
-
-def main(
-        argv: List[str]
-):
-
-    parser = ArgumentParser(description='Run an experiment.')
-
-    parser.add_argument(
-        'runner_name',
-        type=str,
-        help='Runner name.'
-    )
-
-    parser.add_argument(
-        '--figure-name',
-        type=str,
-        default='_'.join(argv),
-        help='Name of output figure.'
-    )
-
-    parser.add_argument(
-        '--save-to-pdf',
-        type=bool,
-        default=False,
-        help='Whether or not to save the output figure to disk as a PDF.'
-    )
-
-    args, unknown_args = parser.parse_known_args(argv)
-
-    runner = globals()[args.runner_name]
-
-    runner(
-        args=unknown_args,
-        figure_name=args.figure_name,
-        save_to_pdf=args.save_to_pdf
-    )
 
 
 if __name__ == '__main__':
