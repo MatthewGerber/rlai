@@ -166,4 +166,4 @@ class EpsilonGreedy(Nonassociative):
 
         self.epsilon = self.original_epsilon = epsilon
         self.epsilon_reduction_rate = epsilon_reduction_rate
-        self.greedy_action = list(self.Q.keys())[0]
+        self.greedy_action = None

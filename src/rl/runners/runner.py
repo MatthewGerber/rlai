@@ -29,7 +29,7 @@ def load_class(
     return class_ref
 
 
-def main(
+def run(
         args: List[str]
 ):
     random_state = RandomState(12345)
@@ -110,13 +110,16 @@ def main(
     optimal_action_ax = axs[1]
 
     # run each agent in the environment
+    monitors = []
     for agent in agents:
 
-        print(f'Running {agent} in {environment}...')
+        print(f'Running {agent} agent in {environment} environment...')
 
         monitor = Monitor(
             T=parsed_args.T
         )
+
+        monitors.append(monitor)
 
         for run in range(parsed_args.n_runs):
 
@@ -130,25 +133,25 @@ def main(
                 monitor=monitor
             )
 
-            runs_finished = run + 1
-            if (runs_finished % 100) == 0:
-                percent_done = 100 * (runs_finished / parsed_args.n_runs)
-                print(f'{percent_done:.0f}% complete (finished {runs_finished} of {parsed_args.n_runs} runs)...')
+            num_runs_finished = run + 1
+            if (num_runs_finished % 100) == 0:
+                percent_done = 100 * (num_runs_finished / parsed_args.n_runs)
+                print(f'{percent_done:.0f}% complete (finished {num_runs_finished} of {parsed_args.n_runs} runs)...')
 
         reward_ax.plot([
             averager.get_value()
             for averager in monitor.t_average_reward
-        ], label=agent.name)
+        ], linewidth=1, label=agent.name)
 
         cum_reward_ax.plot([
             averager.get_value()
             for averager in monitor.t_average_cumulative_reward
-        ], linestyle='--', label=agent.name)
+        ], linewidth=1, linestyle='--', label=agent.name)
 
         optimal_action_ax.plot([
             count_optimal_action / parsed_args.n_runs
             for count_optimal_action in monitor.t_count_optimal_action
-        ], label=agent.name)
+        ], linewidth=1, label=agent.name)
 
         print()
 
@@ -171,6 +174,8 @@ def main(
         pdf.savefig()
         pdf.close()
 
+    return monitors
+
 
 if __name__ == '__main__':
-    main(sys.argv[1:])
+    run(sys.argv[1:])

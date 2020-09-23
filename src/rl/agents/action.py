@@ -15,6 +15,16 @@ class Action(ABC):
 
         self.i = i
 
+    def __str__(
+            self
+    ) -> str:
+        """
+        Get string description of action.
+
+        :return: String.
+        """
+        return str(self.i)
+
     def __hash__(
             self
     ) -> int:

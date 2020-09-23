@@ -1,5 +1,6 @@
-from numpy.random import RandomState
 import numpy as np
+from numpy.random import RandomState
+
 from rl.runners.monitor import Monitor
 
 
