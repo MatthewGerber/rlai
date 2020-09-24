@@ -11,12 +11,12 @@ from rl.runners.runner import run
 def test_run():
 
     run_args_list = [
-        '--T 100 --n-runs 200 --environment rl.environments.bandit.KArmedBandit --k 10 --agent rl.agents.greedy.EpsilonGreedy --epsilon 0.2 0.0',
-        '--T 100 --n-runs 200 --environment rl.environments.bandit.KArmedBandit --k 10 --reset-probability 0.005 --agent rl.agents.greedy.EpsilonGreedy --epsilon 0.2 0.0',
-        '--T 100 --n-runs 200 --environment rl.environments.bandit.KArmedBandit --k 10 --reset-probability 0.005 --agent rl.agents.greedy.EpsilonGreedy --epsilon 0.2 0.0 --alpha 0.1',
-        '--T 100 --n-runs 200 --environment rl.environments.bandit.KArmedBandit --k 10 --agent rl.agents.greedy.EpsilonGreedy --epsilon 0.2 0.0 --epsilon-reduction-rate 0.01',
-        '--T 100 --n-runs 200 --environment rl.environments.bandit.KArmedBandit --k 10 --agent rl.agents.greedy.EpsilonGreedy --epsilon 0.0 --initial-q-value 5 --alpha 0.1',
-        '--T 100 --n-runs 200 --environment rl.environments.bandit.KArmedBandit --k 10 --agent rl.agents.upper_confidence_bound.UpperConfidenceBound --c 0 1'
+        '--T 100 --n-runs 200 --environment rl.environments.bandit.KArmedBandit --k 10 --agent rl.agents.nonassociative.q_value.EpsilonGreedy --epsilon 0.2 0.0',
+        '--T 100 --n-runs 200 --environment rl.environments.bandit.KArmedBandit --k 10 --reset-probability 0.005 --agent rl.agents.nonassociative.q_value.EpsilonGreedy --epsilon 0.2 0.0',
+        '--T 100 --n-runs 200 --environment rl.environments.bandit.KArmedBandit --k 10 --reset-probability 0.005 --agent rl.agents.nonassociative.q_value.EpsilonGreedy --epsilon 0.2 0.0 --alpha 0.1',
+        '--T 100 --n-runs 200 --environment rl.environments.bandit.KArmedBandit --k 10 --agent rl.agents.nonassociative.q_value.EpsilonGreedy --epsilon 0.2 0.0 --epsilon-reduction-rate 0.01',
+        '--T 100 --n-runs 200 --environment rl.environments.bandit.KArmedBandit --k 10 --agent rl.agents.nonassociative.q_value.EpsilonGreedy --epsilon 0.0 --initial-q-value 5 --alpha 0.1',
+        '--T 100 --n-runs 200 --environment rl.environments.bandit.KArmedBandit --k 10 --agent rl.agents.nonassociative.q_value.UpperConfidenceBound --c 0 1'
     ]
 
     run_monitor: Dict[str, List[Monitor]] = dict()
@@ -31,11 +31,9 @@ def test_run():
     with open(f'{os.path.dirname(__file__)}/fixtures/test_run.pickle', 'rb') as file:
         run_monitor_fixture = pickle.load(file)
 
-    assert_array_equal(list(sorted(run_monitor.keys())), list(sorted(run_monitor_fixture.keys())))
-
-    for run_args in run_args_list:
+    for run_args, run_args_fixture in zip(run_args_list, run_monitor_fixture.keys()):
         print(f'Checking test results for run {run_args}...', end='')
-        for monitor, monitor_fixture in zip(run_monitor[run_args], run_monitor_fixture[run_args]):
+        for monitor, monitor_fixture in zip(run_monitor[run_args], run_monitor_fixture[run_args_fixture]):
             assert_array_equal(
                 [r.get_value() for r in monitor.t_average_cumulative_reward],
                 [r.get_value() for r in monitor_fixture.t_average_cumulative_reward]

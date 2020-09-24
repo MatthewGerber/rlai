@@ -13,7 +13,7 @@
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
     <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/rl/runners/runner.py" />
-    <option name="PARAMETERS" value="--T 1000 --n-runs 2000 --figure-name &quot;Figure 2.3:  Greedy with optimistic initial values and recency-weighted reward average, bandit&quot; --save-to-pdf --environment rl.environments.bandit.KArmedBandit --k 10 --agent rl.agents.greedy.EpsilonGreedy --epsilon 0.0 --initial-q-value 5 --alpha 0.1" />
+    <option name="PARAMETERS" value="--T 1000 --n-runs 2000 --figure-name &quot;Figure 2.3:  Greedy with optimistic initial values and recency-weighted reward average, bandit&quot; --save-to-pdf --environment rl.environments.bandit.KArmedBandit --k 10 --agent rl.agents.nonassociative.q_value.EpsilonGreedy --epsilon 0.0 --initial-q-value 5 --alpha 0.1" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />

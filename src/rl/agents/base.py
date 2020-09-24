@@ -55,9 +55,10 @@ class Agent(ABC):
         """
 
         self.most_recent_action = None
-
-        for a in self.N_t_a:
-            self.N_t_a[a] = 0
+        self.N_t_A.update({
+            a: 0
+            for a in self.N_t_A
+        })
 
     @abstractmethod
     def sense(
@@ -86,7 +87,7 @@ class Agent(ABC):
         a = self.__act__(t=t)
 
         self.most_recent_action = a
-        self.N_t_a[a] += 1
+        self.N_t_A[a] += 1
 
         return a
 
@@ -126,7 +127,7 @@ class Agent(ABC):
 
         :param AA: List of all possible actions.
         :param name: Name of the agent.
-        :param random_state: Random State.
+        :param random_state: Random state.
         """
 
         self.AA = AA
@@ -134,7 +135,7 @@ class Agent(ABC):
         self.random_state = random_state
 
         self.most_recent_action: Optional[Action] = None
-        self.N_t_a: Dict[Action, int] = {
+        self.N_t_A: Dict[Action, int] = {
             a: 0
             for a in self.AA
         }
