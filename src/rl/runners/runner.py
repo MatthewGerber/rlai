@@ -121,7 +121,7 @@ def run(
 
         monitors.append(monitor)
 
-        for run in range(parsed_args.n_runs):
+        for r in range(parsed_args.n_runs):
 
             agent.reset_for_new_run()
             environment.reset_for_new_run()
@@ -133,7 +133,7 @@ def run(
                 monitor=monitor
             )
 
-            num_runs_finished = run + 1
+            num_runs_finished = r + 1
             if (num_runs_finished % 100) == 0:
                 percent_done = 100 * (num_runs_finished / parsed_args.n_runs)
                 print(f'{percent_done:.0f}% complete (finished {num_runs_finished} of {parsed_args.n_runs} runs)...')

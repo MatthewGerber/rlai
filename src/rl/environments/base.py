@@ -4,7 +4,7 @@ from typing import List, Tuple, Any
 
 from numpy.random import RandomState
 
-from rl.agents.action import Action
+from rl.actions.base import Action
 from rl.agents.base import Agent
 from rl.runners.monitor import Monitor
 

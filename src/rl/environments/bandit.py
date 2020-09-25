@@ -4,7 +4,7 @@ from typing import List, Optional, Tuple
 from numpy.random import RandomState
 from scipy import stats
 
-from rl.agents.action import Action
+from rl.actions.base import Action
 from rl.agents.base import Agent
 from rl.environments.base import Environment
 from rl.meta import rl_text

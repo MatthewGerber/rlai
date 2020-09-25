@@ -4,8 +4,8 @@ from typing import List, Optional, final, Dict, Tuple
 
 from numpy.random import RandomState
 
-from rl.agents.action import Action
-from rl.environments.state import State
+from rl.actions.base import Action
+from rl.states.base import State
 
 
 class Agent(ABC):
@@ -55,22 +55,26 @@ class Agent(ABC):
         """
 
         self.most_recent_action = None
+        self.most_recent_action_tick = None
         self.N_t_A.update({
             a: 0
             for a in self.N_t_A
         })
 
-    @abstractmethod
     def sense(
             self,
-            state: State
+            state: State,
+            t: int
     ):
         """
         Pass the agent state information to sense.
 
         :param state: State.
+        :param t: Time tick for `state`.
         """
-        pass
+
+        self.most_recent_state = state
+        self.most_recent_state_tick = t
 
     @final
     def act(
@@ -86,7 +90,11 @@ class Agent(ABC):
 
         a = self.__act__(t=t)
 
+        if a is None:
+            raise ValueError('Agent returned action of None.')
+
         self.most_recent_action = a
+        self.most_recent_action_tick = t
         self.N_t_A[a] += 1
 
         return a
@@ -135,6 +143,9 @@ class Agent(ABC):
         self.random_state = random_state
 
         self.most_recent_action: Optional[Action] = None
+        self.most_recent_action_tick: Optional[int] = None
+        self.most_recent_state: Optional[State] = None
+        self.most_recent_state_tick: Optional[int] = None
         self.N_t_A: Dict[Action, int] = {
             a: 0
             for a in self.AA

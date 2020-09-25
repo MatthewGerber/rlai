@@ -1,18 +1,59 @@
 import math
+from argparse import Namespace, ArgumentParser
 from typing import List, Dict, Tuple
 
 from numpy.random import RandomState
 
-from rl.agents.action import Action
+from rl.actions.base import Action
 from rl.agents.base import Agent
-from rl.agents.nonassociative.base import Nonassociative
 from rl.utils import IncrementalSampleAverager
 
 
-class PreferenceGradient(Nonassociative):
+class PreferenceGradient(Agent):
     """
     A preference-gradient agent.
     """
+
+    @classmethod
+    def parse_arguments(
+            cls,
+            args
+    ) -> Tuple[Namespace, List[str]]:
+        """
+        Parse arguments.
+
+        :param args: Arguments.
+        :return: 2-tuple of parsed and unparsed arguments.
+        """
+
+        parsed_args, unparsed_args = super().parse_arguments(args)
+
+        parser = ArgumentParser(allow_abbrev=False)
+
+        parser.add_argument(
+            '--step-size-alpha',
+            type=float,
+            default=0.1,
+            help='Step-size parameter used to update action preferences.'
+        )
+
+        parser.add_argument(
+            '--reward-average-alpha',
+            type=float,
+            default=None,
+            help='Constant step-size for reward averaging. If provided, the reward average becomes a recency-weighted average (good for nonstationary environments). If `None` is passed, then the unweighted sample average will be used (good for stationary environments).'
+        )
+
+        parser.add_argument(
+            '--use-reward-baseline',
+            type=bool,
+            default=True,
+            help='Whether or not to use a reward baseline when updating action preferences.'
+        )
+
+        parsed_args, unparsed_args = parser.parse_known_args(unparsed_args, parsed_args)
+
+        return parsed_args, unparsed_args
 
     @classmethod
     def init_from_arguments(
@@ -36,9 +77,9 @@ class PreferenceGradient(Nonassociative):
         agents = [
             PreferenceGradient(
                 AA=AA,
-                name=f'preference gradient (alpha={parsed_args.alpha})',
+                name=f'preference gradient (step size={parsed_args.step_size_alpha})',
                 random_state=random_state,
-                alpha=parsed_args.alpha
+                **dict(parsed_args._get_kwargs())
             )
         ]
 
@@ -94,10 +135,13 @@ class PreferenceGradient(Nonassociative):
 
         self.R_bar.update(r)
 
-        relative_reward_step = self.alpha * (r - self.R_bar.get_value())
+        if self.use_reward_baseline:
+            preference_update = self.step_size_alpha * (r - self.R_bar.get_value())
+        else:
+            preference_update = self.step_size_alpha * r
 
         self.H_t_A.update({
-            a: h_t_a + relative_reward_step * (1 - self.Pr_A[a]) if a == self.most_recent_action else h_t_a - relative_reward_step * self.Pr_A[a]
+            a: h_t_a + preference_update * (1 - self.Pr_A[a]) if a == self.most_recent_action else h_t_a - preference_update * self.Pr_A[a]
             for a, h_t_a in self.H_t_A.items()
         })
 
@@ -125,7 +169,9 @@ class PreferenceGradient(Nonassociative):
             AA: List[Action],
             name: str,
             random_state: RandomState,
-            alpha: float
+            step_size_alpha: float,
+            reward_average_alpha: float,
+            use_reward_baseline: bool
     ):
         """
         Initialize the agent.
@@ -133,15 +179,19 @@ class PreferenceGradient(Nonassociative):
         :param AA: List of all possible actions.
         :param name: Name of the agent.
         :param random_state: Random State.
-        :param alpha: Step size.
+        :param step_size_alpha: Step-size parameter used to update action preferences.
+        :param reward_average_alpha: Step-size parameter for incremental reward averaging. See `IncrementalSampleAverager` for details.
+        :param use_reward_baseline: Whether or not to use a reward baseline when updating action preferences.
         """
 
         super().__init__(
             AA=AA,
             name=name,
-            random_state=random_state,
-            alpha=alpha
+            random_state=random_state
         )
+
+        self.step_size_alpha = step_size_alpha
+        self.use_reward_baseline = use_reward_baseline
 
         self.H_t_A: Dict[Action, float] = {
             a: 0.0
@@ -152,5 +202,5 @@ class PreferenceGradient(Nonassociative):
 
         self.R_bar = IncrementalSampleAverager(
             initial_value=0.0,
-            alpha=self.alpha
+            alpha=reward_average_alpha
         )

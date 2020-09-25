@@ -6,15 +6,14 @@ from typing import List, Dict, Tuple
 
 from numpy.random import RandomState
 
-from rl.agents.action import Action
+from rl.actions.base import Action
 from rl.agents.base import Agent
-from rl.agents.nonassociative.base import Nonassociative
 from rl.meta import rl_text
 from rl.utils import IncrementalSampleAverager
 
 
 @rl_text(chapter=2, page=27)
-class QValue(Nonassociative, ABC):
+class QValue(Agent, ABC):
     """
     A nonassociative, q-value agent.
     """
@@ -40,6 +39,13 @@ class QValue(Nonassociative, ABC):
             type=float,
             default=0.0,
             help='Initial Q-value to use for all actions. Use values greater than zero to encourage exploration in the early stages of the run.'
+        )
+
+        parser.add_argument(
+            '--alpha',
+            type=float,
+            default=None,
+            help='Constant step size for Q-value update. If provided, the Q-value sample average becomes a recency-weighted average (good for nonstationary environments). If `None` is passed, then the unweighted sample average will be used (good for stationary environments).'
         )
 
         return parser.parse_known_args(unparsed_args, parsed_args)
@@ -75,8 +81,8 @@ class QValue(Nonassociative, ABC):
             AA: List[Action],
             name: str,
             random_state: RandomState,
-            alpha: float,
-            initial_q_value: float
+            initial_q_value: float,
+            alpha: float
     ):
         """
         Initialize the agent.
@@ -84,22 +90,21 @@ class QValue(Nonassociative, ABC):
         :param AA: List of all possible actions.
         :param name: Name of agent.
         :param random_state: Random state.
-        :param alpha: Step-size parameter for incremental reward averaging. See `IncrementalSampleAverager` for details.
         :param initial_q_value: Initial Q-value to use for all actions. Use values greater than zero to encourage
         exploration in the early stages of the run.
+        :param alpha: Step-size parameter for incremental reward averaging. See `IncrementalSampleAverager` for details.
         """
 
         super().__init__(
             AA=AA,
             name=name,
-            random_state=random_state,
-            alpha=alpha
+            random_state=random_state
         )
 
         self.Q: Dict[Action, IncrementalSampleAverager] = {
             a: IncrementalSampleAverager(
                 initial_value=initial_q_value,
-                alpha=self.alpha
+                alpha=alpha
             )
             for a in self.AA
         }
@@ -232,8 +237,8 @@ class EpsilonGreedy(QValue):
             AA: List[Action],
             name: str,
             random_state: RandomState,
-            alpha: float,
             initial_q_value: float,
+            alpha: float,
             epsilon: float,
             epsilon_reduction_rate: float
     ):
@@ -243,9 +248,9 @@ class EpsilonGreedy(QValue):
         :param AA: List of all possible actions.
         :param name: Name of agent.
         :param random_state: Random state.
-        :param alpha: Step-size parameter for incremental reward averaging. See `IncrementalSampleAverager` for details.
         :param initial_q_value: Initial Q-value to use for all actions. Use values greater than zero to encourage
         exploration in the early stages of the run.
+        :param alpha: Step-size parameter for incremental reward averaging. See `IncrementalSampleAverager` for details.
         :param epsilon: Epsilon.
         :param epsilon_reduction_rate: Rate at which `epsilon` is reduced from its initial value to zero. This is the
         percentage reduction, and it is applied at each time step when the agent explores. For example, pass 0 for no
@@ -256,8 +261,8 @@ class EpsilonGreedy(QValue):
             AA=AA,
             name=name,
             random_state=random_state,
-            alpha=alpha,
-            initial_q_value=initial_q_value
+            initial_q_value=initial_q_value,
+            alpha=alpha
         )
 
         self.epsilon = self.original_epsilon = epsilon
@@ -371,8 +376,8 @@ class UpperConfidenceBound(QValue):
             AA: List[Action],
             name: str,
             random_state: RandomState,
-            alpha: float,
             initial_q_value: float,
+            alpha: float,
             c: float
     ):
         """
@@ -381,9 +386,9 @@ class UpperConfidenceBound(QValue):
         :param AA: List of all possible actions.
         :param name: Name of agent.
         :param random_state: Random state.
-        :param alpha: Step-size parameter for incremental reward averaging. See `IncrementalSampleAverager` for details.
         :param initial_q_value: Initial Q-value to use for all actions. Use values greater than zero to encourage
         exploration in the early stages of the run.
+        :param alpha: Step-size parameter for incremental reward averaging. See `IncrementalSampleAverager` for details.
         :param c: Confidence.
         """
 
@@ -391,8 +396,8 @@ class UpperConfidenceBound(QValue):
             AA=AA,
             name=name,
             random_state=random_state,
-            alpha=alpha,
-            initial_q_value=initial_q_value
+            initial_q_value=initial_q_value,
+            alpha=alpha
         )
 
         self.c = c

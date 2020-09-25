@@ -1,4 +1,4 @@
-from rl.agents.action import Action
+from rl.actions.base import Action
 from rl.utils import IncrementalSampleAverager
 
 
