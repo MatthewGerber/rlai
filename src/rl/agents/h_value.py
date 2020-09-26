@@ -46,8 +46,7 @@ class PreferenceGradient(Agent):
 
         parser.add_argument(
             '--use-reward-baseline',
-            type=bool,
-            default=True,
+            action='store_true',
             help='Whether or not to use a reward baseline when updating action preferences.'
         )
 

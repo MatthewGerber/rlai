@@ -16,7 +16,9 @@ def test_run():
         '--T 100 --n-runs 200 --environment rl.environments.bandit.KArmedBandit --k 10 --reset-probability 0.005 --agent rl.agents.q_value.EpsilonGreedy --epsilon 0.2 0.0 --alpha 0.1',
         '--T 100 --n-runs 200 --environment rl.environments.bandit.KArmedBandit --k 10 --agent rl.agents.q_value.EpsilonGreedy --epsilon 0.2 0.0 --epsilon-reduction-rate 0.01',
         '--T 100 --n-runs 200 --environment rl.environments.bandit.KArmedBandit --k 10 --agent rl.agents.q_value.EpsilonGreedy --epsilon 0.0 --initial-q-value 5 --alpha 0.1',
-        '--T 100 --n-runs 200 --environment rl.environments.bandit.KArmedBandit --k 10 --agent rl.agents.q_value.UpperConfidenceBound --c 0 1'
+        '--T 100 --n-runs 200 --environment rl.environments.bandit.KArmedBandit --k 10 --agent rl.agents.q_value.UpperConfidenceBound --c 0 1',
+        '--T 100 --n-runs 200 --environment rl.environments.bandit.KArmedBandit --k 10 --q-star-mean 4 --agent rl.agents.h_value.PreferenceGradient --step-size-alpha 0.1 --use-reward-baseline',
+        '--T 100 --n-runs 200 --environment rl.environments.bandit.KArmedBandit --k 10 --q-star-mean 4 --agent rl.agents.h_value.PreferenceGradient --step-size-alpha 0.1'
     ]
 
     run_monitor: Dict[str, List[Monitor]] = dict()
