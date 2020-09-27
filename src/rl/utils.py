@@ -1,3 +1,8 @@
+from typing import List, Any
+
+import numpy as np
+from numpy.random import RandomState
+
 from rl.meta import rl_text
 
 
@@ -27,10 +32,10 @@ class IncrementalSampleAverager:
 
         self.n += 1.0
 
-        if self.alpha is None:
-            step_size = 1 / self.n
-        else:
+        if self.has_alpha:
             step_size = self.alpha
+        else:
+            step_size = 1 / self.n
 
         self.average = self.average + step_size * (value - self.average)
 
@@ -68,6 +73,7 @@ class IncrementalSampleAverager:
 
         self.initial_value = initial_value
         self.alpha = alpha
+        self.has_alpha = self.alpha is not None
         self.average = 0.0
         self.n = initial_value
 
@@ -76,3 +82,29 @@ class IncrementalSampleAverager:
     ) -> str:
 
         return str(self.average)
+
+
+def sample_list_item(
+        x: List[Any],
+        p: np.ndarray,
+        random_state: RandomState
+) -> Any:
+    """
+    Sample a list item according to the items' probabilities.
+
+    :param x: Items to sample.
+    :param p: Probabilities (must have same length as `x`).
+    :param random_state: Random state.
+    :return: Sampled list item.
+    """
+
+    cdf_y_rand = random_state.random_sample()
+    cdf = np.cumsum(p)
+    num_actions = len(x)
+    x_i = next(
+        i
+        for i in range(num_actions)
+        if cdf_y_rand < cdf[i]
+    )
+
+    return x[x_i]

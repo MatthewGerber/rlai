@@ -1,12 +1,12 @@
-import math
 from argparse import Namespace, ArgumentParser
-from typing import List, Dict, Tuple
+from typing import List, Tuple
 
+import numpy as np
 from numpy.random import RandomState
 
 from rl.actions.base import Action
 from rl.agents.base import Agent
-from rl.utils import IncrementalSampleAverager
+from rl.utils import IncrementalSampleAverager, sample_list_item
 
 
 class PreferenceGradient(Agent):
@@ -93,11 +93,7 @@ class PreferenceGradient(Agent):
 
         super().reset_for_new_run()
 
-        self.H_t_A.update({
-            a: 0.0
-            for a in self.H_t_A
-        })
-
+        self.H_t_A = np.zeros_like(self.H_t_A)
         self.update_action_probabilities()
         self.R_bar.reset()
 
@@ -112,13 +108,7 @@ class PreferenceGradient(Agent):
         :return: Action.
         """
 
-        return self.random_state.choice(
-            a=self.AA,
-            p=[
-                self.Pr_A[a]
-                for a in self.AA
-            ]
-        )
+        return sample_list_item(self.AA, self.Pr_A, self.random_state)
 
     def reward(
             self,
@@ -139,10 +129,16 @@ class PreferenceGradient(Agent):
         else:
             preference_update = self.step_size_alpha * r
 
-        self.H_t_A.update({
-            a: h_t_a + preference_update * (1 - self.Pr_A[a]) if a == self.most_recent_action else h_t_a - preference_update * self.Pr_A[a]
-            for a, h_t_a in self.H_t_A.items()
-        })
+        # get preference update for action taken
+        most_recent_action_i = self.most_recent_action.i
+        update_action_taken = self.H_t_A[most_recent_action_i] + preference_update * (1 - self.Pr_A[most_recent_action_i])
+
+        # get other-action preference update for all actions
+        update_all = self.H_t_A - preference_update * self.Pr_A
+
+        # set preferences
+        self.H_t_A = update_all
+        self.H_t_A[most_recent_action_i] = update_action_taken
 
         self.update_action_probabilities()
 
@@ -153,15 +149,9 @@ class PreferenceGradient(Agent):
         Update action probabilities based on current preferences.
         """
 
-        denominator = sum([
-            math.exp(h_t_a)
-            for h_t_a in self.H_t_A.values()
-        ])
+        exp_h_t_a = np.e ** self.H_t_A
 
-        self.Pr_A.update({
-            a: math.exp(h) / denominator
-            for a, h in self.H_t_A.items()
-        })
+        self.Pr_A = exp_h_t_a / exp_h_t_a.sum()
 
     def __init__(
             self,
@@ -192,12 +182,8 @@ class PreferenceGradient(Agent):
         self.step_size_alpha = step_size_alpha
         self.use_reward_baseline = use_reward_baseline
 
-        self.H_t_A: Dict[Action, float] = {
-            a: 0.0
-            for a in self.AA
-        }
-
-        self.Pr_A: Dict[Action, float] = dict()
+        self.H_t_A: np.ndarray = np.zeros(len(self.AA))
+        self.Pr_A: np.ndarray = np.zeros_like(self.H_t_A)
 
         self.R_bar = IncrementalSampleAverager(
             initial_value=0.0,

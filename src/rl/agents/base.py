@@ -133,10 +133,14 @@ class Agent(ABC):
         """
         Initialize the agent.
 
-        :param AA: List of all possible actions.
+        :param AA: List of all possible actions, with identifiers sorted in increasing order from zero.
         :param name: Name of the agent.
         :param random_state: Random state.
         """
+
+        for i, a in enumerate(AA):
+            if a.i != i:
+                raise ValueError('Actions must be sorted in increasing order from zero.')
 
         self.AA = AA
         self.name = name
