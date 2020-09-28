@@ -27,7 +27,7 @@ def test_incremental_averager():
 def test_sample_list_item():
 
     x = [1, 2, 3]
-    p = [0.1, 0.3, 0.6]
+    p = np.array([0.1, 0.3, 0.6])
 
     rng = RandomState(12345)
     x_samples = [

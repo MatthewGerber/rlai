@@ -14,6 +14,7 @@ class Action(ABC):
         """
 
         self.i = i
+        self.hash = i.__hash__()
 
     def __str__(
             self
@@ -34,7 +35,7 @@ class Action(ABC):
         :return: Hash code
         """
 
-        return self.i.__hash__()
+        return self.hash
 
     def __eq__(
             self,

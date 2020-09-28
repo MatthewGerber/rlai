@@ -30,7 +30,7 @@ class IncrementalSampleAverager:
         :return: Updated sample average.
         """
 
-        self.n += 1.0
+        self.n += 1
 
         if self.has_alpha:
             step_size = self.alpha
@@ -74,8 +74,8 @@ class IncrementalSampleAverager:
         self.initial_value = initial_value
         self.alpha = alpha
         self.has_alpha = self.alpha is not None
-        self.average = 0.0
-        self.n = initial_value
+        self.average = initial_value
+        self.n = 0
 
     def __str__(
             self
@@ -86,25 +86,24 @@ class IncrementalSampleAverager:
 
 def sample_list_item(
         x: List[Any],
-        p: np.ndarray,
+        probs: np.ndarray,
         random_state: RandomState
 ) -> Any:
     """
     Sample a list item according to the items' probabilities.
 
     :param x: Items to sample.
-    :param p: Probabilities (must have same length as `x`).
+    :param probs: Probabilities (must have same length as `x`).
     :param random_state: Random state.
     :return: Sampled list item.
     """
 
     cdf_y_rand = random_state.random_sample()
-    cdf = np.cumsum(p)
-    num_actions = len(x)
+
     x_i = next(
         i
-        for i in range(num_actions)
-        if cdf_y_rand < cdf[i]
+        for i, cum_prob in enumerate(probs.cumsum())
+        if cdf_y_rand < cum_prob
     )
 
     return x[x_i]

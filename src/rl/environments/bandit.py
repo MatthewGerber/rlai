@@ -1,8 +1,8 @@
 from argparse import Namespace, ArgumentParser
 from typing import List, Optional, Tuple
 
+import numpy as np
 from numpy.random import RandomState
-from scipy import stats
 
 from rl.actions.base import Action
 from rl.agents.base import Agent
@@ -10,22 +10,14 @@ from rl.environments.base import Environment
 from rl.meta import rl_text
 from rl.runners.monitor import Monitor
 
+ARM_QSTAR_BUFFER_SIZE = 1000
+
 
 @rl_text(chapter=2, page=25)
 class Arm:
     """
     Bandit arm.
     """
-
-    def reset(
-            self
-    ):
-        """
-        Reset the arm.
-        """
-
-        self.q_star_buffer.clear()
-        self.q_star_buffer_idx = None
 
     def pull(
             self
@@ -37,8 +29,8 @@ class Arm:
         """
 
         # refill the reward buffer if it is empty or hasn't been initialized
-        if len(self.q_star_buffer) == 0 or self.q_star_buffer_idx is None or self.q_star_buffer_idx >= len(self.q_star_buffer):
-            self.q_star_buffer = list(self.q_star.rvs(1000, random_state=self.random_state))
+        if self.q_star_buffer_idx >= len(self.q_star_buffer):
+            self.q_star_buffer = self.random_state.normal(loc=self.mean, scale=self.variance, size=ARM_QSTAR_BUFFER_SIZE)
             self.q_star_buffer_idx = 0
 
         # return next value from buffer
@@ -68,10 +60,8 @@ class Arm:
         self.variance: float = variance
         self.random_state: RandomState = random_state
 
-        self.q_star = stats.norm(loc=mean, scale=variance)
-        self.q_star_buffer: List[float] = []
-        self.q_star_buffer_idx: Optional[int] = None
-        self.reset()
+        self.q_star_buffer: np.ndarray = np.array([])
+        self.q_star_buffer_idx: int = 0
 
     def __str__(
             self
@@ -171,16 +161,15 @@ class KArmedBandit(Environment):
         # get new arm reward means and initialize new arms
         q_star_means = self.random_state.normal(loc=self.q_star_mean, scale=self.q_star_variance, size=self.k)
 
-        self.arms.clear()
-        self.arms.extend([
+        self.arms = [
             Arm(
                 i=i,
-                mean=q_star_means[i],
+                mean=mean,
                 variance=self.reward_variance,
                 random_state=self.random_state
             )
             for i, mean in enumerate(q_star_means)
-        ])
+        ]
 
         self.best_arm = max(self.arms, key=lambda arm: arm.mean)
 
@@ -211,18 +200,34 @@ class KArmedBandit(Environment):
         :param monitor: Monitor.
         """
 
-        for t in range(T):
+        failed_steps = [
+            t
+            for t in range(T)
+            if not self.run_step(t, agent, monitor)
+        ]
 
-            if self.random_state.random_sample() < self.reset_probability:
-                self.reset_for_new_run()
+        if len(failed_steps) > 0:
+            raise ValueError(f'Failed steps:  {failed_steps}')
 
-            action = agent.act(t=t)
-            monitor.report(t=t, agent_action=action, optimal_action=Action(self.best_arm.i))
+    def run_step(
+            self,
+            t: int,
+            agent: Agent,
+            monitor: Monitor
+    ) -> bool:
 
-            reward = self.pull(action.i)
-            monitor.report(t=t, action_reward=reward)
+        if self.random_state.random_sample() < self.reset_probability:
+            self.reset_for_new_run()
 
-            agent.reward(reward)
+        action = agent.act(t=t)
+        monitor.report(t=t, agent_action=action, optimal_action=Action(self.best_arm.i))
+
+        reward = self.pull(action.i)
+        monitor.report(t=t, action_reward=reward)
+
+        agent.reward(reward)
+
+        return True
 
     def __init__(
             self,

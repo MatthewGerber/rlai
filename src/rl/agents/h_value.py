@@ -122,9 +122,8 @@ class PreferenceGradient(Agent):
 
         super().reward(r)
 
-        self.R_bar.update(r)
-
         if self.use_reward_baseline:
+            self.R_bar.update(r)
             preference_update = self.step_size_alpha * (r - self.R_bar.get_value())
         else:
             preference_update = self.step_size_alpha * r
@@ -150,8 +149,9 @@ class PreferenceGradient(Agent):
         """
 
         exp_h_t_a = np.e ** self.H_t_A
+        exp_h_t_a_sum = exp_h_t_a.sum()
 
-        self.Pr_A = exp_h_t_a / exp_h_t_a.sum()
+        self.Pr_A = exp_h_t_a / exp_h_t_a_sum
 
     def __init__(
             self,
@@ -159,8 +159,8 @@ class PreferenceGradient(Agent):
             name: str,
             random_state: RandomState,
             step_size_alpha: float,
-            reward_average_alpha: float,
-            use_reward_baseline: bool
+            use_reward_baseline: bool,
+            reward_average_alpha: float
     ):
         """
         Initialize the agent.
@@ -169,8 +169,8 @@ class PreferenceGradient(Agent):
         :param name: Name of the agent.
         :param random_state: Random State.
         :param step_size_alpha: Step-size parameter used to update action preferences.
-        :param reward_average_alpha: Step-size parameter for incremental reward averaging. See `IncrementalSampleAverager` for details.
         :param use_reward_baseline: Whether or not to use a reward baseline when updating action preferences.
+        :param reward_average_alpha: Step-size parameter for incremental reward averaging. See `IncrementalSampleAverager` for details.
         """
 
         super().__init__(
@@ -181,11 +181,10 @@ class PreferenceGradient(Agent):
 
         self.step_size_alpha = step_size_alpha
         self.use_reward_baseline = use_reward_baseline
-
-        self.H_t_A: np.ndarray = np.zeros(len(self.AA))
-        self.Pr_A: np.ndarray = np.zeros_like(self.H_t_A)
-
         self.R_bar = IncrementalSampleAverager(
             initial_value=0.0,
             alpha=reward_average_alpha
         )
+
+        self.H_t_A: np.ndarray = np.zeros(len(self.AA))
+        self.Pr_A: np.ndarray = np.zeros_like(self.H_t_A)

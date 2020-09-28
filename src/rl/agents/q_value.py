@@ -350,7 +350,7 @@ class UpperConfidenceBound(QValue):
         :return: Denominator.
         """
 
-        n_t_a = self.N_t_A[a]
+        n_t_a = self.N_t_A[a.i]
 
         if n_t_a == 0:
             return sys.float_info.min
