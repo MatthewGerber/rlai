@@ -6,8 +6,9 @@ from typing import List, Dict, Tuple
 
 from numpy.random import RandomState
 
-from rl.actions.base import Action
-from rl.agents.base import Agent
+from rl.actions import Action
+from rl.agents import Agent
+from rl.environments import Environment
 from rl.meta import rl_text
 from rl.utils import IncrementalSampleAverager
 
@@ -154,14 +155,14 @@ class EpsilonGreedy(QValue):
     def init_from_arguments(
             cls,
             args: List[str],
-            AA: List[Action],
+            environment: Environment,
             random_state: RandomState
     ) -> Tuple[List[Agent], List[str]]:
         """
         Initialize a list of agents from arguments.
 
         :param args: Arguments.
-        :param AA: List of possible actions.
+        :param environment: Environment.
         :param random_state: Random state.
         :return: 2-tuple of a list of agents and a list of unparsed arguments.
         """
@@ -175,7 +176,7 @@ class EpsilonGreedy(QValue):
         # initialize agents
         agents = [
             EpsilonGreedy(
-                AA=AA,
+                AA=environment.AA,
                 name=f'epsilon-greedy (e={epsilon:0.2f})',
                 random_state=random_state,
                 epsilon=epsilon,
@@ -307,14 +308,14 @@ class UpperConfidenceBound(QValue):
     def init_from_arguments(
             cls,
             args: List[str],
-            AA: List[Action],
+            environment: Environment,
             random_state: RandomState
     ) -> Tuple[List[Agent], List[str]]:
         """
         Initialize a list of agents from arguments.
 
         :param args: Arguments.
-        :param AA: List of possible actions.
+        :param environment: Environment.
         :param random_state: Random state.
         :return: 2-tuple of a list of agents and a list of unparsed arguments.
         """
@@ -328,7 +329,7 @@ class UpperConfidenceBound(QValue):
         # initialize agents
         agents = [
             UpperConfidenceBound(
-                AA=AA,
+                AA=environment.AA,
                 name=f'UCB (c={c})',
                 random_state=random_state,
                 c=c,

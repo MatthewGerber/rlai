@@ -1,36 +1,36 @@
-from abc import ABC
-
-
-class Action(ABC):
+class Reward:
 
     def __init__(
             self,
-            i: int
+            i: int,
+            r: float
     ):
         """
-        Initialize the action.
+        Initialize the reward.
 
-        :param i: Identifier for the action.
+        :param i: Identifier for the reward.
+        :param r: Reward value.
         """
 
         self.i = i
+        self.r = r
         self.hash = i.__hash__()
 
     def __str__(
             self
     ) -> str:
         """
-        Get string description of action.
+        Get string description of reward.
 
         :return: String.
         """
-        return str(self.i)
+        return f'{self.i}: {self.r}'
 
     def __hash__(
             self
     ) -> int:
         """
-        Get hash code for action.
+        Get hash code for reward.
 
         :return: Hash code
         """
@@ -42,9 +42,9 @@ class Action(ABC):
             other
     ) -> bool:
         """
-        Check whether the current action equals another.
+        Check whether the current reward equals another.
 
-        :param other: Other action.
+        :param other: Other reward.
         :return: True if equal and False otherwise.
         """
 
@@ -55,9 +55,9 @@ class Action(ABC):
             other
     ) -> bool:
         """
-        Check whether the current action is not equal to another.
+        Check whether the current reward is not equal to another.
 
-        :param other: Other action.
+        :param other: Other reward.
         :return: True if not equal and False otherwise.
         """
 

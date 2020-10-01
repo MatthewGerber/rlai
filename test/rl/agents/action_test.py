@@ -1,4 +1,4 @@
-from rl.actions.base import Action
+from rl.actions import Action
 
 
 def test_action_eq_ne():

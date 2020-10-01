@@ -4,9 +4,9 @@ from typing import List, Optional, Tuple
 import numpy as np
 from numpy.random import RandomState
 
-from rl.actions.base import Action
-from rl.agents.base import Agent
-from rl.environments.base import Environment
+from rl.actions import Action
+from rl.agents import Agent
+from rl.environments import Environment
 from rl.meta import rl_text
 from rl.runners.monitor import Monitor
 

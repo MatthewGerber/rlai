@@ -4,8 +4,9 @@ from typing import List, Tuple
 import numpy as np
 from numpy.random import RandomState
 
-from rl.actions.base import Action
-from rl.agents.base import Agent
+from rl.actions import Action
+from rl.agents import Agent
+from rl.environments import Environment
 from rl.utils import IncrementalSampleAverager, sample_list_item
 
 
@@ -58,14 +59,14 @@ class PreferenceGradient(Agent):
     def init_from_arguments(
             cls,
             args: List[str],
-            AA: List[Action],
+            environment: Environment,
             random_state: RandomState
     ) -> Tuple[List[Agent], List[str]]:
         """
         Initialize a list of agents from arguments.
 
         :param args: Arguments.
-        :param AA: List of possible actions.
+        :param environment: Environment.
         :param random_state: Random state.
         :return: 2-tuple of a list of agents and a list of unparsed arguments.
         """
@@ -75,7 +76,7 @@ class PreferenceGradient(Agent):
         # initialize agents
         agents = [
             PreferenceGradient(
-                AA=AA,
+                AA=environment.AA,
                 name=f'preference gradient (step size={parsed_args.step_size_alpha})',
                 random_state=random_state,
                 **dict(parsed_args._get_kwargs())

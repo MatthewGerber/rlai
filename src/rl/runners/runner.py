@@ -90,7 +90,7 @@ def run(
     agent_class = load_class(parsed_args.agent)
     agents, unparsed_args = agent_class.init_from_arguments(
         args=unparsed_args,
-        AA=environment.AA,
+        environment=environment,
         random_state=random_state
     )
 
