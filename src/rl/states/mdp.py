@@ -6,6 +6,9 @@ from rl.states import State
 
 
 class MdpState(State):
+    """
+    MDP state.
+    """
 
     def __init__(
             self,
@@ -15,6 +18,16 @@ class MdpState(State):
             RR: List[Reward],
             terminal: bool
     ):
+        """
+        Initialize the MDP state.
+
+        :param i: State index.
+        :param AA: All actions.
+        :param SS: All states.
+        :param RR: All rewards.
+        :param terminal: Whether or not the state is terminal.
+        """
+
         super().__init__(
             i=i
         )
@@ -24,6 +37,7 @@ class MdpState(State):
         self.RR = RR
         self.terminal = terminal
 
+        # initialize an empty model within the state. can't fill it in until all states have been initialized.
         self.p_S_prime_R_given_A: Dict[
             Action, Dict[
                 State, Dict[
@@ -35,6 +49,10 @@ class MdpState(State):
     def init_model(
             self
     ):
+        """
+        Initialize the model within each state with zeros.
+        """
+
         self.p_S_prime_R_given_A = {
             a: {
                 s: {

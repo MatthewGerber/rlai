@@ -16,7 +16,7 @@ from rl.utils import IncrementalSampleAverager
 @rl_text(chapter=2, page=27)
 class QValue(Agent, ABC):
     """
-    A nonassociative, q-value agent.
+    Nonassociative, q-value agent.
     """
 
     @classmethod
@@ -114,7 +114,7 @@ class QValue(Agent, ABC):
 @rl_text(chapter=2, page=27)
 class EpsilonGreedy(QValue):
     """
-    A nonassociative, epsilon-greedy agent.
+    Nonassociative, epsilon-greedy agent.
     """
 
     @classmethod
@@ -274,7 +274,7 @@ class EpsilonGreedy(QValue):
 @rl_text(chapter=2, page=35)
 class UpperConfidenceBound(QValue):
     """
-    A nonassociatve, upper-confidence-bound agent.
+    Nonassociatve, upper-confidence-bound agent.
     """
 
     @classmethod

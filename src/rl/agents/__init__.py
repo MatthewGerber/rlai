@@ -11,7 +11,7 @@ from rl.states import State
 
 class Agent(ABC):
     """
-    Abstract base class for all agents.
+    Base class for all agents.
     """
 
     @classmethod

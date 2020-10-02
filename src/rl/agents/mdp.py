@@ -14,7 +14,7 @@ from rl.utils import sample_list_item
 
 class MdpAgent(Agent, ABC):
     """
-    A MDP agent.
+    MDP agent.
     """
 
     @classmethod
@@ -86,7 +86,7 @@ class MdpAgent(Agent, ABC):
 
 class EquiprobableRandom(MdpAgent):
     """
-    Equiprobable-random agent.
+    Equiprobable-random MDP agent.
     """
 
     @classmethod
@@ -96,6 +96,14 @@ class EquiprobableRandom(MdpAgent):
             environment: MdpEnvironment,
             random_state: RandomState
     ) -> Tuple[List[Agent], List[str]]:
+        """
+        Initialize a list of agents from arguments.
+
+        :param args: Arguments.
+        :param environment: Environment.
+        :param random_state: Random state.
+        :return: 2-tuple of a list of agents and a list of unparsed arguments.
+        """
 
         parsed_args, unparsed_args = cls.parse_arguments(args)
 
@@ -115,6 +123,12 @@ class EquiprobableRandom(MdpAgent):
             self,
             t: int
     ) -> Action:
+        """
+        Act randomly.
+
+        :param t: Time tick.
+        :return: Action.
+        """
 
         return sample_list_item(self.AA, np.array([self.pi[self.most_recent_state][a] for a in self.AA]), self.random_state)
 

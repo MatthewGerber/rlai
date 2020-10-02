@@ -17,6 +17,9 @@ from rl.states.mdp import MdpState
 
 @rl_text(chapter=3, page=47)
 class MdpEnvironment(Environment, ABC):
+    """
+    MDP environment.
+    """
 
     def __init__(
             self,
@@ -38,10 +41,18 @@ class MdpEnvironment(Environment, ABC):
 
 @rl_text(chapter=3, page=60)
 class Gridworld(MdpEnvironment):
+    """
+    Gridworld MDP environment.
+    """
 
     @staticmethod
     def example_4_1(
     ):
+        """
+        Construct the Gridworld for Example 4.1.
+        :return: Gridworld.
+        """
+
         RR = [
             Reward(
                 i=i,
@@ -62,9 +73,8 @@ class Gridworld(MdpEnvironment):
 
         g.grid[0, 0].terminal = g.grid[3, 3].terminal = True
 
-        g.set_reward_probabilities(
-            r=r_minus_one,
-            probability=1.0,
+        g.set_model_probabilities(
+            nonterminal_reward=r_minus_one,
             terminal_reward=r_zero
         )
 
@@ -125,28 +135,22 @@ class Gridworld(MdpEnvironment):
     ):
         pass
 
-    @staticmethod
-    def set_p(
-            s_s_prime: List[Tuple[MdpState, MdpState]],
-            a: Action,
-            r: Reward,
-            probability: float
-    ):
-        s: MdpState
-        s_prime: MdpState
-
-        for s, s_prime in s_s_prime:
-            if not s.terminal:
-                s.p_S_prime_R_given_A[a][s_prime][r] = probability
-
-    def set_reward_probabilities(
+    def set_model_probabilities(
             self,
-            r: Reward,
-            probability: float,
+            nonterminal_reward: Reward,
             terminal_reward: Reward
     ):
+        """
+        Set model probabilities within the environment.
+
+        :param nonterminal_reward: Nonterminal reward.
+        :param terminal_reward: Terminal reward.
+        """
+
+        # set nonterminal reward probabilities
         for a in self.AA:
 
+            # arrange grid such that a row-by-row will generate the appropriate state transition sequences
             if a == self.a_down:
                 grid = self.grid
             elif a == self.a_up:
@@ -158,16 +162,31 @@ class Gridworld(MdpEnvironment):
             else:
                 raise ValueError(f'Unknown action:  {a}')
 
-            for row_i, next_row_i in zip(range(grid.shape[0]), list(range(1, grid.shape[0])) + [-1]):
-                for s, s_prime in zip(grid[row_i, :], grid[next_row_i, :]):
+            # go row by row, with the final row transitioning to itself
+            for s_row_i, s_prime_row_i in zip(range(grid.shape[0]), list(range(1, grid.shape[0])) + [-1]):
+                for s, s_prime in zip(grid[s_row_i, :], grid[s_prime_row_i, :]):
                     if not s.terminal:
-                        s.p_S_prime_R_given_A[a][s_prime][r] = probability
+                        s.p_S_prime_R_given_A[a][s_prime][nonterminal_reward] = 1.0
 
+        # set terminal reward probabilities
         s: MdpState
         for s in self.SS:
             if s.terminal:
                 for a in self.AA:
                     s.p_S_prime_R_given_A[a][s][terminal_reward] = 1.0
+
+        # check that marginal probabilities for each state sum to 1
+        for s in self.SS:
+            for a in self.AA:
+
+                marginal_prob = sum([
+                    s.p_S_prime_R_given_A[a][s_prime][r]
+                    for s_prime in s.p_S_prime_R_given_A[a]
+                    for r in s.p_S_prime_R_given_A[a][s_prime]
+                ])
+
+                if marginal_prob != 1.0:
+                    raise ValueError(f'Expected state-marginal probability of 1.0, got {marginal_prob}.')
 
     def __init__(
             self,
@@ -177,6 +196,16 @@ class Gridworld(MdpEnvironment):
             n_columns: int,
             RR: List[Reward]
     ):
+        """
+        Initialize the gridworld.
+
+        :param name: Name.
+        :param random_state: Random state.
+        :param n_rows: Number of row.
+        :param n_columns: Number of columns.
+        :param RR: List of all possible rewards.
+        """
+
         AA = [
             Action(
                 i=i,
@@ -187,6 +216,7 @@ class Gridworld(MdpEnvironment):
 
         self.a_up, self.a_down, self.a_left, self.a_right = AA
 
+        # create mdp states, providing each with the list of all states
         SS = []
         SS.extend([
             MdpState(
@@ -200,6 +230,7 @@ class Gridworld(MdpEnvironment):
             for col_j in range(n_columns)
         ])
 
+        # initialize the model within each state, now that SS has been populated.
         for s in SS:
             s.init_model()
 

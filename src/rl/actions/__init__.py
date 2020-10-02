@@ -12,7 +12,7 @@ class Action:
         Initialize the action.
 
         :param i: Identifier for the action.
-        :param name: Name (optional)
+        :param name: Name (optional).
         """
 
         self.i = i
@@ -35,7 +35,7 @@ class Action:
         """
         Get hash code for action.
 
-        :return: Hash code
+        :return: Hash code.
         """
 
         return self.hash

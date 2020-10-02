@@ -7,12 +7,14 @@ from numpy.random import RandomState
 from rl.actions import Action
 from rl.agents import Agent
 from rl.environments import Environment
+from rl.meta import rl_text
 from rl.utils import IncrementalSampleAverager, sample_list_item
 
 
+@rl_text(chapter=2, page=37)
 class PreferenceGradient(Agent):
     """
-    A preference-gradient agent.
+    Preference-gradient agent.
     """
 
     @classmethod
