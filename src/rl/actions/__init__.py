@@ -1,20 +1,23 @@
-from typing import Any
-
-
 class Action:
+    """
+    Base class for all actions.
+    """
 
     def __init__(
             self,
-            i: Any
+            i: int,
+            name: str = None
     ):
         """
         Initialize the action.
 
-        :param i: Identifier for the action (must be hashable).
+        :param i: Identifier for the action.
+        :param name: Name (optional)
         """
 
         self.i = i
         self.hash = i.__hash__()
+        self.name = name
 
     def __str__(
             self
@@ -24,7 +27,7 @@ class Action:
 
         :return: String.
         """
-        return str(self.i)
+        return f'{self.i}:  {self.name}'
 
     def __hash__(
             self

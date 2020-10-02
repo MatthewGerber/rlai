@@ -34,7 +34,7 @@ def run(
 ):
     random_state = RandomState(12345)
 
-    parser = ArgumentParser(description='Run an experiment.', allow_abbrev=False)
+    parser = ArgumentParser(description='Run an agent within an environment.', allow_abbrev=False)
 
     parser.add_argument(
         '--n-runs',

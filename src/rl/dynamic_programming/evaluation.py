@@ -2,17 +2,17 @@ from typing import Dict
 
 import numpy as np
 
-from rl.agents.policy import PolicyAgent
-from rl.environments.mdp import MDP
+from rl.agents.mdp import MdpAgent
+from rl.environments.mdp import MdpEnvironment
 from rl.meta import rl_text
 from rl.states import State
 from rl.states.mdp import MdpState
 
 
 @rl_text(chapter=4, page=75)
-def evaluate_policy_state_values(
-        agent: PolicyAgent,
-        environment: MDP,
+def iterative_policy_evaluation(
+        agent: MdpAgent,
+        environment: MdpEnvironment,
         theta: float
 ) -> Dict[State, float]:
 

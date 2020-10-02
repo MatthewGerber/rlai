@@ -1,5 +1,6 @@
-from argparse import ArgumentParser, Namespace
-from typing import List, Tuple, Union, Optional
+from abc import ABC
+from argparse import Namespace, ArgumentParser
+from typing import List, Tuple
 
 import numpy as np
 from numpy.random import RandomState
@@ -7,20 +8,40 @@ from numpy.random import RandomState
 from rl.actions import Action
 from rl.agents import Agent
 from rl.environments import Environment
-from rl.environments.mdp import MDP
 from rl.meta import rl_text
 from rl.rewards import Reward
 from rl.runners.monitor import Monitor
+from rl.states import State
 from rl.states.mdp import MdpState
 
 
+@rl_text(chapter=3, page=47)
+class MdpEnvironment(Environment, ABC):
+
+    def __init__(
+            self,
+            name: str,
+            AA: List[Action],
+            random_state: RandomState,
+            SS: List[State],
+            RR: List[Reward]
+    ):
+        super().__init__(
+            name=name,
+            AA=AA,
+            random_state=random_state
+        )
+
+        self.SS = SS
+        self.RR = RR
+
+
 @rl_text(chapter=3, page=60)
-class Gridworld(MDP):
+class Gridworld(MdpEnvironment):
 
     @staticmethod
     def example_4_1(
-    ) -> Environment:
-
+    ):
         RR = [
             Reward(
                 i=i,
@@ -39,9 +60,12 @@ class Gridworld(MDP):
             RR=RR
         )
 
-        g.set_down_p(
+        g.grid[0, 0].terminal = g.grid[3, 3].terminal = True
+
+        g.set_reward_probabilities(
             r=r_minus_one,
-            value=1.0
+            probability=1.0,
+            terminal_reward=r_zero
         )
 
         return g
@@ -101,53 +125,49 @@ class Gridworld(MDP):
     ):
         pass
 
+    @staticmethod
     def set_p(
-            self,
-            states: np.array,
-            a: Optional[Union[Action, List[Action]]],
-            s: Optional[Union[MdpState, List[MdpState]]],
-            r: Optional[Union[Reward, List[Reward]]],
-            value: float
+            s_s_prime: List[Tuple[MdpState, MdpState]],
+            a: Action,
+            r: Reward,
+            probability: float
     ):
-        if a is None:
-            a = self.AA
+        s: MdpState
+        s_prime: MdpState
 
-        if not isinstance(a, list):
-            a = [a]
+        for s, s_prime in s_s_prime:
+            if not s.terminal:
+                s.p_S_prime_R_given_A[a][s_prime][r] = probability
 
-        if s is None:
-            s = self.SS
-
-        if not isinstance(s, list):
-            s = [s]
-
-        if r is None:
-            r = self.RR
-
-        if not isinstance(r, list):
-            r = [r]
-
-        state: MdpState
-        for state in states:
-            for a in a:
-                for s in s:
-                    for r in r:
-                        state.p_S_prime_R_given_A[a][s][r] = value
-
-    def set_down_p(
+    def set_reward_probabilities(
             self,
             r: Reward,
-            value: float
+            probability: float,
+            terminal_reward: Reward
     ):
-        grid = self.grid
-        for row_i, next_row_i in zip(range(grid.shape[0]), range(1, grid.shape[0])):
-            self.set_p(
-                states=grid[row_i:],
-                a=self.a_down,
-                s=grid[next_row_i:],
-                r=r,
-                value=value
-            )
+        for a in self.AA:
+
+            if a == self.a_down:
+                grid = self.grid
+            elif a == self.a_up:
+                grid = np.flipud(self.grid)
+            elif a == self.a_right:
+                grid = self.grid.transpose()
+            elif a == self.a_left:
+                grid = np.flipud(self.grid.transpose())
+            else:
+                raise ValueError(f'Unknown action:  {a}')
+
+            for row_i, next_row_i in zip(range(grid.shape[0]), list(range(1, grid.shape[0])) + [-1]):
+                for s, s_prime in zip(grid[row_i, :], grid[next_row_i, :]):
+                    if not s.terminal:
+                        s.p_S_prime_R_given_A[a][s_prime][r] = probability
+
+        s: MdpState
+        for s in self.SS:
+            if s.terminal:
+                for a in self.AA:
+                    s.p_S_prime_R_given_A[a][s][terminal_reward] = 1.0
 
     def __init__(
             self,
@@ -158,26 +178,36 @@ class Gridworld(MDP):
             RR: List[Reward]
     ):
         AA = [
-            Action(i=a)
-            for a in ['u', 'd', 'l', 'r']
+            Action(
+                i=i,
+                name=direction
+            )
+            for i, direction in enumerate(['u', 'd', 'l', 'r'])
         ]
 
         self.a_up, self.a_down, self.a_left, self.a_right = AA
+
+        SS = []
+        SS.extend([
+            MdpState(
+                i=row_i * n_columns + col_j,
+                AA=AA,
+                SS=SS,
+                RR=RR,
+                terminal=False
+            )
+            for row_i in range(n_rows)
+            for col_j in range(n_columns)
+        ])
+
+        for s in SS:
+            s.init_model()
 
         super().__init__(
             name=name,
             AA=AA,
             random_state=random_state,
-            SS=[
-                MdpState(
-                    i=row_i * n_columns + col_j,
-                    AA=self.AA,
-                    SS=self.SS,
-                    RR=self.RR
-                )
-                for row_i in range(n_rows)
-                for col_j in range(n_columns)
-            ],
+            SS=SS,
             RR=RR
         )
 

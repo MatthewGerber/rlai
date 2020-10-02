@@ -7,19 +7,49 @@ from numpy.random import RandomState
 
 from rl.actions import Action
 from rl.agents import Agent
-from rl.environments.mdp import MDP
-from rl.states import State
+from rl.environments.mdp import MdpEnvironment
+from rl.states.mdp import MdpState
 from rl.utils import sample_list_item
 
 
-class PolicyAgent(Agent, ABC):
+class MdpAgent(Agent, ABC):
+    """
+    A MDP agent.
+    """
 
+    @classmethod
+    def parse_arguments(
+            cls,
+            args
+    ) -> Tuple[Namespace, List[str]]:
+        """
+        Parse arguments.
+
+        :param args: Arguments.
+        :return: 2-tuple of parsed and unparsed arguments.
+        """
+
+        parsed_args, unparsed_args = super().parse_arguments(args)
+
+        parser = ArgumentParser(allow_abbrev=False)
+
+        parser.add_argument(
+            '--gamma',
+            type=float,
+            default=0.1,
+            help='Discount factor.'
+        )
+
+        parsed_args, unparsed_args = parser.parse_known_args(unparsed_args, parsed_args)
+
+        return parsed_args, unparsed_args
+    
     def __init__(
             self,
             AA: List[Action],
             name: str,
             random_state: RandomState,
-            SS: List[State],
+            SS: List[MdpState],
             gamma: float
     ):
         """
@@ -54,47 +84,23 @@ class PolicyAgent(Agent, ABC):
         }
 
 
-class Equipropable(PolicyAgent):
-
-    @classmethod
-    def parse_arguments(
-            cls,
-            args
-    ) -> Tuple[Namespace, List[str]]:
-        """
-        Parse arguments.
-
-        :param args: Arguments.
-        :return: 2-tuple of parsed and unparsed arguments.
-        """
-
-        parsed_args, unparsed_args = super().parse_arguments(args)
-
-        parser = ArgumentParser(allow_abbrev=False)
-
-        parser.add_argument(
-            '--gamma',
-            type=float,
-            default=0.1,
-            help='Discount factor.'
-        )
-
-        parsed_args, unparsed_args = parser.parse_known_args(unparsed_args, parsed_args)
-
-        return parsed_args, unparsed_args
+class EquiprobableRandom(MdpAgent):
+    """
+    Equiprobable-random agent.
+    """
 
     @classmethod
     def init_from_arguments(
             cls,
             args: List[str],
-            environment: MDP,
+            environment: MdpEnvironment,
             random_state: RandomState
     ) -> Tuple[List[Agent], List[str]]:
 
         parsed_args, unparsed_args = cls.parse_arguments(args)
 
         agents = [
-            Equipropable(
+            EquiprobableRandom(
                 AA=environment.AA,
                 name='equiprobable',
                 random_state=random_state,
@@ -110,7 +116,7 @@ class Equipropable(PolicyAgent):
             t: int
     ) -> Action:
 
-        return sample_list_item(self.AA, self.pi, self.random_state)
+        return sample_list_item(self.AA, np.array([self.pi[self.most_recent_state][a] for a in self.AA]), self.random_state)
 
     def reward(self, r: float):
         pass
@@ -120,7 +126,7 @@ class Equipropable(PolicyAgent):
             AA: List[Action],
             name: str,
             random_state: RandomState,
-            SS: List[State],
+            SS: List[MdpState],
             gamma: float
     ):
         """
@@ -142,6 +148,7 @@ class Equipropable(PolicyAgent):
         )
 
         num_actions = len(self.AA)
+        
         self.pi = {
             s: {
                 a: 1 / num_actions
