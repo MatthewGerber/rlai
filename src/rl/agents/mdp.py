@@ -84,9 +84,9 @@ class MdpAgent(Agent, ABC):
         }
 
 
-class EquiprobableRandom(MdpAgent):
+class Stochastic(MdpAgent):
     """
-    Equiprobable-random MDP agent.
+    Stochastic MDP agent.
     """
 
     @classmethod
@@ -108,9 +108,9 @@ class EquiprobableRandom(MdpAgent):
         parsed_args, unparsed_args = cls.parse_arguments(args)
 
         agents = [
-            EquiprobableRandom(
+            Stochastic(
                 AA=environment.AA,
-                name='equiprobable',
+                name=f'stochastic (gamma={parsed_args.gamma})',
                 random_state=random_state,
                 SS=environment.SS,
                 gamma=parsed_args.gamma
@@ -144,7 +144,7 @@ class EquiprobableRandom(MdpAgent):
             gamma: float
     ):
         """
-        Initialize the agent.
+        Initialize the agent with an equiprobable policy over actions.
 
         :param AA: List of all possible actions, with identifiers sorted in increasing order from zero.
         :param name: Name of the agent.

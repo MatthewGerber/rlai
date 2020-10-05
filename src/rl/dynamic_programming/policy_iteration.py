@@ -1,4 +1,5 @@
-from typing import Dict
+import math
+from typing import Dict, Optional
 
 import numpy as np
 
@@ -10,11 +11,12 @@ from rl.states.mdp import MdpState
 
 
 @rl_text(chapter=4, page=74)
-def iterative_policy_evaluation_of_state_value(
+def evaluate_v(
         agent: MdpAgent,
         environment: MdpEnvironment,
         theta: float,
-        update_in_place: bool
+        update_in_place: bool,
+        initial_V_S: Optional[Dict[MdpState, float]] = None
 ) -> Dict[MdpState, float]:
     """
     Perform iterative policy evaluation of an agent's policy within an environment, returning state values.
@@ -23,19 +25,32 @@ def iterative_policy_evaluation_of_state_value(
     :param environment: MDP environment.
     :param theta: Prediction accuracy requirement.
     :param update_in_place: Whether or not to update value estimates in place.
+    :param initial_V_S: Initial guess at state-value, or None for no guess.
     :return: Dictionary of MDP states and their estimated values.
     """
 
     if theta <= 0:
         raise ValueError('theta must be > 0.0')
 
-    V_S = np.array([0.0] * len(agent.SS))
+    if initial_V_S is None:
+        V_S = np.array([0.0] * len(agent.SS))
+    else:
+
+        V_S = np.array([
+            initial_V_S[s]
+            for s in sorted(initial_V_S, key=lambda s: s.i)
+        ])
+
+        expected_shape = (len(agent.SS), )
+        if V_S.shape != expected_shape:
+            raise ValueError(
+                f'Expected initial_V_S to have shape {expected_shape}, but it has shape {V_S.shape}')
 
     delta = theta + 1
     iterations_finished = 0
     while delta > theta:
 
-        if iterations_finished % 10 == 0:
+        if iterations_finished > 0 and iterations_finished % 10 == 0:
             print(f'Finished {iterations_finished} iterations:  delta={delta}')
 
         if update_in_place:
@@ -70,14 +85,120 @@ def iterative_policy_evaluation_of_state_value(
 
     print(f'Evaluation completed after {iterations_finished} iteration(s).')
 
+    round_places = int(abs(math.log10(theta)) - 1)
+
     return {
-        s: v
+        s: round(v, round_places)
         for s, v in zip(agent.SS, V_S)
     }
 
 
 @rl_text(chapter=4, page=76)
-def iterative_policy_evaluation_of_action_value(
+def improve_policy_v(
+        agent: MdpAgent,
+        environment: MdpEnvironment,
+        v_pi: Dict[MdpState, float]
+) -> bool:
+    """
+    Improve an agent's policy according to its state-value estimates. This makes the policy greed with respect to the
+    state-value estimates. In cases where multiple such greedy actions exist for a state, each of the greedy actions
+    will be assigned equal probability.
+
+    :param agent: Agent.
+    :param environment: Environment.
+    :param v_pi: State-value estimates for the agent's policy.
+    :return: True if policy was changed and False if the policy was not changed.
+    """
+
+    # calculate state-action values (q) for the agent's policy
+    Q_S_A = {
+        s: {
+            a: sum([
+                s.p_S_prime_R_given_A[a][s_prime][r] * (r.r + agent.gamma * v_pi[s_prime])
+                for s_prime in agent.SS
+                for r in environment.RR
+            ])
+            for a in agent.AA
+        }
+        for s in agent.SS
+    }
+
+    # get the maximal action value for each state
+    S_max_Q = {
+        s: max(Q_S_A[s].values())
+        for s in Q_S_A
+    }
+
+    # count up how many actions in each state are maximizers
+    S_num_A_max_Q = {
+        s: sum(Q_S_A[s][a] == S_max_Q[s] for a in Q_S_A[s])
+        for s in Q_S_A
+    }
+
+    # update policy, assigning uniform probability across all maximizing actions.
+    agent_old_pi = agent.pi
+    agent.pi = {
+        s: {
+            a: 1.0 / S_num_A_max_Q[s] if Q_S_A[s][a] == S_max_Q[s] else 0.0
+            for a in agent.AA
+        }
+        for s in agent.SS
+    }
+
+    # check our math
+    if not all(
+        sum(agent.pi[s].values()) == 1.0
+        for s in agent.pi
+    ):
+        raise ValueError('Expected action probabilities to sum to 1.0')
+
+    return agent_old_pi != agent.pi
+
+
+def iterate_policy_v(
+        agent: MdpAgent,
+        environment: MdpEnvironment,
+        theta: float,
+        update_in_place: bool
+) -> Dict[MdpState, float]:
+    """
+    Run policy iteration on an agent using state-value estimates.
+
+    :param agent: Agent.
+    :param environment: Environment.
+    :param theta: See `evaluate_v`.
+    :param update_in_place: See `evaluate_v`.
+    :return: Final state-value estimates.
+    """
+
+    improving = True
+    v_pi: Optional[Dict[MdpState, float]] = None
+    i = 0
+    while improving:
+
+        v_pi = evaluate_v(
+            agent=agent,
+            environment=environment,
+            theta=theta,
+            update_in_place=update_in_place,
+            initial_V_S=v_pi
+        )
+
+        improving = improve_policy_v(
+            agent=agent,
+            environment=environment,
+            v_pi=v_pi
+        )
+
+        i += 1
+
+    print(f'Policy iteration terminated after {i} iteration(s).')
+
+    return v_pi
+
+
+@rl_text(chapter=4, page=76)
+def evaluate_q(
         agent: MdpAgent,
         environment: MdpEnvironment,
         theta: float,

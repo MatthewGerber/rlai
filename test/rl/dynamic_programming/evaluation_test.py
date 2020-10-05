@@ -1,31 +1,21 @@
 import os
 import pickle
 
-from numpy.random import RandomState
-import numpy as np
-from rl.agents.mdp import EquiprobableRandom
-from rl.dynamic_programming.evaluation import iterative_policy_evaluation_of_state_value, \
-    iterative_policy_evaluation_of_action_value
-from rl.environments.mdp import Gridworld
-import os
-import pickle
-
 import numpy as np
 from numpy.random import RandomState
 
-from rl.agents.mdp import EquiprobableRandom
-from rl.dynamic_programming.evaluation import iterative_policy_evaluation_of_state_value, \
-    iterative_policy_evaluation_of_action_value
+from rl.agents.mdp import Stochastic
+from rl.dynamic_programming.policy_iteration import evaluate_v, evaluate_q, iterate_policy_v
 from rl.environments.mdp import Gridworld
 
 
-def test_iterative_policy_evaluation_of_state_value():
+def test_evaluate_v():
 
     mdp_environment: Gridworld = Gridworld.example_4_1()
 
     random_state = RandomState(12345)
 
-    mdp_agent = EquiprobableRandom(
+    mdp_agent = Stochastic(
         mdp_environment.AA,
         'test',
         random_state,
@@ -33,14 +23,14 @@ def test_iterative_policy_evaluation_of_state_value():
         1
     )
 
-    state_value = iterative_policy_evaluation_of_state_value(
+    state_value = evaluate_v(
         mdp_agent,
         mdp_environment,
         0.001,
         True
     )
 
-    state_value_not_in_place = iterative_policy_evaluation_of_state_value(
+    state_value_not_in_place = evaluate_v(
         mdp_agent,
         mdp_environment,
         0.001,
@@ -67,13 +57,13 @@ def test_iterative_policy_evaluation_of_state_value():
     assert state_value == fixture
 
 
-def test_iterative_policy_evaluation_of_action_value():
+def test_evaluate_q():
 
     mdp_environment: Gridworld = Gridworld.example_4_1()
 
     random_state = RandomState(12345)
 
-    mdp_agent = EquiprobableRandom(
+    mdp_agent = Stochastic(
         mdp_environment.AA,
         'test',
         random_state,
@@ -81,14 +71,14 @@ def test_iterative_policy_evaluation_of_action_value():
         1
     )
 
-    action_value = iterative_policy_evaluation_of_action_value(
+    action_value = evaluate_q(
         mdp_agent,
         mdp_environment,
         0.001,
         True
     )
 
-    action_value_not_in_place = iterative_policy_evaluation_of_action_value(
+    action_value_not_in_place = evaluate_q(
         mdp_agent,
         mdp_environment,
         0.001,
@@ -118,3 +108,27 @@ def test_iterative_policy_evaluation_of_action_value():
         fixture = pickle.load(file)
 
     assert action_value == fixture
+
+
+def test_policy_iteration():
+
+    mdp_environment: Gridworld = Gridworld.example_4_1()
+
+    random_state = RandomState(12345)
+
+    mdp_agent = Stochastic(
+        mdp_environment.AA,
+        'test',
+        random_state,
+        mdp_environment.SS,
+        1
+    )
+
+    iterate_policy_v(
+        mdp_agent,
+        mdp_environment,
+        0.001,
+        True
+    )
+    
+    assert False
