@@ -9,11 +9,11 @@ from rl.meta import rl_text
 from rl.states.mdp import MdpState
 
 
-@rl_text(chapter=4, page=80)
-def iterate_policy_v_pi(
+@rl_text(chapter=4, page=82)
+def iterate_value_v_pi(
         agent: MdpAgent,
         environment: MdpEnvironment,
-        theta: float,
+        evaluation_iterations_per_improvement: int,
         update_in_place: bool
 ) -> Dict[MdpState, float]:
     """
@@ -21,7 +21,8 @@ def iterate_policy_v_pi(
 
     :param agent: Agent.
     :param environment: Environment.
-    :param theta: See `evaluate_v_pi`.
+    :param evaluation_iterations_per_improvement: Number of policy evaluation iterations to execute for each iteration
+    of improvement (e.g., passing 1 results in Equation 4.10).
     :param update_in_place: See `evaluate_v_pi`.
     :return: Final state-value estimates.
     """
@@ -64,8 +65,8 @@ def iterate_policy_q_pi(
 
     :param agent: Agent.
     :param environment: Environment.
-    :param theta: See `evaluate_q_pi`.
-    :param update_in_place: See `evaluate_q_pi`.
+    :param theta: See `evaluate_v_pi`.
+    :param update_in_place: See `evaluate_v_pi`.
     :return: Final state-action value estimates.
     """
 
