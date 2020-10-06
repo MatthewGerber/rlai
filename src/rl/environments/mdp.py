@@ -11,7 +11,6 @@ from rl.environments import Environment
 from rl.meta import rl_text
 from rl.rewards import Reward
 from rl.runners.monitor import Monitor
-from rl.states import State
 from rl.states.mdp import MdpState
 
 
@@ -26,7 +25,7 @@ class MdpEnvironment(Environment, ABC):
             name: str,
             AA: List[Action],
             random_state: RandomState,
-            SS: List[State],
+            SS: List[MdpState],
             RR: List[Reward]
     ):
         super().__init__(

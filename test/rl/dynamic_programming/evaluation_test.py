@@ -5,11 +5,12 @@ import numpy as np
 from numpy.random import RandomState
 
 from rl.agents.mdp import Stochastic
-from rl.dynamic_programming.policy_iteration import evaluate_v, evaluate_q, iterate_policy_v
+from rl.dynamic_programming.policy_iteration import evaluate_v_pi, evaluate_q_pi, iterate_policy_v_pi, \
+    iterate_policy_q_pi
 from rl.environments.mdp import Gridworld
 
 
-def test_evaluate_v():
+def test_evaluate_v_pi():
 
     mdp_environment: Gridworld = Gridworld.example_4_1()
 
@@ -23,41 +24,41 @@ def test_evaluate_v():
         1
     )
 
-    state_value = evaluate_v(
+    v_pi = evaluate_v_pi(
         mdp_agent,
         mdp_environment,
         0.001,
         True
     )
 
-    state_value_not_in_place = evaluate_v(
+    v_pi_not_in_place = evaluate_v_pi(
         mdp_agent,
         mdp_environment,
         0.001,
         False
     )
 
-    assert list(state_value.keys()) == list(state_value_not_in_place.keys())
+    assert list(v_pi.keys()) == list(v_pi_not_in_place.keys())
 
-    assert np.allclose(list(state_value.values()), list(state_value_not_in_place.values()), atol=0.01)
+    assert np.allclose(list(v_pi.values()), list(v_pi_not_in_place.values()), atol=0.01)
 
     # pickle doesn't like to unpickle instances with custom __hash__ functions
-    state_value = {
-        s.i: state_value[s]
-        for s in state_value
+    v_pi = {
+        s.i: v_pi[s]
+        for s in v_pi
     }
 
     # uncomment the following line and run test to update fixture
     # with open(f'{os.path.dirname(__file__)}/fixtures/test_iterative_policy_evaluation_of_state_value.pickle', 'wb') as file:
-    #     pickle.dump(state_value, file)
+    #     pickle.dump(v_pi, file)
 
     with open(f'{os.path.dirname(__file__)}/fixtures/test_iterative_policy_evaluation_of_state_value.pickle', 'rb') as file:
         fixture = pickle.load(file)
 
-    assert state_value == fixture
+    assert v_pi == fixture
 
 
-def test_evaluate_q():
+def test_evaluate_q_pi():
 
     mdp_environment: Gridworld = Gridworld.example_4_1()
 
@@ -71,43 +72,43 @@ def test_evaluate_q():
         1
     )
 
-    action_value = evaluate_q(
+    q_pi = evaluate_q_pi(
         mdp_agent,
         mdp_environment,
         0.001,
         True
     )
 
-    action_value_not_in_place = evaluate_q(
+    q_pi_not_in_place = evaluate_q_pi(
         mdp_agent,
         mdp_environment,
         0.001,
         False
     )
 
-    assert list(action_value.keys()) == list(action_value_not_in_place.keys())
+    assert list(q_pi.keys()) == list(q_pi_not_in_place.keys())
 
-    for s in action_value:
-        for a in action_value[s]:
-            assert np.allclose(action_value[s][a], action_value_not_in_place[s][a], atol=0.01)
+    for s in q_pi:
+        for a in q_pi[s]:
+            assert np.allclose(q_pi[s][a], q_pi_not_in_place[s][a], atol=0.01)
 
     # pickle doesn't like to unpickle instances with custom __hash__ functions
-    action_value = {
+    q_pi = {
         s.i: {
-            a.i: action_value[s][a]
-            for a in action_value[s]
+            a.i: q_pi[s][a]
+            for a in q_pi[s]
         }
-        for s in action_value
+        for s in q_pi
     }
 
     # uncomment the following line and run test to update fixture
     # with open(f'{os.path.dirname(__file__)}/fixtures/test_iterative_policy_evaluation_of_action_value.pickle', 'wb') as file:
-    #     pickle.dump(action_value, file)
+    #     pickle.dump(q_pi, file)
 
     with open(f'{os.path.dirname(__file__)}/fixtures/test_iterative_policy_evaluation_of_action_value.pickle', 'rb') as file:
         fixture = pickle.load(file)
 
-    assert action_value == fixture
+    assert q_pi == fixture
 
 
 def test_policy_iteration():
@@ -116,7 +117,7 @@ def test_policy_iteration():
 
     random_state = RandomState(12345)
 
-    mdp_agent = Stochastic(
+    mdp_agent_v_pi = Stochastic(
         mdp_environment.AA,
         'test',
         random_state,
@@ -124,11 +125,26 @@ def test_policy_iteration():
         1
     )
 
-    iterate_policy_v(
-        mdp_agent,
+    v_pi = iterate_policy_v_pi(
+        mdp_agent_v_pi,
         mdp_environment,
         0.001,
         True
     )
-    
+
+    mdp_agent_q_pi = Stochastic(
+        mdp_environment.AA,
+        'test',
+        random_state,
+        mdp_environment.SS,
+        1
+    )
+
+    q_pi = iterate_policy_q_pi(
+        mdp_agent_q_pi,
+        mdp_environment,
+        0.001,
+        True
+    )
+
     assert False
