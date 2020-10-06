@@ -234,7 +234,7 @@ def evaluate_q_pi(
                 # calculate expected state-action value using current estimates of successor state-action values
                 new_q = np.sum([
 
-                    # action is given, so start expectation with state-reward probability.
+                    # action is given, so start expectation with state/reward probability.
                     s.p_S_prime_R_given_A[a][s_prime][r] * (r.r + agent.gamma * np.sum([
                         agent.pi[s_prime][a_prime] * Q_S_A[s_prime][a_prime_i]
                         for a_prime_i, a_prime in enumerate(agent.AA)

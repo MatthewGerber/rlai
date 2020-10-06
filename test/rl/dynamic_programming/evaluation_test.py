@@ -117,6 +117,7 @@ def test_policy_iteration():
 
     random_state = RandomState(12345)
 
+    # state-value policy iteration
     mdp_agent_v_pi = Stochastic(
         mdp_environment.AA,
         'test',
@@ -125,13 +126,14 @@ def test_policy_iteration():
         1
     )
 
-    v_pi = iterate_policy_v_pi(
+    iterate_policy_v_pi(
         mdp_agent_v_pi,
         mdp_environment,
         0.001,
         True
     )
 
+    # action-value policy iteration
     mdp_agent_q_pi = Stochastic(
         mdp_environment.AA,
         'test',
@@ -140,11 +142,12 @@ def test_policy_iteration():
         1
     )
 
-    q_pi = iterate_policy_q_pi(
+    iterate_policy_q_pi(
         mdp_agent_q_pi,
         mdp_environment,
         0.001,
         True
     )
 
-    assert False
+    # should get the same policy
+    assert mdp_agent_v_pi.pi == mdp_agent_q_pi.pi
