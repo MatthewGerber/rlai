@@ -18,7 +18,8 @@ TEST_REQUIREMENTS = [
 
 DEV_REQUIREMENTS = [
     'bump2version==1.0',
-    'flake8==3.7'
+    'flake8==3.7',
+    'md-toc==7.0.3'
 ]
 
 setup(
