@@ -192,8 +192,8 @@ def evaluate_q_pi(
 
     return {
         s: {
-            a: round_for_theta(v, theta)
-            for a, v in zip(agent.AA, q_S_A[s])
+            a: round_for_theta(q, theta)
+            for a, q in zip(agent.AA, q_S_A[s])
         }
         for s in agent.SS
     }

@@ -14,7 +14,6 @@ class MdpState(State):
             self,
             i: int,
             AA: List[Action],
-            SS: List[State],
             RR: List[Reward],
             terminal: bool
     ):
@@ -23,7 +22,6 @@ class MdpState(State):
 
         :param i: State index.
         :param AA: All actions.
-        :param SS: All states.
         :param RR: All rewards.
         :param terminal: Whether or not the state is terminal.
         """
@@ -33,11 +31,11 @@ class MdpState(State):
         )
 
         self.AA = AA
-        self.SS = SS
         self.RR = RR
         self.terminal = terminal
+        self.SS = []
 
-        # initialize an empty model within the state. can't fill it in until all states have been initialized.
+        # initialize an empty model within the state (see `init_model` for initialization)
         self.p_S_prime_R_given_A: Dict[
             Action, Dict[
                 State, Dict[
@@ -47,11 +45,16 @@ class MdpState(State):
         ] = {}
 
     def init_model(
-            self
+            self,
+            SS: List[State]
     ):
         """
         Initialize the model within each state with zeros.
+
+        :param SS: List of all states.
         """
+
+        self.SS = SS
 
         self.p_S_prime_R_given_A = {
             a: {

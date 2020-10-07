@@ -28,6 +28,16 @@ class MdpEnvironment(Environment, ABC):
             SS: List[MdpState],
             RR: List[Reward]
     ):
+        """
+        Initialize the MDP environment.
+
+        :param name: Name.
+        :param AA: List of actions.
+        :param random_state: Random state.
+        :param SS: List of states.
+        :param RR: List of rewards.
+        """
+
         super().__init__(
             name=name,
             AA=AA,
@@ -36,6 +46,10 @@ class MdpEnvironment(Environment, ABC):
 
         self.SS = SS
         self.RR = RR
+
+        # initialize the model within each state, now that SS has been populated.
+        for s in self.SS:
+            s.init_model(self.SS)
 
 
 @rl_text(chapter=3, page=60)
@@ -215,23 +229,16 @@ class Gridworld(MdpEnvironment):
 
         self.a_up, self.a_down, self.a_left, self.a_right = AA
 
-        # create mdp states, providing each with the list of all states
-        SS = []
-        SS.extend([
+        SS = [
             MdpState(
                 i=row_i * n_columns + col_j,
                 AA=AA,
-                SS=SS,
                 RR=RR,
                 terminal=False
             )
             for row_i in range(n_rows)
             for col_j in range(n_columns)
-        ])
-
-        # initialize the model within each state, now that SS has been populated.
-        for s in SS:
-            s.init_model()
+        ]
 
         super().__init__(
             name=name,
@@ -242,3 +249,113 @@ class Gridworld(MdpEnvironment):
         )
 
         self.grid = np.array(self.SS).reshape(n_rows, n_columns)
+
+
+@rl_text(chapter=4, page=84)
+class GamblersProblem(MdpEnvironment):
+
+    @classmethod
+    def parse_arguments(
+            cls,
+            args
+    ) -> Tuple[Namespace, List[str]]:
+        """
+        Parse arguments.
+
+        :param args: Arguments.
+        :return: 2-tuple of parsed and unparsed arguments.
+        """
+
+        parsed_args, unparsed_args = super().parse_arguments(args)
+
+        parser = ArgumentParser(allow_abbrev=False)
+
+        parser.add_argument(
+            '--p-h',
+            type=float,
+            default=0.5,
+            help='Probability of coin toss coming up heads.'
+        )
+
+        parsed_args, unparsed_args = parser.parse_known_args(unparsed_args, parsed_args)
+
+        return parsed_args, unparsed_args
+
+    @classmethod
+    def init_from_arguments(
+            cls,
+            args: List[str],
+            random_state: RandomState
+    ) -> Tuple[Environment, List[str]]:
+        """
+        Initialize an environment from arguments.
+
+        :param args: Arguments.
+        :param random_state: Random state.
+        :return: 2-tuple of an environment and a list of unparsed arguments.
+        """
+
+        parsed_args, unparsed_args = cls.parse_arguments(args)
+
+        gamblers_problem = GamblersProblem(
+            name=f"gambler's problem (p={parsed_args.p_h})",
+            random_state=random_state,
+            **dict(parsed_args._get_kwargs())
+        )
+
+        return gamblers_problem, unparsed_args
+
+    def run(self, agent, T: int, monitor: Monitor):
+        pass
+
+    def __init__(
+            self,
+            name: str,
+            random_state: RandomState,
+            p_h: float
+    ):
+        """
+        Initialize the MDP environment.
+
+        :param name: Name.
+        :param random_state: Random state.
+        :param p_h: Probability of coin toss coming up heads.
+        """
+
+        AA = [Action(i=stake) for stake in range(0, 50)]
+
+        r_not_win = Reward(0, 0.0)
+        r_win = Reward(1, 1.0)
+        RR = [r_not_win, r_win]
+
+        SS = [
+            MdpState(
+                i=capital,
+                AA=[
+                    a
+                    for a in AA
+                    if a.i < min(capital, 100 - capital)
+                ],
+                RR=RR,
+                terminal=capital == 0 or capital == 100
+            )
+            for capital in range(0, 101)
+        ]
+
+        super().__init__(
+            name=name,
+            AA=AA,
+            random_state=random_state,
+            SS=SS,
+            RR=RR
+        )
+
+        for s in self.SS:
+            for a in s.p_S_prime_R_given_A:
+
+                s_prime_h = SS[s.i + a.i]
+                r_h = r_win if s_prime_h == 100 else r_not_win
+                s.p_S_prime_R_given_A[a][s_prime_h][r_h] = p_h
+
+                s_prime_t = SS[s.i - a.i]
+                s.p_S_prime_R_given_A[a][s_prime_t][r_not_win] = 1 - p_h
