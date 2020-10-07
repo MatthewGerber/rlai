@@ -5,10 +5,11 @@ import numpy as np
 from numpy.random import RandomState
 
 from rl.agents.mdp import Stochastic
-from rl.dynamic_programming.policy_iteration import iterate_policy_v_pi, \
-    iterate_policy_q_pi
 from rl.dynamic_programming.policy_evaluation import evaluate_q_pi
 from rl.dynamic_programming.policy_evaluation import evaluate_v_pi
+from rl.dynamic_programming.policy_iteration import iterate_policy_v_pi, \
+    iterate_policy_q_pi
+from rl.dynamic_programming.value_iteration import iterate_value_v_pi, iterate_value_q_pi
 from rl.environments.mdp import Gridworld
 
 
@@ -27,17 +28,19 @@ def test_evaluate_v_pi():
     )
 
     v_pi = evaluate_v_pi(
-        mdp_agent,
-        mdp_environment,
-        0.001,
-        True
+        agent=mdp_agent,
+        environment=mdp_environment,
+        theta=0.001,
+        num_iterations=None,
+        update_in_place=True
     )
 
     v_pi_not_in_place = evaluate_v_pi(
-        mdp_agent,
-        mdp_environment,
-        0.001,
-        False
+        agent=mdp_agent,
+        environment=mdp_environment,
+        theta=0.001,
+        num_iterations=None,
+        update_in_place=False
     )
 
     assert list(v_pi.keys()) == list(v_pi_not_in_place.keys())
@@ -75,17 +78,19 @@ def test_evaluate_q_pi():
     )
 
     q_pi = evaluate_q_pi(
-        mdp_agent,
-        mdp_environment,
-        0.001,
-        True
+        agent=mdp_agent,
+        environment=mdp_environment,
+        theta=0.001,
+        num_iterations=None,
+        update_in_place=True
     )
 
     q_pi_not_in_place = evaluate_q_pi(
-        mdp_agent,
-        mdp_environment,
-        0.001,
-        False
+        agent=mdp_agent,
+        environment=mdp_environment,
+        theta=0.001,
+        num_iterations=None,
+        update_in_place=False
     )
 
     assert list(q_pi.keys()) == list(q_pi_not_in_place.keys())
@@ -153,3 +158,62 @@ def test_policy_iteration():
 
     # should get the same policy
     assert mdp_agent_v_pi.pi == mdp_agent_q_pi.pi
+
+
+def test_value_iteration():
+
+    mdp_environment: Gridworld = Gridworld.example_4_1()
+
+    random_state = RandomState(12345)
+
+    # run policy iteration on v_pi
+    mdp_agent_v_pi_policy_iteration = Stochastic(
+        mdp_environment.AA,
+        'test',
+        random_state,
+        mdp_environment.SS,
+        1
+    )
+
+    iterate_policy_v_pi(
+        mdp_agent_v_pi_policy_iteration,
+        mdp_environment,
+        0.001,
+        True
+    )
+
+    # run value iteration on v_pi
+    mdp_agent_v_pi_value_iteration = Stochastic(
+        mdp_environment.AA,
+        'test',
+        random_state,
+        mdp_environment.SS,
+        1
+    )
+
+    iterate_value_v_pi(
+        mdp_agent_v_pi_value_iteration,
+        mdp_environment,
+        1,
+        True
+    )
+
+    assert mdp_agent_v_pi_policy_iteration.pi == mdp_agent_v_pi_value_iteration.pi
+
+    # run value iteration on q_pi
+    mdp_agent_q_pi_value_iteration = Stochastic(
+        mdp_environment.AA,
+        'test',
+        random_state,
+        mdp_environment.SS,
+        1
+    )
+
+    iterate_value_q_pi(
+        mdp_agent_q_pi_value_iteration,
+        mdp_environment,
+        1,
+        True
+    )
+
+    assert mdp_agent_q_pi_value_iteration.pi == mdp_agent_v_pi_policy_iteration.pi

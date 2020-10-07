@@ -31,12 +31,15 @@ def iterate_policy_v_pi(
     i = 0
     while improving:
 
+        print(f'Policy iteration {i + 1}:  ', end='')
+
         v_pi = evaluate_v_pi(
             agent=agent,
             environment=environment,
             theta=theta,
+            num_iterations=None,
             update_in_place=update_in_place,
-            initial_V_S=v_pi
+            initial_v_S=v_pi
         )
 
         improving = improve_policy_with_v_pi(
@@ -47,7 +50,7 @@ def iterate_policy_v_pi(
 
         i += 1
 
-    print(f'Policy iteration terminated after {i} iteration(s).')
+    print(f'Policy iteration terminated after {i} iteration(s).\n')
 
     return v_pi
 
@@ -74,12 +77,15 @@ def iterate_policy_q_pi(
     i = 0
     while improving:
 
+        print(f'Policy iteration {i + 1}:  ', end='')
+
         q_pi = evaluate_q_pi(
             agent=agent,
             environment=environment,
             theta=theta,
+            num_iterations=None,
             update_in_place=update_in_place,
-            initial_Q_S_A=q_pi
+            initial_q_S_A=q_pi
         )
 
         improving = improve_policy_with_q_pi(
@@ -89,6 +95,6 @@ def iterate_policy_q_pi(
 
         i += 1
 
-    print(f'Policy iteration terminated after {i} iteration(s).')
+    print(f'Policy iteration terminated after {i} iteration(s).\n')
 
     return q_pi
