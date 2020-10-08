@@ -21,7 +21,7 @@ class State:
 
         :return: String.
         """
-        return str(self.i)
+        return f'State {self.i}'
 
     def __hash__(
             self

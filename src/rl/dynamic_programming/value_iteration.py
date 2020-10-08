@@ -4,7 +4,6 @@ from rl.actions import Action
 from rl.agents.mdp import MdpAgent
 from rl.dynamic_programming.policy_evaluation import evaluate_v_pi, evaluate_q_pi
 from rl.dynamic_programming.policy_improvement import improve_policy_with_v_pi, improve_policy_with_q_pi
-from rl.environments.mdp import MdpEnvironment
 from rl.meta import rl_text
 from rl.states.mdp import MdpState
 
@@ -12,7 +11,6 @@ from rl.states.mdp import MdpState
 @rl_text(chapter=4, page=82)
 def iterate_value_v_pi(
         agent: MdpAgent,
-        environment: MdpEnvironment,
         evaluation_iterations_per_improvement: int,
         update_in_place: bool
 ) -> Dict[MdpState, float]:
@@ -20,7 +18,6 @@ def iterate_value_v_pi(
     Run value iteration on an agent using state-value estimates.
 
     :param agent: Agent.
-    :param environment: Environment.
     :param evaluation_iterations_per_improvement: Number of policy evaluation iterations to execute for each iteration
     of improvement (e.g., passing 1 results in Equation 4.10).
     :param update_in_place: See `evaluate_v_pi`.
@@ -36,7 +33,6 @@ def iterate_value_v_pi(
 
         v_pi = evaluate_v_pi(
             agent=agent,
-            environment=environment,
             theta=None,
             num_iterations=evaluation_iterations_per_improvement,
             update_in_place=update_in_place,
@@ -45,7 +41,6 @@ def iterate_value_v_pi(
 
         improving = improve_policy_with_v_pi(
             agent=agent,
-            environment=environment,
             v_pi=v_pi
         )
 
@@ -59,7 +54,6 @@ def iterate_value_v_pi(
 @rl_text(chapter=4, page=82)
 def iterate_value_q_pi(
         agent: MdpAgent,
-        environment: MdpEnvironment,
         evaluation_iterations_per_improvement: int,
         update_in_place: bool
 ) -> Dict[MdpState, Dict[Action, float]]:
@@ -67,7 +61,6 @@ def iterate_value_q_pi(
     Run policy iteration on an agent using state-value estimates.
 
     :param agent: Agent.
-    :param environment: Environment.
     :param evaluation_iterations_per_improvement: Number of policy evaluation iterations to execute for each iteration
     of improvement (e.g., passing 1 results in Equation 4.10).
     :param update_in_place: See `evaluate_v_pi`.
@@ -83,7 +76,6 @@ def iterate_value_q_pi(
 
         q_pi = evaluate_q_pi(
             agent=agent,
-            environment=environment,
             theta=None,
             num_iterations=evaluation_iterations_per_improvement,
             update_in_place=update_in_place,

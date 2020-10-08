@@ -4,7 +4,6 @@ from rl.actions import Action
 from rl.agents.mdp import MdpAgent
 from rl.dynamic_programming.policy_evaluation import evaluate_v_pi, evaluate_q_pi
 from rl.dynamic_programming.policy_improvement import improve_policy_with_v_pi, improve_policy_with_q_pi
-from rl.environments.mdp import MdpEnvironment
 from rl.meta import rl_text
 from rl.states.mdp import MdpState
 
@@ -12,7 +11,6 @@ from rl.states.mdp import MdpState
 @rl_text(chapter=4, page=80)
 def iterate_policy_v_pi(
         agent: MdpAgent,
-        environment: MdpEnvironment,
         theta: float,
         update_in_place: bool
 ) -> Dict[MdpState, float]:
@@ -20,7 +18,6 @@ def iterate_policy_v_pi(
     Run policy iteration on an agent using state-value estimates.
 
     :param agent: Agent.
-    :param environment: Environment.
     :param theta: See `evaluate_v_pi`.
     :param update_in_place: See `evaluate_v_pi`.
     :return: Final state-value estimates.
@@ -35,7 +32,6 @@ def iterate_policy_v_pi(
 
         v_pi = evaluate_v_pi(
             agent=agent,
-            environment=environment,
             theta=theta,
             num_iterations=None,
             update_in_place=update_in_place,
@@ -44,7 +40,6 @@ def iterate_policy_v_pi(
 
         improving = improve_policy_with_v_pi(
             agent=agent,
-            environment=environment,
             v_pi=v_pi
         )
 
@@ -58,7 +53,6 @@ def iterate_policy_v_pi(
 @rl_text(chapter=4, page=80)
 def iterate_policy_q_pi(
         agent: MdpAgent,
-        environment: MdpEnvironment,
         theta: float,
         update_in_place: bool
 ) -> Dict[MdpState, Dict[Action, float]]:
@@ -66,7 +60,6 @@ def iterate_policy_q_pi(
     Run policy iteration on an agent using state-value estimates.
 
     :param agent: Agent.
-    :param environment: Environment.
     :param theta: See `evaluate_q_pi`.
     :param update_in_place: See `evaluate_q_pi`.
     :return: Final state-action value estimates.
@@ -81,7 +74,6 @@ def iterate_policy_q_pi(
 
         q_pi = evaluate_q_pi(
             agent=agent,
-            environment=environment,
             theta=theta,
             num_iterations=None,
             update_in_place=update_in_place,

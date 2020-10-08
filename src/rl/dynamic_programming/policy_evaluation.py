@@ -5,7 +5,6 @@ import numpy as np
 
 from rl.actions import Action
 from rl.agents.mdp import MdpAgent
-from rl.environments.mdp import MdpEnvironment
 from rl.meta import rl_text
 from rl.states.mdp import MdpState
 
@@ -13,7 +12,6 @@ from rl.states.mdp import MdpState
 @rl_text(chapter=4, page=74)
 def evaluate_v_pi(
         agent: MdpAgent,
-        environment: MdpEnvironment,
         theta: Optional[float],
         num_iterations: Optional[int],
         update_in_place: bool,
@@ -23,7 +21,6 @@ def evaluate_v_pi(
     Perform iterative policy evaluation of an agent's policy within an environment, returning state values.
 
     :param agent: MDP agent.
-    :param environment: MDP environment.
     :param theta: Minimum tolerated change in state value estimates, below which evaluation terminates. Either `theta`
     or `num_iterations` (or both) can be specified, but passing neither will raise an exception.
     :param num_iterations: Number of evaluation iterations to execute.  Either `theta` or `num_iterations` (or both)
@@ -49,8 +46,7 @@ def evaluate_v_pi(
 
         expected_shape = (len(agent.SS), )
         if v_S.shape != expected_shape:
-            raise ValueError(
-                f'Expected initial_v_S to have shape {expected_shape}, but it has shape {v_S.shape}')
+            raise ValueError(f'Expected initial_v_S to have shape {expected_shape}, but it has shape {v_S.shape}')
 
     iterations_finished = 0
     while True:
@@ -71,9 +67,9 @@ def evaluate_v_pi(
 
                 agent.pi[s][a] * s.p_S_prime_R_given_A[a][s_prime][r] * (r.r + agent.gamma * v_S[s_prime_i])
 
-                for a in agent.AA
-                for s_prime_i, s_prime in enumerate(agent.SS)
-                for r in environment.RR
+                for a in s.p_S_prime_R_given_A
+                for s_prime_i, s_prime in enumerate(s.p_S_prime_R_given_A[a])
+                for r in s.p_S_prime_R_given_A[a][s_prime]
             ])
 
             v_S_to_update[s_i] = new_v
@@ -102,7 +98,6 @@ def evaluate_v_pi(
 @rl_text(chapter=4, page=76)
 def evaluate_q_pi(
         agent: MdpAgent,
-        environment: MdpEnvironment,
         theta: Optional[float],
         num_iterations: Optional[int],
         update_in_place: bool,
@@ -112,7 +107,6 @@ def evaluate_q_pi(
     Perform iterative policy evaluation of an agent's policy within an environment, returning state-action values.
 
     :param agent: MDP agent.
-    :param environment: MDP environment.
     :param theta: Minimum tolerated change in state value estimates, below which evaluation terminates. Either `theta`
     or `num_iterations` (or both) can be specified, but passing neither will raise an exception.
     :param num_iterations: Number of evaluation iterations to execute.  Either `theta` or `num_iterations` (or both)
@@ -156,7 +150,7 @@ def evaluate_q_pi(
 
         # update each state-action value
         for s in agent.SS:
-            for a_i, a in enumerate(agent.AA):
+            for a_i, a in enumerate(s.p_S_prime_R_given_A.keys()):
 
                 prev_q = q_S_A[s][a_i]
 
@@ -169,8 +163,8 @@ def evaluate_q_pi(
                         for a_prime_i, a_prime in enumerate(agent.AA)
                      ]))
 
-                    for s_prime_i, s_prime in enumerate(agent.SS)
-                    for r in environment.RR
+                    for s_prime_i, s_prime in enumerate(s.p_S_prime_R_given_A[a])
+                    for r in s.p_S_prime_R_given_A[a][s_prime]
                 ])
 
                 q_S_A_to_update[s][a_i] = new_q

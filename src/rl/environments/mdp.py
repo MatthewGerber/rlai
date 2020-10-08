@@ -322,7 +322,10 @@ class GamblersProblem(MdpEnvironment):
         :param p_h: Probability of coin toss coming up heads.
         """
 
-        AA = [Action(i=stake) for stake in range(0, 50)]
+        self.p_h = p_h
+        self.p_t = 1 - p_h
+
+        AA = [Action(i=stake, name=f'Stake {stake}') for stake in range(0, 51)]
 
         r_not_win = Reward(0, 0.0)
         r_win = Reward(1, 1.0)
@@ -334,7 +337,7 @@ class GamblersProblem(MdpEnvironment):
                 AA=[
                     a
                     for a in AA
-                    if a.i < min(capital, 100 - capital)
+                    if a.i <= min(capital, 100 - capital)
                 ],
                 RR=RR,
                 terminal=capital == 0 or capital == 100
@@ -353,9 +356,10 @@ class GamblersProblem(MdpEnvironment):
         for s in self.SS:
             for a in s.p_S_prime_R_given_A:
 
-                s_prime_h = SS[s.i + a.i]
-                r_h = r_win if s_prime_h == 100 else r_not_win
-                s.p_S_prime_R_given_A[a][s_prime_h][r_h] = p_h
+                s_prime_h = self.SS[s.i + a.i]
+                r_h = r_win if not s.terminal and s_prime_h.i == 100 else r_not_win
+                s.p_S_prime_R_given_A[a][s_prime_h][r_h] = self.p_h
 
-                s_prime_t = SS[s.i - a.i]
-                s.p_S_prime_R_given_A[a][s_prime_t][r_not_win] = 1 - p_h
+                s_prime_t = self.SS[s.i - a.i]
+                r_t = r_win if not s.terminal and s_prime_t.i == 100 else r_not_win
+                s.p_S_prime_R_given_A[a][s_prime_t][r_t] += self.p_t

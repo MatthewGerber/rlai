@@ -38,7 +38,7 @@ class MdpState(State):
         # initialize an empty model within the state (see `init_model` for initialization)
         self.p_S_prime_R_given_A: Dict[
             Action, Dict[
-                State, Dict[
+                MdpState, Dict[
                     Reward, float
                 ]
             ]

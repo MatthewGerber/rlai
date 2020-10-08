@@ -2,15 +2,14 @@ from typing import Dict
 
 from rl.actions import Action
 from rl.agents.mdp import MdpAgent
-from rl.environments.mdp import MdpEnvironment
 from rl.meta import rl_text
 from rl.states.mdp import MdpState
+import numpy as np
 
 
 @rl_text(chapter=4, page=76)
 def improve_policy_with_v_pi(
         agent: MdpAgent,
-        environment: MdpEnvironment,
         v_pi: Dict[MdpState, float]
 ) -> bool:
     """
@@ -19,7 +18,6 @@ def improve_policy_with_v_pi(
     will be assigned equal probability.
 
     :param agent: Agent.
-    :param environment: Environment.
     :param v_pi: State-value estimates for the agent's policy.
     :return: True if policy was changed and False if the policy was not changed.
     """
@@ -29,10 +27,10 @@ def improve_policy_with_v_pi(
         s: {
             a: sum([
                 s.p_S_prime_R_given_A[a][s_prime][r] * (r.r + agent.gamma * v_pi[s_prime])
-                for s_prime in agent.SS
-                for r in environment.RR
+                for s_prime in s.p_S_prime_R_given_A[a]
+                for r in s.p_S_prime_R_given_A[a][s_prime]
             ])
-            for a in agent.AA
+            for a in s.p_S_prime_R_given_A
         }
         for s in agent.SS
     }
@@ -75,15 +73,17 @@ def improve_policy_with_q_pi(
     agent.pi = {
         s: {
             a: 1.0 / S_num_A_max_Q[s] if q_pi[s][a] == S_max_Q[s] else 0.0
-            for a in agent.AA
+            for a in s.p_S_prime_R_given_A
         }
         for s in agent.SS
     }
 
     # check our math
-    if not all(
-        sum(agent.pi[s].values()) == 1.0
-        for s in agent.pi
+    if not np.allclose(
+        [
+            sum(agent.pi[s].values())
+            for s in agent.pi
+        ], 1.0
     ):
         raise ValueError('Expected action probabilities to sum to 1.0')
 

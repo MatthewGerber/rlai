@@ -24,7 +24,7 @@ class Reward:
 
         :return: String.
         """
-        return f'{self.i}: {self.r}'
+        return f'Reward {self.i}: {self.r}'
 
     def __hash__(
             self

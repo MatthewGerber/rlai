@@ -29,7 +29,6 @@ def test_evaluate_v_pi():
 
     v_pi = evaluate_v_pi(
         agent=mdp_agent,
-        environment=mdp_environment,
         theta=0.001,
         num_iterations=None,
         update_in_place=True
@@ -37,7 +36,6 @@ def test_evaluate_v_pi():
 
     v_pi_not_in_place = evaluate_v_pi(
         agent=mdp_agent,
-        environment=mdp_environment,
         theta=0.001,
         num_iterations=None,
         update_in_place=False
@@ -79,7 +77,6 @@ def test_evaluate_q_pi():
 
     q_pi = evaluate_q_pi(
         agent=mdp_agent,
-        environment=mdp_environment,
         theta=0.001,
         num_iterations=None,
         update_in_place=True
@@ -87,7 +84,6 @@ def test_evaluate_q_pi():
 
     q_pi_not_in_place = evaluate_q_pi(
         agent=mdp_agent,
-        environment=mdp_environment,
         theta=0.001,
         num_iterations=None,
         update_in_place=False
@@ -135,7 +131,6 @@ def test_policy_iteration():
 
     iterate_policy_v_pi(
         mdp_agent_v_pi,
-        mdp_environment,
         0.001,
         True
     )
@@ -151,7 +146,6 @@ def test_policy_iteration():
 
     iterate_policy_q_pi(
         mdp_agent_q_pi,
-        mdp_environment,
         0.001,
         True
     )
@@ -177,7 +171,6 @@ def test_value_iteration():
 
     iterate_policy_v_pi(
         mdp_agent_v_pi_policy_iteration,
-        mdp_environment,
         0.001,
         True
     )
@@ -193,7 +186,6 @@ def test_value_iteration():
 
     iterate_value_v_pi(
         mdp_agent_v_pi_value_iteration,
-        mdp_environment,
         1,
         True
     )
@@ -211,7 +203,6 @@ def test_value_iteration():
 
     iterate_value_q_pi(
         mdp_agent_q_pi_value_iteration,
-        mdp_environment,
         1,
         True
     )

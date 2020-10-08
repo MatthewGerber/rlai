@@ -161,12 +161,10 @@ class Stochastic(MdpAgent):
             gamma=gamma
         )
 
-        num_actions = len(self.AA)
-        
         self.pi = {
             s: {
-                a: 1 / num_actions
-                for a in self.AA
+                a: 1 / len(s.p_S_prime_R_given_A.keys())
+                for a in s.p_S_prime_R_given_A
             }
             for s in self.SS
         }
