@@ -160,7 +160,7 @@ def evaluate_q_pi(
                     # action is given, so start expectation with state/reward probability.
                     s.p_S_prime_R_given_A[a][s_prime][r] * (r.r + agent.gamma * np.sum([
                         agent.pi[s_prime][a_prime] * q_S_A[s_prime][a_prime_i]
-                        for a_prime_i, a_prime in enumerate(agent.AA)
+                        for a_prime_i, a_prime in enumerate(s.p_S_prime_R_given_A)
                      ]))
 
                     for s_prime_i, s_prime in enumerate(s.p_S_prime_R_given_A[a])

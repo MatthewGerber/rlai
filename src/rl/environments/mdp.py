@@ -20,6 +20,27 @@ class MdpEnvironment(Environment, ABC):
     MDP environment.
     """
 
+    def check_marginal_probabilities(
+            self
+    ):
+        """
+        Check the marginal next-state and -reward probabilities, to ensure they sum to 1. Raises an exception if this is
+        not the case.
+        """
+
+        # check that marginal probabilities for each state sum to 1
+        for s in self.SS:
+            for a in s.p_S_prime_R_given_A:
+
+                marginal_prob = sum([
+                    s.p_S_prime_R_given_A[a][s_prime][r]
+                    for s_prime in s.p_S_prime_R_given_A[a]
+                    for r in s.p_S_prime_R_given_A[a][s_prime]
+                ])
+
+                if marginal_prob != 1.0:
+                    raise ValueError(f'Expected state-marginal probability of 1.0, got {marginal_prob}.')
+
     def __init__(
             self,
             name: str,
@@ -188,18 +209,7 @@ class Gridworld(MdpEnvironment):
                 for a in self.AA:
                     s.p_S_prime_R_given_A[a][s][terminal_reward] = 1.0
 
-        # check that marginal probabilities for each state sum to 1
-        for s in self.SS:
-            for a in self.AA:
-
-                marginal_prob = sum([
-                    s.p_S_prime_R_given_A[a][s_prime][r]
-                    for s_prime in s.p_S_prime_R_given_A[a]
-                    for r in s.p_S_prime_R_given_A[a][s_prime]
-                ])
-
-                if marginal_prob != 1.0:
-                    raise ValueError(f'Expected state-marginal probability of 1.0, got {marginal_prob}.')
+        self.check_marginal_probabilities()
 
     def __init__(
             self,
@@ -362,4 +372,6 @@ class GamblersProblem(MdpEnvironment):
 
                 s_prime_t = self.SS[s.i - a.i]
                 r_t = r_win if not s.terminal and s_prime_t.i == 100 else r_not_win
-                s.p_S_prime_R_given_A[a][s_prime_t][r_t] += self.p_t
+                s.p_S_prime_R_given_A[a][s_prime_t][r_t] += self.p_t  # add the probability, in case the results of head and tail are the same.
+
+        self.check_marginal_probabilities()

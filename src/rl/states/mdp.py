@@ -21,8 +21,8 @@ class MdpState(State):
         Initialize the MDP state.
 
         :param i: State index.
-        :param AA: All actions.
-        :param RR: All rewards.
+        :param AA: All actions that can be taken from this state.
+        :param RR: All rewards provided by the environment
         :param terminal: Whether or not the state is terminal.
         """
 
