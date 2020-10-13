@@ -23,7 +23,7 @@ def improve_policy_with_v_pi(
     """
 
     # calculate state-action values (q) for the agent's policy
-    Q_S_A = {
+    q_S_A = {
         s: {
             a: sum([
                 s.p_S_prime_R_given_A[a][s_prime][r] * (r.r + agent.gamma * v_pi[s_prime])
@@ -37,7 +37,7 @@ def improve_policy_with_v_pi(
 
     return improve_policy_with_q_pi(
         agent=agent,
-        q_pi=Q_S_A
+        q_pi=q_S_A
     )
 
 

@@ -37,17 +37,9 @@ def evaluate_v_pi(
     )
 
     if initial_v_S is None:
-        v_S = np.array([0.0] * len(agent.SS))
+        v_S = {s: 0.0 for s in agent.SS}
     else:
-
-        v_S = np.array([
-            initial_v_S[s]
-            for s in sorted(initial_v_S, key=lambda s: s.i)
-        ])
-
-        expected_shape = (len(agent.SS), )
-        if v_S.shape != expected_shape:
-            raise ValueError(f'Expected initial_v_S to have shape {expected_shape}, but it has shape {v_S.shape}')
+        v_S = initial_v_S
 
     iterations_finished = 0
     while True:
@@ -55,25 +47,25 @@ def evaluate_v_pi(
         if update_in_place:
             v_S_to_update = v_S
         else:
-            v_S_to_update = np.zeros_like(v_S)
+            v_S_to_update = {s: 0.0 for s in agent.SS}
 
         delta = 0.0
 
-        for s_i, s in enumerate(agent.SS):
+        for s in agent.SS:
 
-            prev_v = v_S[s_i]
+            prev_v = v_S[s]
 
             # calculate expected value of current state using current estimates of successor state-values
             new_v = np.sum([
 
-                agent.pi[s][a] * s.p_S_prime_R_given_A[a][s_prime][r] * (r.r + agent.gamma * v_S[s_prime_i])
+                agent.pi[s][a] * s.p_S_prime_R_given_A[a][s_prime][r] * (r.r + agent.gamma * v_S[s_prime])
 
                 for a in s.p_S_prime_R_given_A
-                for s_prime_i, s_prime in enumerate(s.p_S_prime_R_given_A[a])
+                for s_prime in s.p_S_prime_R_given_A[a]
                 for r in s.p_S_prime_R_given_A[a][s_prime]
             ])
 
-            v_S_to_update[s_i] = new_v
+            v_S_to_update[s] = new_v
 
             delta = max(delta, abs(prev_v - new_v))
 
@@ -92,7 +84,7 @@ def evaluate_v_pi(
 
     v_pi = {
         s: round_for_theta(v, theta)
-        for s, v in zip(agent.SS, v_S)
+        for s, v in v_S.items()
     }
 
     return v_pi, delta
@@ -127,17 +119,14 @@ def evaluate_q_pi(
 
     if initial_q_S_A is None:
         q_S_A = {
-            s: np.array([0.0] * len(agent.AA))
+            s: {
+                a: 0.0
+                for a in s.p_S_prime_R_given_A
+            }
             for s in agent.SS
         }
     else:
-        q_S_A = {
-            s: np.array([
-                initial_q_S_A[s][a]
-                for a in sorted(initial_q_S_A[s], key=lambda a: a.i)
-            ])
-            for s in initial_q_S_A
-        }
+        q_S_A = initial_q_S_A
 
     iterations_finished = 0
     while True:
@@ -146,7 +135,10 @@ def evaluate_q_pi(
             q_S_A_to_update = q_S_A
         else:
             q_S_A_to_update = {
-                s: np.zeros_like(q_S_A[s])
+                s: {
+                    a: 0.0
+                    for a in s.p_S_prime_R_given_A
+                }
                 for s in agent.SS
             }
 
@@ -154,24 +146,24 @@ def evaluate_q_pi(
 
         # update each state-action value
         for s in agent.SS:
-            for a_i, a in enumerate(s.p_S_prime_R_given_A.keys()):
+            for a in s.p_S_prime_R_given_A:
 
-                prev_q = q_S_A[s][a_i]
+                prev_q = q_S_A[s][a]
 
                 # calculate expected state-action value using current estimates of successor state-action values
                 new_q = np.sum([
 
                     # action is given, so start expectation with state/reward probability.
                     s.p_S_prime_R_given_A[a][s_prime][r] * (r.r + agent.gamma * np.sum([
-                        agent.pi[s_prime][a_prime] * q_S_A[s_prime][a_prime_i]
-                        for a_prime_i, a_prime in enumerate(s.p_S_prime_R_given_A)
+                        agent.pi[s_prime][a_prime] * q_S_A[s_prime][a_prime]
+                        for a_prime in s.p_S_prime_R_given_A
                      ]))
 
-                    for s_prime_i, s_prime in enumerate(s.p_S_prime_R_given_A[a])
+                    for s_prime in s.p_S_prime_R_given_A[a]
                     for r in s.p_S_prime_R_given_A[a][s_prime]
                 ])
 
-                q_S_A_to_update[s][a_i] = new_q
+                q_S_A_to_update[s][a] = new_q
 
                 delta = max(delta, abs(prev_q - new_q))
 
@@ -191,9 +183,9 @@ def evaluate_q_pi(
     q_pi = {
         s: {
             a: round_for_theta(q, theta)
-            for a, q in zip(agent.AA, q_S_A[s])
+            for a, q in q_S_A[s].items()
         }
-        for s in agent.SS
+        for s in q_S_A
     }
 
     return q_pi, delta
