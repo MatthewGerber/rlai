@@ -16,7 +16,7 @@ def evaluate_v_pi(
         num_iterations: Optional[int],
         update_in_place: bool,
         initial_v_S: Optional[Dict[MdpState, float]] = None
-) -> Dict[MdpState, float]:
+) -> Tuple[Dict[MdpState, float], float]:
     """
     Perform iterative policy evaluation of an agent's policy within an environment, returning state values.
 
@@ -27,7 +27,8 @@ def evaluate_v_pi(
     can be specified, but passing neither will raise an exception.
     :param update_in_place: Whether or not to update value estimates in place.
     :param initial_v_S: Initial guess at state-value, or None for no guess.
-    :return: Dictionary of MDP states and their estimated values.
+    :return: 2-tuple of (1) dictionary of MDP states and their estimated values under the agent's policy, and (2) final
+    value of delta.
     """
 
     theta, num_iterations = check_termination_criteria(
@@ -89,10 +90,12 @@ def evaluate_v_pi(
         ):
             break
 
-    return {
+    v_pi = {
         s: round_for_theta(v, theta)
         for s, v in zip(agent.SS, v_S)
     }
+
+    return v_pi, delta
 
 
 @rl_text(chapter=4, page=76)
@@ -102,7 +105,7 @@ def evaluate_q_pi(
         num_iterations: Optional[int],
         update_in_place: bool,
         initial_q_S_A: Dict[MdpState, Dict[Action, float]] = None
-) -> Dict[MdpState, Dict[Action, float]]:
+) -> Tuple[Dict[MdpState, Dict[Action, float]], float]:
     """
     Perform iterative policy evaluation of an agent's policy within an environment, returning state-action values.
 
@@ -113,7 +116,8 @@ def evaluate_q_pi(
     can be specified, but passing neither will raise an exception.
     :param update_in_place: Whether or not to update value estimates in place.
     :param initial_q_S_A: Initial guess at state-action value, or None for no guess.
-    :return: Dictionary of MDP states, actions, and their estimated values.
+    :return: 2-tuple of (1) dictionary of MDP states, actions, and their estimated values under the agent's policy, and
+    (2) final value of delta.
     """
 
     theta, num_iterations = check_termination_criteria(
@@ -184,13 +188,15 @@ def evaluate_q_pi(
         ):
             break
 
-    return {
+    q_pi = {
         s: {
             a: round_for_theta(q, theta)
             for a, q in zip(agent.AA, q_S_A[s])
         }
         for s in agent.SS
     }
+
+    return q_pi, delta
 
 
 def check_termination_criteria(

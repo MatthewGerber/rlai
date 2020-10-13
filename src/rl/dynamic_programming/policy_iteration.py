@@ -30,7 +30,7 @@ def iterate_policy_v_pi(
 
         print(f'Policy iteration {i + 1}:  ', end='')
 
-        v_pi = evaluate_v_pi(
+        v_pi, _ = evaluate_v_pi(
             agent=agent,
             theta=theta,
             num_iterations=None,
@@ -72,7 +72,7 @@ def iterate_policy_q_pi(
 
         print(f'Policy iteration {i + 1}:  ', end='')
 
-        q_pi = evaluate_q_pi(
+        q_pi, _ = evaluate_q_pi(
             agent=agent,
             theta=theta,
             num_iterations=None,
