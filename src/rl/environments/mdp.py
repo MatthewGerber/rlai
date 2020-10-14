@@ -366,11 +366,19 @@ class GamblersProblem(MdpEnvironment):
         for s in self.SS:
             for a in s.p_S_prime_R_given_A:
 
+                # next state and reward if heads
                 s_prime_h = self.SS[s.i + a.i]
+                if s_prime_h.i > 100:
+                    raise ValueError('Expected state to be <= 100')
+
                 r_h = r_win if not s.terminal and s_prime_h.i == 100 else r_not_win
                 s.p_S_prime_R_given_A[a][s_prime_h][r_h] = self.p_h
 
+                # next state and reward if tails
                 s_prime_t = self.SS[s.i - a.i]
+                if s_prime_t.i < 0:
+                    raise ValueError('Expected state to be >= 0')
+
                 r_t = r_win if not s.terminal and s_prime_t.i == 100 else r_not_win
                 s.p_S_prime_R_given_A[a][s_prime_t][r_t] += self.p_t  # add the probability, in case the results of head and tail are the same.
 
