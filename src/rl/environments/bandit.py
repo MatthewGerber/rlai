@@ -152,10 +152,13 @@ class KArmedBandit(Environment):
         return bandit, unparsed_args
 
     def reset_for_new_run(
-            self
+            self,
+            agent
     ):
         """
         Reset the the bandit, initializing arms to new expected values.
+
+        :param agent: Agent.
         """
 
         # get new arm reward means and initialize new arms
@@ -186,38 +189,23 @@ class KArmedBandit(Environment):
 
         return self.arms[arm].pull()
 
-    def run(
-            self,
-            agent: Agent,
-            T: int,
-            monitor: Monitor
-    ):
-        """
-        Run the environment with an agent.
-
-        :param agent: Agent to run.
-        :param T: Number of time steps to run.
-        :param monitor: Monitor.
-        """
-
-        failed_steps = [
-            t
-            for t in range(T)
-            if not self.run_step(t, agent, monitor)
-        ]
-
-        if len(failed_steps) > 0:
-            raise ValueError(f'Failed steps:  {failed_steps}')
-
     def run_step(
             self,
             t: int,
             agent: Agent,
             monitor: Monitor
     ) -> bool:
+        """
+        Run a step of the environment with an agent.
+
+        :param t: Step.
+        :param agent: Agent.
+        :param monitor: Monitor.
+        :return: True if a terminal state was entered and the run should terminate, and False otherwise.
+        """
 
         if self.random_state.random_sample() < self.reset_probability:
-            self.reset_for_new_run()
+            self.reset_for_new_run(agent)
 
         action = agent.act(t=t)
         monitor.report(t=t, agent_action=action, optimal_action=Action(self.best_arm.i))
@@ -227,7 +215,7 @@ class KArmedBandit(Environment):
 
         agent.reward(reward)
 
-        return True
+        return False
 
     def __init__(
             self,

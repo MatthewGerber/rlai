@@ -124,7 +124,7 @@ def run(
         for r in range(parsed_args.n_runs):
 
             agent.reset_for_new_run()
-            environment.reset_for_new_run()
+            environment.reset_for_new_run(agent)
             monitor.reset_for_new_run()
 
             environment.run(

@@ -1,3 +1,5 @@
+from typing import Optional
+
 from rl.actions import Action
 from rl.utils import IncrementalSampleAverager
 
@@ -40,6 +42,8 @@ class Monitor:
             self.cumulative_reward += action_reward
             self.t_average_cumulative_reward[t].update(self.cumulative_reward)
 
+        self.most_recent_time_step = t
+
     def __init__(
             self,
             T: int
@@ -62,3 +66,4 @@ class Monitor:
             IncrementalSampleAverager()
             for _ in range(self.T)
         ]
+        self.most_recent_time_step: Optional[int] = None

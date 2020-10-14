@@ -1,6 +1,6 @@
 from abc import ABC
 from argparse import Namespace, ArgumentParser
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 import numpy as np
 from numpy.random import RandomState
@@ -67,6 +67,9 @@ class MdpEnvironment(Environment, ABC):
 
         self.SS = SS
         self.RR = RR
+        self.terminal_states = [s for s in self.SS if s.terminal]
+        self.nonterminal_states = [s for s in self.SS if not s.terminal]
+        self.state: Optional[MdpState] = None
 
         # initialize the model within each state, now that SS has been populated.
         for s in self.SS:
@@ -161,12 +164,31 @@ class Gridworld(MdpEnvironment):
 
         return gridworld, unparsed_args
 
-    def run(
+    def reset_for_new_run(
             self,
-            agent: Agent,
-            T: int,
-            monitor: Monitor
+            agent
     ):
+        """
+        Reset for a new run.
+        :param agent: Agent.
+        """
+
+        raise ValueError()
+
+    def run_step(
+            self,
+            t: int,
+            agent: Agent,
+            monitor: Monitor
+    ) -> bool:
+        """
+        Run a step of the environment with an agent.
+
+        :param t: Step.
+        :param agent: Agent.
+        :param monitor: Monitor.
+        :return: True if a terminal state was entered and the run should terminate, and False otherwise.
+        """
         pass
 
     def set_model_probabilities(
@@ -315,8 +337,64 @@ class GamblersProblem(MdpEnvironment):
 
         return gamblers_problem, unparsed_args
 
-    def run(self, agent, T: int, monitor: Monitor):
-        pass
+    def reset_for_new_run(
+            self,
+            agent
+    ):
+        """
+        Reset the game for a new run.
+
+        :param agent: Agent.
+        """
+
+        self.state = self.random_state.choice(self.nonterminal_states)
+
+        # tell the agent about the initial state
+        agent.sense(
+            state=self.state,
+            t=-1
+        )
+
+    def run_step(
+            self,
+            t: int,
+            agent: Agent,
+            monitor: Monitor
+    ) -> bool:
+        """
+        Run a step of the environment with an agent.
+
+        :param t: Step.
+        :param agent: Agent.
+        :param monitor: Monitor.
+        :return: True if a terminal state was entered and the run should terminate, and False otherwise.
+        """
+
+        # get agent's stake
+        stake = agent.act(t=t)
+
+        # flip a (possibly unfair) coin
+        heads = self.random_state.random_sample() <= self.p_h
+
+        # get next state based on stake and coin flip
+        if heads:
+            self.state = self.SS[self.state.i + stake.i]
+        else:
+            self.state = self.SS[self.state.i - stake.i]
+
+        # tell agent new state
+        agent.sense(
+            state=self.state,
+            t=t
+        )
+
+        # reward agent
+        reward = self.r_win.r if self.state == 100 else self.r_not_win.r
+        agent.reward(reward)
+        monitor.report(t=t, action_reward=reward)
+
+        # return whether terminal
+        return self.state.terminal
 
     def __init__(
             self,
@@ -335,23 +413,32 @@ class GamblersProblem(MdpEnvironment):
         self.p_h = p_h
         self.p_t = 1 - p_h
 
+        # the range of possible actions:  stake 0 (no play) through 50 (at capital=50). beyond a capital of 50 the
+        # agent is only allowed to stake an amount that would take them to 100 on a win.
         AA = [Action(i=stake, name=f'Stake {stake}') for stake in range(0, 51)]
 
-        r_not_win = Reward(0, 0.0)
-        r_win = Reward(1, 1.0)
-        RR = [r_not_win, r_win]
+        # two possible rewards:  0.0 and 1.0
+        self.r_not_win = Reward(0, 0.0)
+        self.r_win = Reward(1, 1.0)
+        RR = [self.r_not_win, self.r_win]
 
+        # range of possible states (capital levels)
         SS = [
             MdpState(
                 i=capital,
+
+                # the range of permissible actions is state dependent
                 AA=[
                     a
                     for a in AA
                     if a.i <= min(capital, 100 - capital)
                 ],
+
                 RR=RR,
                 terminal=capital == 0 or capital == 100
             )
+
+            # include terminal capital levels of 0 and 100
             for capital in range(0, 101)
         ]
 
@@ -371,7 +458,7 @@ class GamblersProblem(MdpEnvironment):
                 if s_prime_h.i > 100:
                     raise ValueError('Expected state to be <= 100')
 
-                r_h = r_win if not s.terminal and s_prime_h.i == 100 else r_not_win
+                r_h = self.r_win if not s.terminal and s_prime_h.i == 100 else self.r_not_win
                 s.p_S_prime_R_given_A[a][s_prime_h][r_h] = self.p_h
 
                 # next state and reward if tails
@@ -379,7 +466,7 @@ class GamblersProblem(MdpEnvironment):
                 if s_prime_t.i < 0:
                     raise ValueError('Expected state to be >= 0')
 
-                r_t = r_win if not s.terminal and s_prime_t.i == 100 else r_not_win
+                r_t = self.r_win if not s.terminal and s_prime_t.i == 100 else self.r_not_win
                 s.p_S_prime_R_given_A[a][s_prime_t][r_t] += self.p_t  # add the probability, in case the results of head and tail are the same.
 
         self.check_marginal_probabilities()

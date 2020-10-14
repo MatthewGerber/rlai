@@ -1,10 +1,11 @@
 from abc import ABC, abstractmethod
 from argparse import Namespace, ArgumentParser
-from typing import Tuple, List, Any
+from typing import Tuple, List, Any, final
 
 from numpy.random import RandomState
 
 from rl.actions import Action
+from rl.agents import Agent
 from rl.runners.monitor import Monitor
 
 
@@ -43,6 +44,16 @@ class Environment(ABC):
         pass
 
     @abstractmethod
+    def reset_for_new_run(
+            self,
+            agent  # can't provide Agent type hint due to circular reference with Environment
+    ):
+        """
+        Reset the the environment.
+        """
+        pass
+
+    @final
     def run(
             self,
             agent,  # can't provide Agent type hint due to circular reference with Environment
@@ -55,6 +66,30 @@ class Environment(ABC):
         :param agent: Agent to run.
         :param T: Number of time steps to run.
         :param monitor: Monitor.
+        """
+
+        terminated = any(
+            self.run_step(t, agent, monitor)
+            for t in range(T)
+        )
+
+        if terminated:
+            print(f'Environment run terminated episodically after {monitor.most_recent_time_step} step(s).')
+
+    @abstractmethod
+    def run_step(
+            self,
+            t: int,
+            agent: Agent,
+            monitor: Monitor
+    ) -> bool:
+        """
+        Run a step of the environment with an agent.
+
+        :param t: Step.
+        :param agent: Agent.
+        :param monitor: Monitor.
+        :return: True if a terminal state was entered and the run should terminate, and False otherwise.
         """
         pass
 
