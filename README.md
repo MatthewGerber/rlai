@@ -18,8 +18,9 @@
   - [`rl.dynamic_programming.policy_improvement.improve_policy_with_v_pi`](#rldynamic_programmingpolicy_improvementimprove_policy_with_v_pi)
   - [`rl.dynamic_programming.policy_iteration.iterate_policy_q_pi`](#rldynamic_programmingpolicy_iterationiterate_policy_q_pi)
   - [`rl.dynamic_programming.policy_iteration.iterate_policy_v_pi`](#rldynamic_programmingpolicy_iterationiterate_policy_v_pi)
-  - [`rl.dynamic_programming.value_iteration.iterate_value_q_pi`](#rldynamic_programmingvalue_iterationiterate_value_q_pi)
   - [`rl.dynamic_programming.value_iteration.iterate_value_v_pi`](#rldynamic_programmingvalue_iterationiterate_value_v_pi)
+  - [`rl.dynamic_programming.value_iteration.iterate_value_q_pi`](#rldynamic_programmingvalue_iterationiterate_value_q_pi)
+  - [`rl.environments.mdp.GamblersProblem`](#rlenvironmentsmdpgamblersproblem)
 <!--TOC-->
 
 # Goals
@@ -74,28 +75,28 @@ Gridworld MDP environment.
 Perform iterative policy evaluation of an agent's policy within an environment, returning state values.
 
     :param agent: MDP agent.
-    :param environment: MDP environment.
     :param theta: Minimum tolerated change in state value estimates, below which evaluation terminates. Either `theta`
     or `num_iterations` (or both) can be specified, but passing neither will raise an exception.
     :param num_iterations: Number of evaluation iterations to execute.  Either `theta` or `num_iterations` (or both)
     can be specified, but passing neither will raise an exception.
     :param update_in_place: Whether or not to update value estimates in place.
     :param initial_v_S: Initial guess at state-value, or None for no guess.
-    :return: Dictionary of MDP states and their estimated values.
+    :return: 2-tuple of (1) dictionary of MDP states and their estimated values under the agent's policy, and (2) final
+    value of delta.
 ```
 ## `rl.dynamic_programming.policy_evaluation.evaluate_q_pi`
 ```
 Perform iterative policy evaluation of an agent's policy within an environment, returning state-action values.
 
     :param agent: MDP agent.
-    :param environment: MDP environment.
     :param theta: Minimum tolerated change in state value estimates, below which evaluation terminates. Either `theta`
     or `num_iterations` (or both) can be specified, but passing neither will raise an exception.
     :param num_iterations: Number of evaluation iterations to execute.  Either `theta` or `num_iterations` (or both)
     can be specified, but passing neither will raise an exception.
     :param update_in_place: Whether or not to update value estimates in place.
     :param initial_q_S_A: Initial guess at state-action value, or None for no guess.
-    :return: Dictionary of MDP states, actions, and their estimated values.
+    :return: 2-tuple of (1) dictionary of MDP states, actions, and their estimated values under the agent's policy, and
+    (2) final value of delta.
 ```
 ## `rl.dynamic_programming.policy_improvement.improve_policy_with_q_pi`
 ```
@@ -114,7 +115,6 @@ Improve an agent's policy according to its state-value estimates. This makes the
     will be assigned equal probability.
 
     :param agent: Agent.
-    :param environment: Environment.
     :param v_pi: State-value estimates for the agent's policy.
     :return: True if policy was changed and False if the policy was not changed.
 ```
@@ -123,7 +123,6 @@ Improve an agent's policy according to its state-value estimates. This makes the
 Run policy iteration on an agent using state-value estimates.
 
     :param agent: Agent.
-    :param environment: Environment.
     :param theta: See `evaluate_q_pi`.
     :param update_in_place: See `evaluate_q_pi`.
     :return: Final state-action value estimates.
@@ -133,30 +132,33 @@ Run policy iteration on an agent using state-value estimates.
 Run policy iteration on an agent using state-value estimates.
 
     :param agent: Agent.
-    :param environment: Environment.
     :param theta: See `evaluate_v_pi`.
     :param update_in_place: See `evaluate_v_pi`.
     :return: Final state-value estimates.
-```
-## `rl.dynamic_programming.value_iteration.iterate_value_q_pi`
-```
-Run policy iteration on an agent using state-value estimates.
-
-    :param agent: Agent.
-    :param environment: Environment.
-    :param evaluation_iterations_per_improvement: Number of policy evaluation iterations to execute for each iteration
-    of improvement (e.g., passing 1 results in Equation 4.10).
-    :param update_in_place: See `evaluate_v_pi`.
-    :return: Final state-action value estimates.
 ```
 ## `rl.dynamic_programming.value_iteration.iterate_value_v_pi`
 ```
 Run value iteration on an agent using state-value estimates.
 
     :param agent: Agent.
-    :param environment: Environment.
+    :param theta: See `evaluate_v_pi`.
     :param evaluation_iterations_per_improvement: Number of policy evaluation iterations to execute for each iteration
     of improvement (e.g., passing 1 results in Equation 4.10).
     :param update_in_place: See `evaluate_v_pi`.
     :return: Final state-value estimates.
+```
+## `rl.dynamic_programming.value_iteration.iterate_value_q_pi`
+```
+Run value iteration on an agent using state-action value estimates.
+
+    :param agent: Agent.
+    :param theta: See `evaluate_q_pi`.
+    :param evaluation_iterations_per_improvement: Number of policy evaluation iterations to execute for each iteration
+    of improvement.
+    :param update_in_place: See `evaluate_q_pi`.
+    :return: Final state-action value estimates.
+```
+## `rl.environments.mdp.GamblersProblem`
+```
+Gambler's problem MDP environment.
 ```
