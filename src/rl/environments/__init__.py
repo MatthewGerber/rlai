@@ -68,6 +68,7 @@ class Environment(ABC):
         :param monitor: Monitor.
         """
 
+        # use any to short-circuit the runs if any step returns True (for termination)
         any(
             self.run_step(t, agent, monitor)
             for t in range(T)

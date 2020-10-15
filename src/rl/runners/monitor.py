@@ -16,7 +16,7 @@ class Monitor:
         Reset the monitor for a new run.
         """
 
-        self.cumulative_reward = 0
+        self.cumulative_reward = 0.0
 
     def report(
             self,

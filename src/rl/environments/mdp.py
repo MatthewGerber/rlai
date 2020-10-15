@@ -69,10 +69,10 @@ class MdpEnvironment(Environment, ABC):
             action: Action
     ) -> Tuple[MdpState, Reward]:
         """
-        Transition to the next state given an action.
+        Get the next state and reward for an action.
 
         :param action: Action.
-        :return: 2-tuple of next state and ensuing reward.
+        :return: 2-tuple of next state and associated reward.
         """
         pass
 
@@ -136,7 +136,7 @@ class MdpEnvironment(Environment, ABC):
         self.nonterminal_states = [s for s in self.SS if not s.terminal]
         self.state: Optional[MdpState] = None
 
-        # initialize the model within each state, now that SS has been populated.
+        # initialize the model within each state
         for s in self.SS:
             s.init_model(self.SS)
 
@@ -239,7 +239,7 @@ class Gridworld(MdpEnvironment):
         :param action: Action.
         :return: 2-tuple of next state and ensuing reward.
         """
-        raise ValueError()
+        raise ValueError('Not yet implemented')
 
     def set_model_probabilities(
             self,
@@ -395,10 +395,10 @@ class GamblersProblem(MdpEnvironment):
             action
     ) -> Tuple[MdpState, Reward]:
         """
-        Get the next state and reward given an action.
+        Get the next state and reward for an action.
 
         :param action: Action.
-        :return: 2-tuple of next state and ensuing reward.
+        :return: 2-tuple of next state and associated reward.
         """
 
         # flip a (possibly unfair) coin

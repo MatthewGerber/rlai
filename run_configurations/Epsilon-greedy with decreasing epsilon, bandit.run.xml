@@ -13,7 +13,7 @@
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
     <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/rl/runners/runner.py" />
-    <option name="PARAMETERS" value="--T 1000 --n-runs 2000 --figure-name &quot;Epsilon-greedy with decreasing epsilon, bandit&quot; --environment rl.environments.bandit.KArmedBandit --k 10 --agent rl.agents.q_value.EpsilonGreedy --epsilon 0.2 0.1 0.01 0.0 --epsilon-reduction-rate 0.01" />
+    <option name="PARAMETERS" value="--T 1000 --n-runs 2000 --figure-name &quot;Epsilon-greedy with decreasing epsilon, bandit&quot; --save-to-pdf --environment rl.environments.bandit.KArmedBandit --k 10 --agent rl.agents.q_value.EpsilonGreedy --epsilon 0.2 0.1 0.01 0.0 --epsilon-reduction-rate 0.01" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />

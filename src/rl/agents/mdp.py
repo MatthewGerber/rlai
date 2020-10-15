@@ -15,7 +15,7 @@ from rl.utils import sample_list_item
 
 class MdpAgent(Agent, ABC):
     """
-    MDP agent.
+    MDP agent. Adds the concepts of state, reward discounting, and policy-based action to the base agent.
     """
 
     @classmethod
@@ -50,7 +50,7 @@ class MdpAgent(Agent, ABC):
             args
     ) -> Tuple[Namespace, List[str]]:
         """
-        Parse arguments for the MDP solver.
+        Parse arguments for the specified MDP solver.
 
         :param args: Aguments.
         :return: 2-tuple of parsed and unparsed arguments.
@@ -61,19 +61,19 @@ class MdpAgent(Agent, ABC):
         parser.add_argument(
             '--mdp-solver',
             type=str,
-            help='MDP solver function.'
+            help='Fully-qualified name of the MDP solver function to use.'
         )
 
         parser.add_argument(
             '--theta',
             type=float,
-            help='Minimum tolerated change in state value estimates, below which policy evaluation terminates.'
+            help='Minimum tolerated change in value estimates, below which policy evaluation terminates.'
         )
 
         parser.add_argument(
             '--update-in-place',
-            type=bool,
-            help='True to update the policy in place (usually quicker), otherwise False.'
+            action='store_true',
+            help='Update the policy in place (usually quicker).'
         )
 
         parser.add_argument(
@@ -202,7 +202,15 @@ class Stochastic(MdpAgent):
             self,
             r: float
     ):
-        pass
+        """
+        Reward the agent.
+
+        :param r: Reward.
+        """
+
+        super().reward(
+            r=r
+        )
 
     def __init__(
             self,
