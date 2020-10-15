@@ -1,5 +1,6 @@
 from abc import ABC
 from argparse import Namespace, ArgumentParser
+from importlib import import_module
 from typing import List, Tuple
 
 import numpy as np
@@ -41,6 +42,47 @@ class MdpAgent(Agent, ABC):
         )
 
         parsed_args, unparsed_args = parser.parse_known_args(unparsed_args, parsed_args)
+
+        return parsed_args, unparsed_args
+
+    @staticmethod
+    def parse_mdp_solver_args(
+            args
+    ) -> Tuple[Namespace, List[str]]:
+        """
+        Parse arguments for the MDP solver.
+
+        :param args: Aguments.
+        :return: 2-tuple of parsed and unparsed arguments.
+        """
+
+        parser = ArgumentParser(allow_abbrev=False)
+
+        parser.add_argument(
+            '--mdp-solver',
+            type=str,
+            help='MDP solver function.'
+        )
+
+        parser.add_argument(
+            '--theta',
+            type=float,
+            help='Minimum tolerated change in state value estimates, below which policy evaluation terminates.'
+        )
+
+        parser.add_argument(
+            '--update-in-place',
+            type=bool,
+            help='True to update the policy in place (usually quicker), otherwise False.'
+        )
+
+        parser.add_argument(
+            '--evaluation-iterations-per-improvement',
+            type=int,
+            help='Number of policy evaluation iterations to execute for each iteration of improvement.'
+        )
+
+        parsed_args, unparsed_args = parser.parse_known_args(args)
 
         return parsed_args, unparsed_args
     
@@ -117,6 +159,24 @@ class Stochastic(MdpAgent):
             )
         ]
 
+        # get the mdp solver and arguments
+        parsed_mdp_args, unparsed_args = cls.parse_mdp_solver_args(unparsed_args)
+        solver_module_name, solver_function_name = parsed_mdp_args.mdp_solver.rsplit('.', maxsplit=1)
+        solver_function_module = import_module(solver_module_name)
+        solver_function = getattr(solver_function_module, solver_function_name)
+        solver_function_arguments = {
+            k: v
+            for k, v in dict(parsed_mdp_args._get_kwargs()).items()
+            if k != 'mdp_solver' and v is not None
+        }
+
+        # have each agent solve the mdp with the specified function/parameters
+        for agent in agents:
+            solver_function(
+                agent,
+                **solver_function_arguments
+            )
+
         return agents, unparsed_args
 
     def __act__(
@@ -130,9 +190,18 @@ class Stochastic(MdpAgent):
         :return: Action.
         """
 
-        return sample_list_item(self.AA, np.array([self.pi[self.most_recent_state][a] for a in self.AA]), self.random_state)
+        action_prob = self.pi[self.most_recent_state]
 
-    def reward(self, r: float):
+        return sample_list_item(
+            x=list(action_prob.keys()),
+            probs=np.array(list(action_prob.values())),
+            random_state=self.random_state
+        )
+
+    def reward(
+            self,
+            r: float
+    ):
         pass
 
     def __init__(

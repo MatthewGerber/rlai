@@ -1,6 +1,6 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 from argparse import Namespace, ArgumentParser
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, final
 
 import numpy as np
 from numpy.random import RandomState
@@ -40,6 +40,71 @@ class MdpEnvironment(Environment, ABC):
 
                 if marginal_prob != 1.0:
                     raise ValueError(f'Expected state-marginal probability of 1.0, got {marginal_prob}.')
+
+    def reset_for_new_run(
+            self,
+            agent
+    ):
+        """
+        Reset the environment to a random nonterminal state.
+
+        :param agent: Agent.
+        """
+
+        super().reset_for_new_run(
+            agent=agent
+        )
+
+        self.state = self.random_state.choice(self.nonterminal_states)
+
+        # tell the agent about the initial state
+        agent.sense(
+            state=self.state,
+            t=0
+        )
+
+    @abstractmethod
+    def get_next_state_and_reward(
+            self,
+            action: Action
+    ) -> Tuple[MdpState, Reward]:
+        """
+        Transition to the next state given an action.
+
+        :param action: Action.
+        :return: 2-tuple of next state and ensuing reward.
+        """
+        pass
+
+    @final
+    def run_step(
+            self,
+            t: int,
+            agent: Agent,
+            monitor: Monitor
+    ) -> bool:
+        """
+        Run a step of the environment with an agent.
+
+        :param t: Step.
+        :param agent: Agent.
+        :param monitor: Monitor.
+        :return: True if a terminal state was entered and the run should terminate, and False otherwise.
+        """
+
+        self.state, reward = self.get_next_state_and_reward(
+            action=agent.act(t=t)
+        )
+
+        agent.sense(
+            state=self.state,
+            t=t+1
+        )
+
+        agent.reward(reward.r)
+        monitor.report(t=t+1, action_reward=reward.r)
+
+        return self.state.terminal
 
     def __init__(
             self,
@@ -164,32 +229,17 @@ class Gridworld(MdpEnvironment):
 
         return gridworld, unparsed_args
 
-    def reset_for_new_run(
+    def get_next_state_and_reward(
             self,
-            agent
-    ):
+            action
+    ) -> Tuple[MdpState, Reward]:
         """
-        Reset for a new run.
-        :param agent: Agent.
-        """
+        Transition to the next state given an action.
 
+        :param action: Action.
+        :return: 2-tuple of next state and ensuing reward.
+        """
         raise ValueError()
-
-    def run_step(
-            self,
-            t: int,
-            agent: Agent,
-            monitor: Monitor
-    ) -> bool:
-        """
-        Run a step of the environment with an agent.
-
-        :param t: Step.
-        :param agent: Agent.
-        :param monitor: Monitor.
-        :return: True if a terminal state was entered and the run should terminate, and False otherwise.
-        """
-        pass
 
     def set_model_probabilities(
             self,
@@ -285,6 +335,9 @@ class Gridworld(MdpEnvironment):
 
 @rl_text(chapter=4, page=84)
 class GamblersProblem(MdpEnvironment):
+    """
+    Gambler's problem MDP environment.
+    """
 
     @classmethod
     def parse_arguments(
@@ -337,64 +390,29 @@ class GamblersProblem(MdpEnvironment):
 
         return gamblers_problem, unparsed_args
 
-    def reset_for_new_run(
+    def get_next_state_and_reward(
             self,
-            agent
-    ):
+            action
+    ) -> Tuple[MdpState, Reward]:
         """
-        Reset the game for a new run.
+        Get the next state and reward given an action.
 
-        :param agent: Agent.
+        :param action: Action.
+        :return: 2-tuple of next state and ensuing reward.
         """
-
-        self.state = self.random_state.choice(self.nonterminal_states)
-
-        # tell the agent about the initial state
-        agent.sense(
-            state=self.state,
-            t=-1
-        )
-
-    def run_step(
-            self,
-            t: int,
-            agent: Agent,
-            monitor: Monitor
-    ) -> bool:
-        """
-        Run a step of the environment with an agent.
-
-        :param t: Step.
-        :param agent: Agent.
-        :param monitor: Monitor.
-        :return: True if a terminal state was entered and the run should terminate, and False otherwise.
-        """
-
-        # get agent's stake
-        stake = agent.act(t=t)
 
         # flip a (possibly unfair) coin
         heads = self.random_state.random_sample() <= self.p_h
 
         # get next state based on stake and coin flip
         if heads:
-            self.state = self.SS[self.state.i + stake.i]
+            state = self.SS[self.state.i + action.i]
         else:
-            self.state = self.SS[self.state.i - stake.i]
+            state = self.SS[self.state.i - action.i]
 
-        # tell agent new state
-        agent.sense(
-            state=self.state,
-            t=t
-        )
+        reward = self.r_win if state.i == 100 else self.r_not_win
 
-        # reward agent
-        reward = self.r_win.r if self.state == 100 else self.r_not_win.r
-        agent.reward(reward)
-        monitor.report(t=t, action_reward=reward)
-
-        # return whether terminal
-        return self.state.terminal
+        return state, reward
 
     def __init__(
             self,

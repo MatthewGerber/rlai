@@ -161,6 +161,10 @@ class KArmedBandit(Environment):
         :param agent: Agent.
         """
 
+        super().reset_for_new_run(
+            agent=agent
+        )
+
         # get new arm reward means and initialize new arms
         q_star_means = self.random_state.normal(loc=self.q_star_mean, scale=self.q_star_variance, size=self.k)
 

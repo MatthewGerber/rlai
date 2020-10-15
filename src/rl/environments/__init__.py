@@ -68,13 +68,10 @@ class Environment(ABC):
         :param monitor: Monitor.
         """
 
-        terminated = any(
+        any(
             self.run_step(t, agent, monitor)
             for t in range(T)
         )
-
-        if terminated:
-            print(f'Environment run terminated episodically after {monitor.most_recent_time_step} step(s).')
 
     @abstractmethod
     def run_step(

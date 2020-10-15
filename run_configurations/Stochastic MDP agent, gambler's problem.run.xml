@@ -13,7 +13,7 @@
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
     <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/rl/runners/runner.py" />
-    <option name="PARAMETERS" value="--T 1000 --n-runs 2000 --figure-name &quot;Figure 2.5:  Preference gradient, bandit&quot; --save-to-pdf --environment rl.environments.bandit.KArmedBandit --k 10 --q-star-mean 4 --agent rl.agents.h_value.PreferenceGradient --step-size-alpha 0.1 --use-reward-baseline" />
+    <option name="PARAMETERS" value="--T 50 --n-runs 50000 --environment rl.environments.mdp.GamblersProblem --p-h 0.4 --agent rl.agents.mdp.Stochastic --gamma 1 --mdp-solver rl.dynamic_programming.value_iteration.iterate_value_v_pi --theta 0.001 --update-in-place True --evaluation-iterations-per-improvement 1" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />

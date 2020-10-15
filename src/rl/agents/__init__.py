@@ -57,6 +57,8 @@ class Agent(ABC):
 
         self.most_recent_action = None
         self.most_recent_action_tick = None
+        self.most_recent_state = None
+        self.most_recent_state_tick = None
         self.N_t_A = np.zeros_like(self.N_t_A)
 
     def sense(
