@@ -15,9 +15,9 @@ from rl.environments.mdp import Gridworld
 
 def test_evaluate_v_pi():
 
-    mdp_environment: Gridworld = Gridworld.example_4_1()
-
     random_state = RandomState(12345)
+
+    mdp_environment: Gridworld = Gridworld.example_4_1(random_state)
 
     mdp_agent = Stochastic(
         mdp_environment.AA,
@@ -63,9 +63,9 @@ def test_evaluate_v_pi():
 
 def test_evaluate_q_pi():
 
-    mdp_environment: Gridworld = Gridworld.example_4_1()
-
     random_state = RandomState(12345)
+
+    mdp_environment: Gridworld = Gridworld.example_4_1(random_state)
 
     mdp_agent = Stochastic(
         mdp_environment.AA,
@@ -116,9 +116,9 @@ def test_evaluate_q_pi():
 
 def test_policy_iteration():
 
-    mdp_environment: Gridworld = Gridworld.example_4_1()
-
     random_state = RandomState(12345)
+
+    mdp_environment: Gridworld = Gridworld.example_4_1(random_state)
 
     # state-value policy iteration
     mdp_agent_v_pi = Stochastic(
@@ -156,9 +156,9 @@ def test_policy_iteration():
 
 def test_value_iteration():
 
-    mdp_environment: Gridworld = Gridworld.example_4_1()
-
     random_state = RandomState(12345)
+
+    mdp_environment: Gridworld = Gridworld.example_4_1(random_state)
 
     # run policy iteration on v_pi
     mdp_agent_v_pi_policy_iteration = Stochastic(
