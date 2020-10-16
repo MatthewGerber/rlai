@@ -93,16 +93,21 @@ def sample_list_item(
     Sample a list item according to the items' probabilities.
 
     :param x: Items to sample.
-    :param probs: Probabilities (must have same length as `x`).
+    :param probs: Probabilities (must have same length as `x` and sum to 1).
     :param random_state: Random state.
     :return: Sampled list item.
     """
 
     cdf_y_rand = random_state.random_sample()
 
+    cum_probs = probs.cumsum()
+    final_cum_prob = cum_probs[-1]
+    if abs(1.0 - final_cum_prob) > 0.0000001:
+        raise ValueError(f'Expected cumulative probabilities to sum to 1, but got {final_cum_prob} instead.')
+
     x_i = next(
         i
-        for i, cum_prob in enumerate(probs.cumsum())
+        for i, cum_prob in enumerate(cum_probs)
         if cdf_y_rand < cum_prob
     )
 

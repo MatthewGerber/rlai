@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Stochastic MDP agent, gambler's problem" type="PythonConfigurationType" factoryName="Python" folderName="Chapter 3">
+  <configuration default="false" name="Stochastic MDP agent, gambler's problem" type="PythonConfigurationType" factoryName="Python" folderName="Chapter 4">
     <module name="rl" />
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />

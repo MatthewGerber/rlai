@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 from argparse import Namespace, ArgumentParser
 from typing import List, Tuple, Optional, final
 
@@ -12,6 +12,7 @@ from rl.meta import rl_text
 from rl.rewards import Reward
 from rl.runners.monitor import Monitor
 from rl.states.mdp import MdpState
+from rl.utils import sample_list_item
 
 
 @rl_text(chapter=3, page=47)
@@ -63,19 +64,6 @@ class MdpEnvironment(Environment, ABC):
             t=0
         )
 
-    @abstractmethod
-    def get_next_state_and_reward(
-            self,
-            action: Action
-    ) -> Tuple[MdpState, Reward]:
-        """
-        Get the next state and reward for an action.
-
-        :param action: Action.
-        :return: 2-tuple of next state and associated reward.
-        """
-        pass
-
     @final
     def run_step(
             self,
@@ -92,8 +80,29 @@ class MdpEnvironment(Environment, ABC):
         :return: True if a terminal state was entered and the run should terminate, and False otherwise.
         """
 
-        self.state, reward = self.get_next_state_and_reward(
-            action=agent.act(t=t)
+        a = agent.act(t=t)
+
+        # get next-state / reward tuples
+        s_prime_rewards = [
+            (s_prime, reward)
+            for s_prime in self.state.p_S_prime_R_given_A[a]
+            for reward in self.state.p_S_prime_R_given_A[a][s_prime]
+            if self.state.p_S_prime_R_given_A[a][s_prime][reward] > 0.0
+        ]
+
+        # get probability of each tuple
+        probs = np.array([
+            self.state.p_S_prime_R_given_A[a][s_prime][reward]
+            for s_prime in self.state.p_S_prime_R_given_A[a]
+            for reward in self.state.p_S_prime_R_given_A[a][s_prime]
+            if self.state.p_S_prime_R_given_A[a][s_prime][reward] > 0.0
+        ])
+
+        # sample next-state / reward
+        self.state, reward = sample_list_item(
+            x=s_prime_rewards,
+            probs=probs,
+            random_state=self.random_state
         )
 
         agent.sense(
@@ -149,9 +158,12 @@ class Gridworld(MdpEnvironment):
 
     @staticmethod
     def example_4_1(
+            random_state: RandomState
     ):
         """
         Construct the Gridworld for Example 4.1.
+
+        :param random_state: Random state.
         :return: Gridworld.
         """
 
@@ -167,7 +179,7 @@ class Gridworld(MdpEnvironment):
 
         g = Gridworld(
             name='Example 4.1',
-            random_state=None,
+            random_state=random_state,
             n_rows=4,
             n_columns=4,
             RR=RR
@@ -175,10 +187,36 @@ class Gridworld(MdpEnvironment):
 
         g.grid[0, 0].terminal = g.grid[3, 3].terminal = True
 
-        g.set_model_probabilities(
-            nonterminal_reward=r_minus_one,
-            terminal_reward=r_zero
-        )
+        # set nonterminal reward probabilities
+        for a in g.AA:
+
+            # arrange grid such that a row-to-row scan will generate the appropriate state transition sequences for the
+            # current action.
+            if a == g.a_down:
+                grid = g.grid
+            elif a == g.a_up:
+                grid = np.flipud(g.grid)
+            elif a == g.a_right:
+                grid = g.grid.transpose()
+            elif a == g.a_left:
+                grid = np.flipud(g.grid.transpose())
+            else:
+                raise ValueError(f'Unknown action:  {a}')
+
+            # go row by row, with the final row transitioning to itself
+            for s_row_i, s_prime_row_i in zip(range(grid.shape[0]), list(range(1, grid.shape[0])) + [-1]):
+                for s, s_prime in zip(grid[s_row_i, :], grid[s_prime_row_i, :]):
+                    if not s.terminal:
+                        s.p_S_prime_R_given_A[a][s_prime][r_minus_one] = 1.0
+
+        # set terminal reward probabilities
+        s: MdpState
+        for s in g.SS:
+            if s.terminal:
+                for a in g.AA:
+                    s.p_S_prime_R_given_A[a][s][r_zero] = 1.0
+
+        g.check_marginal_probabilities()
 
         return g
 
@@ -225,63 +263,11 @@ class Gridworld(MdpEnvironment):
 
         parsed_args, unparsed_args = cls.parse_arguments(args)
 
-        gridworld = getattr(cls, parsed_args.id)()
+        gridworld = getattr(cls, parsed_args.id)(
+            random_state=random_state
+        )
 
         return gridworld, unparsed_args
-
-    def get_next_state_and_reward(
-            self,
-            action
-    ) -> Tuple[MdpState, Reward]:
-        """
-        Transition to the next state given an action.
-
-        :param action: Action.
-        :return: 2-tuple of next state and ensuing reward.
-        """
-        raise ValueError('Not yet implemented')
-
-    def set_model_probabilities(
-            self,
-            nonterminal_reward: Reward,
-            terminal_reward: Reward
-    ):
-        """
-        Set model probabilities within the environment.
-
-        :param nonterminal_reward: Nonterminal reward.
-        :param terminal_reward: Terminal reward.
-        """
-
-        # set nonterminal reward probabilities
-        for a in self.AA:
-
-            # arrange grid such that a row-by-row will generate the appropriate state transition sequences
-            if a == self.a_down:
-                grid = self.grid
-            elif a == self.a_up:
-                grid = np.flipud(self.grid)
-            elif a == self.a_right:
-                grid = self.grid.transpose()
-            elif a == self.a_left:
-                grid = np.flipud(self.grid.transpose())
-            else:
-                raise ValueError(f'Unknown action:  {a}')
-
-            # go row by row, with the final row transitioning to itself
-            for s_row_i, s_prime_row_i in zip(range(grid.shape[0]), list(range(1, grid.shape[0])) + [-1]):
-                for s, s_prime in zip(grid[s_row_i, :], grid[s_prime_row_i, :]):
-                    if not s.terminal:
-                        s.p_S_prime_R_given_A[a][s_prime][nonterminal_reward] = 1.0
-
-        # set terminal reward probabilities
-        s: MdpState
-        for s in self.SS:
-            if s.terminal:
-                for a in self.AA:
-                    s.p_S_prime_R_given_A[a][s][terminal_reward] = 1.0
-
-        self.check_marginal_probabilities()
 
     def __init__(
             self,
@@ -389,30 +375,6 @@ class GamblersProblem(MdpEnvironment):
         )
 
         return gamblers_problem, unparsed_args
-
-    def get_next_state_and_reward(
-            self,
-            action
-    ) -> Tuple[MdpState, Reward]:
-        """
-        Get the next state and reward for an action.
-
-        :param action: Action.
-        :return: 2-tuple of next state and associated reward.
-        """
-
-        # flip a (possibly unfair) coin
-        heads = self.random_state.random_sample() <= self.p_h
-
-        # get next state based on stake and coin flip
-        if heads:
-            state = self.SS[self.state.i + action.i]
-        else:
-            state = self.SS[self.state.i - action.i]
-
-        reward = self.r_win if state.i == 100 else self.r_not_win
-
-        return state, reward
 
     def __init__(
             self,
