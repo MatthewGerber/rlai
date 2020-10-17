@@ -5,11 +5,8 @@ import numpy as np
 from numpy.random import RandomState
 
 from rl.agents.mdp import Stochastic
-from rl.dynamic_programming.policy_evaluation import evaluate_q_pi
-from rl.dynamic_programming.policy_evaluation import evaluate_v_pi
-from rl.dynamic_programming.policy_iteration import iterate_policy_v_pi, \
-    iterate_policy_q_pi
-from rl.dynamic_programming.value_iteration import iterate_value_v_pi, iterate_value_q_pi
+from rl.gpi.dynamic_programming.evaluation import evaluate_v_pi, evaluate_q_pi
+from rl.gpi.dynamic_programming.iteration import iterate_value_v_pi, iterate_value_q_pi, iterate_policy_v_pi, iterate_policy_q_pi
 from rl.environments.mdp import Gridworld
 
 

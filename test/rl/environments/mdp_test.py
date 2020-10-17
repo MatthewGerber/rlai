@@ -4,7 +4,7 @@ import pickle
 from numpy.random import RandomState
 
 from rl.agents.mdp import Stochastic
-from rl.dynamic_programming.value_iteration import iterate_value_v_pi
+from rl.gpi.dynamic_programming.iteration import iterate_value_v_pi
 from rl.environments.mdp import GamblersProblem
 
 

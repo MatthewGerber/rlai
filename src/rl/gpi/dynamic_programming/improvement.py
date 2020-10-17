@@ -1,10 +1,11 @@
 from typing import Dict
 
+import numpy as np
+
 from rl.actions import Action
 from rl.agents.mdp import MdpAgent
 from rl.meta import rl_text
 from rl.states.mdp import MdpState
-import numpy as np
 
 
 @rl_text(chapter=4, page=76)
