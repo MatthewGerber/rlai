@@ -5,7 +5,7 @@ from rl.agents.mdp import MdpAgent
 from rl.gpi.dynamic_programming.evaluation import evaluate_v_pi, evaluate_q_pi
 from rl.gpi.dynamic_programming.improvement import improve_policy_with_v_pi, improve_policy_with_q_pi
 from rl.meta import rl_text
-from rl.states.mdp import MdpState
+from rl.states.mdp import ModelBasedMdpState
 
 
 @rl_text(chapter=4, page=80)
@@ -13,7 +13,7 @@ def iterate_policy_v_pi(
         agent: MdpAgent,
         theta: float,
         update_in_place: bool
-) -> Dict[MdpState, float]:
+) -> Dict[ModelBasedMdpState, float]:
     """
     Run policy iteration on an agent using state-value estimates.
 
@@ -23,7 +23,7 @@ def iterate_policy_v_pi(
     :return: Final state-value estimates.
     """
 
-    v_pi: Optional[Dict[MdpState, float]] = None
+    v_pi: Optional[Dict[ModelBasedMdpState, float]] = None
     improving = True
     i = 0
     while improving:
@@ -55,7 +55,7 @@ def iterate_policy_q_pi(
         agent: MdpAgent,
         theta: float,
         update_in_place: bool
-) -> Dict[MdpState, Dict[Action, float]]:
+) -> Dict[ModelBasedMdpState, Dict[Action, float]]:
     """
     Run policy iteration on an agent using state-value estimates.
 
@@ -65,7 +65,7 @@ def iterate_policy_q_pi(
     :return: Final state-action value estimates.
     """
 
-    q_pi: Optional[Dict[MdpState, Dict[Action, float]]] = None
+    q_pi: Optional[Dict[ModelBasedMdpState, Dict[Action, float]]] = None
     improving = True
     i = 0
     while improving:
@@ -98,7 +98,7 @@ def iterate_value_v_pi(
         theta: float,
         evaluation_iterations_per_improvement: int,
         update_in_place: bool
-) -> Dict[MdpState, float]:
+) -> Dict[ModelBasedMdpState, float]:
     """
     Run value iteration on an agent using state-value estimates.
 
@@ -110,7 +110,7 @@ def iterate_value_v_pi(
     :return: Final state-value estimates.
     """
 
-    v_pi: Optional[Dict[MdpState, float]] = None
+    v_pi: Optional[Dict[ModelBasedMdpState, float]] = None
     i = 0
     while True:
 
@@ -145,7 +145,7 @@ def iterate_value_q_pi(
         theta: float,
         evaluation_iterations_per_improvement: int,
         update_in_place: bool
-) -> Dict[MdpState, Dict[Action, float]]:
+) -> Dict[ModelBasedMdpState, Dict[Action, float]]:
     """
     Run value iteration on an agent using state-action value estimates.
 
@@ -157,7 +157,7 @@ def iterate_value_q_pi(
     :return: Final state-action value estimates.
     """
 
-    q_pi: Optional[Dict[MdpState, Dict[Action, float]]] = None
+    q_pi: Optional[Dict[ModelBasedMdpState, Dict[Action, float]]] = None
     i = 0
     while True:
 

@@ -5,13 +5,13 @@ import numpy as np
 from rl.actions import Action
 from rl.agents.mdp import MdpAgent
 from rl.meta import rl_text
-from rl.states.mdp import MdpState
+from rl.states.mdp import ModelBasedMdpState
 
 
 @rl_text(chapter=4, page=76)
 def improve_policy_with_v_pi(
         agent: MdpAgent,
-        v_pi: Dict[MdpState, float]
+        v_pi: Dict[ModelBasedMdpState, float]
 ) -> bool:
     """
     Improve an agent's policy according to its state-value estimates. This makes the policy greedy with respect to the
@@ -24,6 +24,7 @@ def improve_policy_with_v_pi(
     """
 
     # calculate state-action values (q) for the agent's policy
+    s: ModelBasedMdpState
     q_S_A = {
         s: {
             a: sum([
@@ -45,7 +46,7 @@ def improve_policy_with_v_pi(
 @rl_text(chapter=4, page=76)
 def improve_policy_with_q_pi(
         agent: MdpAgent,
-        q_pi: Dict[MdpState, Dict[Action, float]]
+        q_pi: Dict[ModelBasedMdpState, Dict[Action, float]]
 ) -> bool:
     """
     Improve an agent's policy according to its state-action value estimates. This makes the policy greedy with respect
@@ -71,6 +72,7 @@ def improve_policy_with_q_pi(
 
     # update policy, assigning uniform probability across all maximizing actions.
     agent_old_pi = agent.pi
+    s: ModelBasedMdpState
     agent.pi = {
         s: {
             a: 1.0 / S_num_A_max_Q[s] if q_pi[s][a] == S_max_Q[s] else 0.0

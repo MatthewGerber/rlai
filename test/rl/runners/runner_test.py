@@ -19,8 +19,8 @@ def test_run():
         '--T 100 --n-runs 200 --environment rl.environments.bandit.KArmedBandit --k 10 --agent rl.agents.q_value.UpperConfidenceBound --c 0 1',
         '--T 100 --n-runs 200 --environment rl.environments.bandit.KArmedBandit --k 10 --q-star-mean 4 --agent rl.agents.h_value.PreferenceGradient --step-size-alpha 0.1 --use-reward-baseline',
         '--T 100 --n-runs 200 --environment rl.environments.bandit.KArmedBandit --k 10 --q-star-mean 4 --agent rl.agents.h_value.PreferenceGradient --step-size-alpha 0.1',
-        '--T 50 --n-runs 5000 --environment rl.environments.mdp.GamblersProblem --p-h 0.4 --agent rl.agents.mdp.Stochastic --gamma 1 --mdp-solver rl.gpi.dynamic_programming.iteration.iterate_value_v_pi --theta 0.001 --update-in-place --evaluation-iterations-per-improvement 1',
-        '--T 30 --n-runs 500 --environment rl.environments.mdp.Gridworld --id example_4_1 --agent rl.agents.mdp.Stochastic --gamma 1 --mdp-solver rl.gpi.dynamic_programming.iteration.iterate_value_v_pi --theta 0.001 --update-in-place --evaluation-iterations-per-improvement 1'
+        '--T 50 --n-runs 5000 --environment rl.environments.mdp.GamblersProblem --p-h 0.4 --agent rl.agents.mdp.StochasticMdpAgent --gamma 1 --mdp-solver rl.gpi.dynamic_programming.iteration.iterate_value_v_pi --theta 0.001 --update-in-place --evaluation-iterations-per-improvement 1',
+        '--T 30 --n-runs 500 --environment rl.environments.mdp.Gridworld --id example_4_1 --agent rl.agents.mdp.StochasticMdpAgent --gamma 1 --mdp-solver rl.gpi.dynamic_programming.iteration.iterate_value_v_pi --theta 0.001 --update-in-place --evaluation-iterations-per-improvement 1'
     ]
 
     run_monitor: Dict[str, List[Monitor]] = dict()

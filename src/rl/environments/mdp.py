@@ -11,7 +11,7 @@ from rl.environments import Environment
 from rl.meta import rl_text
 from rl.rewards import Reward
 from rl.runners.monitor import Monitor
-from rl.states.mdp import MdpState
+from rl.states.mdp import MdpState, ModelBasedMdpState
 from rl.utils import sample_list_item
 
 
@@ -20,27 +20,6 @@ class MdpEnvironment(Environment, ABC):
     """
     MDP environment.
     """
-
-    def check_marginal_probabilities(
-            self
-    ):
-        """
-        Check the marginal next-state and -reward probabilities, to ensure they sum to 1. Raises an exception if this is
-        not the case.
-        """
-
-        # check that marginal probabilities for each state sum to 1
-        for s in self.SS:
-            for a in s.p_S_prime_R_given_A:
-
-                marginal_prob = sum([
-                    s.p_S_prime_R_given_A[a][s_prime][r]
-                    for s_prime in s.p_S_prime_R_given_A[a]
-                    for r in s.p_S_prime_R_given_A[a][s_prime]
-                ])
-
-                if marginal_prob != 1.0:
-                    raise ValueError(f'Expected state-marginal probability of 1.0, got {marginal_prob}.')
 
     def reset_for_new_run(
             self,
@@ -145,10 +124,6 @@ class MdpEnvironment(Environment, ABC):
         self.nonterminal_states = [s for s in self.SS if not s.terminal]
         self.state: Optional[MdpState] = None
 
-        # initialize the model within each state
-        for s in self.SS:
-            s.init_model(self.SS)
-
 
 @rl_text(chapter=3, page=60)
 class Gridworld(MdpEnvironment):
@@ -210,13 +185,14 @@ class Gridworld(MdpEnvironment):
                         s.p_S_prime_R_given_A[a][s_prime][r_minus_one] = 1.0
 
         # set terminal reward probabilities
-        s: MdpState
+        s: ModelBasedMdpState
         for s in g.SS:
             if s.terminal:
                 for a in g.AA:
                     s.p_S_prime_R_given_A[a][s][r_zero] = 1.0
 
-        g.check_marginal_probabilities()
+        for s in g.SS:
+            s.check_marginal_probabilities()
 
         return g
 
@@ -298,7 +274,7 @@ class Gridworld(MdpEnvironment):
         self.a_up, self.a_down, self.a_left, self.a_right = AA
 
         SS = [
-            MdpState(
+            ModelBasedMdpState(
                 i=row_i * n_columns + col_j,
                 AA=AA,
                 RR=RR,
@@ -315,6 +291,11 @@ class Gridworld(MdpEnvironment):
             SS=SS,
             RR=RR
         )
+
+        # initialize the model within each state
+        self.SS: List[ModelBasedMdpState]
+        for s in self.SS:
+            s.init_model(self.SS)
 
         self.grid = np.array(self.SS).reshape(n_rows, n_columns)
 
@@ -404,7 +385,7 @@ class GamblersProblem(MdpEnvironment):
 
         # range of possible states (capital levels)
         SS = [
-            MdpState(
+            ModelBasedMdpState(
                 i=capital,
 
                 # the range of permissible actions is state dependent
@@ -430,6 +411,11 @@ class GamblersProblem(MdpEnvironment):
             RR=RR
         )
 
+        self.SS: List[ModelBasedMdpState]
+
+        for s in self.SS:
+            s.init_model(self.SS)
+
         for s in self.SS:
             for a in s.p_S_prime_R_given_A:
 
@@ -449,4 +435,5 @@ class GamblersProblem(MdpEnvironment):
                 r_t = self.r_win if not s.terminal and s_prime_t.i == 100 else self.r_not_win
                 s.p_S_prime_R_given_A[a][s_prime_t][r_t] += self.p_t  # add the probability, in case the results of head and tail are the same.
 
-        self.check_marginal_probabilities()
+        for s in self.SS:
+            s.check_marginal_probabilities()

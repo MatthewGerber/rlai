@@ -4,7 +4,7 @@ import pickle
 import numpy as np
 from numpy.random import RandomState
 
-from rl.agents.mdp import Stochastic
+from rl.agents.mdp import StochasticMdpAgent
 from rl.gpi.dynamic_programming.evaluation import evaluate_v_pi, evaluate_q_pi
 from rl.gpi.dynamic_programming.iteration import iterate_value_v_pi, iterate_value_q_pi, iterate_policy_v_pi, iterate_policy_q_pi
 from rl.environments.mdp import Gridworld
@@ -16,7 +16,7 @@ def test_evaluate_v_pi():
 
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state)
 
-    mdp_agent = Stochastic(
+    mdp_agent = StochasticMdpAgent(
         mdp_environment.AA,
         'test',
         random_state,
@@ -64,7 +64,7 @@ def test_evaluate_q_pi():
 
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state)
 
-    mdp_agent = Stochastic(
+    mdp_agent = StochasticMdpAgent(
         mdp_environment.AA,
         'test',
         random_state,
@@ -118,7 +118,7 @@ def test_policy_iteration():
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state)
 
     # state-value policy iteration
-    mdp_agent_v_pi = Stochastic(
+    mdp_agent_v_pi = StochasticMdpAgent(
         mdp_environment.AA,
         'test',
         random_state,
@@ -133,7 +133,7 @@ def test_policy_iteration():
     )
 
     # action-value policy iteration
-    mdp_agent_q_pi = Stochastic(
+    mdp_agent_q_pi = StochasticMdpAgent(
         mdp_environment.AA,
         'test',
         random_state,
@@ -158,7 +158,7 @@ def test_value_iteration():
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state)
 
     # run policy iteration on v_pi
-    mdp_agent_v_pi_policy_iteration = Stochastic(
+    mdp_agent_v_pi_policy_iteration = StochasticMdpAgent(
         mdp_environment.AA,
         'test',
         random_state,
@@ -173,7 +173,7 @@ def test_value_iteration():
     )
 
     # run value iteration on v_pi
-    mdp_agent_v_pi_value_iteration = Stochastic(
+    mdp_agent_v_pi_value_iteration = StochasticMdpAgent(
         mdp_environment.AA,
         'test',
         random_state,
@@ -191,7 +191,7 @@ def test_value_iteration():
     assert mdp_agent_v_pi_policy_iteration.pi == mdp_agent_v_pi_value_iteration.pi
 
     # run value iteration on q_pi
-    mdp_agent_q_pi_value_iteration = Stochastic(
+    mdp_agent_q_pi_value_iteration = StochasticMdpAgent(
         mdp_environment.AA,
         'test',
         random_state,

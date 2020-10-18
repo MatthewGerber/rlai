@@ -3,7 +3,7 @@ import pickle
 
 from numpy.random import RandomState
 
-from rl.agents.mdp import Stochastic
+from rl.agents.mdp import StochasticMdpAgent
 from rl.gpi.dynamic_programming.iteration import iterate_value_v_pi
 from rl.environments.mdp import GamblersProblem
 
@@ -18,7 +18,7 @@ def test_gamblers_problem():
         p_h=0.4
     )
 
-    mdp_agent_v_pi_value_iteration = Stochastic(
+    mdp_agent_v_pi_value_iteration = StochasticMdpAgent(
         mdp_environment.AA,
         'test',
         random_state,

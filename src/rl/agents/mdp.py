@@ -120,15 +120,15 @@ class MdpAgent(Agent, ABC):
         self.pi = {
             s: {
                 a: np.nan
-                for a in self.AA
+                for a in s.AA
             }
             for s in self.SS
         }
 
 
-class Stochastic(MdpAgent):
+class StochasticMdpAgent(MdpAgent):
     """
-    Stochastic MDP agent.
+    Stochastic MDP agent. Adds random select of action based on probabilities specified in the agent's policy.
     """
 
     @classmethod
@@ -150,7 +150,7 @@ class Stochastic(MdpAgent):
         parsed_args, unparsed_args = cls.parse_arguments(args)
 
         agents = [
-            Stochastic(
+            StochasticMdpAgent(
                 AA=environment.AA,
                 name=f'stochastic (gamma={parsed_args.gamma})',
                 random_state=random_state,
@@ -240,8 +240,8 @@ class Stochastic(MdpAgent):
 
         self.pi = {
             s: {
-                a: 1 / len(s.p_S_prime_R_given_A.keys())
-                for a in s.p_S_prime_R_given_A
+                a: 1 / len(s.AA)
+                for a in s.AA
             }
             for s in self.SS
         }

@@ -6,7 +6,7 @@ import numpy as np
 from rl.actions import Action
 from rl.agents.mdp import MdpAgent
 from rl.meta import rl_text
-from rl.states.mdp import MdpState
+from rl.states.mdp import ModelBasedMdpState
 
 
 @rl_text(chapter=4, page=74)
@@ -15,8 +15,8 @@ def evaluate_v_pi(
         theta: Optional[float],
         num_iterations: Optional[int],
         update_in_place: bool,
-        initial_v_S: Optional[Dict[MdpState, float]] = None
-) -> Tuple[Dict[MdpState, float], float]:
+        initial_v_S: Optional[Dict[ModelBasedMdpState, float]] = None
+) -> Tuple[Dict[ModelBasedMdpState, float], float]:
     """
     Perform iterative policy evaluation of an agent's policy within an environment, returning state values.
 
@@ -51,6 +51,7 @@ def evaluate_v_pi(
 
         delta = 0.0
 
+        s: ModelBasedMdpState
         for s in agent.SS:
 
             prev_v = v_S[s]
@@ -96,8 +97,8 @@ def evaluate_q_pi(
         theta: Optional[float],
         num_iterations: Optional[int],
         update_in_place: bool,
-        initial_q_S_A: Dict[MdpState, Dict[Action, float]] = None
-) -> Tuple[Dict[MdpState, Dict[Action, float]], float]:
+        initial_q_S_A: Dict[ModelBasedMdpState, Dict[Action, float]] = None
+) -> Tuple[Dict[ModelBasedMdpState, Dict[Action, float]], float]:
     """
     Perform iterative policy evaluation of an agent's policy within an environment, returning state-action values.
 
@@ -117,6 +118,7 @@ def evaluate_q_pi(
         num_iterations=num_iterations
     )
 
+    s: ModelBasedMdpState
     if initial_q_S_A is None:
         q_S_A = {
             s: {
