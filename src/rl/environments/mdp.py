@@ -12,7 +12,6 @@ from rl.meta import rl_text
 from rl.rewards import Reward
 from rl.runners.monitor import Monitor
 from rl.states.mdp import MdpState, ModelBasedMdpState
-from rl.utils import sample_list_item
 
 
 @rl_text(chapter=3, page=47)
@@ -61,26 +60,8 @@ class MdpEnvironment(Environment, ABC):
 
         a = agent.act(t=t)
 
-        # get next-state / reward tuples
-        s_prime_rewards = [
-            (s_prime, reward)
-            for s_prime in self.state.p_S_prime_R_given_A[a]
-            for reward in self.state.p_S_prime_R_given_A[a][s_prime]
-            if self.state.p_S_prime_R_given_A[a][s_prime][reward] > 0.0
-        ]
-
-        # get probability of each tuple
-        probs = np.array([
-            self.state.p_S_prime_R_given_A[a][s_prime][reward]
-            for s_prime in self.state.p_S_prime_R_given_A[a]
-            for reward in self.state.p_S_prime_R_given_A[a][s_prime]
-            if self.state.p_S_prime_R_given_A[a][s_prime][reward] > 0.0
-        ])
-
-        # sample next-state / reward
-        self.state, reward = sample_list_item(
-            x=s_prime_rewards,
-            probs=probs,
+        self.state, reward = self.state.advance(
+            a=a,
             random_state=self.random_state
         )
 
@@ -277,7 +258,6 @@ class Gridworld(MdpEnvironment):
             ModelBasedMdpState(
                 i=row_i * n_columns + col_j,
                 AA=AA,
-                RR=RR,
                 terminal=False
             )
             for row_i in range(n_rows)
@@ -293,9 +273,9 @@ class Gridworld(MdpEnvironment):
         )
 
         # initialize the model within each state
-        self.SS: List[ModelBasedMdpState]
+        s: ModelBasedMdpState
         for s in self.SS:
-            s.init_model(self.SS)
+            s.initialize_model(self.SS, self.RR)
 
         self.grid = np.array(self.SS).reshape(n_rows, n_columns)
 
@@ -395,7 +375,6 @@ class GamblersProblem(MdpEnvironment):
                     if a.i <= min(capital, 100 - capital)
                 ],
 
-                RR=RR,
                 terminal=capital == 0 or capital == 100
             )
 
@@ -414,7 +393,7 @@ class GamblersProblem(MdpEnvironment):
         self.SS: List[ModelBasedMdpState]
 
         for s in self.SS:
-            s.init_model(self.SS)
+            s.initialize_model(self.SS, self.RR)
 
         for s in self.SS:
             for a in s.p_S_prime_R_given_A:

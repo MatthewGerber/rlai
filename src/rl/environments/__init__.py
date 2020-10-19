@@ -99,6 +99,7 @@ class Environment(ABC):
     ):
         """
         Initialize the environment.
+
         :param name: Name of the environment.
         :param AA: List of all possible actions.
         :param random_state: Random state.
