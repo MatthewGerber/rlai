@@ -1,4 +1,3 @@
-import math
 from typing import Optional, Dict, Tuple
 
 import numpy as np
@@ -7,6 +6,7 @@ from rl.actions import Action
 from rl.agents.mdp import MdpAgent
 from rl.meta import rl_text
 from rl.states.mdp import ModelBasedMdpState
+from rl.utils import check_termination_conditions, round_for_theta, check_termination_criteria
 
 
 @rl_text(chapter=4, page=74)
@@ -191,78 +191,3 @@ def evaluate_q_pi(
     }
 
     return q_pi, delta
-
-
-def check_termination_criteria(
-        theta: Optional[float],
-        num_iterations: Optional[int]
-) -> Tuple[float, int]:
-    """
-    Check theta and number of iterations.
-
-    :param theta: Theta.
-    :param num_iterations: Number of iterations.
-    :return: Normalized values.
-    """
-
-    # treat theta <= 0 as None, as the caller wants to ignore it.
-    if theta is not None and theta <= 0:
-        theta = None
-
-    # treat num_iterations <= 0 as None, as the caller wants to ignore it.
-    if num_iterations is not None and num_iterations <= 0:
-        num_iterations = None
-
-    if theta is None and num_iterations is None:
-        raise ValueError('Either theta or num_iterations (or both) must be provided.')
-
-    print(f'Starting evaluation:  theta={theta}, num_iterations={num_iterations}')
-
-    return theta, num_iterations
-
-
-def check_termination_conditions(
-        delta: float,
-        theta: Optional[float],
-        iterations_finished: int,
-        num_iterations: Optional[int]
-) -> bool:
-    """
-    Check for termination.
-
-    :param delta: Delta.
-    :param theta: Theta.
-    :param iterations_finished: Number of iterations that have been finished.
-    :param num_iterations: Maximum number of iterations.
-    :return: True for termination.
-    """
-
-    if iterations_finished % 10 == 0:
-        print(f'\tFinished {iterations_finished} iterations:  delta={delta}')
-
-    below_theta = theta is not None and delta < theta
-    completed_num_iterations = num_iterations is not None and iterations_finished >= num_iterations
-
-    if below_theta or completed_num_iterations:
-        print(f'\tEvaluation completed:  iterations={iterations_finished}, delta={delta}\n')
-        return True
-    else:
-        return False
-
-
-def round_for_theta(
-        v: float,
-        theta: Optional[float]
-) -> float:
-    """
-    Round a value based on the precision of theta.
-
-    :param v: Value.
-    :param theta: Theta.
-    :return: Rounded value.
-    """
-
-    if theta is None:
-        return v
-    else:
-        return round(v, int(abs(math.log10(theta)) - 1))

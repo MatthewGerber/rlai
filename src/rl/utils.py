@@ -1,4 +1,5 @@
-from typing import List, Any
+import math
+from typing import List, Any, Optional, Tuple
 
 import numpy as np
 from numpy.random import RandomState
@@ -112,3 +113,82 @@ def sample_list_item(
     )
 
     return x[x_i]
+
+
+def check_termination_criteria(
+        theta: Optional[float],
+        num_iterations: Optional[int]
+) -> Tuple[float, int]:
+    """
+    Check theta and number of iterations.
+
+    :param theta: Theta.
+    :param num_iterations: Number of iterations.
+    :return: Normalized values.
+    """
+
+    # treat theta <= 0 as None, as the caller wants to ignore it.
+    if theta is not None and theta <= 0:
+        theta = None
+
+    # treat num_iterations <= 0 as None, as the caller wants to ignore it.
+    if num_iterations is not None and num_iterations <= 0:
+        num_iterations = None
+
+    if theta is None and num_iterations is None:
+        raise ValueError('Either theta or num_iterations (or both) must be provided.')
+
+    print(f'Starting evaluation:  theta={theta}, num_iterations={num_iterations}')
+
+    return theta, num_iterations
+
+
+def check_termination_conditions(
+        delta: float,
+        theta: Optional[float],
+        iterations_finished: int,
+        num_iterations: Optional[int]
+) -> bool:
+    """
+    Check for termination.
+
+    :param delta: Delta.
+    :param theta: Theta.
+    :param iterations_finished: Number of iterations that have been finished.
+    :param num_iterations: Maximum number of iterations.
+    :return: True for termination.
+    """
+
+    below_theta = theta is not None and delta < theta
+
+    completed_num_iterations = False
+    if num_iterations is not None:
+        completed_num_iterations = iterations_finished >= num_iterations
+        num_iterations_per_print = int(num_iterations * 0.05)
+        if iterations_finished % num_iterations_per_print == 0:
+            print(f'\tFinished {iterations_finished} iterations:  delta={delta}')
+
+    if below_theta or completed_num_iterations:
+        print(f'\tEvaluation completed:  iterations={iterations_finished}, delta={delta}\n')
+        return True
+    else:
+        return False
+
+
+def round_for_theta(
+        v: float,
+        theta: Optional[float]
+) -> float:
+    """
+    Round a value based on the precision of theta.
+
+    :param v: Value.
+    :param theta: Theta.
+    :return: Rounded value.
+    """
+
+    if theta is None:
+        return v
+    else:
+        return round(v, int(abs(math.log10(theta)) - 1))
+

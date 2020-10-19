@@ -138,10 +138,9 @@ class Gridworld(MdpEnvironment):
             random_state=random_state,
             n_rows=4,
             n_columns=4,
+            terminal_states=[(0, 0), (3, 3)],
             RR=RR
         )
-
-        g.grid[0, 0].terminal = g.grid[3, 3].terminal = True
 
         # set nonterminal reward probabilities
         for a in g.AA:
@@ -232,6 +231,7 @@ class Gridworld(MdpEnvironment):
             random_state: RandomState,
             n_rows: int,
             n_columns: int,
+            terminal_states: List[Tuple[int, int]],
             RR: List[Reward]
     ):
         """
@@ -241,6 +241,7 @@ class Gridworld(MdpEnvironment):
         :param random_state: Random state.
         :param n_rows: Number of row.
         :param n_columns: Number of columns.
+        :param terminal_states: List of terminal-state locations.
         :param RR: List of all possible rewards.
         """
 
@@ -263,6 +264,9 @@ class Gridworld(MdpEnvironment):
             for row_i in range(n_rows)
             for col_j in range(n_columns)
         ]
+
+        for row, col in terminal_states:
+            SS[row * n_columns + col].terminal = True
 
         super().__init__(
             name=name,

@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Optional
 
 from rl.agents.mdp import MdpAgent
 from rl.environments.mdp import MdpEnvironment
@@ -13,12 +13,23 @@ def evaluate_v_pi(
         environment: MdpEnvironment,
         num_episodes: int
 ) -> Dict[MdpState, float]:
+    """
+    Perform Monte Carlo policy evaluation of an agent's policy within an environment, returning state-action values.
+
+    :param agent:
+    :param environment:
+    :param num_episodes: Number of episodes to execute.
+    :return: Dictionary of MDP states and their estimated values under the agent's policy.
+    """
+
+    print(f'Running Monte Carlo evaluation of v_pi for {num_episodes} episode(s).')
 
     v_pi = {
         s: IncrementalSampleAverager()
         for s in environment.SS
     }
 
+    episodes_per_print = int(num_episodes * 0.05)
     for episode_i in range(num_episodes):
 
         # start the environment in a random state
@@ -41,16 +52,24 @@ def evaluate_v_pi(
             state = next_state
             t += 1
 
-        # work backwards through the trace to calculate discounted returns
+        # work backwards through the trace to calculate discounted returns. need to work backward in order for the value
+        # of G at each time step t to be properly discounted.
         G = 0
         for t, state, reward in reversed(t_state_reward):
+
             G = agent.gamma * G + reward.r
 
-            # add discounted return to sample estimate, if this was the first visit.
+            # if this time step was the first visit to the state, then G is the sample value. add it to our average.
             if state_first_t[state] == t:
                 v_pi[state].update(G)
 
-    return {
+        episodes_finished = episode_i + 1
+        if episodes_finished % episodes_per_print == 0:
+            print(f'Finished {episodes_finished} of {num_episodes} episode(s).')
+
+    v_pi = {
         s: v_pi[s].get_value()
         for s in v_pi
     }
+
+    return v_pi
