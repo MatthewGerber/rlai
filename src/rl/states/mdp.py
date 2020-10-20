@@ -35,12 +35,14 @@ class MdpState(State, ABC):
     def advance(
             self,
             a: Action,
+            t: int,
             random_state: RandomState
     ) -> Tuple[State, Reward]:
         """
         Advance from the current state given an action.
 
         :param a: Action.
+        :param t: Current time step.
         :param random_state: Random state.
         :return: 2-tuple of next state and reward.
         """
@@ -123,12 +125,14 @@ class ModelBasedMdpState(MdpState):
     def advance(
             self,
             a: Action,
+            t: int,
             random_state: RandomState
     ) -> Tuple[State, Reward]:
         """
         Advance from the current state given an action, based on the current state's model probability distribution.
 
         :param a: Action.
+        :param t: Current time step.
         :param random_state: Random state.
         :return: 2-tuple of next state and reward.
         """
