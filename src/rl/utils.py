@@ -87,17 +87,20 @@ class IncrementalSampleAverager:
 
 def sample_list_item(
         x: List[Any],
-        probs: np.ndarray,
+        probs: Optional[np.ndarray],
         random_state: RandomState
 ) -> Any:
     """
     Sample a list item according to the items' probabilities.
 
     :param x: Items to sample.
-    :param probs: Probabilities (must have same length as `x` and sum to 1).
+    :param probs: Probabilities (must have same length as `x` and sum to 1), or None for uniform distribution.
     :param random_state: Random state.
     :return: Sampled list item.
     """
+
+    if probs is None:
+        probs = np.repeat(1 / len(x), len(x))
 
     cdf_y_rand = random_state.random_sample()
 
@@ -165,7 +168,7 @@ def check_termination_conditions(
     if num_iterations is not None:
         completed_num_iterations = iterations_finished >= num_iterations
         num_iterations_per_print = int(num_iterations * 0.05)
-        if iterations_finished % num_iterations_per_print == 0:
+        if num_iterations_per_print > 0 and iterations_finished % num_iterations_per_print == 0:
             print(f'\tFinished {iterations_finished} iterations:  delta={delta}')
 
     if below_theta or completed_num_iterations:

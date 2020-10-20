@@ -1,7 +1,5 @@
 from typing import Dict
 
-import numpy as np
-
 from rl.actions import Action
 from rl.agents.mdp import MdpAgent
 from rl.environments.mdp import MdpEnvironment
@@ -28,9 +26,9 @@ def evaluate_v_pi(
 
     print(f'Running Monte Carlo evaluation of v_pi for {num_episodes} episode(s).')
 
-    v_pi = {
-        s: IncrementalSampleAverager()
-        for s in environment.SS
+    v_pi: Dict[MdpState, IncrementalSampleAverager] = {
+        terminal_state: IncrementalSampleAverager()
+        for terminal_state in environment.terminal_states
     }
 
     episodes_per_print = int(num_episodes * 0.05)
@@ -51,7 +49,7 @@ def evaluate_v_pi(
                 state_first_t[state] = t
 
             if t == 0:
-                a = sample_list_item(state.AA, np.repeat(1 / len(state.AA), len(state.AA)), environment.random_state)
+                a = sample_list_item(state.AA, None, environment.random_state)
             else:
                 a = agent.act(t)
 
@@ -67,20 +65,23 @@ def evaluate_v_pi(
 
             G = agent.gamma * G + reward.r
 
-            # if this time step was the first visit to the state, then G is the sample value. add it to our average.
+            # if the current time step was the first visit to the state, then G is the discounted sample value. add it
+            # to our average.
             if state_first_t[state] == t:
+
+                if state not in v_pi:
+                    v_pi[state] = IncrementalSampleAverager()
+
                 v_pi[state].update(G)
 
         episodes_finished = episode_i + 1
         if episodes_finished % episodes_per_print == 0:
             print(f'Finished {episodes_finished} of {num_episodes} episode(s).')
 
-    v_pi = {
+    return {
         s: v_pi[s].get_value()
         for s in v_pi
     }
-
-    return v_pi
 
 
 @rl_text(chapter=5, page=96)
@@ -101,12 +102,13 @@ def evaluate_q_pi(
 
     print(f'Running Monte Carlo evaluation of q_pi for {num_episodes} episode(s).')
 
-    q_pi = {
-        s: {
+    # start with an averager for each terminal state, which should never be updated.
+    q_pi: Dict[MdpState, Dict[Action, IncrementalSampleAverager]] = {
+        terminal_state: {
             a: IncrementalSampleAverager()
-            for a in s.AA
+            for a in terminal_state.AA
         }
-        for s in environment.SS
+        for terminal_state in environment.terminal_states
     }
 
     episodes_per_print = int(num_episodes * 0.05)
@@ -124,41 +126,49 @@ def evaluate_q_pi(
         while not state.terminal:
 
             if t == 0:
-                a = sample_list_item(state.AA, np.repeat(1 / len(state.AA), len(state.AA)), environment.random_state)
+                a = sample_list_item(state.AA, None, environment.random_state)
             else:
                 a = agent.act(t)
 
-            state_action = (state, a)
+            state_a = (state, a)
 
-            if state_action not in state_action_first_t:
-                state_action_first_t[state_action] = t
+            if state_a not in state_action_first_t:
+                state_action_first_t[state_a] = t
 
             next_state, reward = state.advance(a, environment.random_state)
-            t_state_action_reward.append((t, state_action, reward))
+            t_state_action_reward.append((t, state_a, reward))
             state = next_state
             t += 1
 
         # work backwards through the trace to calculate discounted returns. need to work backward in order for the value
         # of G at each time step t to be properly discounted.
         G = 0
-        for t, state_action, reward in reversed(t_state_action_reward):
+        for t, state_a, reward in reversed(t_state_action_reward):
 
             G = agent.gamma * G + reward.r
 
-            # if this time step was the first visit to the state-action, then G is the sample value. add it to our average.
-            if state_action_first_t[state_action] == t:
-                q_pi[state_action[0]][state_action[1]].update(G)
+            # if the current time step was the first visit to the state-action, then G is the discounted sample value.
+            # add it to our average.
+            if state_action_first_t[state_a] == t:
+
+                state, a = state_a
+
+                if state not in q_pi:
+                    q_pi[state] = {}
+
+                if a not in q_pi[state]:
+                    q_pi[state][a] = IncrementalSampleAverager()
+
+                q_pi[state][a].update(G)
 
         episodes_finished = episode_i + 1
         if episodes_finished % episodes_per_print == 0:
             print(f'Finished {episodes_finished} of {num_episodes} episode(s).')
 
-    q_pi = {
+    return {
         s: {
             a: q_pi[s][a].get_value()
             for a in q_pi[s]
         }
         for s in q_pi
     }
-
-    return q_pi

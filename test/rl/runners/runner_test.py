@@ -36,7 +36,9 @@ def test_run():
         run_monitor_fixture = pickle.load(file)
 
     for run_args, run_args_fixture in zip(run_args_list, run_monitor_fixture.keys()):
+
         print(f'Checking test results for run {run_args}...', end='')
+
         for monitor, monitor_fixture in zip(run_monitor[run_args], run_monitor_fixture[run_args_fixture]):
 
             assert monitor.cumulative_reward == monitor_fixture.cumulative_reward
