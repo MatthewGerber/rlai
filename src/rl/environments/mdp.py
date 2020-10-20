@@ -1,6 +1,6 @@
 from abc import ABC
 from argparse import Namespace, ArgumentParser
-from typing import List, Tuple, Optional, final, Any, Callable
+from typing import List, Tuple, Optional, final
 
 import numpy as np
 from numpy.random import RandomState
@@ -11,7 +11,6 @@ from rl.environments import Environment
 from rl.meta import rl_text
 from rl.rewards import Reward
 from rl.runners.monitor import Monitor
-from rl.states import State
 from rl.states.mdp import MdpState, ModelBasedMdpState
 
 
@@ -422,160 +421,3 @@ class GamblersProblem(MdpEnvironment):
 
         for s in self.SS:
             s.check_marginal_probabilities()
-
-
-class MancalaState(MdpState):
-
-    def advance(
-            self,
-            a: Action,
-            t: int,
-            random_state: RandomState
-    ) -> Tuple[MdpState, Reward]:
-
-        num_picked = self.p1_pockets[a.i]
-        pocket_i = a.i
-
-        go_again = self.sow_and_capture(num_picked, pocket_i)
-        next_state = self.state_generator(self.pockets)
-        if next_state.terminal:
-            return next_state, self.r_win
-
-        if not go_again:
-            while True:
-                self.opponent.sense(next_state, t + 1)
-                opponent_a = self.opponent.act(t + 1)
-                num_picked = self.pockets[opponent_a.i]
-                go_again = self.sow_and_capture(num_picked, opponent_a.i)
-                next_state = self.state_generator(self.pockets)
-                if next_state.terminal:
-                    return next_state, self.r_lose
-                elif not go_again:
-                    break
-
-        return next_state, self.r_none
-
-    def sow_and_capture(
-            self,
-            count: int,
-            pocket_i: int
-    ) -> bool:
-
-        own_start = 0 if pocket_i < self.p1_store_pocket else self.p1_store_pocket + 1
-        own_end = own_start + 5
-        own_store = self.p1_store_pocket if pocket_i < self.p1_store_pocket else self.p2_store_pocket
-        other_store = self.p1_store_pocket if own_store == self.p2_store_pocket else self.p2_store_pocket
-
-        while count > 0:
-
-            if pocket_i >= len(self.pockets):
-                pocket_i = 0
-
-            if pocket_i == other_store:
-                continue
-
-            self.pockets[pocket_i] += 1
-            pocket_i += 1
-            count -= 1
-
-        go_again = False
-
-        if pocket_i == own_store:
-            go_again = True
-        elif self.pockets[pocket_i] == 0 and own_start <= pocket_i <= own_end:
-            go_again = True
-            opposing_pocket_i = self.get_opposing_pocket_i(pocket_i)
-            stolen = self.pockets[opposing_pocket_i]
-            self.pockets[opposing_pocket_i] = 0
-            self.pockets[own_store] += stolen
-
-        return go_again
-
-    def get_opposing_pocket_i(
-            self,
-            pocket_i: int
-    ) -> int:
-
-        if pocket_i < self.p1_store_pocket:
-            return self.p1_store_pocket + (self.p1_store_pocket - pocket_i)
-        else:
-            return self.p2_store_pocket - pocket_i
-
-    def __init__(
-            self,
-            i: int,
-            AA: List[Action],
-            pockets: List[int],
-            state_generator: Callable[[List[int]], MdpState],
-            opponent: Agent,
-            RR: List[Reward]
-    ):
-        self.pockets = pockets
-        self.state_generator = state_generator
-        self.opponent = opponent
-        self.p1_store_pocket = 6
-        self.p2_store_pocket = 13
-        self.RR = RR
-        self.r_win, self.r_lose, self.r_none = self.RR
-
-        super().__init__(
-            i=i,
-            AA=[
-                a
-                for a in AA
-                if a.i < self.p1_store_pocket and pockets[a.i] > 0
-            ],
-            terminal=all(p == 0 for p in pockets[0:self.p1_store_pocket]) or all(p == 0 for p in pockets[self.p1_store_pocket + 1:self.p2_store_pocket])
-        )
-
-class Mancala(MdpEnvironment):
-
-    @classmethod
-    def init_from_arguments(
-            cls,
-            args: List[str],
-            random_state: RandomState
-    ) -> Tuple[Environment, List[str]]:
-        pass
-
-    def __init__(
-            self,
-            random_state: RandomState,
-            opponent: Agent
-    ):
-        """
-        Initialize the game.
-
-        :param random_state: Random state.
-        :param opponent: Opponent agent.
-        """
-
-        self.opponent = opponent
-
-        AA = [
-            Action(i)
-            for i in range(6)
-        ]
-
-        RR = [
-            Reward(i, r)
-            for i, r in enumerate([-1, 1])
-        ]
-
-        self.p1_pockets = [4] * 6
-        self.p1_store = 0
-        self.p2_pockets = [4] * 6
-        self.p2_store = 0
-
-        SS = [
-            MdpState(
-                i=0
-        ]
-
-        super().__init__(
-            name='mancala',
-            AA=AA,
-            random_state=random_state,
-            SS=SS,
-            RR=RR
-        )

@@ -190,11 +190,22 @@ class StochasticMdpAgent(MdpAgent):
         :return: Action.
         """
 
-        action_prob = self.pi[self.most_recent_state]
+        self.most_recent_state: MdpState
+
+        # if the policy is defined for the most recent state, then act accordingly
+        if self.most_recent_state in self.pi:
+            action_prob = self.pi[self.most_recent_state]
+            actions = list(action_prob.keys())
+            probs = np.array(list(action_prob.values()))
+
+        # otherwise, select randomly from actions that are feasible in the current state
+        else:
+            actions = self.most_recent_state.AA
+            probs = None
 
         return sample_list_item(
-            x=list(action_prob.keys()),
-            probs=np.array(list(action_prob.values())),
+            x=actions,
+            probs=probs,
             random_state=self.random_state
         )
 
