@@ -3,7 +3,8 @@ from typing import Dict, Optional
 from rl.actions import Action
 from rl.agents.mdp import MdpAgent
 from rl.gpi.dynamic_programming.evaluation import evaluate_v_pi, evaluate_q_pi
-from rl.gpi.dynamic_programming.improvement import improve_policy_with_v_pi, improve_policy_with_q_pi
+from rl.gpi.dynamic_programming.improvement import improve_policy_with_v_pi
+from rl.gpi.improvement import improve_policy_with_q_pi
 from rl.meta import rl_text
 from rl.states.mdp import ModelBasedMdpState
 
