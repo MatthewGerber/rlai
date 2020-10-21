@@ -18,22 +18,23 @@ class MancalaState(MdpState):
             a: Action,
             t: int,
             random_state: RandomState
-    ) -> Tuple[MdpState, Reward]:
+    ) -> Tuple[MdpState, int, Reward]:
 
         picked_pocket = self.mancala.board[a.i]
         next_state, go_again = self.sow_and_capture(picked_pocket)
+        t += 1
 
         reward = self.mancala.r_none
-
         if next_state.terminal:
             reward = self.mancala.get_terminal_reward()
 
         elif not go_again:
             while True:
-                next_state.mancala.p2.sense(next_state, t + 1)
-                p2_a = next_state.mancala.p2.act(t + 1)
+                next_state.mancala.p2.sense(next_state, t)
+                p2_a = next_state.mancala.p2.act(t)
                 picked_pocket = next_state.mancala.board[p2_a.i]
                 next_state, go_again = next_state.sow_and_capture(picked_pocket)
+                t += 1
 
                 if next_state.terminal:
                     reward = next_state.mancala.get_terminal_reward()
@@ -41,7 +42,7 @@ class MancalaState(MdpState):
                 elif not go_again:
                     break
 
-        return next_state, reward
+        return next_state, t, reward
 
     def sow_and_capture(
             self,
@@ -49,8 +50,8 @@ class MancalaState(MdpState):
     ) -> Tuple[MdpState, bool]:
 
         next_state = deepcopy(self)
-        pocket: Pit = next_state.mancala.board[pocket.i]
 
+        pocket = next_state.mancala.board[pocket.i]
         pick_count = pocket.pick()
         if pick_count <= 0:
             raise ValueError('Cannot pick empty pocket.')
@@ -76,12 +77,10 @@ class MancalaState(MdpState):
 
         if sow_pocket.store and sow_pocket.player_1 == pocket.player_1:
             go_again = True
-        elif sow_pocket.count == 1 and sow_pocket.player_1 == pocket.player_1:
-            go_again = True
-            if sow_pocket.opposing_pocket.count > 0:
-                to_store = sow_pocket.pick() + sow_pocket.opposing_pocket.pick()
-                own_store = next_state.mancala.p1_store if pocket.player_1 else next_state.mancala.p2_store
-                own_store.sow(to_store)
+        elif sow_pocket.count == 1 and sow_pocket.player_1 == pocket.player_1 and sow_pocket.opposing_pocket.count > 0:
+            to_store = sow_pocket.pick() + sow_pocket.opposing_pocket.pick()
+            own_store = next_state.mancala.p1_store if pocket.player_1 else next_state.mancala.p2_store
+            own_store.sow(to_store)
 
         return Mancala.get_state(next_state, (pocket.player_1 and go_again) or (not pocket.player_1 and not go_again)), go_again
 
@@ -209,9 +208,10 @@ class Mancala(MdpEnvironment):
             state.AA_set = set(state.AA)
             state.AA_p1 = state.mancala.get_feasible_actions(True)
             state.AA_p2 = state.mancala.get_feasible_actions(False)
-            cls.id_state[state_id] = deepcopy(state)
+            cls.id_state[state_id] = state
 
         state = cls.id_state[state_id]
+
         state.change_turn(p1)
 
         return state

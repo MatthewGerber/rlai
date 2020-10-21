@@ -53,10 +53,10 @@ def evaluate_v_pi(
             else:
                 a = agent.act(t)
 
-            next_state, reward = state.advance(a, t, environment.random_state)
+            next_state, next_t, reward = state.advance(a, t, environment.random_state)
             t_state_reward.append((t, state, reward))
             state = next_state
-            t += 1
+            t = next_t
 
         # work backwards through the trace to calculate discounted returns. need to work backward in order for the value
         # of G at each time step t to be properly discounted.
@@ -135,10 +135,10 @@ def evaluate_q_pi(
             if state_a not in state_action_first_t:
                 state_action_first_t[state_a] = t
 
-            next_state, reward = state.advance(a, t, environment.random_state)
+            next_state, next_t, reward = state.advance(a, t, environment.random_state)
             t_state_action_reward.append((t, state_a, reward))
             state = next_state
-            t += 1
+            t = next_t
 
             agent.sense(state, t)
 
