@@ -351,12 +351,10 @@ class UpperConfidenceBound(QValue):
         :return: Denominator.
         """
 
-        n_t_a = self.N_t_A[a.i]
-
-        if n_t_a == 0:
+        if a not in self.N_t_A or self.N_t_A[a] == 0:
             return sys.float_info.min
         else:
-            return n_t_a
+            return self.N_t_A[a]
 
     def __act__(
             self,

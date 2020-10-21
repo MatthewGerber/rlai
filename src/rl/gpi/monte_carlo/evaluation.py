@@ -140,6 +140,8 @@ def evaluate_q_pi(
             state = next_state
             t += 1
 
+            agent.sense(state, t)
+
         # work backwards through the trace to calculate discounted returns. need to work backward in order for the value
         # of G at each time step t to be properly discounted.
         G = 0

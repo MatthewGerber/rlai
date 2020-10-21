@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from argparse import Namespace, ArgumentParser
-from typing import Tuple, List, final, Optional
+from typing import Tuple, List, final, Optional, Dict
 
 import numpy as np
 from numpy.random import RandomState
@@ -59,7 +59,7 @@ class Agent(ABC):
         self.most_recent_action_tick = None
         self.most_recent_state = None
         self.most_recent_state_tick = None
-        self.N_t_A = np.zeros_like(self.N_t_A)
+        self.N_t_A = {a: 0.0 for a in self.N_t_A}
 
     def sense(
             self,
@@ -95,7 +95,11 @@ class Agent(ABC):
 
         self.most_recent_action = a
         self.most_recent_action_tick = t
-        self.N_t_A[a.i] += 1
+
+        if a not in self.N_t_A:
+            self.N_t_A[a] = 0
+
+        self.N_t_A[a] += 1
 
         return a
 
@@ -150,7 +154,7 @@ class Agent(ABC):
         self.most_recent_action_tick: Optional[int] = None
         self.most_recent_state: Optional[State] = None
         self.most_recent_state_tick: Optional[int] = None
-        self.N_t_A: np.ndarray = np.zeros(len(self.AA))
+        self.N_t_A: Dict[Action, int] = {}
 
     def __str__(
             self
