@@ -12,6 +12,9 @@ from rl.states.mdp import MdpState
 
 
 class MancalaState(MdpState):
+    """
+    State of the Mancala game.
+    """
 
     def advance(
             self,
@@ -19,6 +22,14 @@ class MancalaState(MdpState):
             t: int,
             random_state: RandomState
     ) -> Tuple[MdpState, int, Reward]:
+        """
+        Advance from the current state given an action.
+
+        :param a: Action.
+        :param t: Current time step.
+        :param random_state: Random state.
+        :return: 3-tuple of next state, next time step, and reward.
+        """
 
         picked_pocket = self.mancala.board[a.i]
         next_state, go_again = self.sow_and_capture(picked_pocket)

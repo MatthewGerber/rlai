@@ -1,3 +1,4 @@
+import warnings
 from typing import Dict, Optional
 
 import matplotlib.pyplot as plt
@@ -17,6 +18,7 @@ def iterate_value_q_pi(
         environment: MdpEnvironment,
         iterations: int,
         evaluation_episodes_per_improvement: int,
+        epsilon: float,
         plot_iterations: bool
 ) -> Dict[MdpState, Dict[Action, float]]:
     """
@@ -27,27 +29,42 @@ def iterate_value_q_pi(
     :param iterations: Total number of iterations to run.
     :param evaluation_episodes_per_improvement: Number of policy evaluation episodes to execute for each iteration
     of improvement. Passing `1` will result in the Monte Carlo ES (Exploring Starts) algorithm.
+    :param epsilon: Total probability mass to spread across all actions, resulting in an epsilon-greedy policy. Must
+    be >= 0 if provided.
     :param plot_iterations: Whether or not to plot the per-episode average reward at each iteration.
     :return: Final state-action value estimates.
     """
 
-    q_pi: Optional[Dict[MdpState, Dict[Action, float]]] = None
+    if epsilon == 0.0:
+        warnings.warn('Epsilon is 0.0. Exploration and convergence not guaranteed. Consider passing a value > 0 to maintain exploration.')
+
+    q_S_A = None
     i = 0
     per_episode_average_rewards = []
     while True:
 
         print(f'Value iteration {i + 1}:  ', end='')
 
-        q_pi, per_episode_average_reward = evaluate_q_pi(
+        q_S_A, per_episode_average_reward = evaluate_q_pi(
             agent=agent,
             environment=environment,
             num_episodes=evaluation_episodes_per_improvement,
-            initial_q_S_A=q_pi
+            exploring_starts=False,
+            initial_q_S_A=q_S_A
         )
+
+        q_pi = {
+            s: {
+                a: q_S_A[s][a].get_value()
+                for a in q_S_A[s]
+            }
+            for s in q_S_A
+        }
 
         improve_policy_with_q_pi(
             agent=agent,
-            q_pi=q_pi
+            q_pi=q_pi,
+            epsilon=epsilon
         )
 
         per_episode_average_rewards.append(per_episode_average_reward)
@@ -61,6 +78,10 @@ def iterate_value_q_pi(
 
         if i >= iterations:
             break
+
+    plt.close('all')
+    plt.plot(per_episode_average_rewards)
+    plt.show()
 
     print(f'Value iteration of q_pi terminated after {i} iteration(s).')
 

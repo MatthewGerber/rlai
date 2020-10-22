@@ -89,18 +89,23 @@ def evaluate_q_pi(
         agent: MdpAgent,
         environment: MdpEnvironment,
         num_episodes: int,
-        initial_q_S_A: Dict[MdpState, Dict[Action, float]] = None
-) -> Tuple[Dict[MdpState, Dict[Action, float]], float]:
+        exploring_starts: bool,
+        initial_q_S_A: Dict[MdpState, Dict[Action, IncrementalSampleAverager]] = None
+) -> Tuple[Dict[MdpState, Dict[Action, IncrementalSampleAverager]], float]:
     """
-    Perform Monte Carlo evaluation of an agent's policy within an environment, returning state-action values. Uses a
-    random action on the first time step to maintain exploration (exploring starts).
+    Perform Monte Carlo evaluation of an agent's policy within an environment, returning state-action values.
 
     :param agent: Agent.
     :param environment: Environment.
     :param num_episodes: Number of episodes to execute.
+    :param exploring_starts: Whether or not to use exploring starts, forcing a random action in the first time step.
+    This maintains exploration in the first state; however, unless each state has some nonzero probability of being
+    selected as the first state, there is no assurance that all state-action pairs will be sampled. If the initial state
+    is deterministic, consider passing False here and shifting the burden of exploration to the improvement step with
+    a nonzero epsilon (see `rl.gpi.improvement.improve_policy_with_q_pi`).
     :param initial_q_S_A: Initial guess at state-action value, or None for no guess.
-    :return: 2-tuple of (1) dictionary of MDP states and their estimated values under the agent's policy, and (2) the
-    per-episode average reward obtained.
+    :return: 2-tuple of (1) dictionary of MDP states and their action-value averagers under the agent's policy, and (2)
+    the per-episode average reward obtained.
     """
 
     print(f'Running Monte Carlo evaluation of q_pi for {num_episodes} episode(s).')
@@ -117,15 +122,7 @@ def evaluate_q_pi(
         }
 
     else:
-
-        # set initial guesses
-        q_S_A: Dict[MdpState, Dict[Action, IncrementalSampleAverager]] = {
-            s: {
-                a: IncrementalSampleAverager(initial_value=initial_q_S_A[s][a])
-                for a in initial_q_S_A[s]
-            }
-            for s in initial_q_S_A
-        }
+        q_S_A = initial_q_S_A
 
     episode_reward_averager = IncrementalSampleAverager()
     episodes_per_print = max(1, int(num_episodes * 0.05))
@@ -143,7 +140,7 @@ def evaluate_q_pi(
         total_reward = 0.0
         while not state.terminal:
 
-            if t == 0:
+            if exploring_starts and t == 0:
                 a = sample_list_item(state.AA, None, environment.random_state)
             else:
                 a = agent.act(t)
@@ -190,12 +187,4 @@ def evaluate_q_pi(
 
     print(f'Completed evaluation. Average reward per episode:  {episode_reward_averager.get_value()}')
 
-    q_pi = {
-        s: {
-            a: q_S_A[s][a].get_value()
-            for a in q_S_A[s]
-        }
-        for s in q_S_A
-    }
-
-    return q_pi, episode_reward_averager.get_value()
+    return q_S_A, episode_reward_averager.get_value()

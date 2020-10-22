@@ -4,8 +4,9 @@ import pickle
 from numpy.random import RandomState
 
 from rl.agents.mdp import StochasticMdpAgent
-from rl.environments.mdp import Gridworld
+from rl.environments.mdp import Gridworld, GamblersProblem
 from rl.gpi.monte_carlo.evaluation import evaluate_v_pi, evaluate_q_pi
+from rl.gpi.monte_carlo.iteration import iterate_value_q_pi
 
 
 def test_evaluate_v_pi():
@@ -58,10 +59,59 @@ def test_evaluate_q_pi():
         1
     )
 
-    q_pi = evaluate_q_pi(
+    q_S_A, _ = evaluate_q_pi(
         agent=mdp_agent,
         environment=mdp_environment,
-        num_episodes=1000
+        num_episodes=1000,
+        exploring_starts=True
+    )
+
+    # pickle doesn't like to unpickle instances with custom __hash__ functions
+    q_pi = {
+        s.i: {
+            a: q_S_A[s][a].get_value()
+            for a in q_S_A[s]
+        }
+        for s in q_S_A
+    }
+
+    # uncomment the following line and run test to update fixture
+    # with open(f'{os.path.dirname(__file__)}/fixtures/test_monte_carlo_evaluation_of_state_action_value.pickle', 'wb') as file:
+    #     pickle.dump(q_pi, file)
+
+    with open(f'{os.path.dirname(__file__)}/fixtures/test_monte_carlo_evaluation_of_state_action_value.pickle', 'rb') as file:
+        fixture = pickle.load(file)
+
+    assert q_pi == fixture
+
+
+def test_iterate_value_q_pi():
+
+    random_state = RandomState(12345)
+
+    # mdp_environment: GamblersProblem = GamblersProblem(
+    #     'gamblers problems',
+    #     random_state=random_state,
+    #     p_h=0.4
+    # )
+
+    mdp_environment: Gridworld = Gridworld.example_4_1(random_state)
+
+    mdp_agent = StochasticMdpAgent(
+        mdp_environment.AA,
+        'test',
+        random_state,
+        mdp_environment.SS,
+        1
+    )
+
+    q_pi = iterate_value_q_pi(
+        agent=mdp_agent,
+        environment=mdp_environment,
+        iterations=10,
+        evaluation_episodes_per_improvement=1000,
+        epsilon=0.1,
+        plot_iterations=False
     )
 
     # pickle doesn't like to unpickle instances with custom __hash__ functions
@@ -74,10 +124,10 @@ def test_evaluate_q_pi():
     }
 
     # uncomment the following line and run test to update fixture
-    # with open(f'{os.path.dirname(__file__)}/fixtures/test_monte_carlo_evaluation_of_state_action_value.pickle', 'wb') as file:
+    # with open(f'{os.path.dirname(__file__)}/fixtures/test_monte_carlo_iteration_of_value_q_pi.pickle', 'wb') as file:
     #     pickle.dump(q_pi, file)
 
-    with open(f'{os.path.dirname(__file__)}/fixtures/test_monte_carlo_evaluation_of_state_action_value.pickle', 'rb') as file:
+    with open(f'{os.path.dirname(__file__)}/fixtures/test_monte_carlo_iteration_of_value_q_pi.pickle', 'rb') as file:
         fixture = pickle.load(file)
 
     assert q_pi == fixture

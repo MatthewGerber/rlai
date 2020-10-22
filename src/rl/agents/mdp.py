@@ -192,16 +192,17 @@ class StochasticMdpAgent(MdpAgent):
 
         self.most_recent_state: MdpState
 
-        # if the policy is defined for the most recent state, then act accordingly
-        if self.most_recent_state in self.pi:
-            action_prob = self.pi[self.most_recent_state]
-            actions = list(action_prob.keys())
-            probs = np.array(list(action_prob.values()))
+        # if the policy is not defined for the most recent state, then update the policy in the most recent state to be
+        # uniform across feasible actions. act accordingly
+        if self.most_recent_state not in self.pi:
+            self.pi[self.most_recent_state] = {
+                a: 1 / len(self.most_recent_state.AA)
+                for a in self.most_recent_state.AA
+            }
 
-        # otherwise, select randomly from actions that are feasible in the current state
-        else:
-            actions = self.most_recent_state.AA
-            probs = None
+        action_prob = self.pi[self.most_recent_state]
+        actions = list(action_prob.keys())
+        probs = np.array(list(action_prob.values()))
 
         return sample_list_item(
             x=actions,
