@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Tuple
 
 from rl.actions import Action
 from rl.agents.mdp import MdpAgent
@@ -88,30 +88,47 @@ def evaluate_v_pi(
 def evaluate_q_pi(
         agent: MdpAgent,
         environment: MdpEnvironment,
-        num_episodes: int
-) -> Dict[MdpState, Dict[Action, float]]:
+        num_episodes: int,
+        initial_q_S_A: Dict[MdpState, Dict[Action, float]] = None
+) -> Tuple[Dict[MdpState, Dict[Action, float]], float]:
     """
     Perform Monte Carlo evaluation of an agent's policy within an environment, returning state-action values. Uses a
     random action on the first time step to maintain exploration (exploring starts).
 
-    :param agent:
-    :param environment:
+    :param agent: Agent.
+    :param environment: Environment.
     :param num_episodes: Number of episodes to execute.
-    :return: Dictionary of MDP states and their estimated values under the agent's policy.
+    :param initial_q_S_A: Initial guess at state-action value, or None for no guess.
+    :return: 2-tuple of (1) dictionary of MDP states and their estimated values under the agent's policy, and (2) the
+    per-episode average reward obtained.
     """
 
     print(f'Running Monte Carlo evaluation of q_pi for {num_episodes} episode(s).')
 
-    # start with an averager for each terminal state, which should never be updated.
-    q_pi: Dict[MdpState, Dict[Action, IncrementalSampleAverager]] = {
-        terminal_state: {
-            a: IncrementalSampleAverager()
-            for a in terminal_state.AA
-        }
-        for terminal_state in environment.terminal_states
-    }
+    if initial_q_S_A is None:
 
-    episodes_per_print = int(num_episodes * 0.05)
+        # start with an averager for each terminal state, which should never be updated.
+        q_S_A: Dict[MdpState, Dict[Action, IncrementalSampleAverager]] = {
+            terminal_state: {
+                a: IncrementalSampleAverager()
+                for a in terminal_state.AA
+            }
+            for terminal_state in environment.terminal_states
+        }
+
+    else:
+
+        # set initial guesses
+        q_S_A: Dict[MdpState, Dict[Action, IncrementalSampleAverager]] = {
+            s: {
+                a: IncrementalSampleAverager(initial_value=initial_q_S_A[s][a])
+                for a in initial_q_S_A[s]
+            }
+            for s in initial_q_S_A
+        }
+
+    episode_reward_averager = IncrementalSampleAverager()
+    episodes_per_print = max(1, int(num_episodes * 0.05))
     for episode_i in range(num_episodes):
 
         # start the environment in a random state with a random feasible action in that state
@@ -123,6 +140,7 @@ def evaluate_q_pi(
         t = 0
         state_action_first_t = {}
         t_state_action_reward = []
+        total_reward = 0.0
         while not state.terminal:
 
             if t == 0:
@@ -137,6 +155,7 @@ def evaluate_q_pi(
 
             next_state, next_t, reward = state.advance(a, t, environment.random_state)
             t_state_action_reward.append((t, state_a, reward))
+            total_reward += reward.r
             state = next_state
             t = next_t
 
@@ -155,22 +174,28 @@ def evaluate_q_pi(
 
                 state, a = state_a
 
-                if state not in q_pi:
-                    q_pi[state] = {}
+                if state not in q_S_A:
+                    q_S_A[state] = {}
 
-                if a not in q_pi[state]:
-                    q_pi[state][a] = IncrementalSampleAverager()
+                if a not in q_S_A[state]:
+                    q_S_A[state][a] = IncrementalSampleAverager()
 
-                q_pi[state][a].update(G)
+                q_S_A[state][a].update(G)
+
+        episode_reward_averager.update(total_reward)
 
         episodes_finished = episode_i + 1
         if episodes_finished % episodes_per_print == 0:
             print(f'Finished {episodes_finished} of {num_episodes} episode(s).')
 
-    return {
+    print(f'Completed evaluation. Average reward per episode:  {episode_reward_averager.get_value()}')
+
+    q_pi = {
         s: {
-            a: q_pi[s][a].get_value()
-            for a in q_pi[s]
+            a: q_S_A[s][a].get_value()
+            for a in q_S_A[s]
         }
-        for s in q_pi
+        for s in q_S_A
     }
+
+    return q_pi, episode_reward_averager.get_value()
