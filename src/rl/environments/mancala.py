@@ -60,13 +60,19 @@ class MancalaState(MdpState):
             pocket
     ) -> Tuple[MdpState, bool]:
 
-        next_state = deepcopy(self)
+        # make deep copy of state, as we're about to change it.
+        next_state = MancalaState(
+            AA=[],
+            mancala=deepcopy(self.mancala)
+        )
 
+        # pick pocket
         pocket = next_state.mancala.board[pocket.i]
         pick_count = pocket.pick()
         if pick_count <= 0:
             raise ValueError('Cannot pick empty pocket.')
 
+        # sow
         sow_pocket = None
         sow_i = pocket.i + 1
         while pick_count > 0:
@@ -85,7 +91,6 @@ class MancalaState(MdpState):
             sow_i += 1
 
         go_again = False
-
         if sow_pocket.store and sow_pocket.player_1 == pocket.player_1:
             go_again = True
         elif sow_pocket.count == 1 and sow_pocket.player_1 == pocket.player_1 and sow_pocket.opposing_pocket.count > 0:
@@ -93,7 +98,24 @@ class MancalaState(MdpState):
             own_store = next_state.mancala.p1_store if pocket.player_1 else next_state.mancala.p2_store
             own_store.sow(to_store)
 
-        return Mancala.get_state(next_state, (pocket.player_1 and go_again) or (not pocket.player_1 and not go_again)), go_again
+        # configure next state for the appropriate player
+        p1 = (pocket.player_1 and go_again) or (not pocket.player_1 and not go_again)
+        next_state.configure_copy(p1)
+
+        return next_state, go_again
+
+    def configure_copy(
+            self,
+            p1: bool
+    ):
+        self.i = self.get_id()
+        self.hash = self.i.__hash__()
+        self.terminal = self.is_terminal()
+        self.AA = self.mancala.get_feasible_actions(None)
+        self.AA_set = set(self.AA)
+        self.AA_p1 = self.mancala.get_feasible_actions(True)
+        self.AA_p2 = self.mancala.get_feasible_actions(False)
+        self.set_feasible_actions(p1)
 
     def get_id(
             self
@@ -105,7 +127,7 @@ class MancalaState(MdpState):
     ) -> bool:
         return all(p.count == 0 for p in self.mancala.p1_pockets) or all(p.count == 0 for p in self.mancala.p2_pockets)
 
-    def change_turn(
+    def set_feasible_actions(
             self,
             p1: bool
     ):
@@ -118,18 +140,15 @@ class MancalaState(MdpState):
 
     def __init__(
             self,
-            i: int,
             AA: List[Action],
             mancala
     ):
         self.mancala: Mancala = mancala
-        self.id = None
-        self.hash = None
         self.AA_p1 = None
         self.AA_p2 = None
 
         super().__init__(
-            i=i,
+            i=0,
             AA=[
                 a
                 for a in AA
@@ -137,23 +156,6 @@ class MancalaState(MdpState):
             ],
             terminal=self.is_terminal()
         )
-
-    def __hash__(
-            self
-    ):
-        return self.hash
-
-    def __eq__(
-            self,
-            other
-    ):
-        return self.id == other.id
-
-    def __ne__(
-            self,
-            other
-    ):
-        return self.id != other.id
 
 
 class Pit:
@@ -191,8 +193,6 @@ class Pit:
 
 class Mancala(MdpEnvironment):
 
-    id_state: Dict[str, MancalaState] = {}
-
     @classmethod
     def init_from_arguments(
             cls,
@@ -200,32 +200,6 @@ class Mancala(MdpEnvironment):
             random_state: RandomState
     ) -> Tuple[Environment, List[str]]:
         pass
-
-    @classmethod
-    def get_state(
-            cls,
-            state: MancalaState,
-            p1: bool
-    ) -> MancalaState:
-
-        state_id = state.get_id()
-
-        if state_id not in cls.id_state:
-            state.i = len(cls.id_state)
-            state.id = state_id
-            state.hash = state_id.__hash__()
-            state.terminal = state.is_terminal()
-            state.AA = state.mancala.get_feasible_actions(None)
-            state.AA_set = set(state.AA)
-            state.AA_p1 = state.mancala.get_feasible_actions(True)
-            state.AA_p2 = state.mancala.get_feasible_actions(False)
-            cls.id_state[state_id] = state
-
-        state = cls.id_state[state_id]
-
-        state.change_turn(p1)
-
-        return state
 
     def get_terminal_reward(
             self
@@ -302,10 +276,11 @@ class Mancala(MdpEnvironment):
         ]
 
         initial_state = MancalaState(
-            i=0,
             AA=AA,
             mancala=self
         )
+
+        initial_state.configure_copy(True)
 
         super().__init__(
             name='mancala',
@@ -314,9 +289,3 @@ class Mancala(MdpEnvironment):
             SS=[initial_state],
             RR=RR
         )
-
-        s: MancalaState
-        self.id_state = {
-            s.get_id(): Mancala.get_state(s, True)
-            for s in self.SS
-        }
