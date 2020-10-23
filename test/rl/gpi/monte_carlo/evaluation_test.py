@@ -89,12 +89,6 @@ def test_iterate_value_q_pi():
 
     random_state = RandomState(12345)
 
-    # mdp_environment: GamblersProblem = GamblersProblem(
-    #     'gamblers problems',
-    #     random_state=random_state,
-    #     p_h=0.4
-    # )
-
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state)
 
     mdp_agent = StochasticMdpAgent(
@@ -108,10 +102,10 @@ def test_iterate_value_q_pi():
     q_pi = iterate_value_q_pi(
         agent=mdp_agent,
         environment=mdp_environment,
-        iterations=10,
-        evaluation_episodes_per_improvement=1000,
+        num_improvements=3000,
+        num_episodes_per_improvement=1,
         epsilon=0.1,
-        plot_iterations=False
+        num_improvements_per_plot=None
     )
 
     # pickle doesn't like to unpickle instances with custom __hash__ functions

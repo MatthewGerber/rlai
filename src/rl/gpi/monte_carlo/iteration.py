@@ -16,22 +16,23 @@ from rl.states.mdp import MdpState
 def iterate_value_q_pi(
         agent: MdpAgent,
         environment: MdpEnvironment,
-        iterations: int,
-        evaluation_episodes_per_improvement: int,
+        num_improvements: int,
+        num_episodes_per_improvement: int,
         epsilon: float,
-        plot_iterations: bool
+        num_improvements_per_plot: Optional[int] = None
 ) -> Dict[MdpState, Dict[Action, float]]:
     """
     Run value iteration on an agent using state-action value estimates.
 
     :param agent: Agent.
     :param environment: Environment.
-    :param iterations: Total number of iterations to run.
-    :param evaluation_episodes_per_improvement: Number of policy evaluation episodes to execute for each iteration
-    of improvement. Passing `1` will result in the Monte Carlo ES (Exploring Starts) algorithm.
+    :param num_improvements: Number of policy improvements to make.
+    :param num_episodes_per_improvement: Number of policy evaluation episodes to execute for each iteration of
+    improvement. Passing `1` will result in the Monte Carlo ES (Exploring Starts) algorithm.
     :param epsilon: Total probability mass to spread across all actions, resulting in an epsilon-greedy policy. Must
     be >= 0 if provided.
-    :param plot_iterations: Whether or not to plot the per-episode average reward at each iteration.
+    :param num_improvements_per_plot: Number of improvements to make before plotting the per-improvement average. Pass
+    None to turn off all plotting.
     :return: Final state-action value estimates.
     """
 
@@ -48,7 +49,7 @@ def iterate_value_q_pi(
         q_S_A, per_episode_average_reward = evaluate_q_pi(
             agent=agent,
             environment=environment,
-            num_episodes=evaluation_episodes_per_improvement,
+            num_episodes=num_episodes_per_improvement,
             exploring_starts=False,
             initial_q_S_A=q_S_A
         )
@@ -71,17 +72,18 @@ def iterate_value_q_pi(
 
         i += 1
 
-        if plot_iterations:
+        if num_improvements_per_plot is not None and i % num_improvements_per_plot == 0:
             plt.close('all')
             plt.plot(per_episode_average_rewards)
             plt.show()
 
-        if i >= iterations:
+        if i >= num_improvements:
             break
 
-    plt.close('all')
-    plt.plot(per_episode_average_rewards)
-    plt.show()
+    if num_improvements_per_plot is not None:
+        plt.close('all')
+        plt.plot(per_episode_average_rewards)
+        plt.show()
 
     print(f'Value iteration of q_pi terminated after {i} iteration(s).')
 

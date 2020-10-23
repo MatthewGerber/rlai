@@ -48,11 +48,17 @@ def improve_policy_with_q_pi(
     agent_old_pi = agent.pi
     s: ModelBasedMdpState
     agent.pi = {
+
         s: {
-            a: ((1.0 - epsilon) / S_num_a_max_q[s]) + (epsilon / len(s.AA)) if s in q_pi and a in q_pi[s] and q_pi[s][a] == S_max_q[s] else epsilon / len(s.AA)
+            a:
+                ((1.0 - epsilon) / S_num_a_max_q[s]) + (epsilon / len(s.AA)) if a in q_pi[s] and q_pi[s][a] == S_max_q[s]
+                else epsilon / len(s.AA)
             for a in s.AA
         }
         for s in agent.pi
+
+        # we can only update the policy for states that we have q-value estimates for
+        if s in q_pi and any(a in q_pi[s] for a in s.AA)
     }
 
     # check our math

@@ -110,9 +110,8 @@ def evaluate_q_pi(
 
     print(f'Running Monte Carlo evaluation of q_pi for {num_episodes} episode(s).')
 
+    # if no initial guess is provided, then start with an averager for each terminal state.
     if initial_q_S_A is None:
-
-        # start with an averager for each terminal state, which should never be updated.
         q_S_A: Dict[MdpState, Dict[Action, IncrementalSampleAverager]] = {
             terminal_state: {
                 a: IncrementalSampleAverager()
@@ -120,7 +119,7 @@ def evaluate_q_pi(
             }
             for terminal_state in environment.terminal_states
         }
-
+    # set to initial guess
     else:
         q_S_A = initial_q_S_A
 
