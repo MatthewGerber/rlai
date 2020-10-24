@@ -1,8 +1,11 @@
+from typing import Union, Optional
+
+
 class State:
 
     def __init__(
             self,
-            i: int
+            i: Optional[Union[int, str]]
     ):
         """
         Initialize the state.
@@ -11,7 +14,9 @@ class State:
         """
 
         self.i = i
-        self.hash = i.__hash__()
+
+        if i is not None:
+            self.hash = i.__hash__()
 
     def __str__(
             self

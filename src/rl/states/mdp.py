@@ -1,10 +1,10 @@
 from abc import abstractmethod, ABC
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Optional, Union
 
 import numpy as np
-from numpy.random import RandomState
 
 from rl.actions import Action
+from rl.environments import Environment
 from rl.meta import rl_text
 from rl.rewards import Reward
 from rl.states import State
@@ -34,23 +34,23 @@ class MdpState(State, ABC):
     @abstractmethod
     def advance(
             self,
-            a: Action,
+            environment: Environment,
             t: int,
-            random_state: RandomState
+            a: Action
     ) -> Tuple[State, int, Reward]:
         """
         Advance from the current state given an action.
 
-        :param a: Action.
+        :param environment: Environment.
         :param t: Current time step.
-        :param random_state: Random state.
+        :param a: Action.
         :return: 3-tuple of next state, next time step, and reward.
         """
         pass
 
     def __init__(
             self,
-            i: int,
+            i: Optional[Union[int, str]],
             AA: List[Action],
             terminal: bool
     ):
@@ -124,16 +124,16 @@ class ModelBasedMdpState(MdpState):
 
     def advance(
             self,
-            a: Action,
+            environment: Environment,
             t: int,
-            random_state: RandomState
+            a: Action
     ) -> Tuple[State, int, Reward]:
         """
         Advance from the current state given an action, based on the current state's model probability distribution.
 
-        :param a: Action.
+        :param environment: Environment.
         :param t: Current time step.
-        :param random_state: Random state.
+        :param a: Action.
         :return: 3-tuple of next state, next time step, and reward.
         """
 
@@ -157,7 +157,7 @@ class ModelBasedMdpState(MdpState):
         next_state, reward = sample_list_item(
             x=s_prime_rewards,
             probs=probs,
-            random_state=random_state
+            random_state=environment.random_state
         )
 
         return next_state, t + 1, reward

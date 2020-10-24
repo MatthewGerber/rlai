@@ -1,3 +1,4 @@
+import pickle
 import warnings
 from typing import Dict, Optional
 
@@ -12,6 +13,21 @@ from rl.meta import rl_text
 from rl.states.mdp import MdpState
 
 
+def resume_iterate_value_q_pi_from_checkpoint(
+        checkpoint_path: str,
+        new_checkpoint_path: Optional[str] = None
+):
+    if new_checkpoint_path is None:
+        new_checkpoint_path = checkpoint_path
+
+    with open(checkpoint_path, 'rb') as checkpoint_file:
+        resume_args = pickle.load(checkpoint_file)
+
+    resume_args['checkpoint_path'] = new_checkpoint_path
+
+    iterate_value_q_pi(**resume_args)
+
+
 @rl_text(chapter=5, page=99)
 def iterate_value_q_pi(
         agent: MdpAgent,
@@ -19,7 +35,10 @@ def iterate_value_q_pi(
         num_improvements: int,
         num_episodes_per_improvement: int,
         epsilon: float,
-        num_improvements_per_plot: Optional[int] = None
+        num_improvements_per_plot: Optional[int] = None,
+        num_improvements_per_checkpoint: Optional[int] = None,
+        checkpoint_path: Optional[str] = None,
+        initial_q_S_A: Optional[Dict] = None
 ) -> Dict[MdpState, Dict[Action, float]]:
     """
     Run value iteration on an agent using state-action value estimates.
@@ -33,13 +52,16 @@ def iterate_value_q_pi(
     be >= 0 if provided.
     :param num_improvements_per_plot: Number of improvements to make before plotting the per-improvement average. Pass
     None to turn off all plotting.
+    :param num_improvements_per_checkpoint: Number of improvements per checkpoint save.
+    :param checkpoint_path: Checkpoint path. Must be provided if `num_improvements_per_checkpoint` is provided.
+    :param initial_q_S_A: Initial state-action value estimates (primarily useful for restarting from a checkpoint).
     :return: Final state-action value estimates.
     """
 
     if epsilon == 0.0:
         warnings.warn('Epsilon is 0.0. Exploration and convergence not guaranteed. Consider passing a value > 0 to maintain exploration.')
 
-    q_S_A = None
+    q_S_A = initial_q_S_A
     i = 0
     per_episode_average_rewards = []
     while True:
@@ -76,6 +98,22 @@ def iterate_value_q_pi(
             plt.close('all')
             plt.plot(per_episode_average_rewards)
             plt.show()
+
+        if num_improvements_per_checkpoint is not None and i % num_improvements_per_checkpoint == 0:
+
+            resume_args = {
+                'agent': agent,
+                'environment': environment,
+                'num_improvements': num_improvements,
+                'num_episodes_per_improvement': num_episodes_per_improvement,
+                'epsilon': epsilon,
+                'num_improvements_per_plot': num_improvements_per_plot,
+                'num_improvements_per_checkpoint': num_improvements_per_checkpoint,
+                'initial_q_S_A': q_S_A
+            }
+
+            with open(checkpoint_path, 'wb') as checkpoint_file:
+                pickle.dump(resume_args, checkpoint_file)
 
         if i >= num_improvements:
             break

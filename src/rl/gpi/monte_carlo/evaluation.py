@@ -53,7 +53,7 @@ def evaluate_v_pi(
             else:
                 a = agent.act(t)
 
-            next_state, next_t, reward = state.advance(a, t, environment.random_state)
+            next_state, next_t, reward = state.advance(environment, t, a)
             t_state_reward.append((t, state, reward))
             state = next_state
             t = next_t
@@ -149,7 +149,7 @@ def evaluate_q_pi(
             if state_a not in state_action_first_t:
                 state_action_first_t[state_a] = t
 
-            next_state, next_t, reward = state.advance(a, t, environment.random_state)
+            next_state, next_t, reward = state.advance(environment, t, a)
             t_state_action_reward.append((t, state_a, reward))
             total_reward += reward.r
             state = next_state

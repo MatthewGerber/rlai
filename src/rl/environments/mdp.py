@@ -61,9 +61,9 @@ class MdpEnvironment(Environment, ABC):
         a = agent.act(t=t)
 
         self.state, next_t, reward = self.state.advance(
-            a=a,
+            environment=self,
             t=t,
-            random_state=self.random_state
+            a=a
         )
 
         agent.sense(
