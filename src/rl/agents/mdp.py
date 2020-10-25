@@ -193,7 +193,7 @@ class StochasticMdpAgent(MdpAgent):
         self.most_recent_state: MdpState
 
         # if the policy is not defined for the most recent state, then update the policy in the most recent state to be
-        # uniform across feasible actions. act accordingly
+        # uniform across feasible actions. act accordingly.
         if self.most_recent_state not in self.pi:
             self.pi[self.most_recent_state] = {
                 a: 1 / len(self.most_recent_state.AA)
@@ -257,3 +257,56 @@ class StochasticMdpAgent(MdpAgent):
             }
             for s in self.SS
         }
+
+
+class Human(MdpAgent):
+    """
+    An interactive, human-driven agent that prompts for actions at each time step.
+    """
+
+    @classmethod
+    def init_from_arguments(
+            cls,
+            args: List[str],
+            environment,
+            random_state: RandomState
+    ) -> List:
+        pass
+
+    def __act__(
+            self,
+            t: int
+    ) -> Action:
+
+        action = None
+
+        while action is None:
+
+            prompt = 'Please select from the following actions:\n'
+
+            self.most_recent_state: MdpState
+            for i, a in enumerate(sorted(self.most_recent_state.AA, key=lambda a: a.i)):
+                prompt += f'\t({i}):  {a}\n'
+
+            try:
+                action = self.most_recent_state.AA[int(input(prompt))]
+            except Exception:
+                pass
+
+        return action
+
+    def reward(
+            self,
+            r: float):
+        pass
+
+    def __init__(
+            self
+    ):
+        super().__init__(
+            AA=[],
+            name='human',
+            random_state=None,
+            SS=[],
+            gamma=1
+        )

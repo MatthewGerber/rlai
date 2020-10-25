@@ -1,6 +1,6 @@
 import pickle
 import warnings
-from typing import Dict, Optional
+from typing import Dict, Optional, Callable
 
 import matplotlib.pyplot as plt
 
@@ -16,6 +16,7 @@ from rl.states.mdp import MdpState
 def resume_iterate_value_q_pi_from_checkpoint(
         checkpoint_path: str,
         new_checkpoint_path: Optional[str] = None,
+        mutator: Callable = None,
         **new_args
 ):
     if new_checkpoint_path is None:
@@ -30,6 +31,9 @@ def resume_iterate_value_q_pi_from_checkpoint(
 
     if new_args is not None:
         resume_args.update(new_args)
+
+    if mutator is not None:
+        mutator(**resume_args)
 
     iterate_value_q_pi(**resume_args)
 

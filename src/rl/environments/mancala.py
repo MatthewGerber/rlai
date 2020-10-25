@@ -4,6 +4,7 @@ from numpy.random import RandomState
 
 from rl.actions import Action
 from rl.agents import Agent
+from rl.agents.mdp import Human
 from rl.environments import Environment
 from rl.environments.mdp import MdpEnvironment
 from rl.rewards import Reward
@@ -64,12 +65,34 @@ class MancalaState(MdpState):
         reward = environment.r_none
         if next_state.terminal:
             reward = environment.get_terminal_reward()
+
         # if the agent (player 1) does not get to go again, let the environmental agent take its turn(s)
         elif not go_again:
             while True:
 
                 # sense, act, transition
                 environment.player_2.sense(next_state, t)
+
+                # if a human is playing, print the board.
+                if isinstance(environment.player_2, Human):
+
+                    print(f'|{environment.player_1_store.count}', end='')
+                    for player_1_pocket in reversed(environment.player_1_pockets):
+                        print(f'|{player_1_pocket.count}', end='')
+                    print('|')
+
+                    print('  ', end='')
+                    for player_2_pocket in environment.player_2_pockets:
+                        print(f'|{player_2_pocket.count}', end='')
+
+                    print(f'|{environment.player_2_store.count}|')
+
+                    print('  ', end='')
+                    for i, player_2_pocket in enumerate(environment.player_2_pockets):
+                        print(f' {i}', end='')
+
+                    print()
+
                 p2_a = environment.player_2.act(t)
                 picked_pocket = environment.board[p2_a.i]
                 go_again = environment.sow_and_capture(picked_pocket)
