@@ -15,7 +15,8 @@ from rl.states.mdp import MdpState
 
 def resume_iterate_value_q_pi_from_checkpoint(
         checkpoint_path: str,
-        new_checkpoint_path: Optional[str] = None
+        new_checkpoint_path: Optional[str] = None,
+        **new_args
 ):
     if new_checkpoint_path is None:
         new_checkpoint_path = checkpoint_path
@@ -24,6 +25,9 @@ def resume_iterate_value_q_pi_from_checkpoint(
         resume_args = pickle.load(checkpoint_file)
 
     resume_args['checkpoint_path'] = new_checkpoint_path
+
+    if new_args is not None:
+        resume_args.update(new_args)
 
     iterate_value_q_pi(**resume_args)
 
@@ -64,6 +68,7 @@ def iterate_value_q_pi(
     q_S_A = initial_q_S_A
     i = 0
     per_episode_average_rewards = []
+    state_space_size = []
     while True:
 
         print(f'Value iteration {i + 1}:  ', end='')
@@ -91,12 +96,20 @@ def iterate_value_q_pi(
         )
 
         per_episode_average_rewards.append(per_episode_average_reward)
+        state_space_size.append(len(q_S_A))
 
         i += 1
 
         if num_improvements_per_plot is not None and i % num_improvements_per_plot == 0:
             plt.close('all')
-            plt.plot(per_episode_average_rewards)
+            plt.plot(per_episode_average_rewards, '-', label='win-loss')
+            plt.xlabel('Time step')
+            plt.ylabel('Win-loss differential (% win - % loss)')
+            plt.grid()
+            state_space_ax = plt.twinx()
+            state_space_ax.plot(state_space_size, '--', label='# states')
+            state_space_ax.set_ylabel('# states')
+            state_space_ax.legend()
             plt.show()
 
         if num_improvements_per_checkpoint is not None and i % num_improvements_per_checkpoint == 0:
@@ -117,11 +130,6 @@ def iterate_value_q_pi(
 
         if i >= num_improvements:
             break
-
-    if num_improvements_per_plot is not None:
-        plt.close('all')
-        plt.plot(per_episode_average_rewards)
-        plt.show()
 
     print(f'Value iteration of q_pi terminated after {i} iteration(s).')
 

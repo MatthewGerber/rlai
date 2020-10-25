@@ -1,4 +1,4 @@
-from typing import Tuple, List, Optional
+from typing import Tuple, List, Optional, Dict
 
 from numpy.random import RandomState
 
@@ -102,9 +102,8 @@ class MancalaState(MdpState):
         :param player_1: First player (agent).
         """
 
-        # we'll generate all states on the fly, so use identifiers that map to precise board configurations.
         super().__init__(
-            i='-'.join(str(pit.count) for pit in mancala.board),
+            i=mancala.get_state_i(),
             AA=mancala.get_feasible_actions(player_1),
             terminal=mancala.is_terminal()
         )
@@ -162,6 +161,7 @@ class Pit:
         # these will be assigned after all pits have been created
         self.i = None
         self.opposing_pocket = None
+        self.action = None
 
     def __str__(
             self
@@ -186,6 +186,23 @@ class Mancala(MdpEnvironment):
             random_state: RandomState
     ) -> Tuple[Environment, List[str]]:
         pass
+
+    def get_state_i(
+            self
+    ) -> int:
+        """
+        Get the integer identifier for the current board configuration (state). The returned value is guaranteed to be
+        the same for the same board configuration, both throughout the life of the current object as well as after the
+        current object has been pickled for later use (e.g., in checkpoint-based resumption).
+
+        :return: Integer identifier.
+        """
+
+        state_id_str = '-'.join(str(pit.count) for pit in self.board)
+        if state_id_str not in self.state_id_str_int:
+            self.state_id_str_int[state_id_str] = len(self.state_id_str_int)
+
+        return self.state_id_str_int[state_id_str]
 
     def reset_for_new_run(
             self,
@@ -236,12 +253,10 @@ class Mancala(MdpEnvironment):
         :return: List of feasible actions.
         """
 
-        actions = []
-
         if player_1:
-            actions.extend(Action(pit.i) for pit in self.player_1_pockets if pit.count > 0)
+            actions = [p.action for p in self.player_1_pockets if p.count > 0]
         else:
-            actions.extend(Action(pit.i) for pit in self.player_2_pockets if pit.count > 0)
+            actions = [p.action for p in self.player_2_pockets if p.count > 0]
 
         return actions
 
@@ -321,6 +336,7 @@ class Mancala(MdpEnvironment):
         self.initial_count = initial_count
         self.player_2 = player_2
 
+        self.state_id_str_int: Dict[str, int] = {}
         self.r_win = Reward(0, 1.0)
         self.r_lose = Reward(1, -1.0)
         self.r_none = Reward(2, 0.0)
@@ -342,7 +358,12 @@ class Mancala(MdpEnvironment):
         self.board = self.player_1_pockets + [self.player_1_store] + self.player_2_pockets + [self.player_2_store]
 
         for i, pit in enumerate(self.board):
+
             pit.i = i
+
+            # non-store pit (i.e., pockets) have actions associated with them
+            if not pit.store:
+                pit.action = Action(pit.i)
 
         for player_1_pocket, opposing_player_2_pocket in zip(self.player_1_pockets, reversed(self.player_2_pockets)):
             player_1_pocket.opposing_pocket = opposing_player_2_pocket
@@ -355,7 +376,7 @@ class Mancala(MdpEnvironment):
 
         super().__init__(
             name='mancala',
-            AA=[Action(i) for i in range(len(self.board))],
+            AA=[p.action for p in self.player_1_pockets] + [p.action for p in self.player_2_pockets],
             random_state=random_state,
             SS=[initial_state],
             RR=RR

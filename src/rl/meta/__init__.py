@@ -20,13 +20,16 @@ def rl_text(
     :return: Decorator function.
     """
 
-    def inner(func):
+    def inner(element):
 
-        func.rl_text_chapter = chapter
-        func.rl_text_page = page
-        func.rl_text_description = f'RL 2nd Edition, ch. {chapter}, p. {page}'
+        if os.getenv('ANNOTATIONS_ON', 'False') != 'True':
+            return element
 
-        return func
+        element.rl_text_chapter = chapter
+        element.rl_text_page = page
+        element.rl_text_description = f'RL 2nd Edition, ch. {chapter}, p. {page}'
+
+        return element
 
     return inner
 
@@ -77,7 +80,7 @@ def summarize(
             summarize(module, chapter_page_descriptions, paths_summarized)
 
 
-if __name__ == '__main__':
+def main():
 
     chapter_page_descriptions = {}
 
@@ -108,3 +111,7 @@ if __name__ == '__main__':
 
     with open(meta_md_path, 'w') as meta_md:
         meta_md.write(markdown_with_toc)
+
+
+if __name__ == '__main__':
+    main()

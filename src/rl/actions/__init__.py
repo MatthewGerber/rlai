@@ -16,7 +16,6 @@ class Action:
         """
 
         self.i = i
-        self.hash = i.__hash__()
         self.name = name
 
     def __str__(
@@ -38,7 +37,7 @@ class Action:
         :return: Hash code.
         """
 
-        return self.hash
+        return self.i
 
     def __eq__(
             self,
@@ -64,4 +63,4 @@ class Action:
         :return: True if not equal and False otherwise.
         """
 
-        return not self.__eq__(other)
+        return self.i != other.i

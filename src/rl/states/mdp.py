@@ -1,5 +1,5 @@
 from abc import abstractmethod, ABC
-from typing import List, Dict, Tuple, Optional, Union
+from typing import List, Dict, Tuple, Optional
 
 import numpy as np
 
@@ -50,7 +50,7 @@ class MdpState(State, ABC):
 
     def __init__(
             self,
-            i: Optional[Union[int, str]],
+            i: Optional[int],
             AA: List[Action],
             terminal: bool
     ):

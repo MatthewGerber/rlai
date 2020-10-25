@@ -14,7 +14,6 @@ class Reward:
 
         self.i = i
         self.r = r
-        self.hash = i.__hash__()
 
     def __str__(
             self
@@ -35,7 +34,7 @@ class Reward:
         :return: Hash code
         """
 
-        return self.hash
+        return self.i
 
     def __eq__(
             self,
@@ -61,4 +60,4 @@ class Reward:
         :return: True if not equal and False otherwise.
         """
 
-        return not self.__eq__(other)
+        return self.i != other.i

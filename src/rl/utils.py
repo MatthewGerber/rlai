@@ -194,4 +194,3 @@ def round_for_theta(
         return v
     else:
         return round(v, int(abs(math.log10(theta)) - 1))
-

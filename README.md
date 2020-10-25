@@ -9,18 +9,26 @@
   - [`rl.agents.q_value.UpperConfidenceBound`](#rlagentsq_valueupperconfidencebound)
   - [`rl.agents.h_value.PreferenceGradient`](#rlagentsh_valuepreferencegradient)
 - [Chapter 3](#chapter-3)
+  - [`rl.environments.mancala.MancalaState`](#rlenvironmentsmancalamancalastate)
+  - [`rl.environments.mancala.Mancala`](#rlenvironmentsmancalamancala)
   - [`rl.environments.mdp.MdpEnvironment`](#rlenvironmentsmdpmdpenvironment)
+  - [`rl.states.mdp.MdpState`](#rlstatesmdpmdpstate)
+  - [`rl.states.mdp.ModelBasedMdpState`](#rlstatesmdpmodelbasedmdpstate)
   - [`rl.environments.mdp.Gridworld`](#rlenvironmentsmdpgridworld)
 - [Chapter 4](#chapter-4)
-  - [`rl.dynamic_programming.policy_evaluation.evaluate_v_pi`](#rldynamic_programmingpolicy_evaluationevaluate_v_pi)
-  - [`rl.dynamic_programming.policy_evaluation.evaluate_q_pi`](#rldynamic_programmingpolicy_evaluationevaluate_q_pi)
-  - [`rl.dynamic_programming.policy_improvement.improve_policy_with_q_pi`](#rldynamic_programmingpolicy_improvementimprove_policy_with_q_pi)
-  - [`rl.dynamic_programming.policy_improvement.improve_policy_with_v_pi`](#rldynamic_programmingpolicy_improvementimprove_policy_with_v_pi)
-  - [`rl.dynamic_programming.policy_iteration.iterate_policy_q_pi`](#rldynamic_programmingpolicy_iterationiterate_policy_q_pi)
-  - [`rl.dynamic_programming.policy_iteration.iterate_policy_v_pi`](#rldynamic_programmingpolicy_iterationiterate_policy_v_pi)
-  - [`rl.dynamic_programming.value_iteration.iterate_value_v_pi`](#rldynamic_programmingvalue_iterationiterate_value_v_pi)
-  - [`rl.dynamic_programming.value_iteration.iterate_value_q_pi`](#rldynamic_programmingvalue_iterationiterate_value_q_pi)
+  - [`rl.gpi.dynamic_programming.evaluation.evaluate_v_pi`](#rlgpidynamic_programmingevaluationevaluate_v_pi)
+  - [`rl.gpi.dynamic_programming.evaluation.evaluate_q_pi`](#rlgpidynamic_programmingevaluationevaluate_q_pi)
+  - [`rl.gpi.dynamic_programming.improvement.improve_policy_with_v_pi`](#rlgpidynamic_programmingimprovementimprove_policy_with_v_pi)
+  - [`rl.gpi.improvement.improve_policy_with_q_pi`](#rlgpiimprovementimprove_policy_with_q_pi)
+  - [`rl.gpi.dynamic_programming.iteration.iterate_policy_q_pi`](#rlgpidynamic_programmingiterationiterate_policy_q_pi)
+  - [`rl.gpi.dynamic_programming.iteration.iterate_policy_v_pi`](#rlgpidynamic_programmingiterationiterate_policy_v_pi)
+  - [`rl.gpi.dynamic_programming.iteration.iterate_value_v_pi`](#rlgpidynamic_programmingiterationiterate_value_v_pi)
   - [`rl.environments.mdp.GamblersProblem`](#rlenvironmentsmdpgamblersproblem)
+  - [`rl.gpi.dynamic_programming.iteration.iterate_value_q_pi`](#rlgpidynamic_programmingiterationiterate_value_q_pi)
+- [Chapter 5](#chapter-5)
+  - [`rl.gpi.monte_carlo.evaluation.evaluate_v_pi`](#rlgpimonte_carloevaluationevaluate_v_pi)
+  - [`rl.gpi.monte_carlo.evaluation.evaluate_q_pi`](#rlgpimonte_carloevaluationevaluate_q_pi)
+  - [`rl.gpi.monte_carlo.iteration.iterate_value_q_pi`](#rlgpimonte_carloiterationiterate_value_q_pi)
 <!--TOC-->
 
 # Goals
@@ -61,16 +69,32 @@ Nonassociatve, upper-confidence-bound agent.
 Preference-gradient agent.
 ```
 # Chapter 3
+## `rl.environments.mancala.MancalaState`
+```
+State of the mancala game. In charge of representing the entirety of the game state and advancing to the next state.
+```
+## `rl.environments.mancala.Mancala`
+```
+Environment for the mancala game.
+```
 ## `rl.environments.mdp.MdpEnvironment`
 ```
 MDP environment.
+```
+## `rl.states.mdp.MdpState`
+```
+Model-free MDP state.
+```
+## `rl.states.mdp.ModelBasedMdpState`
+```
+Model-based MDP state. Adds the specification of a probability distribution over next states and rewards.
 ```
 ## `rl.environments.mdp.Gridworld`
 ```
 Gridworld MDP environment.
 ```
 # Chapter 4
-## `rl.dynamic_programming.policy_evaluation.evaluate_v_pi`
+## `rl.gpi.dynamic_programming.evaluation.evaluate_v_pi`
 ```
 Perform iterative policy evaluation of an agent's policy within an environment, returning state values.
 
@@ -84,7 +108,7 @@ Perform iterative policy evaluation of an agent's policy within an environment, 
     :return: 2-tuple of (1) dictionary of MDP states and their estimated values under the agent's policy, and (2) final
     value of delta.
 ```
-## `rl.dynamic_programming.policy_evaluation.evaluate_q_pi`
+## `rl.gpi.dynamic_programming.evaluation.evaluate_q_pi`
 ```
 Perform iterative policy evaluation of an agent's policy within an environment, returning state-action values.
 
@@ -98,7 +122,22 @@ Perform iterative policy evaluation of an agent's policy within an environment, 
     :return: 2-tuple of (1) dictionary of MDP states, actions, and their estimated values under the agent's policy, and
     (2) final value of delta.
 ```
-## `rl.dynamic_programming.policy_improvement.improve_policy_with_q_pi`
+## `rl.gpi.dynamic_programming.improvement.improve_policy_with_v_pi`
+```
+Improve an agent's policy according to its state-value estimates. This makes the policy greedy with respect to the
+    state-value estimates. In cases where multiple such greedy actions exist for a state, each of the greedy actions
+    will be assigned equal probability.
+
+    Note that the present function resides within `rl.gpi.dynamic_programming.improvement` and requires state-value
+    estimates of states that are model-based. These are the case because policy improvement from state values is only
+    possible if we have a model of the environment. Compare with `rl.gpi.improvement.improve_policy_with_q_pi`, which
+    accepts model-free states since state-action values are estimated directly.
+
+    :param agent: Agent.
+    :param v_pi: State-value estimates for the agent's policy.
+    :return: True if policy was changed and False if the policy was not changed.
+```
+## `rl.gpi.improvement.improve_policy_with_q_pi`
 ```
 Improve an agent's policy according to its state-action value estimates. This makes the policy greedy with respect
     to the state-action value estimates. In cases where multiple such greedy actions exist for a state, each of the
@@ -106,19 +145,11 @@ Improve an agent's policy according to its state-action value estimates. This ma
 
     :param agent: Agent.
     :param q_pi: State-action value estimates for the agent's policy.
+    :param epsilon: Total probability mass to spread across all actions, resulting in an epsilon-greedy policy. Must
+    be >= 0 if provided.
     :return: True if policy was changed and False if the policy was not changed.
 ```
-## `rl.dynamic_programming.policy_improvement.improve_policy_with_v_pi`
-```
-Improve an agent's policy according to its state-value estimates. This makes the policy greedy with respect to the
-    state-value estimates. In cases where multiple such greedy actions exist for a state, each of the greedy actions
-    will be assigned equal probability.
-
-    :param agent: Agent.
-    :param v_pi: State-value estimates for the agent's policy.
-    :return: True if policy was changed and False if the policy was not changed.
-```
-## `rl.dynamic_programming.policy_iteration.iterate_policy_q_pi`
+## `rl.gpi.dynamic_programming.iteration.iterate_policy_q_pi`
 ```
 Run policy iteration on an agent using state-value estimates.
 
@@ -127,7 +158,7 @@ Run policy iteration on an agent using state-value estimates.
     :param update_in_place: See `evaluate_q_pi`.
     :return: Final state-action value estimates.
 ```
-## `rl.dynamic_programming.policy_iteration.iterate_policy_v_pi`
+## `rl.gpi.dynamic_programming.iteration.iterate_policy_v_pi`
 ```
 Run policy iteration on an agent using state-value estimates.
 
@@ -136,7 +167,7 @@ Run policy iteration on an agent using state-value estimates.
     :param update_in_place: See `evaluate_v_pi`.
     :return: Final state-value estimates.
 ```
-## `rl.dynamic_programming.value_iteration.iterate_value_v_pi`
+## `rl.gpi.dynamic_programming.iteration.iterate_value_v_pi`
 ```
 Run value iteration on an agent using state-value estimates.
 
@@ -147,7 +178,11 @@ Run value iteration on an agent using state-value estimates.
     :param update_in_place: See `evaluate_v_pi`.
     :return: Final state-value estimates.
 ```
-## `rl.dynamic_programming.value_iteration.iterate_value_q_pi`
+## `rl.environments.mdp.GamblersProblem`
+```
+Gambler's problem MDP environment.
+```
+## `rl.gpi.dynamic_programming.iteration.iterate_value_q_pi`
 ```
 Run value iteration on an agent using state-action value estimates.
 
@@ -158,7 +193,48 @@ Run value iteration on an agent using state-action value estimates.
     :param update_in_place: See `evaluate_q_pi`.
     :return: Final state-action value estimates.
 ```
-## `rl.environments.mdp.GamblersProblem`
+# Chapter 5
+## `rl.gpi.monte_carlo.evaluation.evaluate_v_pi`
 ```
-Gambler's problem MDP environment.
+Perform Monte Carlo evaluation of an agent's policy within an environment, returning state values. Uses a random
+    action on the first time step to maintain exploration (exploring starts).
+
+    :param agent:
+    :param environment:
+    :param num_episodes: Number of episodes to execute.
+    :return: Dictionary of MDP states and their estimated values under the agent's policy.
+```
+## `rl.gpi.monte_carlo.evaluation.evaluate_q_pi`
+```
+Perform Monte Carlo evaluation of an agent's policy within an environment, returning state-action values.
+
+    :param agent: Agent.
+    :param environment: Environment.
+    :param num_episodes: Number of episodes to execute.
+    :param exploring_starts: Whether or not to use exploring starts, forcing a random action in the first time step.
+    This maintains exploration in the first state; however, unless each state has some nonzero probability of being
+    selected as the first state, there is no assurance that all state-action pairs will be sampled. If the initial state
+    is deterministic, consider passing False here and shifting the burden of exploration to the improvement step with
+    a nonzero epsilon (see `rl.gpi.improvement.improve_policy_with_q_pi`).
+    :param initial_q_S_A: Initial guess at state-action value, or None for no guess.
+    :return: 2-tuple of (1) dictionary of MDP states and their action-value averagers under the agent's policy, and (2)
+    the per-episode average reward obtained.
+```
+## `rl.gpi.monte_carlo.iteration.iterate_value_q_pi`
+```
+Run value iteration on an agent using state-action value estimates.
+
+    :param agent: Agent.
+    :param environment: Environment.
+    :param num_improvements: Number of policy improvements to make.
+    :param num_episodes_per_improvement: Number of policy evaluation episodes to execute for each iteration of
+    improvement. Passing `1` will result in the Monte Carlo ES (Exploring Starts) algorithm.
+    :param epsilon: Total probability mass to spread across all actions, resulting in an epsilon-greedy policy. Must
+    be >= 0 if provided.
+    :param num_improvements_per_plot: Number of improvements to make before plotting the per-improvement average. Pass
+    None to turn off all plotting.
+    :param num_improvements_per_checkpoint: Number of improvements per checkpoint save.
+    :param checkpoint_path: Checkpoint path. Must be provided if `num_improvements_per_checkpoint` is provided.
+    :param initial_q_S_A: Initial state-action value estimates (primarily useful for restarting from a checkpoint).
+    :return: Final state-action value estimates.
 ```

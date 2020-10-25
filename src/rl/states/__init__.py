@@ -1,11 +1,11 @@
-from typing import Union, Optional
+from typing import Optional
 
 
 class State:
 
     def __init__(
             self,
-            i: Optional[Union[int, str]]
+            i: Optional[int]
     ):
         """
         Initialize the state.
@@ -14,9 +14,6 @@ class State:
         """
 
         self.i = i
-
-        if i is not None:
-            self.hash = i.__hash__()
 
     def __str__(
             self
@@ -37,7 +34,7 @@ class State:
         :return: Hash code
         """
 
-        return self.hash
+        return self.i
 
     def __eq__(
             self,
@@ -63,4 +60,4 @@ class State:
         :return: True if not equal and False otherwise.
         """
 
-        return not self.__eq__(other)
+        return self.i != other.i
