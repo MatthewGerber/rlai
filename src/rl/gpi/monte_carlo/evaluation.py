@@ -1,4 +1,4 @@
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Set
 
 from rl.actions import Action
 from rl.agents.mdp import MdpAgent
@@ -91,7 +91,7 @@ def evaluate_q_pi(
         num_episodes: int,
         exploring_starts: bool,
         initial_q_S_A: Dict[MdpState, Dict[Action, IncrementalSampleAverager]] = None
-) -> Tuple[Dict[MdpState, Dict[Action, IncrementalSampleAverager]], float]:
+) -> Tuple[Dict[MdpState, Dict[Action, IncrementalSampleAverager]], Set[MdpState], float]:
     """
     Perform Monte Carlo evaluation of an agent's policy within an environment, returning state-action values.
 
@@ -104,21 +104,23 @@ def evaluate_q_pi(
     is deterministic, consider passing False here and shifting the burden of exploration to the improvement step with
     a nonzero epsilon (see `rl.gpi.improvement.improve_policy_with_q_pi`).
     :param initial_q_S_A: Initial guess at state-action value, or None for no guess.
-    :return: 2-tuple of (1) dictionary of MDP states and their action-value averagers under the agent's policy, and (2)
-    the per-episode average reward obtained.
+    :return: 2-tuple of (1) dictionary of all MDP states and their action-value averagers under the agent's policy, (2)
+    set of only those states that were evaluated, and (3) the per-episode average reward obtained.
     """
 
     print(f'Running Monte Carlo evaluation of q_pi for {num_episodes} episode(s).')
 
+    evaluated_states = set()
+
     # if no initial guess is provided, then start with an averager for each terminal state.
     if initial_q_S_A is None:
-        q_S_A: Dict[MdpState, Dict[Action, IncrementalSampleAverager]] = {
-            terminal_state: {
+        q_S_A: Dict[MdpState, Dict[Action, IncrementalSampleAverager]] = {}
+        for terminal_state in environment.terminal_states:
+            q_S_A[terminal_state] = {
                 a: IncrementalSampleAverager()
                 for a in terminal_state.AA
             }
-            for terminal_state in environment.terminal_states
-        }
+            evaluated_states.add(terminal_state)
     # set to initial guess
     else:
         q_S_A = initial_q_S_A
@@ -138,6 +140,8 @@ def evaluate_q_pi(
         t_state_action_reward = []
         total_reward = 0.0
         while not state.terminal:
+
+            evaluated_states.add(state)
 
             if exploring_starts and t == 0:
                 a = sample_list_item(state.AA, None, environment.random_state)
@@ -186,4 +190,4 @@ def evaluate_q_pi(
 
     print(f'Completed evaluation. Average reward per episode:  {episode_reward_averager.get_value()}')
 
-    return q_S_A, episode_reward_averager.get_value()
+    return q_S_A, evaluated_states, episode_reward_averager.get_value()

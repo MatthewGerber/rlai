@@ -21,8 +21,10 @@ def resume_iterate_value_q_pi_from_checkpoint(
     if new_checkpoint_path is None:
         new_checkpoint_path = checkpoint_path
 
+    print('Reading checkpoint file to resume...', end='')
     with open(checkpoint_path, 'rb') as checkpoint_file:
         resume_args = pickle.load(checkpoint_file)
+    print('.done')
 
     resume_args['checkpoint_path'] = new_checkpoint_path
 
@@ -67,13 +69,14 @@ def iterate_value_q_pi(
 
     q_S_A = initial_q_S_A
     i = 0
-    per_episode_average_rewards = []
-    state_space_size = []
+    iteration_average_reward = []
+    iteration_total_states = []
+    iteration_num_states_updated = []
     while True:
 
         print(f'Value iteration {i + 1}:  ', end='')
 
-        q_S_A, per_episode_average_reward = evaluate_q_pi(
+        q_S_A, evaluated_states, per_episode_average_reward = evaluate_q_pi(
             agent=agent,
             environment=environment,
             num_episodes=num_episodes_per_improvement,
@@ -81,33 +84,40 @@ def iterate_value_q_pi(
             initial_q_S_A=q_S_A
         )
 
+        # build the q_pi update that only includes states visited in the current iteration. there is no need to update
+        # the agent's policy for states that weren't evaluated, and this will dramatically cut down computation for
+        # environments with large state spaces.
         q_pi = {
             s: {
                 a: q_S_A[s][a].get_value()
                 for a in q_S_A[s]
             }
             for s in q_S_A
+            if s in evaluated_states
         }
 
-        improve_policy_with_q_pi(
+        num_states_updated = improve_policy_with_q_pi(
             agent=agent,
             q_pi=q_pi,
             epsilon=epsilon
         )
 
-        per_episode_average_rewards.append(per_episode_average_reward)
-        state_space_size.append(len(q_S_A))
+        iteration_average_reward.append(per_episode_average_reward)
+        iteration_total_states.append(len(q_S_A))
+        iteration_num_states_updated.append(num_states_updated)
 
         i += 1
 
         if num_improvements_per_plot is not None and i % num_improvements_per_plot == 0:
             plt.close('all')
-            plt.plot(per_episode_average_rewards, '-', label='win-loss')
+            plt.plot(iteration_average_reward, '-', label='%win-%loss')
             plt.xlabel('Time step')
-            plt.ylabel('Win-loss differential (% win - % loss)')
+            plt.ylabel('Win-loss differential')
             plt.grid()
             state_space_ax = plt.twinx()
-            state_space_ax.plot(state_space_size, '--', label='# states')
+            state_space_ax.plot(iteration_total_states, '--', color='orange', label='total')
+            state_space_ax.plot(iteration_num_states_updated, '-', color='orange', label='updated')
+            state_space_ax.set_yscale('log')
             state_space_ax.set_ylabel('# states')
             state_space_ax.legend()
             plt.show()

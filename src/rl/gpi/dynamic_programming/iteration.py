@@ -42,7 +42,7 @@ def iterate_policy_v_pi(
         improving = improve_policy_with_v_pi(
             agent=agent,
             v_pi=v_pi
-        )
+        ) > 0
 
         i += 1
 
@@ -84,7 +84,7 @@ def iterate_policy_q_pi(
         improving = improve_policy_with_q_pi(
             agent=agent,
             q_pi=q_pi
-        )
+        ) > 0
 
         i += 1
 

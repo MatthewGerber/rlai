@@ -10,7 +10,7 @@ from rl.states.mdp import ModelBasedMdpState
 def improve_policy_with_v_pi(
         agent: MdpAgent,
         v_pi: Dict[ModelBasedMdpState, float]
-) -> bool:
+) -> int:
     """
     Improve an agent's policy according to its state-value estimates. This makes the policy greedy with respect to the
     state-value estimates. In cases where multiple such greedy actions exist for a state, each of the greedy actions
@@ -23,7 +23,7 @@ def improve_policy_with_v_pi(
 
     :param agent: Agent.
     :param v_pi: State-value estimates for the agent's policy.
-    :return: True if policy was changed and False if the policy was not changed.
+    :return: Number of states in which the policy was updated.
     """
 
     # calculate state-action values (q) for the agent's policy

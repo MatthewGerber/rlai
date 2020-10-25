@@ -59,12 +59,15 @@ def test_evaluate_q_pi():
         1
     )
 
-    q_S_A, _ = evaluate_q_pi(
+    q_S_A, evaluated_states, _ = evaluate_q_pi(
         agent=mdp_agent,
         environment=mdp_environment,
         num_episodes=1000,
         exploring_starts=True
     )
+
+    assert len(q_S_A) == len(evaluated_states)
+    assert all(s in q_S_A for s in evaluated_states)
 
     # pickle doesn't like to unpickle instances with custom __hash__ functions
     q_pi = {
@@ -99,7 +102,7 @@ def test_iterate_value_q_pi():
         1
     )
 
-    q_pi = iterate_value_q_pi(
+    iterate_value_q_pi(
         agent=mdp_agent,
         environment=mdp_environment,
         num_improvements=3000,
@@ -109,19 +112,19 @@ def test_iterate_value_q_pi():
     )
 
     # pickle doesn't like to unpickle instances with custom __hash__ functions
-    q_pi = {
+    pi = {
         s.i: {
-            a: q_pi[s][a]
-            for a in q_pi[s]
+            a: mdp_agent.pi[s][a]
+            for a in mdp_agent.pi[s]
         }
-        for s in q_pi
+        for s in mdp_agent.pi
     }
 
     # uncomment the following line and run test to update fixture
     # with open(f'{os.path.dirname(__file__)}/fixtures/test_monte_carlo_iteration_of_value_q_pi.pickle', 'wb') as file:
-    #     pickle.dump(q_pi, file)
+    #     pickle.dump(pi, file)
 
     with open(f'{os.path.dirname(__file__)}/fixtures/test_monte_carlo_iteration_of_value_q_pi.pickle', 'rb') as file:
         fixture = pickle.load(file)
 
-    assert q_pi == fixture
+    assert pi == fixture
