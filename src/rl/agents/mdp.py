@@ -282,14 +282,21 @@ class Human(MdpAgent):
 
         while action is None:
 
-            prompt = 'Please select from the following actions:\n'
+            prompt = 'Please select from the following actions:  '
 
             self.most_recent_state: MdpState
-            for i, a in enumerate(sorted(self.most_recent_state.AA, key=lambda a: a.i)):
-                prompt += f'\t({i}):  {a}\n'
+
+            name_i = {
+                a.name: i
+                for i, a in enumerate(self.most_recent_state.AA)
+            }
+
+            for i, name in enumerate(sorted(name_i.keys())):
+                prompt += f'{", " if i > 0 else ""}{name}'
 
             try:
-                action = self.most_recent_state.AA[int(input(prompt))]
+                chosen_name = input(prompt)
+                action = self.most_recent_state.AA[name_i[chosen_name]]
             except Exception:
                 pass
 

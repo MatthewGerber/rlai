@@ -73,25 +73,9 @@ class MancalaState(MdpState):
                 # sense, act, transition
                 environment.player_2.sense(next_state, t)
 
-                # if a human is playing, print the board.
+                # if a human is playing, render the board.
                 if isinstance(environment.player_2, Human):
-
-                    print(f'|{environment.player_1_store.count}', end='')
-                    for player_1_pocket in reversed(environment.player_1_pockets):
-                        print(f'|{player_1_pocket.count}', end='')
-                    print('|')
-
-                    print('  ', end='')
-                    for player_2_pocket in environment.player_2_pockets:
-                        print(f'|{player_2_pocket.count}', end='')
-
-                    print(f'|{environment.player_2_store.count}|')
-
-                    print('  ', end='')
-                    for i, player_2_pocket in enumerate(environment.player_2_pockets):
-                        print(f' {i}', end='')
-
-                    print()
+                    environment.render()
 
                 p2_a = environment.player_2.act(t)
                 picked_pocket = environment.board[p2_a.i]
@@ -247,6 +231,30 @@ class Mancala(MdpEnvironment):
             else:
                 pocket.count = self.initial_count
 
+    def render(
+            self
+    ):
+        """
+        Render the board for interaction by a human agent.
+        """
+
+        print(f'|{self.player_1_store.count}', end='')
+        for player_1_pocket in reversed(self.player_1_pockets):
+            print(f'|{player_1_pocket.count}', end='')
+        print('|')
+
+        print('  ', end='')
+        for player_2_pocket in self.player_2_pockets:
+            print(f'|{player_2_pocket.count}', end='')
+
+        print(f'|{self.player_2_store.count}|')
+
+        print('  ', end='')
+        for i, player_2_pocket in enumerate(self.player_2_pockets):
+            print(f' {i}', end='')
+
+        print()
+
     def get_terminal_reward(
             self
     ) -> Reward:
@@ -384,9 +392,17 @@ class Mancala(MdpEnvironment):
 
             pit.i = i
 
-            # non-store pit (i.e., pockets) have actions associated with them
+            # non-store pit (i.e., pockets) have actions associated with them. Action.i indexes the particular pit
+            # within the board.
             if not pit.store:
                 pit.action = Action(pit.i)
+
+        # Action.name indicates the i-th pit from the player's perspective
+        for i, pit in enumerate(self.player_1_pockets):
+            pit.action.name = str(i)
+
+        for i, pit in enumerate(self.player_2_pockets):
+            pit.action.name = str(i)
 
         for player_1_pocket, opposing_player_2_pocket in zip(self.player_1_pockets, reversed(self.player_2_pockets)):
             player_1_pocket.opposing_pocket = opposing_player_2_pocket
@@ -404,3 +420,4 @@ class Mancala(MdpEnvironment):
             SS=[initial_state],
             RR=RR
         )
+
