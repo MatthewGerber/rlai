@@ -17,20 +17,6 @@ class MdpState(State, ABC):
     Model-free MDP state.
     """
 
-    def is_feasible(
-            self,
-            a: Action
-    ) -> bool:
-        """
-        Check whether an action is feasible from the current state. This uses a set-based lookup with O(1) complexity,
-        which is far faster than checking for the action in self.AA.
-
-        :param a: Action.
-        :return: True if the action is feasible from the current state and False otherwise.
-        """
-
-        return a in self.AA_set
-
     @abstractmethod
     def advance(
             self,
@@ -58,19 +44,15 @@ class MdpState(State, ABC):
         Initialize the MDP state.
 
         :param i: State index.
-        :param AA: All actions that can be taken from this state.
         :param terminal: Whether or not the state is terminal.
         """
 
         super().__init__(
-            i=i
+            i=i,
+            AA=AA
         )
 
-        self.AA = AA
         self.terminal = terminal
-
-        # use set for fast existence checks (e.g., in `feasible` function)
-        self.AA_set = set(self.AA)
 
 
 @rl_text(chapter=3, page=47)

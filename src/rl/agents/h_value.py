@@ -6,8 +6,8 @@ from numpy.random import RandomState
 
 from rl.actions import Action
 from rl.agents import Agent
-from rl.environments import Environment
 from rl.meta import rl_text
+from rl.states import State
 from rl.utils import IncrementalSampleAverager, sample_list_item
 
 
@@ -61,14 +61,12 @@ class PreferenceGradient(Agent):
     def init_from_arguments(
             cls,
             args: List[str],
-            environment: Environment,
             random_state: RandomState
     ) -> Tuple[List[Agent], List[str]]:
         """
         Initialize a list of agents from arguments.
 
         :param args: Arguments.
-        :param environment: Environment.
         :param random_state: Random state.
         :return: 2-tuple of a list of agents and a list of unparsed arguments.
         """
@@ -78,7 +76,6 @@ class PreferenceGradient(Agent):
         # initialize agents
         agents = [
             PreferenceGradient(
-                AA=environment.AA,
                 name=f'preference gradient (step size={parsed_args.step_size_alpha})',
                 random_state=random_state,
                 **dict(parsed_args._get_kwargs())
@@ -88,15 +85,18 @@ class PreferenceGradient(Agent):
         return agents, unparsed_args
 
     def reset_for_new_run(
-            self
+            self,
+            state: State
     ):
         """
         Reset the agent to a state prior to any learning.
+
+        :param state: New state.
         """
 
-        super().reset_for_new_run()
+        super().reset_for_new_run(state)
 
-        self.H_t_A = np.zeros_like(self.H_t_A)
+        self.H_t_A = np.zeros(len(self.most_recent_state.AA))
         self.update_action_probabilities()
         self.R_bar.reset()
 
@@ -111,7 +111,7 @@ class PreferenceGradient(Agent):
         :return: Action.
         """
 
-        return sample_list_item(self.AA, self.Pr_A, self.random_state)
+        return sample_list_item(self.most_recent_state.AA, self.Pr_A, self.random_state)
 
     def reward(
             self,
@@ -158,7 +158,6 @@ class PreferenceGradient(Agent):
 
     def __init__(
             self,
-            AA: List[Action],
             name: str,
             random_state: RandomState,
             step_size_alpha: float,
@@ -168,7 +167,6 @@ class PreferenceGradient(Agent):
         """
         Initialize the agent.
 
-        :param AA: List of all possible actions.
         :param name: Name of the agent.
         :param random_state: Random State.
         :param step_size_alpha: Step-size parameter used to update action preferences.
@@ -177,7 +175,6 @@ class PreferenceGradient(Agent):
         """
 
         super().__init__(
-            AA=AA,
             name=name,
             random_state=random_state
         )
@@ -189,5 +186,5 @@ class PreferenceGradient(Agent):
             alpha=reward_average_alpha
         )
 
-        self.H_t_A: np.ndarray = np.zeros(len(self.AA))
-        self.Pr_A: np.ndarray = np.zeros_like(self.H_t_A)
+        self.H_t_A: np.ndarray = None
+        self.Pr_A: np.ndarray = None

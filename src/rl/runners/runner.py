@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 from numpy.random import RandomState
 
+from rl.agents.mdp import MdpAgent
 from rl.runners import FIGURES_DIRECTORY
 from rl.runners.monitor import Monitor
 
@@ -90,13 +91,18 @@ def run(
     agent_class = load_class(parsed_args.agent)
     agents, unparsed_args = agent_class.init_from_arguments(
         args=unparsed_args,
-        environment=environment,
         random_state=random_state
     )
 
     # no unparsed arguments should remain
     if len(unparsed_args) > 0:
         raise ValueError(f'Unparsed arguments:  {unparsed_args}')
+
+    # if we're running mdp agents, have each agent solve the mdp with the specified function/parameters.
+    for agent in agents:
+        if isinstance(agent, MdpAgent):
+            agent.initialize_equiprobable_policy(environment.SS)
+            agent.solve_mdp()
 
     # set up plot
     pdf = None
@@ -124,8 +130,8 @@ def run(
         num_runs_per_print = int(parsed_args.n_runs * 0.05)
         for r in range(parsed_args.n_runs):
 
-            agent.reset_for_new_run()
-            environment.reset_for_new_run(agent)
+            state = environment.reset_for_new_run()
+            agent.reset_for_new_run(state)
             monitor.reset_for_new_run()
 
             environment.run(

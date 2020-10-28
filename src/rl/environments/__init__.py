@@ -7,6 +7,7 @@ from numpy.random import RandomState
 from rl.actions import Action
 from rl.agents import Agent
 from rl.runners.monitor import Monitor
+from rl.states import State
 
 
 class Environment(ABC):
@@ -45,11 +46,12 @@ class Environment(ABC):
 
     @abstractmethod
     def reset_for_new_run(
-            self,
-            agent  # can't provide Agent type hint due to circular reference with Environment
-    ):
+            self
+    ) -> State:
         """
         Reset the the environment.
+
+        :return: New state.
         """
         pass
 
@@ -94,19 +96,16 @@ class Environment(ABC):
     def __init__(
             self,
             name: str,
-            AA: List[Action],
             random_state: RandomState
     ):
         """
         Initialize the environment.
 
         :param name: Name of the environment.
-        :param AA: List of all possible actions.
         :param random_state: Random state.
         """
 
         self.name = name
-        self.AA = AA
         self.random_state = random_state
 
     def __str__(

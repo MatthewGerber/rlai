@@ -9,6 +9,7 @@ from rl.agents import Agent
 from rl.environments import Environment
 from rl.meta import rl_text
 from rl.runners.monitor import Monitor
+from rl.states import State
 
 ARM_QSTAR_BUFFER_SIZE = 1000
 
@@ -152,18 +153,13 @@ class KArmedBandit(Environment):
         return bandit, unparsed_args
 
     def reset_for_new_run(
-            self,
-            agent
-    ):
+            self
+    ) -> State:
         """
         Reset the the bandit, initializing arms to new expected values.
 
-        :param agent: Agent.
+        :return: New State.
         """
-
-        super().reset_for_new_run(
-            agent=agent
-        )
 
         # get new arm reward means and initialize new arms
         q_star_means = self.random_state.normal(loc=self.q_star_mean, scale=self.q_star_variance, size=self.k)
@@ -179,6 +175,8 @@ class KArmedBandit(Environment):
         ]
 
         self.best_arm = max(self.arms, key=lambda arm: arm.mean)
+
+        return State(i=0, AA=[Action(i) for i in range(self.k)])
 
     def pull(
             self,
@@ -209,7 +207,7 @@ class KArmedBandit(Environment):
         """
 
         if self.random_state.random_sample() < self.reset_probability:
-            self.reset_for_new_run(agent)
+            self.reset_for_new_run()
 
         action = agent.act(t=t)
         monitor.report(t=t, agent_action=action, optimal_action=Action(self.best_arm.i))
@@ -243,7 +241,6 @@ class KArmedBandit(Environment):
 
         super().__init__(
             name=f'{k}-armed bandit',
-            AA=[Action(i) for i in range(k)],
             random_state=random_state
         )
 

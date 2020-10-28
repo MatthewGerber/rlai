@@ -1,19 +1,41 @@
-from typing import Optional
+from typing import Optional, List
+
+from rl.actions import Action
 
 
 class State:
 
+    def is_feasible(
+            self,
+            a: Action
+    ) -> bool:
+        """
+        Check whether an action is feasible from the current state. This uses a set-based lookup with O(1) complexity,
+        which is far faster than checking for the action in self.AA.
+
+        :param a: Action.
+        :return: True if the action is feasible from the current state and False otherwise.
+        """
+
+        return a in self.AA_set
+
     def __init__(
             self,
-            i: Optional[int]
+            i: Optional[int],
+            AA: List[Action]
     ):
         """
         Initialize the state.
 
         :param i: Identifier for the state.
+        :param AA: All actions that can be taken from this state.
         """
 
         self.i = i
+        self.AA = AA
+
+        # use set for fast existence checks (e.g., in `feasible` function)
+        self.AA_set = set(self.AA)
 
     def __str__(
             self

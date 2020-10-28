@@ -16,9 +16,22 @@ from rl.states.mdp import MdpState
 def resume_iterate_value_q_pi_from_checkpoint(
         checkpoint_path: str,
         new_checkpoint_path: Optional[str] = None,
-        mutator: Callable = None,
+        resume_args_mutator: Callable = None,
         **new_args
 ):
+    """
+    Resume the execution of a previous call to `rl.gpi.monte_carlo.iteration.iterate_value_q_pi`, based on a stored
+    checkpoint.
+
+    :param checkpoint_path: Path to checkpoint file.
+    :param new_checkpoint_path: Path to new checkpoint file, if the original should be left as it is. Pass `None` to
+    use and overwrite `checkpoint_path` with new checkpoints.
+    :param resume_args_mutator: A function called prior to resumption. This function will be passed a dictionary of
+    arguments comprising the checkpoint. The passed function can change these arguments if desired.
+    :param new_args: As a simpler alternative to `resume_args_mutator`, pass any keyword arguments that should replace
+    those in the checkpoint.
+    """
+
     if new_checkpoint_path is None:
         new_checkpoint_path = checkpoint_path
 
@@ -32,8 +45,8 @@ def resume_iterate_value_q_pi_from_checkpoint(
     if new_args is not None:
         resume_args.update(new_args)
 
-    if mutator is not None:
-        mutator(**resume_args)
+    if resume_args_mutator is not None:
+        resume_args_mutator(**resume_args)
 
     iterate_value_q_pi(**resume_args)
 

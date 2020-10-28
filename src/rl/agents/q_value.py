@@ -2,14 +2,14 @@ import math
 import sys
 from abc import ABC
 from argparse import Namespace, ArgumentParser
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Optional
 
 from numpy.random import RandomState
 
 from rl.actions import Action
 from rl.agents import Agent
-from rl.environments import Environment
 from rl.meta import rl_text
+from rl.states import State
 from rl.utils import IncrementalSampleAverager
 
 
@@ -52,16 +52,28 @@ class QValue(Agent, ABC):
         return parser.parse_known_args(unparsed_args, parsed_args)
 
     def reset_for_new_run(
-            self
+            self,
+            state: State
     ):
         """
         Reset the agent to a state prior to any learning.
+
+        :param state: New state.
         """
 
-        super().reset_for_new_run()
+        super().reset_for_new_run(state)
 
-        for averager in self.Q.values():
-            averager.reset()
+        if self.Q is None:
+            self.Q = {
+                a: IncrementalSampleAverager(
+                    initial_value=self.initial_q_value,
+                    alpha=self.alpha
+                )
+                for a in self.most_recent_state.AA
+            }
+        else:
+            for averager in self.Q.values():
+                averager.reset()
 
     def reward(
             self,
@@ -79,7 +91,6 @@ class QValue(Agent, ABC):
 
     def __init__(
             self,
-            AA: List[Action],
             name: str,
             random_state: RandomState,
             initial_q_value: float,
@@ -88,7 +99,6 @@ class QValue(Agent, ABC):
         """
         Initialize the agent.
 
-        :param AA: List of all possible actions.
         :param name: Name of agent.
         :param random_state: Random state.
         :param initial_q_value: Initial Q-value to use for all actions. Use values greater than zero to encourage
@@ -97,18 +107,14 @@ class QValue(Agent, ABC):
         """
 
         super().__init__(
-            AA=AA,
             name=name,
             random_state=random_state
         )
 
-        self.Q: Dict[Action, IncrementalSampleAverager] = {
-            a: IncrementalSampleAverager(
-                initial_value=initial_q_value,
-                alpha=alpha
-            )
-            for a in self.AA
-        }
+        self.initial_q_value = initial_q_value
+        self.alpha = alpha
+
+        self.Q: Optional[Dict[Action, IncrementalSampleAverager]] = None
 
 
 @rl_text(chapter=2, page=27)
@@ -155,14 +161,12 @@ class EpsilonGreedy(QValue):
     def init_from_arguments(
             cls,
             args: List[str],
-            environment: Environment,
             random_state: RandomState
     ) -> Tuple[List[Agent], List[str]]:
         """
         Initialize a list of agents from arguments.
 
         :param args: Arguments.
-        :param environment: Environment.
         :param random_state: Random state.
         :return: 2-tuple of a list of agents and a list of unparsed arguments.
         """
@@ -176,7 +180,6 @@ class EpsilonGreedy(QValue):
         # initialize agents
         agents = [
             EpsilonGreedy(
-                AA=environment.AA,
                 name=f'epsilon-greedy (e={epsilon:0.2f})',
                 random_state=random_state,
                 epsilon=epsilon,
@@ -188,13 +191,16 @@ class EpsilonGreedy(QValue):
         return agents, unparsed_args
 
     def reset_for_new_run(
-            self
+            self,
+            state: State
     ):
         """
         Reset the agent to a state prior to any learning.
+
+        :param state: New state.
         """
 
-        super().reset_for_new_run()
+        super().reset_for_new_run(state)
 
         self.epsilon = self.original_epsilon
         self.greedy_action = list(self.Q.keys())[0]
@@ -211,7 +217,7 @@ class EpsilonGreedy(QValue):
         """
 
         if self.random_state.random_sample() < self.epsilon:
-            a = self.random_state.choice(self.AA)
+            a = self.random_state.choice(self.most_recent_state.AA)
             self.epsilon *= (1 - self.epsilon_reduction_rate)
         else:
             a = self.greedy_action
@@ -235,7 +241,6 @@ class EpsilonGreedy(QValue):
 
     def __init__(
             self,
-            AA: List[Action],
             name: str,
             random_state: RandomState,
             initial_q_value: float,
@@ -246,7 +251,6 @@ class EpsilonGreedy(QValue):
         """
         Initialize the agent.
 
-        :param AA: List of all possible actions.
         :param name: Name of agent.
         :param random_state: Random state.
         :param initial_q_value: Initial Q-value to use for all actions. Use values greater than zero to encourage
@@ -259,7 +263,6 @@ class EpsilonGreedy(QValue):
         """
 
         super().__init__(
-            AA=AA,
             name=name,
             random_state=random_state,
             initial_q_value=initial_q_value,
@@ -308,14 +311,12 @@ class UpperConfidenceBound(QValue):
     def init_from_arguments(
             cls,
             args: List[str],
-            environment: Environment,
             random_state: RandomState
     ) -> Tuple[List[Agent], List[str]]:
         """
         Initialize a list of agents from arguments.
 
         :param args: Arguments.
-        :param environment: Environment.
         :param random_state: Random state.
         :return: 2-tuple of a list of agents and a list of unparsed arguments.
         """
@@ -329,7 +330,6 @@ class UpperConfidenceBound(QValue):
         # initialize agents
         agents = [
             UpperConfidenceBound(
-                AA=environment.AA,
                 name=f'UCB (c={c})',
                 random_state=random_state,
                 c=c,
@@ -368,11 +368,10 @@ class UpperConfidenceBound(QValue):
         :return: Action.
         """
 
-        return max(self.AA, key=lambda a: self.Q[a].get_value() + self.c * math.sqrt(math.log(t + 1) / self.get_denominator(a)))
+        return max(self.most_recent_state.AA, key=lambda a: self.Q[a].get_value() + self.c * math.sqrt(math.log(t + 1) / self.get_denominator(a)))
 
     def __init__(
             self,
-            AA: List[Action],
             name: str,
             random_state: RandomState,
             initial_q_value: float,
@@ -382,7 +381,6 @@ class UpperConfidenceBound(QValue):
         """
         Initialize the agent.
 
-        :param AA: List of all possible actions.
         :param name: Name of agent.
         :param random_state: Random state.
         :param initial_q_value: Initial Q-value to use for all actions. Use values greater than zero to encourage
@@ -392,7 +390,6 @@ class UpperConfidenceBound(QValue):
         """
 
         super().__init__(
-            AA=AA,
             name=name,
             random_state=random_state,
             initial_q_value=initial_q_value,

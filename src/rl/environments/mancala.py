@@ -8,6 +8,7 @@ from rl.agents.mdp import Human
 from rl.environments import Environment
 from rl.environments.mdp import MdpEnvironment
 from rl.rewards import Reward
+from rl.states import State
 from rl.states.mdp import MdpState
 
 
@@ -73,7 +74,7 @@ class MancalaState(MdpState):
                 # sense, act, transition
                 environment.player_2.sense(next_state, t)
 
-                # if a human is playing, render the board.
+                # if the environmental agent is human, then render the board for them to see.
                 if isinstance(environment.player_2, Human):
                     environment.render()
 
@@ -212,24 +213,21 @@ class Mancala(MdpEnvironment):
         return self.state_id_str_int[state_id_str]
 
     def reset_for_new_run(
-            self,
-            agent
-    ):
+            self
+    ) -> State:
         """
         Reset the game to the initial state.
-
-        :param agent: Agent.
         """
 
-        super().reset_for_new_run(
-            agent=agent
-        )
+        super().reset_for_new_run()
 
         for pocket in self.board:
             if pocket.store:
                 pocket.count = 0
             else:
                 pocket.count = self.initial_count
+
+        return self.state
 
     def render(
             self
@@ -415,9 +413,7 @@ class Mancala(MdpEnvironment):
 
         super().__init__(
             name='mancala',
-            AA=[p.action for p in self.player_1_pockets] + [p.action for p in self.player_2_pockets],
             random_state=random_state,
             SS=[initial_state],
             RR=RR
         )
-

@@ -1,14 +1,14 @@
 from abc import ABC
 from argparse import Namespace, ArgumentParser
 from importlib import import_module
-from typing import List, Tuple
+from typing import List, Tuple, Optional, Dict, Callable
 
 import numpy as np
 from numpy.random import RandomState
 
 from rl.actions import Action
 from rl.agents import Agent
-from rl.environments.mdp import MdpEnvironment
+from rl.states import State
 from rl.states.mdp import MdpState
 from rl.utils import sample_list_item
 
@@ -85,45 +85,63 @@ class MdpAgent(Agent, ABC):
         parsed_args, unparsed_args = parser.parse_known_args(args)
 
         return parsed_args, unparsed_args
-    
+
+    def initialize_equiprobable_policy(
+            self,
+            SS: List[MdpState]
+    ):
+        """
+        Initialize the policy of the current agent to be equiprobable over all actions in a list of states.
+
+        :param SS: List of states.
+        """
+
+        self.pi = {
+            s: {
+                a: 1 / len(s.AA)
+                for a in s.AA
+            }
+            for s in SS
+        }
+
+    def solve_mdp(
+            self
+    ):
+        """
+        Solve the current agent's MDP using a function and arguments that have already been specified (e.g., on the
+        command line).
+        """
+
+        self.solver_function(self, **self.solver_function_args)
+
     def __init__(
             self,
-            AA: List[Action],
             name: str,
             random_state: RandomState,
-            SS: List[MdpState],
-            gamma: float
+            gamma: float,
+            solver_function: Optional[Callable],
+            solver_function_args: Optional[Dict]
     ):
         """
         Initialize the agent.
 
-        :param AA: List of all possible actions, with identifiers sorted in increasing order from zero.
         :param name: Name of the agent.
         :param random_state: Random state.
-        :param SS: List of all possible states, with identifiers sorted in increasing order from zero.
         :param gamma: Discount.
+        :param solver_function: Solver function.
+        :param solver_function_args: Solver function arguments
         """
 
-        for i, s in enumerate(SS):
-            if s.i != i:
-                raise ValueError('States must be sorted in increasing order from zero.')
-
         super().__init__(
-            AA=AA,
             name=name,
             random_state=random_state
         )
 
-        self.SS = SS
         self.gamma = gamma
+        self.solver_function = solver_function
+        self.solver_function_args = solver_function_args
 
-        self.pi = {
-            s: {
-                a: np.nan
-                for a in s.AA
-            }
-            for s in self.SS
-        }
+        self.pi: Optional[Dict[State, Dict[Action, float]]] = None
 
 
 class StochasticMdpAgent(MdpAgent):
@@ -135,32 +153,18 @@ class StochasticMdpAgent(MdpAgent):
     def init_from_arguments(
             cls,
             args: List[str],
-            environment: MdpEnvironment,
             random_state: RandomState
     ) -> Tuple[List[Agent], List[str]]:
         """
         Initialize a list of agents from arguments.
 
         :param args: Arguments.
-        :param environment: Environment.
         :param random_state: Random state.
         :return: 2-tuple of a list of agents and a list of unparsed arguments.
         """
 
-        parsed_args, unparsed_args = cls.parse_arguments(args)
-
-        agents = [
-            StochasticMdpAgent(
-                AA=environment.AA,
-                name=f'stochastic (gamma={parsed_args.gamma})',
-                random_state=random_state,
-                SS=environment.SS,
-                gamma=parsed_args.gamma
-            )
-        ]
-
         # get the mdp solver and arguments
-        parsed_mdp_args, unparsed_args = cls.parse_mdp_solver_args(unparsed_args)
+        parsed_mdp_args, unparsed_args = cls.parse_mdp_solver_args(args)
         solver_module_name, solver_function_name = parsed_mdp_args.mdp_solver.rsplit('.', maxsplit=1)
         solver_function_module = import_module(solver_module_name)
         solver_function = getattr(solver_function_module, solver_function_name)
@@ -170,12 +174,17 @@ class StochasticMdpAgent(MdpAgent):
             if k != 'mdp_solver' and v is not None
         }
 
-        # have each agent solve the mdp with the specified function/parameters
-        for agent in agents:
-            solver_function(
-                agent,
-                **solver_function_arguments
+        parsed_args, unparsed_args = cls.parse_arguments(unparsed_args)
+
+        agents = [
+            StochasticMdpAgent(
+                name=f'stochastic (gamma={parsed_args.gamma})',
+                random_state=random_state,
+                gamma=parsed_args.gamma,
+                solver_function=solver_function,
+                solver_function_args=solver_function_arguments
             )
+        ]
 
         return agents, unparsed_args
 
@@ -184,7 +193,7 @@ class StochasticMdpAgent(MdpAgent):
             t: int
     ) -> Action:
         """
-        Act randomly.
+        Act stochastically according to the policy.
 
         :param t: Time tick.
         :return: Action.
@@ -200,6 +209,7 @@ class StochasticMdpAgent(MdpAgent):
                 for a in self.most_recent_state.AA
             }
 
+        # sample action according to policy for most recent state
         action_prob = self.pi[self.most_recent_state]
         actions = list(action_prob.keys())
         probs = np.array(list(action_prob.values()))
@@ -226,37 +236,29 @@ class StochasticMdpAgent(MdpAgent):
 
     def __init__(
             self,
-            AA: List[Action],
             name: str,
             random_state: RandomState,
-            SS: List[MdpState],
-            gamma: float
+            gamma: float,
+            solver_function: Optional[Callable],
+            solver_function_args: Optional[Dict]
     ):
         """
-        Initialize the agent with an equiprobable policy over actions.
+        Initialize the agent.
 
-        :param AA: List of all possible actions, with identifiers sorted in increasing order from zero.
         :param name: Name of the agent.
         :param random_state: Random state.
-        :param SS: List of all possible states, with identifiers sorted in increasing order from zero.
         :param gamma: Discount.
+        :param solver_function: Solver function.
+        :param solver_function_args: Solver function arguments
         """
 
         super().__init__(
-            AA=AA,
             name=name,
             random_state=random_state,
-            SS=SS,
-            gamma=gamma
+            gamma=gamma,
+            solver_function=solver_function,
+            solver_function_args=solver_function_args
         )
-
-        self.pi = {
-            s: {
-                a: 1 / len(s.AA)
-                for a in s.AA
-            }
-            for s in self.SS
-        }
 
 
 class Human(MdpAgent):
@@ -268,7 +270,6 @@ class Human(MdpAgent):
     def init_from_arguments(
             cls,
             args: List[str],
-            environment,
             random_state: RandomState
     ) -> List:
         pass
@@ -286,17 +287,19 @@ class Human(MdpAgent):
 
             self.most_recent_state: MdpState
 
-            name_i = {
+            a_name_i = {
                 a.name: i
                 for i, a in enumerate(self.most_recent_state.AA)
             }
 
-            for i, name in enumerate(sorted(name_i.keys())):
+            for i, name in enumerate(sorted(a_name_i.keys())):
                 prompt += f'{", " if i > 0 else ""}{name}'
+
+            prompt += '\nEnter your selection:  '
 
             try:
                 chosen_name = input(prompt)
-                action = self.most_recent_state.AA[name_i[chosen_name]]
+                action = self.most_recent_state.AA[a_name_i[chosen_name]]
             except Exception:
                 pass
 
@@ -311,9 +314,9 @@ class Human(MdpAgent):
             self
     ):
         super().__init__(
-            AA=[],
             name='human',
             random_state=None,
-            SS=[],
-            gamma=1
+            gamma=1,
+            solver_function=None,
+            solver_function_args=None
         )

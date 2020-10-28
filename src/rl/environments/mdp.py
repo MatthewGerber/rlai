@@ -11,6 +11,7 @@ from rl.environments import Environment
 from rl.meta import rl_text
 from rl.rewards import Reward
 from rl.runners.monitor import Monitor
+from rl.states import State
 from rl.states.mdp import MdpState, ModelBasedMdpState
 
 
@@ -21,26 +22,15 @@ class MdpEnvironment(Environment, ABC):
     """
 
     def reset_for_new_run(
-            self,
-            agent
-    ):
+            self
+    ) -> State:
         """
-        Reset the environment to a random nonterminal state.
-
-        :param agent: Agent.
+        Reset the the environment.
         """
-
-        super().reset_for_new_run(
-            agent=agent
-        )
 
         self.state = self.random_state.choice(self.nonterminal_states)
 
-        # tell the agent about the initial state
-        agent.sense(
-            state=self.state,
-            t=0
-        )
+        return self.state
 
     @final
     def run_step(
@@ -79,7 +69,6 @@ class MdpEnvironment(Environment, ABC):
     def __init__(
             self,
             name: str,
-            AA: List[Action],
             random_state: RandomState,
             SS: List[MdpState],
             RR: List[Reward]
@@ -88,7 +77,6 @@ class MdpEnvironment(Environment, ABC):
         Initialize the MDP environment.
 
         :param name: Name.
-        :param AA: List of actions.
         :param random_state: Random state.
         :param SS: List of states.
         :param RR: List of rewards.
@@ -96,7 +84,6 @@ class MdpEnvironment(Environment, ABC):
 
         super().__init__(
             name=name,
-            AA=AA,
             random_state=random_state
         )
 
@@ -144,7 +131,7 @@ class Gridworld(MdpEnvironment):
         )
 
         # set nonterminal reward probabilities
-        for a in g.AA:
+        for a in [g.a_up, g.a_down, g.a_left, g.a_right]:
 
             # arrange grid such that a row-to-row scan will generate the appropriate state transition sequences for the
             # current action.
@@ -169,7 +156,7 @@ class Gridworld(MdpEnvironment):
         s: ModelBasedMdpState
         for s in g.SS:
             if s.terminal:
-                for a in g.AA:
+                for a in s.AA:
                     s.p_S_prime_R_given_A[a][s][r_zero] = 1.0
 
         for s in g.SS:
@@ -271,7 +258,6 @@ class Gridworld(MdpEnvironment):
 
         super().__init__(
             name=name,
-            AA=AA,
             random_state=random_state,
             SS=SS,
             RR=RR
@@ -389,7 +375,6 @@ class GamblersProblem(MdpEnvironment):
 
         super().__init__(
             name=name,
-            AA=AA,
             random_state=random_state,
             SS=SS,
             RR=RR

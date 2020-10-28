@@ -37,7 +37,7 @@ def improve_policy_with_v_pi(
             ])
             for a in s.p_S_prime_R_given_A
         }
-        for s in agent.SS
+        for s in agent.pi
     }
 
     return improve_policy_with_q_pi(

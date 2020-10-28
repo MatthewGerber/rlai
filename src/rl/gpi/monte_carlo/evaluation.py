@@ -35,8 +35,8 @@ def evaluate_v_pi(
     for episode_i in range(num_episodes):
 
         # start the environment in a random state
-        environment.reset_for_new_run(agent)
-        state = environment.state
+        state = environment.reset_for_new_run()
+        agent.reset_for_new_run(state)
 
         # simulate until episode termination, keeping a trace of states and their immediate rewards, as well as the
         # times of their first visits.
@@ -130,8 +130,8 @@ def evaluate_q_pi(
     for episode_i in range(num_episodes):
 
         # start the environment in a random state with a random feasible action in that state
-        environment.reset_for_new_run(agent)
-        state = environment.state
+        state = environment.reset_for_new_run()
+        agent.reset_for_new_run(state)
 
         # simulate until episode termination, keeping a trace of state-action pairs and their immediate rewards, as well
         # as the times of their first visits.

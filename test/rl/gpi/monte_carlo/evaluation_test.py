@@ -4,7 +4,7 @@ import pickle
 from numpy.random import RandomState
 
 from rl.agents.mdp import StochasticMdpAgent
-from rl.environments.mdp import Gridworld, GamblersProblem
+from rl.environments.mdp import Gridworld
 from rl.gpi.monte_carlo.evaluation import evaluate_v_pi, evaluate_q_pi
 from rl.gpi.monte_carlo.iteration import iterate_value_q_pi
 
@@ -16,12 +16,14 @@ def test_evaluate_v_pi():
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state)
 
     mdp_agent = StochasticMdpAgent(
-        mdp_environment.AA,
         'test',
         random_state,
-        mdp_environment.SS,
-        1
+        1,
+        None,
+        None
     )
+
+    mdp_agent.initialize_equiprobable_policy(mdp_environment.SS)
 
     v_pi = evaluate_v_pi(
         agent=mdp_agent,
@@ -52,12 +54,14 @@ def test_evaluate_q_pi():
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state)
 
     mdp_agent = StochasticMdpAgent(
-        mdp_environment.AA,
         'test',
         random_state,
-        mdp_environment.SS,
-        1
+        1,
+        None,
+        None
     )
+
+    mdp_agent.initialize_equiprobable_policy(mdp_environment.SS)
 
     q_S_A, evaluated_states, _ = evaluate_q_pi(
         agent=mdp_agent,
@@ -95,12 +99,14 @@ def test_iterate_value_q_pi():
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state)
 
     mdp_agent = StochasticMdpAgent(
-        mdp_environment.AA,
         'test',
         random_state,
-        mdp_environment.SS,
-        1
+        1,
+        None,
+        None
     )
+
+    mdp_agent.initialize_equiprobable_policy(mdp_environment.SS)
 
     iterate_value_q_pi(
         agent=mdp_agent,

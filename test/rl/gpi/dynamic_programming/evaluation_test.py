@@ -17,12 +17,14 @@ def test_evaluate_v_pi():
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state)
 
     mdp_agent = StochasticMdpAgent(
-        mdp_environment.AA,
         'test',
         random_state,
-        mdp_environment.SS,
-        1
+        1,
+        None,
+        None
     )
+
+    mdp_agent.initialize_equiprobable_policy(mdp_environment.SS)
 
     v_pi, _ = evaluate_v_pi(
         agent=mdp_agent,
@@ -65,12 +67,14 @@ def test_evaluate_q_pi():
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state)
 
     mdp_agent = StochasticMdpAgent(
-        mdp_environment.AA,
         'test',
         random_state,
-        mdp_environment.SS,
-        1
+        1,
+        None,
+        None
     )
+
+    mdp_agent.initialize_equiprobable_policy(mdp_environment.SS)
 
     q_pi, _ = evaluate_q_pi(
         agent=mdp_agent,
@@ -119,12 +123,14 @@ def test_policy_iteration():
 
     # state-value policy iteration
     mdp_agent_v_pi = StochasticMdpAgent(
-        mdp_environment.AA,
         'test',
         random_state,
-        mdp_environment.SS,
-        1
+        1,
+        None,
+        None
     )
+
+    mdp_agent_v_pi.initialize_equiprobable_policy(mdp_environment.SS)
 
     iterate_policy_v_pi(
         mdp_agent_v_pi,
@@ -134,12 +140,14 @@ def test_policy_iteration():
 
     # action-value policy iteration
     mdp_agent_q_pi = StochasticMdpAgent(
-        mdp_environment.AA,
         'test',
         random_state,
-        mdp_environment.SS,
-        1
+        1,
+        None,
+        None
     )
+
+    mdp_agent_q_pi.initialize_equiprobable_policy(mdp_environment.SS)
 
     iterate_policy_q_pi(
         mdp_agent_q_pi,
@@ -159,12 +167,14 @@ def test_value_iteration():
 
     # run policy iteration on v_pi
     mdp_agent_v_pi_policy_iteration = StochasticMdpAgent(
-        mdp_environment.AA,
         'test',
         random_state,
-        mdp_environment.SS,
-        1
+        1,
+        None,
+        None
     )
+
+    mdp_agent_v_pi_policy_iteration.initialize_equiprobable_policy(mdp_environment.SS)
 
     iterate_policy_v_pi(
         mdp_agent_v_pi_policy_iteration,
@@ -174,12 +184,14 @@ def test_value_iteration():
 
     # run value iteration on v_pi
     mdp_agent_v_pi_value_iteration = StochasticMdpAgent(
-        mdp_environment.AA,
         'test',
         random_state,
-        mdp_environment.SS,
-        1
+        1,
+        None,
+        None
     )
+
+    mdp_agent_v_pi_value_iteration.initialize_equiprobable_policy(mdp_environment.SS)
 
     iterate_value_v_pi(
         mdp_agent_v_pi_value_iteration,
@@ -192,12 +204,14 @@ def test_value_iteration():
 
     # run value iteration on q_pi
     mdp_agent_q_pi_value_iteration = StochasticMdpAgent(
-        mdp_environment.AA,
         'test',
         random_state,
-        mdp_environment.SS,
-        1
+        1,
+        None,
+        None
     )
+
+    mdp_agent_q_pi_value_iteration.initialize_equiprobable_policy(mdp_environment.SS)
 
     iterate_value_q_pi(
         mdp_agent_q_pi_value_iteration,

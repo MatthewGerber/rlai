@@ -19,12 +19,14 @@ def test_gamblers_problem():
     )
 
     mdp_agent_v_pi_value_iteration = StochasticMdpAgent(
-        mdp_environment.AA,
         'test',
         random_state,
-        mdp_environment.SS,
-        1
+        1,
+        None,
+        None
     )
+
+    mdp_agent_v_pi_value_iteration.initialize_equiprobable_policy(mdp_environment.SS)
 
     v_pi = iterate_value_v_pi(
         mdp_agent_v_pi_value_iteration,

@@ -37,7 +37,7 @@ def evaluate_v_pi(
     )
 
     if initial_v_S is None:
-        v_S = {s: 0.0 for s in agent.SS}
+        v_S = {s: 0.0 for s in agent.pi}
     else:
         v_S = initial_v_S
 
@@ -47,12 +47,12 @@ def evaluate_v_pi(
         if update_in_place:
             v_S_to_update = v_S
         else:
-            v_S_to_update = {s: 0.0 for s in agent.SS}
+            v_S_to_update = {s: 0.0 for s in agent.pi}
 
         delta = 0.0
 
         s: ModelBasedMdpState
-        for s in agent.SS:
+        for s in agent.pi:
 
             prev_v = v_S[s]
 
@@ -125,7 +125,7 @@ def evaluate_q_pi(
                 a: 0.0
                 for a in s.p_S_prime_R_given_A
             }
-            for s in agent.SS
+            for s in agent.pi
         }
     else:
         q_S_A = initial_q_S_A
@@ -141,13 +141,13 @@ def evaluate_q_pi(
                     a: 0.0
                     for a in s.p_S_prime_R_given_A
                 }
-                for s in agent.SS
+                for s in agent.pi
             }
 
         delta = 0.0
 
         # update each state-action value
-        for s in agent.SS:
+        for s in agent.pi:
             for a in s.p_S_prime_R_given_A:
 
                 prev_q = q_S_A[s][a]
