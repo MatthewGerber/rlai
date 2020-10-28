@@ -18,9 +18,7 @@ def test_evaluate_v_pi():
     mdp_agent = StochasticMdpAgent(
         'test',
         random_state,
-        1,
-        None,
-        None
+        1
     )
 
     mdp_agent.initialize_equiprobable_policy(mdp_environment.SS)
@@ -56,9 +54,7 @@ def test_evaluate_q_pi():
     mdp_agent = StochasticMdpAgent(
         'test',
         random_state,
-        1,
-        None,
-        None
+        1
     )
 
     mdp_agent.initialize_equiprobable_policy(mdp_environment.SS)
@@ -101,9 +97,7 @@ def test_iterate_value_q_pi():
     mdp_agent = StochasticMdpAgent(
         'test',
         random_state,
-        1,
-        None,
-        None
+        1
     )
 
     mdp_agent.initialize_equiprobable_policy(mdp_environment.SS)

@@ -19,9 +19,7 @@ def test_evaluate_v_pi():
     mdp_agent = StochasticMdpAgent(
         'test',
         random_state,
-        1,
-        None,
-        None
+        1
     )
 
     mdp_agent.initialize_equiprobable_policy(mdp_environment.SS)
@@ -69,9 +67,7 @@ def test_evaluate_q_pi():
     mdp_agent = StochasticMdpAgent(
         'test',
         random_state,
-        1,
-        None,
-        None
+        1
     )
 
     mdp_agent.initialize_equiprobable_policy(mdp_environment.SS)
@@ -125,9 +121,7 @@ def test_policy_iteration():
     mdp_agent_v_pi = StochasticMdpAgent(
         'test',
         random_state,
-        1,
-        None,
-        None
+        1
     )
 
     mdp_agent_v_pi.initialize_equiprobable_policy(mdp_environment.SS)
@@ -142,9 +136,7 @@ def test_policy_iteration():
     mdp_agent_q_pi = StochasticMdpAgent(
         'test',
         random_state,
-        1,
-        None,
-        None
+        1
     )
 
     mdp_agent_q_pi.initialize_equiprobable_policy(mdp_environment.SS)
@@ -169,9 +161,7 @@ def test_value_iteration():
     mdp_agent_v_pi_policy_iteration = StochasticMdpAgent(
         'test',
         random_state,
-        1,
-        None,
-        None
+        1
     )
 
     mdp_agent_v_pi_policy_iteration.initialize_equiprobable_policy(mdp_environment.SS)
@@ -186,9 +176,7 @@ def test_value_iteration():
     mdp_agent_v_pi_value_iteration = StochasticMdpAgent(
         'test',
         random_state,
-        1,
-        None,
-        None
+        1
     )
 
     mdp_agent_v_pi_value_iteration.initialize_equiprobable_policy(mdp_environment.SS)
@@ -206,9 +194,7 @@ def test_value_iteration():
     mdp_agent_q_pi_value_iteration = StochasticMdpAgent(
         'test',
         random_state,
-        1,
-        None,
-        None
+        1
     )
 
     mdp_agent_q_pi_value_iteration.initialize_equiprobable_policy(mdp_environment.SS)

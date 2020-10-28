@@ -91,7 +91,10 @@ class MdpAgent(Agent, ABC):
             SS: List[MdpState]
     ):
         """
-        Initialize the policy of the current agent to be equiprobable over all actions in a list of states.
+        Initialize the policy of the current agent to be equiprobable over all actions in a list of states. This is
+        useful for environments in which the list of states can be easily enumerated. It is not useful for environments
+        (e.g., `rl.environments.mancala.Mancala`) in which the list of states is very large. The latter problems should
+        be addressed with a lazy-expanding list of states (see Mancala for an example).
 
         :param SS: List of states.
         """
@@ -108,7 +111,7 @@ class MdpAgent(Agent, ABC):
             self
     ):
         """
-        Solve the current agent's MDP using a function and arguments that have already been specified (e.g., on the
+        Solve the current agent's MDP using the function and arguments passed to the constructor (e.g., from the
         command line).
         """
 
@@ -119,17 +122,18 @@ class MdpAgent(Agent, ABC):
             name: str,
             random_state: RandomState,
             gamma: float,
-            solver_function: Optional[Callable],
-            solver_function_args: Optional[Dict]
+            solver_function: Optional[Callable] = None,
+            solver_function_args: Optional[Dict] = None
     ):
         """
-        Initialize the agent.
+        Initialize the agent with an empty policy. Call `initialize_equiprobable_policy` to initialize the policy for
+        a list of states.
 
         :param name: Name of the agent.
         :param random_state: Random state.
         :param gamma: Discount.
-        :param solver_function: Solver function.
-        :param solver_function_args: Solver function arguments
+        :param solver_function: Solver function. Required in order to call `self.solve_mdp`.
+        :param solver_function_args: Solver function arguments. Required in order to call `self.solve_mdp`.
         """
 
         super().__init__(
@@ -141,7 +145,7 @@ class MdpAgent(Agent, ABC):
         self.solver_function = solver_function
         self.solver_function_args = solver_function_args
 
-        self.pi: Optional[Dict[State, Dict[Action, float]]] = None
+        self.pi: Dict[State, Dict[Action, float]] = {}
 
 
 class StochasticMdpAgent(MdpAgent):
@@ -239,8 +243,8 @@ class StochasticMdpAgent(MdpAgent):
             name: str,
             random_state: RandomState,
             gamma: float,
-            solver_function: Optional[Callable],
-            solver_function_args: Optional[Dict]
+            solver_function: Optional[Callable] = None,
+            solver_function_args: Optional[Dict] = None
     ):
         """
         Initialize the agent.
@@ -248,8 +252,8 @@ class StochasticMdpAgent(MdpAgent):
         :param name: Name of the agent.
         :param random_state: Random state.
         :param gamma: Discount.
-        :param solver_function: Solver function.
-        :param solver_function_args: Solver function arguments
+        :param solver_function: Solver function. Required in order to call `self.solve_mdp`.
+        :param solver_function_args: Solver function arguments. Required in order to call `self.solve_mdp`.
         """
 
         super().__init__(
@@ -316,7 +320,5 @@ class Human(MdpAgent):
         super().__init__(
             name='human',
             random_state=None,
-            gamma=1,
-            solver_function=None,
-            solver_function_args=None
+            gamma=1
         )

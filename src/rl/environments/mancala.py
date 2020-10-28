@@ -53,8 +53,6 @@ class MancalaState(MdpState):
         # pick and sow from pocket
         picked_pocket = environment.board[a.i]
         go_again = environment.sow_and_capture(picked_pocket)
-
-        # extract next state and advance time
         next_state = MancalaState(
             mancala=environment,
             player_1=MancalaState.player_1_is_next(picked_pocket, go_again)
@@ -71,7 +69,6 @@ class MancalaState(MdpState):
         elif not go_again:
             while True:
 
-                # sense, act, transition
                 environment.player_2.sense(next_state, t)
 
                 # if the environmental agent is human, then render the board for them to see.
