@@ -8,7 +8,6 @@ from numpy.random import RandomState
 
 from rl.actions import Action
 from rl.agents import Agent
-from rl.states import State
 from rl.states.mdp import MdpState
 from rl.utils import sample_list_item
 
@@ -145,7 +144,7 @@ class MdpAgent(Agent, ABC):
         self.solver_function = solver_function
         self.solver_function_args = solver_function_args
 
-        self.pi: Dict[State, Dict[Action, float]] = {}
+        self.pi: Dict[MdpState, Dict[Action, float]] = {}
 
 
 class StochasticMdpAgent(MdpAgent):

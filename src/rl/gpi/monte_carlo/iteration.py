@@ -18,7 +18,7 @@ def resume_iterate_value_q_pi_from_checkpoint(
         new_checkpoint_path: Optional[str] = None,
         resume_args_mutator: Callable = None,
         **new_args
-):
+) -> MdpAgent:
     """
     Resume the execution of a previous call to `rl.gpi.monte_carlo.iteration.iterate_value_q_pi`, based on a stored
     checkpoint.
@@ -30,6 +30,7 @@ def resume_iterate_value_q_pi_from_checkpoint(
     arguments comprising the checkpoint. The passed function can change these arguments if desired.
     :param new_args: As a simpler alternative to `resume_args_mutator`, pass any keyword arguments that should replace
     those in the checkpoint.
+    :return: The updated agent.
     """
 
     if new_checkpoint_path is None:
@@ -49,6 +50,8 @@ def resume_iterate_value_q_pi_from_checkpoint(
         resume_args_mutator(**resume_args)
 
     iterate_value_q_pi(**resume_args)
+
+    return resume_args['agent']
 
 
 @rl_text(chapter=5, page=99)
@@ -78,7 +81,7 @@ def iterate_value_q_pi(
     :param num_improvements_per_checkpoint: Number of improvements per checkpoint save.
     :param checkpoint_path: Checkpoint path. Must be provided if `num_improvements_per_checkpoint` is provided.
     :param initial_q_S_A: Initial state-action value estimates (primarily useful for restarting from a checkpoint).
-    :return: Final state-action value estimates.
+    :return: State-action value estimates from final iteration of improvement.
     """
 
     if epsilon == 0.0:
