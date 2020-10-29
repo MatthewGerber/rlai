@@ -1,6 +1,6 @@
 # Introduction
-This is an implementation of concepts and algorithms described in "Reinforcement Learning: An Introduction" (Barto
-and Sutton, 2018, 2nd edition). It is a work in progress that I started as a personal hobby, and its state reflects the 
+This is an implementation of concepts and algorithms described in "Reinforcement Learning: An Introduction" (Sutton
+and Barto, 2018, 2nd edition). It is a work in progress that I started as a personal hobby, and its state reflects the 
 extent to which I have progressed through the text. I have implemented it with the following objectives in mind.
 
 1. **Complete conceptual and algorithmic coverage**:  Implement all concepts and algorithms described in the text, plus some.
