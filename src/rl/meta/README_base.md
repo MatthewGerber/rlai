@@ -33,7 +33,7 @@ state-space size than the gridworld. I have implemented a fairly common variatio
 * Winner determined by store count.
 
 A couple hours of Monte Carlo optimization explores more than 1 million states when playing against an equiprobable 
-random opponent (shown [here](src/rl/figures/Mancala Learning.png)).
+random opponent (shown [here](src/rl/figures/Mancala%20Learning.png)).
 
 Key files are listed below.
 
