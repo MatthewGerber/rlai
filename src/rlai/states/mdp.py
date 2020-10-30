@@ -44,6 +44,7 @@ class MdpState(State, ABC):
         Initialize the MDP state.
 
         :param i: State index.
+        :param AA: All actions that can be taken from this state.
         :param terminal: Whether or not the state is terminal.
         """
 
