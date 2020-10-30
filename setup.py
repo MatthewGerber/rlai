@@ -24,7 +24,7 @@ DEV_REQUIREMENTS = [
 
 setup(
     name='rl',
-    version='0.1.0',
+    version='0.2.0.dev0',
     description='Reinforcement Learning',
     author='Matthew Gerber',
     author_email='gerber.matthew@gmail.com',
