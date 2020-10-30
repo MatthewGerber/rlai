@@ -16,7 +16,10 @@ def evaluate_v_pi(
 ) -> Dict[MdpState, float]:
     """
     Perform Monte Carlo evaluation of an agent's policy within an environment, returning state values. Uses a random
-    action on the first time step to maintain exploration (exploring starts).
+    action on the first time step to maintain exploration (exploring starts). This evaluation approach is only
+    marginally useful in practice, as the state-value estimates require a model of the environmental dynamics (i.e.,
+    the transition-reward probability distribution) in order to be applied. See `evaluate_q_pi` in this module for a
+    more feature-rich and useful evaluation approach (i.e., state-action value estimation).
 
     :param agent:
     :param environment:
@@ -110,7 +113,7 @@ def evaluate_q_pi(
     :param off_policy_agent: Agent containing behavioral policy used to generate learning episodes. To ensure that the
     state-action value estimates converge to those of the target policy, the policy of the `off_policy_agent` must be
     soft (i.e., have positive probability for all state-action pairs that have positive probabilities in the agent's
-    policy).
+    target policy).
     :param initial_q_S_A: Initial guess at state-action value, or None for no guess.
     :return: 2-tuple of (1) dictionary of all MDP states and their action-value averagers under the agent's policy, (2)
     set of only those states that were evaluated, and (3) the per-episode average reward obtained.
@@ -143,7 +146,7 @@ def evaluate_q_pi(
         episode_generation_agent.reset_for_new_run(state)
 
         # simulate until episode termination, keeping a trace of state-action pairs and their immediate rewards, as well
-        # as the times of their first visits.
+        # as the times of their first visits (only if we're doing first-visit evaluation).
         t = 0
         state_action_first_t = None if update_upon_every_visit else {}
         t_state_action_reward = []
@@ -159,6 +162,7 @@ def evaluate_q_pi(
 
             state_a = (state, a)
 
+            # mark time step of first visit, if we're doing first-visit evaluation.
             if state_action_first_t is not None and state_a not in state_action_first_t:
                 state_action_first_t[state_a] = t
 
@@ -180,11 +184,12 @@ def evaluate_q_pi(
             G = agent.gamma * G + reward.r
 
             # if we're doing every-visit, or if the current time step was the first visit to the state-action, then G
-            # is the discounted sample value add it to our average.
+            # is the discounted sample value. add it to our average.
             if state_action_first_t is None or state_action_first_t[state_a] == t:
 
                 state, a = state_a
 
+                # lazy-initialize sample averager for state-action pair
                 if state not in q_S_A:
                     q_S_A[state] = {}
 

@@ -35,7 +35,7 @@ class IncrementalSampleAverager:
           * 1 / n:  standard average.
           * else:  arbitrary weighting scheme (e.g., used for off-policy importance sampling).
 
-        If `weighted` was True in the constructor, then a non-None value must be passed.
+        If `weighted` was True in the constructor, then a non-None value must be passed here.
 
         :return: Updated sample average.
         """
