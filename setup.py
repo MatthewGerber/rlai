@@ -1,6 +1,5 @@
 from setuptools import (
-    find_namespace_packages,
-    setup
+    setup, find_namespace_packages
 )
 
 INSTALL_REQUIREMENTS = [
@@ -23,9 +22,9 @@ DEV_REQUIREMENTS = [
 ]
 
 setup(
-    name='rl',
+    name='rlai',
     version='0.4.0.dev0',
-    description='Reinforcement Learning',
+    description='Reinforcement Learning:  An Introduction',
     author='Matthew Gerber',
     author_email='gerber.matthew@gmail.com',
     url='https://github.com/MatthewGerber/rl',

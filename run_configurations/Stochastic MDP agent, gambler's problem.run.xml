@@ -7,13 +7,13 @@
       <env name="PYTHONUNBUFFERED" value="1" />
     </envs>
     <option name="SDK_HOME" value="" />
-    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src/rl/runners" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src/rlai/runners" />
     <option name="IS_MODULE_SDK" value="true" />
     <option name="ADD_CONTENT_ROOTS" value="true" />
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-    <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/rl/runners/runner.py" />
-    <option name="PARAMETERS" value="--T 50 --n-runs 50000 --figure-name &quot;Stochastic MDP agent in gambler's problem&quot; --save-to-pdf --environment rl.environments.mdp.GamblersProblem --p-h 0.4 --agent rl.agents.mdp.StochasticMdpAgent --gamma 1 --mdp-solver rl.gpi.dynamic_programming.iteration.iterate_value_v_pi --theta 0.001 --update-in-place --evaluation-iterations-per-improvement 1" />
+    <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/rlai/runners/runner.py" />
+    <option name="PARAMETERS" value="--T 50 --n-runs 50000 --figure-name &quot;Stochastic MDP agent in gambler's problem&quot; --save-to-pdf --environment rlai.environments.mdp.GamblersProblem --p-h 0.4 --agent rlai.agents.mdp.StochasticMdpAgent --gamma 1 --mdp-solver rlai.gpi.dynamic_programming.iteration.iterate_value_v_pi --theta 0.001 --update-in-place --evaluation-iterations-per-improvement 1" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />
