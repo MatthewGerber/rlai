@@ -90,12 +90,14 @@ def evaluate_q_pi(
         environment: MdpEnvironment,
         num_episodes: int,
         exploring_starts: bool,
+        update_upon_every_visit: bool,
+        off_policy_agent: MdpAgent = None,
         initial_q_S_A: Dict[MdpState, Dict[Action, IncrementalSampleAverager]] = None
 ) -> Tuple[Dict[MdpState, Dict[Action, IncrementalSampleAverager]], Set[MdpState], float]:
     """
     Perform Monte Carlo evaluation of an agent's policy within an environment, returning state-action values.
 
-    :param agent: Agent.
+    :param agent: Agent containing target policy to be optimized.
     :param environment: Environment.
     :param num_episodes: Number of episodes to execute.
     :param exploring_starts: Whether or not to use exploring starts, forcing a random action in the first time step.
@@ -103,6 +105,12 @@ def evaluate_q_pi(
     selected as the first state, there is no assurance that all state-action pairs will be sampled. If the initial state
     is deterministic, consider passing False here and shifting the burden of exploration to the improvement step with
     a nonzero epsilon (see `rl.gpi.improvement.improve_policy_with_q_pi`).
+    :param update_upon_every_visit: True to update each state-action pair upon each visit within an episode, or False to
+    update each state-action pair upon the first visit within an episode.
+    :param off_policy_agent: Agent containing behavioral policy used to generate learning episodes. To ensure that the
+    state-action value estimates converge to those of the target policy, the policy of the `off_policy_agent` must be
+    soft (i.e., have positive probability for all state-action pairs that have positive probabilities in the agent's
+    policy).
     :param initial_q_S_A: Initial guess at state-action value, or None for no guess.
     :return: 2-tuple of (1) dictionary of all MDP states and their action-value averagers under the agent's policy, (2)
     set of only those states that were evaluated, and (3) the per-episode average reward obtained.
@@ -112,7 +120,7 @@ def evaluate_q_pi(
 
     evaluated_states = set()
 
-    # if no initial guess is provided, then start with an averager for each terminal state.
+    # if no initial guess is provided, then start with an averager for each terminal state. these should never be used.
     if initial_q_S_A is None:
         q_S_A: Dict[MdpState, Dict[Action, IncrementalSampleAverager]] = {}
         for terminal_state in environment.terminal_states:
@@ -125,18 +133,19 @@ def evaluate_q_pi(
     else:
         q_S_A = initial_q_S_A
 
+    episode_generation_agent = agent if off_policy_agent is None else off_policy_agent
     episode_reward_averager = IncrementalSampleAverager()
     episodes_per_print = max(1, int(num_episodes * 0.05))
     for episode_i in range(num_episodes):
 
         # start the environment in a random state with a random feasible action in that state
         state = environment.reset_for_new_run()
-        agent.reset_for_new_run(state)
+        episode_generation_agent.reset_for_new_run(state)
 
         # simulate until episode termination, keeping a trace of state-action pairs and their immediate rewards, as well
         # as the times of their first visits.
         t = 0
-        state_action_first_t = {}
+        state_action_first_t = None if update_upon_every_visit else {}
         t_state_action_reward = []
         total_reward = 0.0
         while not state.terminal:
@@ -146,11 +155,11 @@ def evaluate_q_pi(
             if exploring_starts and t == 0:
                 a = sample_list_item(state.AA, None, environment.random_state)
             else:
-                a = agent.act(t)
+                a = episode_generation_agent.act(t)
 
             state_a = (state, a)
 
-            if state_a not in state_action_first_t:
+            if state_action_first_t is not None and state_a not in state_action_first_t:
                 state_action_first_t[state_a] = t
 
             next_state, next_t, reward = state.advance(environment, t, a)
@@ -159,18 +168,20 @@ def evaluate_q_pi(
             state = next_state
             t = next_t
 
-            agent.sense(state, t)
+            episode_generation_agent.sense(state, t)
 
         # work backwards through the trace to calculate discounted returns. need to work backward in order for the value
-        # of G at each time step t to be properly discounted.
+        # of G at each time step t to be properly discounted. here, W is the importance-sampling weight of the agent's
+        # (target) policy compared to the episode generation policy (behavior).
         G = 0
+        W = 1
         for t, state_a, reward in reversed(t_state_action_reward):
 
             G = agent.gamma * G + reward.r
 
-            # if the current time step was the first visit to the state-action, then G is the discounted sample value.
-            # add it to our average.
-            if state_action_first_t[state_a] == t:
+            # if we're doing every-visit, or if the current time step was the first visit to the state-action, then G
+            # is the discounted sample value add it to our average.
+            if state_action_first_t is None or state_action_first_t[state_a] == t:
 
                 state, a = state_a
 
@@ -178,9 +189,20 @@ def evaluate_q_pi(
                     q_S_A[state] = {}
 
                 if a not in q_S_A[state]:
-                    q_S_A[state][a] = IncrementalSampleAverager()
+                    q_S_A[state][a] = IncrementalSampleAverager(weighted=True)
 
-                q_S_A[state][a].update(G)
+                # the following two lines work correctly for on- and off-policy learning. in the former case, the agent
+                # and episode policies are the same, which makes W always equal to 1 (i.e., q_S_A is unweighted...the
+                # on-policy case). in off-policy learning, W will be the importance-sampling weight.
+                q_S_A[state][a].update(value=G, weight=W)
+                W *= agent.pi[state][a] / episode_generation_agent.pi[state][a]
+
+                # if the importance sampling weight becomes zero (allowing floating-point tolerane), then we're done,
+                # as all subsequent weighted updates (at earlier time steps) will be zero. this is the sense in which
+                # off-policy learning only learns from the "tails" of episodes in which all state-action pairs of the
+                # episode are also greedy with respect to the agent's policy.
+                if W < 0.00000001:
+                    break
 
         episode_reward_averager.update(total_reward)
 

@@ -38,6 +38,7 @@ def test_learn():
         environment=mancala,
         num_improvements=3,
         num_episodes_per_improvement=100,
+        update_upon_every_visit=False,
         epsilon=0.05,
         num_improvements_per_checkpoint=3,
         checkpoint_path=checkpoint_path
@@ -83,6 +84,7 @@ def test_learn():
         environment=mancala,
         num_improvements=5,
         num_episodes_per_improvement=100,
+        update_upon_every_visit=False,
         epsilon=0.05
     )
 

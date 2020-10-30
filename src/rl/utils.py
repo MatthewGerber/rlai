@@ -22,12 +22,21 @@ class IncrementalSampleAverager:
 
     def update(
             self,
-            value: float
+            value: float,
+            weight: Optional[float] = None
     ) -> float:
         """
-        Update the sample average.
+        Update the sample average with a new value.
 
-        :param value: Sample value.
+        :param value: New value.
+        :param weight: Weight of the value. This is a generalization of the following cases:
+
+          * constant weight for all samples:  recency-weighted average (see `alpha` in the constructor).
+          * 1 / n:  standard average.
+          * else:  arbitrary weighting scheme (e.g., used for off-policy importance sampling).
+
+        If `weighted` was True in the constructor, then a non-None value must be passed.
+
         :return: Updated sample average.
         """
 
@@ -35,6 +44,14 @@ class IncrementalSampleAverager:
 
         if self.has_alpha:
             step_size = self.alpha
+        elif self.weighted:
+
+            if weight is None:
+                raise ValueError('The averager is weighted, so non-None values must be passed for weight.')
+
+            self.cumulative_weight += weight
+            step_size = weight / self.cumulative_weight
+
         else:
             step_size = 1 / self.n
 
@@ -56,7 +73,8 @@ class IncrementalSampleAverager:
     def __init__(
             self,
             initial_value: float = 0.0,
-            alpha: float = None
+            alpha: float = None,
+            weighted: bool = False
     ):
         """
         Initialize the averager.
@@ -67,14 +85,21 @@ class IncrementalSampleAverager:
         the weight of previous values decreasing according to `alpha^i`, where `i` is the number of time steps prior to
         the current when a previous value was obtained. If `None` is passed, then the unweighted sample average will be
         used, and every value will have the same weight.
+        :param weighted: Whether or not per-value weights will be provided to calls to `update`. If this is True, then
+        every call to `update` must provide a non-None value for `weight`.
         """
 
         if alpha is not None and alpha <= 0:
             raise ValueError('alpha must be > 0')
 
+        if alpha is not None and weighted:
+            raise ValueError('Cannot supply alpha and per-value weights.')
+
         self.initial_value = initial_value
         self.alpha = alpha
         self.has_alpha = self.alpha is not None
+        self.weighted = weighted
+        self.cumulative_weight = 0.0 if self.weighted else None
         self.average = initial_value
         self.n = 0
 
