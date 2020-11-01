@@ -50,7 +50,7 @@ class MdpEnvironment(Environment, ABC):
 
         a = agent.act(t=t)
 
-        self.state, next_t, reward = self.state.advance(
+        self.state, next_t, next_reward = self.state.advance(
             environment=self,
             t=t,
             a=a
@@ -61,8 +61,8 @@ class MdpEnvironment(Environment, ABC):
             t=next_t
         )
 
-        agent.reward(reward.r)
-        monitor.report(t=next_t, action_reward=reward.r)
+        agent.reward(next_reward.r)
+        monitor.report(t=next_t, action_reward=next_reward.r)
 
         return self.state.terminal
 

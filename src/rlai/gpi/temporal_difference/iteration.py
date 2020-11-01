@@ -1,85 +1,40 @@
 import pickle
-import warnings
-from typing import Dict, Optional, Callable
+from typing import Optional, Dict
 
 from rlai.actions import Action
 from rlai.agents.mdp import MdpAgent
 from rlai.environments.mdp import MdpEnvironment
 from rlai.gpi.improvement import improve_policy_with_q_pi
-from rlai.gpi.monte_carlo.evaluation import evaluate_q_pi
+from rlai.gpi.temporal_difference.evaluation import evaluate_q_pi
 from rlai.gpi.utils import get_q_pi_for_evaluated_states, plot_policy_iteration
 from rlai.meta import rl_text
 from rlai.states.mdp import MdpState
 
 
-def resume_iterate_value_q_pi_from_checkpoint(
-        checkpoint_path: str,
-        new_checkpoint_path: Optional[str] = None,
-        resume_args_mutator: Callable = None,
-        **new_args
-) -> MdpAgent:
-    """
-    Resume the execution of a previous call to `rlai.gpi.monte_carlo.iteration.iterate_value_q_pi`, based on a stored
-    checkpoint.
-
-    :param checkpoint_path: Path to checkpoint file.
-    :param new_checkpoint_path: Path to new checkpoint file, if the original should be left as it is. Pass `None` to
-    use and overwrite `checkpoint_path` with new checkpoints.
-    :param resume_args_mutator: A function called prior to resumption. This function will be passed a dictionary of
-    arguments comprising the checkpoint. The passed function can change these arguments if desired.
-    :param new_args: As a simpler alternative to `resume_args_mutator`, pass any keyword arguments that should replace
-    those in the checkpoint.
-    :return: The updated agent.
-    """
-
-    if new_checkpoint_path is None:
-        new_checkpoint_path = checkpoint_path
-
-    print('Reading checkpoint file to resume...', end='')
-    with open(checkpoint_path, 'rb') as checkpoint_file:
-        resume_args = pickle.load(checkpoint_file)
-    print('.done')
-
-    resume_args['checkpoint_path'] = new_checkpoint_path
-
-    if new_args is not None:
-        resume_args.update(new_args)
-
-    if resume_args_mutator is not None:
-        resume_args_mutator(**resume_args)
-
-    iterate_value_q_pi(**resume_args)
-
-    return resume_args['agent']
-
-
-@rl_text(chapter=5, page=99)
+@rl_text(chapter=6, page=130)
 def iterate_value_q_pi(
         agent: MdpAgent,
         environment: MdpEnvironment,
         num_improvements: int,
         num_episodes_per_improvement: int,
-        update_upon_every_visit: bool,
+        alpha: float,
         epsilon: float,
-        off_policy_agent: Optional[MdpAgent] = None,
         num_improvements_per_plot: Optional[int] = None,
         num_improvements_per_checkpoint: Optional[int] = None,
         checkpoint_path: Optional[str] = None,
         initial_q_S_A: Optional[Dict] = None
 ) -> Dict[MdpState, Dict[Action, float]]:
     """
-    Run Monte Carlo value iteration on an agent using state-action value estimates.
+    Run value iteration on an agent using state-action value estimates.
 
     :param agent: Agent.
     :param environment: Environment.
     :param num_improvements: Number of policy improvements to make.
     :param num_episodes_per_improvement: Number of policy evaluation episodes to execute for each iteration of
-    improvement. Passing `1` will result in the Monte Carlo ES (Exploring Starts) algorithm.
-    :param update_upon_every_visit: See `rlai.gpi.monte_carlo.evaluation.evaluate_q_pi`.
+    improvement.
+    :param alpha: Step size.
     :param epsilon: Total probability mass to spread across all actions, resulting in an epsilon-greedy policy. Must
-    be >= 0 if provided.
-    :param off_policy_agent: See `rlai.gpi.monte_carlo.evaluation.evaluate_q_pi`. The policy of this agent will not
-    updated by this function.
+    be >= 0 if provided. Will be decayed over the iterations to ensure convergence of the agent's policy to the optimal.
     :param num_improvements_per_plot: Number of improvements to make before plotting the per-improvement average. Pass
     None to turn off all plotting.
     :param num_improvements_per_checkpoint: Number of improvements per checkpoint save.
@@ -87,9 +42,6 @@ def iterate_value_q_pi(
     :param initial_q_S_A: Initial state-action value estimates (primarily useful for restarting from a checkpoint).
     :return: State-action value estimates from final iteration of improvement.
     """
-
-    if (epsilon is None or epsilon == 0.0) and off_policy_agent is None:
-        warnings.warn('Epsilon is 0.0 and there is no off-policy agent. Exploration and convergence not guaranteed. Consider passing epsilon > 0 or a soft off-policy agent to maintain exploration.')
 
     q_S_A = initial_q_S_A
     i = 0
@@ -100,13 +52,13 @@ def iterate_value_q_pi(
 
         print(f'Value iteration {i + 1}:  ', end='')
 
+        epsilon = epsilon * (1 / (i + 1))
+
         q_S_A, evaluated_states, average_reward = evaluate_q_pi(
             agent=agent,
             environment=environment,
             num_episodes=num_episodes_per_improvement,
-            exploring_starts=False,
-            update_upon_every_visit=update_upon_every_visit,
-            off_policy_agent=off_policy_agent,
+            alpha=alpha,
             initial_q_S_A=q_S_A
         )
 
@@ -128,15 +80,13 @@ def iterate_value_q_pi(
             plot_policy_iteration(iteration_average_reward, iteration_total_states, iteration_num_states_updated)
 
         if num_improvements_per_checkpoint is not None and i % num_improvements_per_checkpoint == 0:
-
             resume_args = {
                 'agent': agent,
                 'environment': environment,
                 'num_improvements': num_improvements,
                 'num_episodes_per_improvement': num_episodes_per_improvement,
-                'update_upon_every_visit': update_upon_every_visit,
+                'alpha': alpha,
                 'epsilon': epsilon,
-                'off_policy_agent': off_policy_agent,
                 'num_improvements_per_plot': num_improvements_per_plot,
                 'num_improvements_per_checkpoint': num_improvements_per_checkpoint,
                 'initial_q_S_A': q_S_A

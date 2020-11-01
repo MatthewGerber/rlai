@@ -30,7 +30,7 @@ class MdpState(State, ABC):
         :param environment: Environment.
         :param t: Current time step.
         :param a: Action.
-        :return: 3-tuple of next state, next time step, and reward.
+        :return: 3-tuple of next state, next time step, and next reward.
         """
         pass
 
@@ -117,7 +117,7 @@ class ModelBasedMdpState(MdpState):
         :param environment: Environment.
         :param t: Current time step.
         :param a: Action.
-        :return: 3-tuple of next state, next time step, and reward.
+        :return: 3-tuple of next state, next time step, and next reward.
         """
 
         # get next-state / reward tuples
@@ -136,14 +136,14 @@ class ModelBasedMdpState(MdpState):
             if self.p_S_prime_R_given_A[a][s_prime][reward] > 0.0
         ])
 
-        # sample next-state / reward
-        next_state, reward = sample_list_item(
+        # sample next state and reward
+        next_state, next_reward = sample_list_item(
             x=s_prime_rewards,
             probs=probs,
             random_state=environment.random_state
         )
 
-        return next_state, t + 1, reward
+        return next_state, t + 1, next_reward
 
     def __init__(
             self,

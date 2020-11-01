@@ -45,7 +45,7 @@ class MancalaState(MdpState):
         :param environment: Environment.
         :param t: Current time step.
         :param a: Action.
-        :return: 3-tuple of next state, next time step, and reward.
+        :return: 3-tuple of next state, next time step, and next reward.
         """
 
         environment: Mancala
@@ -61,9 +61,9 @@ class MancalaState(MdpState):
         t += 1
 
         # check for termination
-        reward = environment.r_none
+        next_reward = environment.r_none
         if next_state.terminal:
-            reward = environment.get_terminal_reward()
+            next_reward = environment.get_terminal_reward()
 
         # if the agent (player 1) does not get to go again, let the environmental agent take its turn(s)
         elif not go_again:
@@ -87,13 +87,13 @@ class MancalaState(MdpState):
 
                 # check for termination
                 if next_state.terminal:
-                    reward = environment.get_terminal_reward()
+                    next_reward = environment.get_terminal_reward()
                     break
                 # take another turn if earned
                 elif not go_again:
                     break
 
-        return next_state, t, reward
+        return next_state, t, next_reward
 
     def __init__(
             self,

@@ -3,6 +3,7 @@ from typing import Dict, Tuple, Set
 from rlai.actions import Action
 from rlai.agents.mdp import MdpAgent
 from rlai.environments.mdp import MdpEnvironment
+from rlai.gpi.utils import lazy_initialize_q_S_A, initialize_q_S_A
 from rlai.meta import rl_text
 from rlai.states.mdp import MdpState
 from rlai.utils import IncrementalSampleAverager, sample_list_item
@@ -115,33 +116,22 @@ def evaluate_q_pi(
     soft (i.e., have positive probability for all state-action pairs that have positive probabilities in the agent's
     target policy).
     :param initial_q_S_A: Initial guess at state-action value, or None for no guess.
-    :return: 2-tuple of (1) dictionary of all MDP states and their action-value averagers under the agent's policy, (2)
-    set of only those states that were evaluated, and (3) the per-episode average reward obtained.
+    :return: 3-tuple of (1) dictionary of all MDP states and their action-value averagers under the agent's policy, (2)
+    set of only those states that were evaluated, and (3) the average reward obtained per episode.
     """
 
     print(f'Running Monte Carlo evaluation of q_pi for {num_episodes} episode(s).')
 
     evaluated_states = set()
 
-    # if no initial guess is provided, then start with an averager for each terminal state. these should never be used.
-    if initial_q_S_A is None:
-        q_S_A: Dict[MdpState, Dict[Action, IncrementalSampleAverager]] = {}
-        for terminal_state in environment.terminal_states:
-            q_S_A[terminal_state] = {
-                a: IncrementalSampleAverager()
-                for a in terminal_state.AA
-            }
-            evaluated_states.add(terminal_state)
-    # set to initial guess
-    else:
-        q_S_A = initial_q_S_A
+    q_S_A = initialize_q_S_A(initial_q_S_A, environment, evaluated_states)
 
     episode_generation_agent = agent if off_policy_agent is None else off_policy_agent
     episode_reward_averager = IncrementalSampleAverager()
     episodes_per_print = max(1, int(num_episodes * 0.05))
     for episode_i in range(num_episodes):
 
-        # start the environment in a random state with a random feasible action in that state
+        # reset the environment for the new run, and reset the agent accordingly.
         state = environment.reset_for_new_run()
         episode_generation_agent.reset_for_new_run(state)
 
@@ -166,9 +156,9 @@ def evaluate_q_pi(
             if state_action_first_t is not None and state_a not in state_action_first_t:
                 state_action_first_t[state_a] = t
 
-            next_state, next_t, reward = state.advance(environment, t, a)
-            t_state_action_reward.append((t, state_a, reward))
-            total_reward += reward.r
+            next_state, next_t, next_reward = state.advance(environment, t, a)
+            t_state_action_reward.append((t, state_a, next_reward))
+            total_reward += next_reward.r
             state = next_state
             t = next_t
 
@@ -189,12 +179,7 @@ def evaluate_q_pi(
 
                 state, a = state_a
 
-                # lazy-initialize sample averager for state-action pair
-                if state not in q_S_A:
-                    q_S_A[state] = {}
-
-                if a not in q_S_A[state]:
-                    q_S_A[state][a] = IncrementalSampleAverager(weighted=True)
+                lazy_initialize_q_S_A(q_S_A=q_S_A, state=state, a=a, alpha=None, weighted=True)
 
                 # the following two lines work correctly for on- and off-policy learning. in the former case, the agent
                 # and episode policies are the same, which makes W always equal to 1 (i.e., q_S_A is unweighted...the

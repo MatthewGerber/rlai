@@ -101,7 +101,7 @@ def iterate_value_v_pi(
         update_in_place: bool
 ) -> Dict[ModelBasedMdpState, float]:
     """
-    Run value iteration on an agent using state-value estimates.
+    Run dynamic programming value iteration on an agent using state-value estimates.
 
     :param agent: Agent.
     :param theta: See `evaluate_v_pi`.
