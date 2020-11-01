@@ -32,6 +32,9 @@
   - [`rlai.gpi.monte_carlo.evaluation.evaluate_v_pi`](#rlaigpimonte_carloevaluationevaluate_v_pi)
   - [`rlai.gpi.monte_carlo.evaluation.evaluate_q_pi`](#rlaigpimonte_carloevaluationevaluate_q_pi)
   - [`rlai.gpi.monte_carlo.iteration.iterate_value_q_pi`](#rlaigpimonte_carloiterationiterate_value_q_pi)
+- [Chapter 6](#chapter-6)
+  - [`rlai.gpi.temporal_difference.evaluation.evaluate_q_pi`](#rlaigpitemporal_differenceevaluationevaluate_q_pi)
+  - [`rlai.gpi.temporal_difference.iteration.iterate_value_q_pi`](#rlaigpitemporal_differenceiterationiterate_value_q_pi)
 <!--TOC-->
 
 # Introduction
@@ -74,7 +77,7 @@ random opponent (shown [here](src/rl/figures/Mancala%20Learning.png)).
 Key files are listed below.
 
 * [Environment](src/rl/environments/mancala.py)
-* [Test](test/rlai/environments/mancala_test.py)
+* [Test](test/rl/environments/mancala_test.py)
 
 # Chapter 2
 ## `rlai.environments.bandit.Arm`
@@ -136,7 +139,8 @@ Gridworld MDP environment.
 ```
 Perform iterative policy evaluation of an agent's policy within an environment, returning state values.
 
-    :param agent: MDP agent.
+    :param agent: MDP agent. Must contain a policy `pi` that has been fully initialized with instances of
+    `rlai.states.mdp.ModelBasedMdpState`.
     :param theta: Minimum tolerated change in state value estimates, below which evaluation terminates. Either `theta`
     or `num_iterations` (or both) can be specified, but passing neither will raise an exception.
     :param num_iterations: Number of evaluation iterations to execute.  Either `theta` or `num_iterations` (or both)
@@ -191,7 +195,8 @@ Improve an agent's policy according to its state-action value estimates. This ma
 ```
 Run policy iteration on an agent using state-value estimates.
 
-    :param agent: Agent.
+    :param agent: MDP agent. Must contain a policy `pi` that has been fully initialized with instances of
+    `rlai.states.mdp.ModelBasedMdpState`.
     :param theta: See `evaluate_q_pi`.
     :param update_in_place: See `evaluate_q_pi`.
     :return: Final state-action value estimates.
@@ -200,16 +205,18 @@ Run policy iteration on an agent using state-value estimates.
 ```
 Run policy iteration on an agent using state-value estimates.
 
-    :param agent: Agent.
+    :param agent: MDP agent. Must contain a policy `pi` that has been fully initialized with instances of
+    `rlai.states.mdp.ModelBasedMdpState`.
     :param theta: See `evaluate_v_pi`.
     :param update_in_place: See `evaluate_v_pi`.
     :return: Final state-value estimates.
 ```
 ## `rlai.gpi.dynamic_programming.iteration.iterate_value_v_pi`
 ```
-Run value iteration on an agent using state-value estimates.
+Run dynamic programming value iteration on an agent using state-value estimates.
 
-    :param agent: Agent.
+    :param agent: MDP agent. Must contain a policy `pi` that has been fully initialized with instances of
+    `rlai.states.mdp.ModelBasedMdpState`.
     :param theta: See `evaluate_v_pi`.
     :param evaluation_iterations_per_improvement: Number of policy evaluation iterations to execute for each iteration
     of improvement (e.g., passing 1 results in Equation 4.10).
@@ -224,7 +231,8 @@ Gambler's problem MDP environment.
 ```
 Run value iteration on an agent using state-action value estimates.
 
-    :param agent: Agent.
+    :param agent: MDP agent. Must contain a policy `pi` that has been fully initialized with instances of
+    `rlai.states.mdp.ModelBasedMdpState`.
     :param theta: See `evaluate_q_pi`.
     :param evaluation_iterations_per_improvement: Number of policy evaluation iterations to execute for each iteration
     of improvement.
@@ -235,16 +243,22 @@ Run value iteration on an agent using state-action value estimates.
 ## `rlai.gpi.monte_carlo.evaluation.evaluate_v_pi`
 ```
 Perform Monte Carlo evaluation of an agent's policy within an environment, returning state values. Uses a random
-    action on the first time step to maintain exploration (exploring starts).
+    action on the first time step to maintain exploration (exploring starts). This evaluation approach is only
+    marginally useful in practice, as the state-value estimates require a model of the environmental dynamics (i.e.,
+    the transition-reward probability distribution) in order to be applied. See `evaluate_q_pi` in this module for a
+    more feature-rich and useful evaluation approach (i.e., state-action value estimation). This evaluation function
+    operates over rewards obtained at the end of episodes, so it is only appropriate for episodic tasks.
 
-    :param agent:
-    :param environment:
+    :param agent: Agent.
+    :param environment: Environment.
     :param num_episodes: Number of episodes to execute.
     :return: Dictionary of MDP states and their estimated values under the agent's policy.
 ```
 ## `rlai.gpi.monte_carlo.evaluation.evaluate_q_pi`
 ```
-Perform Monte Carlo evaluation of an agent's policy within an environment, returning state-action values.
+Perform Monte Carlo evaluation of an agent's policy within an environment, returning state-action values. This
+    evaluation function operates over rewards obtained at the end of episodes, so it is only appropriate for episodic
+    tasks.
 
     :param agent: Agent containing target policy to be optimized.
     :param environment: Environment.
@@ -259,14 +273,15 @@ Perform Monte Carlo evaluation of an agent's policy within an environment, retur
     :param off_policy_agent: Agent containing behavioral policy used to generate learning episodes. To ensure that the
     state-action value estimates converge to those of the target policy, the policy of the `off_policy_agent` must be
     soft (i.e., have positive probability for all state-action pairs that have positive probabilities in the agent's
-    policy).
+    target policy).
     :param initial_q_S_A: Initial guess at state-action value, or None for no guess.
-    :return: 2-tuple of (1) dictionary of all MDP states and their action-value averagers under the agent's policy, (2)
-    set of only those states that were evaluated, and (3) the per-episode average reward obtained.
+    :return: 3-tuple of (1) dictionary of all MDP states and their action-value averagers under the agent's policy, (2)
+    set of only those states that were evaluated, and (3) the average reward obtained per episode.
 ```
 ## `rlai.gpi.monte_carlo.iteration.iterate_value_q_pi`
 ```
-Run value iteration on an agent using state-action value estimates.
+Run Monte Carlo value iteration on an agent using state-action value estimates. This iteration function operates
+    over rewards obtained at the end of episodes, so it is only appropriate for episodic tasks.
 
     :param agent: Agent.
     :param environment: Environment.
@@ -278,6 +293,38 @@ Run value iteration on an agent using state-action value estimates.
     be >= 0 if provided.
     :param off_policy_agent: See `rlai.gpi.monte_carlo.evaluation.evaluate_q_pi`. The policy of this agent will not
     updated by this function.
+    :param num_improvements_per_plot: Number of improvements to make before plotting the per-improvement average. Pass
+    None to turn off all plotting.
+    :param num_improvements_per_checkpoint: Number of improvements per checkpoint save.
+    :param checkpoint_path: Checkpoint path. Must be provided if `num_improvements_per_checkpoint` is provided.
+    :param initial_q_S_A: Initial state-action value estimates (primarily useful for restarting from a checkpoint).
+    :return: State-action value estimates from final iteration of improvement.
+```
+# Chapter 6
+## `rlai.gpi.temporal_difference.evaluation.evaluate_q_pi`
+```
+Perform temporal-difference evaluation of an agent's policy within an environment, returning state-action values.
+
+    :param agent: Agent containing target policy to be optimized.
+    :param environment: Environment.
+    :param num_episodes: Number of episodes to execute.
+    :param alpha: Constant step size to use when updating Q-values.
+    :param initial_q_S_A: Initial guess at state-action value, or None for no guess.
+    :return: 3-tuple of (1) dictionary of all MDP states and their action-value averagers under the agent's policy, (2)
+    set of only those states that were evaluated, and (3) the average reward obtained per episode.
+```
+## `rlai.gpi.temporal_difference.iteration.iterate_value_q_pi`
+```
+Run temporal-difference value iteration on an agent using state-action value estimates.
+
+    :param agent: Agent.
+    :param environment: Environment.
+    :param num_improvements: Number of policy improvements to make.
+    :param num_episodes_per_improvement: Number of policy evaluation episodes to execute for each iteration of
+    improvement.
+    :param alpha: Step size.
+    :param epsilon: Total probability mass to spread across all actions, resulting in an epsilon-greedy policy. Must
+    be >= 0 if provided.
     :param num_improvements_per_plot: Number of improvements to make before plotting the per-improvement average. Pass
     None to turn off all plotting.
     :param num_improvements_per_checkpoint: Number of improvements per checkpoint save.
