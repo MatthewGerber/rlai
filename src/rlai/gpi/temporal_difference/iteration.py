@@ -25,7 +25,7 @@ def iterate_value_q_pi(
         initial_q_S_A: Optional[Dict] = None
 ) -> Dict[MdpState, Dict[Action, float]]:
     """
-    Run value iteration on an agent using state-action value estimates.
+    Run temporal-difference value iteration on an agent using state-action value estimates.
 
     :param agent: Agent.
     :param environment: Environment.
@@ -34,7 +34,7 @@ def iterate_value_q_pi(
     improvement.
     :param alpha: Step size.
     :param epsilon: Total probability mass to spread across all actions, resulting in an epsilon-greedy policy. Must
-    be >= 0 if provided. Will be decayed over the iterations to ensure convergence of the agent's policy to the optimal.
+    be >= 0 if provided.
     :param num_improvements_per_plot: Number of improvements to make before plotting the per-improvement average. Pass
     None to turn off all plotting.
     :param num_improvements_per_checkpoint: Number of improvements per checkpoint save.
@@ -51,8 +51,6 @@ def iterate_value_q_pi(
     while True:
 
         print(f'Value iteration {i + 1}:  ', end='')
-
-        epsilon = epsilon * (1 / (i + 1))
 
         q_S_A, evaluated_states, average_reward = evaluate_q_pi(
             agent=agent,
@@ -80,6 +78,7 @@ def iterate_value_q_pi(
             plot_policy_iteration(iteration_average_reward, iteration_total_states, iteration_num_states_updated)
 
         if num_improvements_per_checkpoint is not None and i % num_improvements_per_checkpoint == 0:
+
             resume_args = {
                 'agent': agent,
                 'environment': environment,

@@ -1,6 +1,6 @@
 import pickle
 import warnings
-from typing import Dict, Optional, Callable
+from typing import Dict, Optional
 
 from rlai.actions import Action
 from rlai.agents.mdp import MdpAgent
@@ -10,47 +10,6 @@ from rlai.gpi.monte_carlo.evaluation import evaluate_q_pi
 from rlai.gpi.utils import get_q_pi_for_evaluated_states, plot_policy_iteration
 from rlai.meta import rl_text
 from rlai.states.mdp import MdpState
-
-
-def resume_iterate_value_q_pi_from_checkpoint(
-        checkpoint_path: str,
-        new_checkpoint_path: Optional[str] = None,
-        resume_args_mutator: Callable = None,
-        **new_args
-) -> MdpAgent:
-    """
-    Resume the execution of a previous call to `rlai.gpi.monte_carlo.iteration.iterate_value_q_pi`, based on a stored
-    checkpoint.
-
-    :param checkpoint_path: Path to checkpoint file.
-    :param new_checkpoint_path: Path to new checkpoint file, if the original should be left as it is. Pass `None` to
-    use and overwrite `checkpoint_path` with new checkpoints.
-    :param resume_args_mutator: A function called prior to resumption. This function will be passed a dictionary of
-    arguments comprising the checkpoint. The passed function can change these arguments if desired.
-    :param new_args: As a simpler alternative to `resume_args_mutator`, pass any keyword arguments that should replace
-    those in the checkpoint.
-    :return: The updated agent.
-    """
-
-    if new_checkpoint_path is None:
-        new_checkpoint_path = checkpoint_path
-
-    print('Reading checkpoint file to resume...', end='')
-    with open(checkpoint_path, 'rb') as checkpoint_file:
-        resume_args = pickle.load(checkpoint_file)
-    print('.done')
-
-    resume_args['checkpoint_path'] = new_checkpoint_path
-
-    if new_args is not None:
-        resume_args.update(new_args)
-
-    if resume_args_mutator is not None:
-        resume_args_mutator(**resume_args)
-
-    iterate_value_q_pi(**resume_args)
-
-    return resume_args['agent']
 
 
 @rl_text(chapter=5, page=99)
@@ -68,7 +27,8 @@ def iterate_value_q_pi(
         initial_q_S_A: Optional[Dict] = None
 ) -> Dict[MdpState, Dict[Action, float]]:
     """
-    Run Monte Carlo value iteration on an agent using state-action value estimates.
+    Run Monte Carlo value iteration on an agent using state-action value estimates. This iteration function operates
+    over rewards obtained at the end of episodes, so it is only appropriate for episodic tasks.
 
     :param agent: Agent.
     :param environment: Environment.

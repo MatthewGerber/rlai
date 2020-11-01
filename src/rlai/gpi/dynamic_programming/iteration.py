@@ -18,7 +18,8 @@ def iterate_policy_v_pi(
     """
     Run policy iteration on an agent using state-value estimates.
 
-    :param agent: Agent.
+    :param agent: MDP agent. Must contain a policy `pi` that has been fully initialized with instances of
+    `rlai.states.mdp.ModelBasedMdpState`.
     :param theta: See `evaluate_v_pi`.
     :param update_in_place: See `evaluate_v_pi`.
     :return: Final state-value estimates.
@@ -60,7 +61,8 @@ def iterate_policy_q_pi(
     """
     Run policy iteration on an agent using state-value estimates.
 
-    :param agent: Agent.
+    :param agent: MDP agent. Must contain a policy `pi` that has been fully initialized with instances of
+    `rlai.states.mdp.ModelBasedMdpState`.
     :param theta: See `evaluate_q_pi`.
     :param update_in_place: See `evaluate_q_pi`.
     :return: Final state-action value estimates.
@@ -103,7 +105,8 @@ def iterate_value_v_pi(
     """
     Run dynamic programming value iteration on an agent using state-value estimates.
 
-    :param agent: Agent.
+    :param agent: MDP agent. Must contain a policy `pi` that has been fully initialized with instances of
+    `rlai.states.mdp.ModelBasedMdpState`.
     :param theta: See `evaluate_v_pi`.
     :param evaluation_iterations_per_improvement: Number of policy evaluation iterations to execute for each iteration
     of improvement (e.g., passing 1 results in Equation 4.10).
@@ -150,7 +153,8 @@ def iterate_value_q_pi(
     """
     Run value iteration on an agent using state-action value estimates.
 
-    :param agent: Agent.
+    :param agent: MDP agent. Must contain a policy `pi` that has been fully initialized with instances of
+    `rlai.states.mdp.ModelBasedMdpState`.
     :param theta: See `evaluate_q_pi`.
     :param evaluation_iterations_per_improvement: Number of policy evaluation iterations to execute for each iteration
     of improvement.

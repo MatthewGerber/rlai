@@ -51,7 +51,14 @@ def evaluate_q_pi(
 
             next_state, next_t, next_reward = curr_state.advance(environment, curr_t, curr_a)
             agent.sense(next_state, next_t)
-            next_a = agent.act(next_t)
+
+            # if the next state is terminal, then it might not have any feasible actions for the agent to select from.
+            # if this is the case, then use a dummy action to allow the update to go through. the corresponding state-
+            # action value will always be zero below.
+            if next_state.terminal and len(next_state.AA) == 0:
+                next_a = Action(-1)
+            else:
+                next_a = agent.act(next_t)
 
             # t-d target:  actual realized reward of the current state-action pair, plus the (bootstrapped) discounted
             # future value of the next state-action pair.

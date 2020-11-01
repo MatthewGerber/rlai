@@ -10,8 +10,6 @@ from rlai.gpi.temporal_difference.iteration import iterate_value_q_pi
 
 def test_iterate_value_q_pi():
 
-    return
-
     random_state = RandomState(12345)
 
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state)
@@ -28,9 +26,9 @@ def test_iterate_value_q_pi():
         agent=mdp_agent,
         environment=mdp_environment,
         num_improvements=100,
-        num_episodes_per_improvement=10,
+        num_episodes_per_improvement=100,
         alpha=0.1,
-        epsilon=0.1
+        epsilon=0.05
     )
 
     # pickle doesn't like to unpickle instances with custom __hash__ functions
@@ -43,10 +41,10 @@ def test_iterate_value_q_pi():
     }
 
     # uncomment the following line and run test to update fixture
-    with open(f'{os.path.dirname(__file__)}/fixtures/test_monte_carlo_iteration_of_value_q_pi.pickle', 'wb') as file:
-        pickle.dump(pi, file)
+    # with open(f'{os.path.dirname(__file__)}/fixtures/test_td_iteration_of_value_q_pi.pickle', 'wb') as file:
+    #     pickle.dump(pi, file)
 
-    with open(f'{os.path.dirname(__file__)}/fixtures/test_monte_carlo_iteration_of_value_q_pi.pickle', 'rb') as file:
+    with open(f'{os.path.dirname(__file__)}/fixtures/test_td_iteration_of_value_q_pi.pickle', 'rb') as file:
         fixture = pickle.load(file)
 
     assert pi == fixture

@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Epsilon-greedy, nonstationary bandit" type="PythonConfigurationType" factoryName="Python" folderName="Chapter 2">
+  <configuration default="false" name="Mancala T-D" type="PythonConfigurationType" factoryName="Python" folderName="Mancala">
     <module name="rl" />
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />
@@ -12,8 +12,8 @@
     <option name="ADD_CONTENT_ROOTS" value="true" />
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-    <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/rlai/runners/agent_in_environment.py" />
-    <option name="PARAMETERS" value="--T 1000 --n-runs 2000 --figure-name &quot;Epsilon-greedy, nonstationary bandit&quot; --save-to-pdf --environment rlai.environments.bandit.KArmedBandit --k 10 --reset-probability 0.005 --agent rlai.agents.q_value.EpsilonGreedy --epsilon 0.2 0.1 0.01 0.0" />
+    <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/rlai/runners/mancala.py" />
+    <option name="PARAMETERS" value="--train --train-function &quot;rlai.gpi.temporal_difference.iteration.iterate_value_q_pi&quot; --train-checkpoint-path &quot;$USER_HOME$/Desktop/mancala_trained.pickle&quot;" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />

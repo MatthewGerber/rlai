@@ -1,6 +1,5 @@
 from abc import ABC
 from argparse import Namespace, ArgumentParser
-from importlib import import_module
 from typing import List, Tuple, Optional, Dict, Callable
 
 import numpy as np
@@ -9,7 +8,7 @@ from numpy.random import RandomState
 from rlai.actions import Action
 from rlai.agents import Agent
 from rlai.states.mdp import MdpState
-from rlai.utils import sample_list_item
+from rlai.utils import sample_list_item, import_function
 
 
 class MdpAgent(Agent, ABC):
@@ -168,9 +167,7 @@ class StochasticMdpAgent(MdpAgent):
 
         # get the mdp solver and arguments
         parsed_mdp_args, unparsed_args = cls.parse_mdp_solver_args(args)
-        solver_module_name, solver_function_name = parsed_mdp_args.mdp_solver.rsplit('.', maxsplit=1)
-        solver_function_module = import_module(solver_module_name)
-        solver_function = getattr(solver_function_module, solver_function_name)
+        solver_function = import_function(parsed_mdp_args.mdp_solver)
         solver_function_arguments = {
             k: v
             for k, v in dict(parsed_mdp_args._get_kwargs()).items()

@@ -12,7 +12,7 @@
     <option name="ADD_CONTENT_ROOTS" value="true" />
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-    <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/rlai/runners/runner.py" />
+    <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/rlai/runners/agent_in_environment.py" />
     <option name="PARAMETERS" value="--T 1000 --n-runs 2000 --figure-name &quot;Figure 2.5:  Preference gradient, bandit&quot; --save-to-pdf --environment rlai.environments.bandit.KArmedBandit --k 10 --q-star-mean 4 --agent rlai.agents.h_value.PreferenceGradient --step-size-alpha 0.1 --use-reward-baseline" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />

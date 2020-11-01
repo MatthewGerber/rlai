@@ -6,7 +6,8 @@ from numpy.random import RandomState
 
 from rlai.agents.mdp import StochasticMdpAgent
 from rlai.environments.mancala import Mancala
-from rlai.gpi.monte_carlo.iteration import iterate_value_q_pi, resume_iterate_value_q_pi_from_checkpoint
+from rlai.gpi.monte_carlo.iteration import iterate_value_q_pi
+from rlai.gpi.utils import resume_from_checkpoint
 
 
 def test_learn():
@@ -53,8 +54,9 @@ def test_learn():
 
     assert p1.pi == fixture
 
-    resumed_p1 = resume_iterate_value_q_pi_from_checkpoint(
+    resumed_p1 = resume_from_checkpoint(
         checkpoint_path=checkpoint_path,
+        resume_function=iterate_value_q_pi,
         num_improvements=2
     )
 
@@ -89,6 +91,3 @@ def test_learn():
     )
 
     assert no_checkpoint_p1.pi == resumed_p1.pi
-
-
-

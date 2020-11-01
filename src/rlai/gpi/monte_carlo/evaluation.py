@@ -20,10 +20,11 @@ def evaluate_v_pi(
     action on the first time step to maintain exploration (exploring starts). This evaluation approach is only
     marginally useful in practice, as the state-value estimates require a model of the environmental dynamics (i.e.,
     the transition-reward probability distribution) in order to be applied. See `evaluate_q_pi` in this module for a
-    more feature-rich and useful evaluation approach (i.e., state-action value estimation).
+    more feature-rich and useful evaluation approach (i.e., state-action value estimation). This evaluation function
+    operates over rewards obtained at the end of episodes, so it is only appropriate for episodic tasks.
 
-    :param agent:
-    :param environment:
+    :param agent: Agent.
+    :param environment: Environment.
     :param num_episodes: Number of episodes to execute.
     :return: Dictionary of MDP states and their estimated values under the agent's policy.
     """
@@ -99,7 +100,9 @@ def evaluate_q_pi(
         initial_q_S_A: Dict[MdpState, Dict[Action, IncrementalSampleAverager]] = None
 ) -> Tuple[Dict[MdpState, Dict[Action, IncrementalSampleAverager]], Set[MdpState], float]:
     """
-    Perform Monte Carlo evaluation of an agent's policy within an environment, returning state-action values.
+    Perform Monte Carlo evaluation of an agent's policy within an environment, returning state-action values. This
+    evaluation function operates over rewards obtained at the end of episodes, so it is only appropriate for episodic
+    tasks.
 
     :param agent: Agent containing target policy to be optimized.
     :param environment: Environment.

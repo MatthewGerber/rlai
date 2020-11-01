@@ -4,8 +4,8 @@ from typing import Dict, List
 
 from numpy.testing import assert_array_equal
 
+from rlai.runners.agent_in_environment import run
 from rlai.runners.monitor import Monitor
-from rlai.runners.runner import run
 
 
 def test_run():

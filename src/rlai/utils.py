@@ -1,4 +1,5 @@
-from typing import List, Any, Optional
+from importlib import import_module
+from typing import List, Any, Optional, Callable
 
 import numpy as np
 from numpy.random import RandomState
@@ -143,3 +144,20 @@ def sample_list_item(
     )
 
     return x[x_i]
+
+
+def import_function(
+        name
+) -> Callable:
+    """
+    Import function from fully-qualified name.
+
+    :param name: Fully-qualified name.
+    :return: Function.
+    """
+
+    module_name, function_name = name.rsplit('.', maxsplit=1)
+    function_module = import_module(module_name)
+    function = getattr(function_module, function_name)
+
+    return function
