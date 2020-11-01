@@ -76,6 +76,8 @@ def evaluate_q_pi(
             curr_a = next_a
             total_reward += next_reward.r
 
+        episode_reward_averager.update(total_reward)
+
         episodes_finished = episode_i + 1
         if episodes_finished % episodes_per_print == 0:
             print(f'Finished {episodes_finished} of {num_episodes} episode(s).')
