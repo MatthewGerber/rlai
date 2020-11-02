@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Mancala T-D" type="PythonConfigurationType" factoryName="Python" folderName="Mancala">
+  <configuration default="false" name="Mancala TD" type="PythonConfigurationType" factoryName="Python" folderName="Mancala">
     <module name="rl" />
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />
@@ -13,7 +13,7 @@
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
     <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/rlai/runners/mancala.py" />
-    <option name="PARAMETERS" value="--train --train-function &quot;rlai.gpi.temporal_difference.iteration.iterate_value_q_pi&quot; --train-checkpoint-path &quot;$USER_HOME$/Desktop/mancala_trained.pickle&quot;" />
+    <option name="PARAMETERS" value="--train --train-function &quot;rlai.gpi.temporal_difference.iteration.iterate_value_q_pi&quot; --num-improvements 1000 --num-episodes-per-improvement 500 --alpha 0.1 --epsilon 0.05 --num-improvements-per-plot 20 --num-improvements-per-checkpoint 100 --checkpoint-path &quot;$USER_HOME$/Desktop/mancala_td.pickle&quot;" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />

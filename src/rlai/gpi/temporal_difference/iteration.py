@@ -17,8 +17,8 @@ def iterate_value_q_pi(
         environment: MdpEnvironment,
         num_improvements: int,
         num_episodes_per_improvement: int,
-        alpha: float,
-        epsilon: float,
+        alpha: Optional[float],
+        epsilon: Optional[float],
         num_improvements_per_plot: Optional[int] = None,
         num_improvements_per_checkpoint: Optional[int] = None,
         checkpoint_path: Optional[str] = None,
@@ -32,7 +32,7 @@ def iterate_value_q_pi(
     :param num_improvements: Number of policy improvements to make.
     :param num_episodes_per_improvement: Number of policy evaluation episodes to execute for each iteration of
     improvement.
-    :param alpha: Step size.
+    :param alpha: Constant step size to use when updating Q-values, or None for 1/n step size.
     :param epsilon: Total probability mass to spread across all actions, resulting in an epsilon-greedy policy. Must
     be >= 0 if provided.
     :param num_improvements_per_plot: Number of improvements to make before plotting the per-improvement average. Pass

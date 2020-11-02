@@ -1,4 +1,4 @@
-from typing import Dict, Set, Tuple
+from typing import Dict, Set, Tuple, Optional
 
 from rlai.actions import Action
 from rlai.agents.mdp import MdpAgent
@@ -14,7 +14,7 @@ def evaluate_q_pi(
         agent: MdpAgent,
         environment: MdpEnvironment,
         num_episodes: int,
-        alpha: float,
+        alpha: Optional[float],
         initial_q_S_A: Dict[MdpState, Dict[Action, IncrementalSampleAverager]] = None
 ) -> Tuple[Dict[MdpState, Dict[Action, IncrementalSampleAverager]], Set[MdpState], float]:
     """
@@ -23,7 +23,7 @@ def evaluate_q_pi(
     :param agent: Agent containing target policy to be optimized.
     :param environment: Environment.
     :param num_episodes: Number of episodes to execute.
-    :param alpha: Constant step size to use when updating Q-values.
+    :param alpha: Constant step size to use when updating Q-values, or None for 1/n step size.
     :param initial_q_S_A: Initial guess at state-action value, or None for no guess.
     :return: 3-tuple of (1) dictionary of all MDP states and their action-value averagers under the agent's policy, (2)
     set of only those states that were evaluated, and (3) the average reward obtained per episode.

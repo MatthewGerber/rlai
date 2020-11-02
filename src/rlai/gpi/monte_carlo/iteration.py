@@ -19,7 +19,7 @@ def iterate_value_q_pi(
         num_improvements: int,
         num_episodes_per_improvement: int,
         update_upon_every_visit: bool,
-        epsilon: float,
+        epsilon: Optional[float],
         off_policy_agent: Optional[MdpAgent] = None,
         num_improvements_per_plot: Optional[int] = None,
         num_improvements_per_checkpoint: Optional[int] = None,
