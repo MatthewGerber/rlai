@@ -52,7 +52,7 @@ As with all objectives, none of the above are fully realized. In particular, (1)
 repository public well before finishing. But the remaining objectives are fairly well satisfied.
 
 # Figures
-A list of figures can be found [here](src/rl/figures). Most of these are reproductions of those shown in the text; 
+A list of figures can be found [here](src/rlai/figures). Most of these are reproductions of those shown in the text; 
 however, even the reproductions typically provide detail not shown in the text.
 
 # Mancala
@@ -66,12 +66,12 @@ state-space size than the gridworld. I have implemented a fairly common variatio
 * Winner determined by store count.
 
 A couple hours of Monte Carlo optimization explores more than 1 million states when playing against an equiprobable 
-random opponent (shown [here](src/rl/figures/Mancala%20Learning.png)).
+random opponent (shown [here](src/rlai/figures/Mancala%20Learning.png)).
 
 Key files are listed below.
 
-* [Environment](src/rl/environments/mancala.py)
-* [Test](test/rl/environments/mancala_test.py)
+* [Environment](src/rlai/environments/mancala.py)
+* [Test](test/rlai/environments/mancala_test.py)
 
 # Chapter 2
 ## `rlai.environments.bandit.Arm`
