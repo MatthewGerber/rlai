@@ -17,12 +17,7 @@ repository public well before finishing. But the remaining objectives are fairly
 A list of figures can be found [here](src/rl/figures). Most of these are reproductions of those shown in the text; 
 however, even the reproductions typically provide detail not shown in the text.
 
-# Content
-The following sections are generated programatically from annotation markers placed on functions and classes within the 
-code. They give a rough sense of what is currently implemented, with respect to the text. Topics beyond those in the 
-text are summarized below.
-
-## Mancala
+# Mancala
 This is a simple game with many rule variations, and it provides a greater challenge in terms of implementation and 
 state-space size than the gridworld. I have implemented a fairly common variation summarized below.
 

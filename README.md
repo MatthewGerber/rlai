@@ -1,8 +1,7 @@
 # Table of Contents
 - [Introduction](#introduction)
 - [Figures](#figures)
-- [Content](#content)
-  - [Mancala](#mancala)
+- [Mancala](#mancala)
 - [Chapter 2](#chapter-2)
   - [`rlai.environments.bandit.Arm`](#rlaienvironmentsbanditarm)
   - [`rlai.agents.q_value.EpsilonGreedy`](#rlaiagentsq_valueepsilongreedy)
@@ -56,12 +55,7 @@ repository public well before finishing. But the remaining objectives are fairly
 A list of figures can be found [here](src/rl/figures). Most of these are reproductions of those shown in the text; 
 however, even the reproductions typically provide detail not shown in the text.
 
-# Content
-The following sections are generated programatically from annotation markers placed on functions and classes within the 
-code. They give a rough sense of what is currently implemented, with respect to the text. Topics beyond those in the 
-text are summarized below.
-
-## Mancala
+# Mancala
 This is a simple game with many rule variations, and it provides a greater challenge in terms of implementation and 
 state-space size than the gridworld. I have implemented a fairly common variation summarized below.
 
@@ -308,7 +302,7 @@ Perform temporal-difference evaluation of an agent's policy within an environmen
     :param agent: Agent containing target policy to be optimized.
     :param environment: Environment.
     :param num_episodes: Number of episodes to execute.
-    :param alpha: Constant step size to use when updating Q-values.
+    :param alpha: Constant step size to use when updating Q-values, or None for 1/n step size.
     :param initial_q_S_A: Initial guess at state-action value, or None for no guess.
     :return: 3-tuple of (1) dictionary of all MDP states and their action-value averagers under the agent's policy, (2)
     set of only those states that were evaluated, and (3) the average reward obtained per episode.
@@ -322,7 +316,7 @@ Run temporal-difference value iteration on an agent using state-action value est
     :param num_improvements: Number of policy improvements to make.
     :param num_episodes_per_improvement: Number of policy evaluation episodes to execute for each iteration of
     improvement.
-    :param alpha: Step size.
+    :param alpha: Constant step size to use when updating Q-values, or None for 1/n step size.
     :param epsilon: Total probability mass to spread across all actions, resulting in an epsilon-greedy policy. Must
     be >= 0 if provided.
     :param num_improvements_per_plot: Number of improvements to make before plotting the per-improvement average. Pass
