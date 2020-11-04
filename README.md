@@ -303,6 +303,10 @@ Perform temporal-difference evaluation of an agent's policy within an environmen
     :param environment: Environment.
     :param num_episodes: Number of episodes to execute.
     :param alpha: Constant step size to use when updating Q-values, or None for 1/n step size.
+    :param q_learning: True to perform off-policy Q-learning. In off-policy Q-learning, the `agent` policy is used to
+    generate episodes, and it can be any epsilon-soft policy. The target policy is arranged to be greedy with respect to
+    the estimated q-values (i.e., it is the optimal policy). As a result, the Q-values converge to those of the optimal
+    policy.
     :param initial_q_S_A: Initial guess at state-action value, or None for no guess.
     :return: 3-tuple of (1) dictionary of all MDP states and their action-value averagers under the agent's policy, (2)
     set of only those states that were evaluated, and (3) the average reward obtained per episode.
@@ -317,8 +321,9 @@ Run temporal-difference value iteration on an agent using state-action value est
     :param num_episodes_per_improvement: Number of policy evaluation episodes to execute for each iteration of
     improvement.
     :param alpha: Constant step size to use when updating Q-values, or None for 1/n step size.
+    :param q_learning: True to perform off-policy Q-learning (see `rlai.gpi.temporal_difference.evaluation.evaluate_q_pi`).
     :param epsilon: Total probability mass to spread across all actions, resulting in an epsilon-greedy policy. Must
-    be >= 0 if provided.
+    be >= 0 if provided, and must be strictly > 0 if `q_learning` is True in order to maintain exploration.
     :param num_improvements_per_plot: Number of improvements to make before plotting the per-improvement average. Pass
     None to turn off all plotting.
     :param num_improvements_per_checkpoint: Number of improvements per checkpoint save.
