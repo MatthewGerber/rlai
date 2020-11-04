@@ -23,7 +23,7 @@ DEV_REQUIREMENTS = [
 
 setup(
     name='rlai',
-    version='0.7.0',
+    version='0.8.0.dev0',
     description='Reinforcement Learning:  An Introduction',
     author='Matthew Gerber',
     author_email='gerber.matthew@gmail.com',
