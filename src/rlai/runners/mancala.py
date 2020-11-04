@@ -139,7 +139,11 @@ def run(
         train_function(
             agent=p1,
             environment=mancala,
-            **dict((arg, v) for arg, v in parsed_train_function_args._get_kwargs() if v is not None)
+            **{
+                arg: v
+                for arg, v in vars(parsed_train_function_args)
+                if v is not None
+            }
         )
 
     elif parsed_args.resume_train:

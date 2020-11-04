@@ -323,7 +323,7 @@ class GamblersProblem(MdpEnvironment):
         gamblers_problem = GamblersProblem(
             name=f"gambler's problem (p={parsed_args.p_h})",
             random_state=random_state,
-            **dict(parsed_args._get_kwargs())
+            **vars(parsed_args)
         )
 
         return gamblers_problem, unparsed_args

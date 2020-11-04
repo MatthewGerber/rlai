@@ -78,7 +78,7 @@ class PreferenceGradient(Agent):
             PreferenceGradient(
                 name=f'preference gradient (step size={parsed_args.step_size_alpha})',
                 random_state=random_state,
-                **dict(parsed_args._get_kwargs())
+                **vars(parsed_args)
             )
         ]
 

@@ -183,7 +183,7 @@ class EpsilonGreedy(QValue):
                 name=f'epsilon-greedy (e={epsilon:0.2f})',
                 random_state=random_state,
                 epsilon=epsilon,
-                **dict(parsed_args._get_kwargs())
+                **vars(parsed_args)
             )
             for epsilon in epsilons
         ]
@@ -333,7 +333,7 @@ class UpperConfidenceBound(QValue):
                 name=f'UCB (c={c})',
                 random_state=random_state,
                 c=c,
-                **dict(parsed_args._get_kwargs())
+                **vars(parsed_args)
             )
             for c in c_values
         ]

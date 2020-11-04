@@ -170,7 +170,7 @@ class StochasticMdpAgent(MdpAgent):
         solver_function = import_function(parsed_mdp_args.mdp_solver)
         solver_function_arguments = {
             k: v
-            for k, v in dict(parsed_mdp_args._get_kwargs()).items()
+            for k, v in vars(parsed_mdp_args).items()
             if k != 'mdp_solver' and v is not None
         }
 

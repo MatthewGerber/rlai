@@ -147,7 +147,7 @@ class KArmedBandit(Environment):
 
         bandit = KArmedBandit(
             random_state=random_state,
-            **dict(parsed_args._get_kwargs())
+            **vars(parsed_args)
         )
 
         return bandit, unparsed_args
