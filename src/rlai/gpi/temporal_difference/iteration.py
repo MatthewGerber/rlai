@@ -18,6 +18,7 @@ def iterate_value_q_pi(
         num_improvements: int,
         num_episodes_per_improvement: int,
         alpha: Optional[float],
+        q_learning: bool,
         epsilon: Optional[float],
         num_improvements_per_plot: Optional[int] = None,
         num_improvements_per_checkpoint: Optional[int] = None,
@@ -33,8 +34,9 @@ def iterate_value_q_pi(
     :param num_episodes_per_improvement: Number of policy evaluation episodes to execute for each iteration of
     improvement.
     :param alpha: Constant step size to use when updating Q-values, or None for 1/n step size.
+    :param q_learning: True to perform off-policy Q-learning (see `rlai.gpi.temporal_difference.evaluation.evaluate_q_pi`).
     :param epsilon: Total probability mass to spread across all actions, resulting in an epsilon-greedy policy. Must
-    be >= 0 if provided.
+    be >= 0 if provided, and must be strictly > 0 if `q_learning` is True in order to maintain exploration.
     :param num_improvements_per_plot: Number of improvements to make before plotting the per-improvement average. Pass
     None to turn off all plotting.
     :param num_improvements_per_checkpoint: Number of improvements per checkpoint save.
@@ -42,6 +44,9 @@ def iterate_value_q_pi(
     :param initial_q_S_A: Initial state-action value estimates (primarily useful for restarting from a checkpoint).
     :return: State-action value estimates from final iteration of improvement.
     """
+
+    if q_learning and (epsilon is None or epsilon <= 0):
+        raise ValueError('epsilon must be strictly > 0 for q-learning')
 
     q_S_A = initial_q_S_A
     i = 0
@@ -57,6 +62,7 @@ def iterate_value_q_pi(
             environment=environment,
             num_episodes=num_episodes_per_improvement,
             alpha=alpha,
+            q_learning=q_learning,
             initial_q_S_A=q_S_A
         )
 
