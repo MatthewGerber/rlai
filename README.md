@@ -298,7 +298,7 @@ Run Monte Carlo value iteration on an agent using state-action value estimates. 
 # Chapter 6
 ## `rlai.gpi.temporal_difference.evaluation.Mode`
 ```
-Evaluation modes for temporal-difference evaluation:  SARSA (on-policy, Q-Learning (off-policy), and Expected SARSA
+Evaluation modes for temporal-difference evaluation:  SARSA (on-policy), Q-Learning (off-policy), and Expected SARSA
     (off-policy).
 ```
 ## `rlai.gpi.temporal_difference.evaluation.evaluate_q_pi`
