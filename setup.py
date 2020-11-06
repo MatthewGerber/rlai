@@ -1,3 +1,5 @@
+from os import path
+
 from setuptools import (
     setup, find_namespace_packages
 )
@@ -21,10 +23,15 @@ DEV_REQUIREMENTS = [
     'md-toc==7.0.3'
 ]
 
+with open(path.join(path.abspath(path.dirname(__file__)), 'README.md'), encoding='utf-8') as f:
+    long_description = f.read()
+
 setup(
     name='rlai',
     version='0.8.0.dev0',
     description='Reinforcement Learning:  An Introduction',
+    long_description=long_description,
+    long_description_content_type='text/markdown',
     author='Matthew Gerber',
     author_email='gerber.matthew@gmail.com',
     url='https://github.com/MatthewGerber/rl',
