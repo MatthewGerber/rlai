@@ -13,7 +13,7 @@ from rlai.utils import IncrementalSampleAverager, sample_list_item
 @rl_text(chapter=6, page=130)
 class Mode(enum.Enum):
     """
-    Evaluation modes for temporal-difference evaluation:  SARSA (on-policy, Q-Learning (off-policy), and Expected SARSA
+    Evaluation modes for temporal-difference evaluation:  SARSA (on-policy), Q-Learning (off-policy), and Expected SARSA
     (off-policy).
     """
 
