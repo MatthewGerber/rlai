@@ -1,3 +1,4 @@
+import enum
 from typing import Dict, Set, Tuple, Optional
 
 from rlai.actions import Action
@@ -10,25 +11,43 @@ from rlai.utils import IncrementalSampleAverager, sample_list_item
 
 
 @rl_text(chapter=6, page=130)
+class Mode(enum.Enum):
+    """
+    Evaluation modes for temporal-difference evaluation:  SARSA (on-policy, Q-Learning (off-policy), and Expected SARSA
+    (off-policy).
+    """
+
+    # On-policy SARSA.
+    SARSA = enum.auto()
+
+    # Off-policy Q-learning:  The agent policy is used to generate episodes, and it can be any epsilon-soft policy. The
+    # target policy is arranged to be greedy with respect to the estimated q-values (i.e., it is the optimal policy). As
+    # a result, the Q-values converge to those of the optimal policy.
+    Q_LEARNING = enum.auto()
+
+    # Off-policy expected SARSA.
+    EXPECTED_SARSA = enum.auto()
+
+
+@rl_text(chapter=6, page=130)
 def evaluate_q_pi(
         agent: MdpAgent,
         environment: MdpEnvironment,
         num_episodes: int,
         alpha: Optional[float],
-        q_learning: bool,
+        mode: Mode,
         initial_q_S_A: Dict[MdpState, Dict[Action, IncrementalSampleAverager]] = None
 ) -> Tuple[Dict[MdpState, Dict[Action, IncrementalSampleAverager]], Set[MdpState], float]:
     """
-    Perform temporal-difference evaluation of an agent's policy within an environment, returning state-action values.
+    Perform temporal-difference (TD) evaluation of an agent's policy within an environment, returning state-action
+    values. This evaluation function implements both on-policy TD learning (SARSA) as well as off-policy TD learning
+    (Q-learning and expected SARSA).
 
     :param agent: Agent containing target policy to be optimized.
     :param environment: Environment.
     :param num_episodes: Number of episodes to execute.
     :param alpha: Constant step size to use when updating Q-values, or None for 1/n step size.
-    :param q_learning: True to perform off-policy Q-learning. In off-policy Q-learning, the `agent` policy is used to
-    generate episodes, and it can be any epsilon-soft policy. The target policy is arranged to be greedy with respect to
-    the estimated q-values (i.e., it is the optimal policy). As a result, the Q-values converge to those of the optimal
-    policy.
+    :param mode: Evaluation mode (see `rlai.gpi.temporal_difference.evaluation.Mode`).
     :param initial_q_S_A: Initial guess at state-action value, or None for no guess.
     :return: 3-tuple of (1) dictionary of all MDP states and their action-value averagers under the agent's policy, (2)
     set of only those states that were evaluated, and (3) the average reward obtained per episode.
@@ -48,7 +67,7 @@ def evaluate_q_pi(
         curr_state = environment.reset_for_new_run()
         agent.reset_for_new_run(curr_state)
 
-        # simulate until episode termination. begin by taking an action in the current state.
+        # simulate until episode termination. begin by taking an action in the first state.
         curr_t = 0
         curr_a = agent.act(curr_t)
         total_reward = 0.0
@@ -57,28 +76,44 @@ def evaluate_q_pi(
             next_state, next_t, next_reward = curr_state.advance(environment, curr_t, curr_a)
             agent.sense(next_state, next_t)
 
-            # if the next state is terminal, then it might not have any feasible actions for the agent to select from.
-            # if this is the case, then use a dummy action to allow the update to go through. the corresponding state-
-            # action value will always be zero below.
-            if next_state.terminal and len(next_state.AA) == 0:
-                td_target_a = Action(-1)
+            next_a = None
 
-            # under q-learning, the action used to form the t-d target is selected to maximize the q-value from the
-            # next state (if any q-values are estimated). if no q-values are estimated, then select the action randomly.
-            elif q_learning:
-                if next_state in q_S_A and len(q_S_A[next_state]) > 0:
-                    td_target_a = max(q_S_A[next_state], key=lambda a: q_S_A[next_state][a].get_value())
-                else:
-                    td_target_a = sample_list_item(next_state.AA, probs=None, random_state=environment.random_state)
-
-            # under non-q-learning temporal differencing, the agent determines the t-d target action.
+            # if the next state is terminal, then all next q-values are zero.
+            if next_state.terminal:
+                next_state_q_s_a = 0.0
             else:
-                td_target_a = agent.act(next_t)
+
+                # EXPECTED_SARSA:  get expected q-value based on current policy and q-value estimates
+                if mode == Mode.EXPECTED_SARSA:
+                    next_state_q_s_a = sum(
+                        (agent.pi[next_state][a] if next_state in agent.pi else 1 / len(next_state.AA)) * (q_S_A[next_state][a].get_value() if next_state in q_S_A and a in q_S_A[next_state] else 0.0)
+                        for a in next_state.AA
+                    )
+                else:
+
+                    # SARSA:  agent determines the t-d target action as well as the episode's next action (on-policy)
+                    if mode == Mode.SARSA:
+                        td_target_a = next_a = agent.act(next_t)
+
+                    # Q-LEARNING:  select the action with max q-value from the next state. if no q-values are estimated,
+                    # then select the action uniformly randomly.
+                    elif mode == Mode.Q_LEARNING:
+                        if next_state in q_S_A and len(q_S_A[next_state]) > 0:
+                            td_target_a = max(q_S_A[next_state], key=lambda a: q_S_A[next_state][a].get_value())
+                        else:
+                            td_target_a = sample_list_item(next_state.AA, probs=None, random_state=environment.random_state)
+                    else:
+                        raise ValueError(f'Unknown TD mode:  {mode}')
+
+                    # get the next state-action value if we have an estimate for it; otherwise, it's zero.
+                    if next_state in q_S_A and td_target_a in q_S_A[next_state]:
+                        next_state_q_s_a = q_S_A[next_state][td_target_a].get_value()
+                    else:
+                        next_state_q_s_a = 0.0
 
             # t-d target:  actual realized reward of the current state-action pair, plus the (bootstrapped) discounted
-            # future value of the next state-action pair.
-            lazy_initialize_q_S_A(q_S_A=q_S_A, state=next_state, a=td_target_a, alpha=alpha, weighted=False)
-            td_target = next_reward.r + agent.gamma * q_S_A[next_state][td_target_a].get_value()
+            # future value of the next state-action value, as estimated by one of the modes.
+            td_target = next_reward.r + agent.gamma * next_state_q_s_a
 
             # update the value of the current state/action pair with the t-d target
             lazy_initialize_q_S_A(q_S_A=q_S_A, state=curr_state, a=curr_a, alpha=alpha, weighted=False)
@@ -88,7 +123,7 @@ def evaluate_q_pi(
             # advance the episode
             curr_t = next_t
             curr_state = next_state
-            curr_a = agent.act(next_t) if q_learning else td_target_a  # get the next action from the agent if we're q-learning; otherwise, if not q-learning, then we already have the next action as the t-d target action.
+            curr_a = agent.act(next_t) if next_a is None else next_a  # if the next action has not been set, then we're off-policy and the agent should determine the next action.
             total_reward += next_reward.r
 
         episode_reward_averager.update(total_reward)
