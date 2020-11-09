@@ -9,6 +9,7 @@ from rlai.gpi.temporal_difference.evaluation import evaluate_q_pi, Mode
 from rlai.gpi.utils import get_q_pi_for_evaluated_states, plot_policy_iteration
 from rlai.meta import rl_text
 from rlai.states.mdp import MdpState
+from rlai.utils import IncrementalSampleAverager
 
 
 @rl_text(chapter=6, page=130)
@@ -19,12 +20,13 @@ def iterate_value_q_pi(
         num_episodes_per_improvement: int,
         alpha: Optional[float],
         mode: Mode,
+        n_steps: Optional[int],
         epsilon: float,
         num_improvements_per_plot: Optional[int] = None,
         num_improvements_per_checkpoint: Optional[int] = None,
         checkpoint_path: Optional[str] = None,
         initial_q_S_A: Optional[Dict] = None
-) -> Dict[MdpState, Dict[Action, float]]:
+) -> Dict[MdpState, Dict[Action, IncrementalSampleAverager]]:
     """
     Run temporal-difference value iteration on an agent using state-action value estimates.
 
@@ -35,6 +37,7 @@ def iterate_value_q_pi(
     improvement.
     :param alpha: Constant step size to use when updating Q-values, or None for 1/n step size.
     :param mode: Evaluation mode (see `rlai.gpi.temporal_difference.evaluation.Mode`).
+    :param n_steps: Number of steps (see `rlai.gpi.temporal_difference.evaluation.evaluate_q_pi`).
     :param epsilon: Total probability mass to spread across all actions, resulting in an epsilon-greedy policy. Must
     be strictly > 0.
     :param num_improvements_per_plot: Number of improvements to make before plotting the per-improvement average. Pass
@@ -42,7 +45,7 @@ def iterate_value_q_pi(
     :param num_improvements_per_checkpoint: Number of improvements per checkpoint save.
     :param checkpoint_path: Checkpoint path. Must be provided if `num_improvements_per_checkpoint` is provided.
     :param initial_q_S_A: Initial state-action value estimates (primarily useful for restarting from a checkpoint).
-    :return: State-action value estimates from final iteration of improvement.
+    :return: Dictionary of state-action value estimators.
     """
 
     if epsilon is None or epsilon <= 0:
@@ -63,6 +66,7 @@ def iterate_value_q_pi(
             num_episodes=num_episodes_per_improvement,
             alpha=alpha,
             mode=mode,
+            n_steps=n_steps,
             initial_q_S_A=q_S_A
         )
 
@@ -105,4 +109,4 @@ def iterate_value_q_pi(
 
     print(f'Value iteration of q_pi terminated after {i} iteration(s).')
 
-    return q_pi
+    return q_S_A

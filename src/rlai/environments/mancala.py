@@ -38,14 +38,14 @@ class MancalaState(MdpState):
             environment: Environment,
             t: int,
             a: Action
-    ) -> Tuple[MdpState, int, Reward]:
+    ) -> Tuple[MdpState, Reward]:
         """
         Advance from the current state given an action.
 
         :param environment: Environment.
         :param t: Current time step.
         :param a: Action.
-        :return: 3-tuple of next state, next time step, and next reward.
+        :return: 2-tuple of next state and next reward.
         """
 
         environment: Mancala
@@ -57,8 +57,6 @@ class MancalaState(MdpState):
             mancala=environment,
             player_1=MancalaState.player_1_is_next(picked_pocket, go_again)
         )
-
-        t += 1
 
         # check for termination
         next_reward = environment.r_none
@@ -83,8 +81,6 @@ class MancalaState(MdpState):
                     player_1=MancalaState.player_1_is_next(picked_pocket, go_again)
                 )
 
-                t += 1
-
                 # check for termination
                 if next_state.terminal:
                     next_reward = environment.get_terminal_reward()
@@ -93,7 +89,7 @@ class MancalaState(MdpState):
                 elif not go_again:
                     break
 
-        return next_state, t, next_reward
+        return next_state, next_reward
 
     def __init__(
             self,

@@ -10,6 +10,7 @@ from rlai.gpi.monte_carlo.evaluation import evaluate_q_pi
 from rlai.gpi.utils import get_q_pi_for_evaluated_states, plot_policy_iteration
 from rlai.meta import rl_text
 from rlai.states.mdp import MdpState
+from rlai.utils import IncrementalSampleAverager
 
 
 @rl_text(chapter=5, page=99)
@@ -25,7 +26,7 @@ def iterate_value_q_pi(
         num_improvements_per_checkpoint: Optional[int] = None,
         checkpoint_path: Optional[str] = None,
         initial_q_S_A: Optional[Dict] = None
-) -> Dict[MdpState, Dict[Action, float]]:
+) -> Dict[MdpState, Dict[Action, IncrementalSampleAverager]]:
     """
     Run Monte Carlo value iteration on an agent using state-action value estimates. This iteration function operates
     over rewards obtained at the end of episodes, so it is only appropriate for episodic tasks.
@@ -45,7 +46,7 @@ def iterate_value_q_pi(
     :param num_improvements_per_checkpoint: Number of improvements per checkpoint save.
     :param checkpoint_path: Checkpoint path. Must be provided if `num_improvements_per_checkpoint` is provided.
     :param initial_q_S_A: Initial state-action value estimates (primarily useful for restarting from a checkpoint).
-    :return: State-action value estimates from final iteration of improvement.
+    :return: Dictionary of state-action value estimators.
     """
 
     if (epsilon is None or epsilon == 0.0) and off_policy_agent is None:
@@ -110,4 +111,4 @@ def iterate_value_q_pi(
 
     print(f'Value iteration of q_pi terminated after {i} iteration(s).')
 
-    return q_pi
+    return q_S_A

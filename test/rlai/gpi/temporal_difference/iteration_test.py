@@ -4,12 +4,12 @@ import pickle
 from numpy.random import RandomState
 
 from rlai.agents.mdp import StochasticMdpAgent
-from rlai.environments.mdp import Gridworld, GamblersProblem
+from rlai.environments.mdp import Gridworld
 from rlai.gpi.temporal_difference.evaluation import Mode
 from rlai.gpi.temporal_difference.iteration import iterate_value_q_pi
 
 
-def test_iterate_value_q_pi():
+def test_sarsa_iterate_value_q_pi():
 
     random_state = RandomState(12345)
 
@@ -30,6 +30,7 @@ def test_iterate_value_q_pi():
         num_episodes_per_improvement=100,
         alpha=0.1,
         mode=Mode.SARSA,
+        n_steps=1,
         epsilon=0.05
     )
 
@@ -73,6 +74,7 @@ def test_q_learning_iterate_value_q_pi():
         num_episodes_per_improvement=100,
         alpha=0.1,
         mode=Mode.Q_LEARNING,
+        n_steps=1,
         epsilon=0.05
     )
 
@@ -116,6 +118,7 @@ def test_expected_sarsa_iterate_value_q_pi():
         num_episodes_per_improvement=100,
         alpha=0.1,
         mode=Mode.EXPECTED_SARSA,
+        n_steps=1,
         epsilon=0.05
     )
 
