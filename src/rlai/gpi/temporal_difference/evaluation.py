@@ -84,16 +84,20 @@ def evaluate_q_pi(
             next_t = curr_t + 1
             agent.sense(next_state, next_t)
 
-            # pass reward to prior state-action values, discounting based on time step differences. if n_steps is None,
-            # then pass reward to all prior time steps (equivalent to infinite n_steps, or Monte Carlo). the reward
-            # should not be discounted for the current time step.
+            # get prior time steps for which truncated return g should be updated. if n_steps is None, then get all
+            # prior time steps (equivalent to infinite n_steps, or Monte Carlo).
             t_state_a_g[curr_t] = (curr_state, curr_a, 0.0)
             if n_steps is None:
-                prior_t = list(t_state_a_g.keys())
+                prior_t_values = list(t_state_a_g.keys())
             else:
-                prior_t = range(curr_t, curr_t - n_steps, -1)
+                # in 1-step td, the earliest time step is the current time step; in 2-step, the earliest time step is
+                # the prior time step, etc. always update through the current time step.
+                earliest_t = curr_t - n_steps + 1
+                prior_t_values = range(earliest_t, curr_t + 1)
 
-            for t in prior_t:
+            # pass reward to prior state-action values, discounting based on time step differences (the reward should
+            # not be discounted for the current time step).
+            for t in prior_t_values:
                 if t in t_state_a_g:
                     state, a, g = t_state_a_g[t]
                     discount = agent.gamma ** (curr_t - t)
@@ -156,11 +160,10 @@ def evaluate_q_pi(
             total_reward += next_reward.r
 
         # flush out the remaining n-step updates, with all next state-action values being zero.
-        flush_n_steps = curr_t + 1
         while len(t_state_a_g):
             update_q_S_A(
                 q_S_A=q_S_A,
-                n_steps=flush_n_steps,
+                n_steps=n_steps,
                 curr_t=curr_t,
                 t_state_a_g=t_state_a_g,
                 agent=agent,
@@ -168,7 +171,7 @@ def evaluate_q_pi(
                 alpha=alpha,
                 evaluated_states=evaluated_states
             )
-            flush_n_steps -= 1
+            curr_t += 1
 
         episode_reward_averager.update(total_reward)
 
@@ -195,9 +198,11 @@ def update_q_S_A(
     state-action value, as estimated by one of the TD modes.
 
     :param q_S_A: State-action value estimators.
-    :param n_steps: Number of time steps to accumulate.
+    :param n_steps: Number of time steps to accumulate rewards for before updating a state-action value.
     :param curr_t: Current time step.
-    :param t_state_a_g: Structore of time, state, action, g accumulators.
+    :param t_state_a_g: Structore of time, state, action, g accumulators. If an n-step update is feasible at the current
+    time step (i.e., if we have accumulated sufficient rewards), then the entry corresponding to the n-step update will
+    be deleted from this structure.
     :param agent: Agent.
     :param next_state_q_s_a: Next state-action value.
     :param alpha: Step size.
