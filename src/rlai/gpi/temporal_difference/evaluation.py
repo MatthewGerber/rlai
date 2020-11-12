@@ -42,7 +42,7 @@ def evaluate_q_pi(
     """
     Perform temporal-difference (TD) evaluation of an agent's policy within an environment, returning state-action
     values. This evaluation function implements both on-policy TD learning (SARSA) as well as off-policy TD learning
-    (Q-learning and expected SARSA).
+    (Q-learning and expected SARSA), and n-step updates are implemented for all learning modes.
 
     :param agent: Agent containing target policy to be optimized.
     :param environment: Environment.
@@ -198,7 +198,7 @@ def update_q_S_A(
     state-action value, as estimated by one of the TD modes.
 
     :param q_S_A: State-action value estimators.
-    :param n_steps: Number of time steps to accumulate rewards for before updating a state-action value.
+    :param n_steps: Number of time steps to accumulate actual rewards for before updating a state-action value.
     :param curr_t: Current time step.
     :param t_state_a_g: Structore of time, state, action, g accumulators. If an n-step update is feasible at the current
     time step (i.e., if we have accumulated sufficient rewards), then the entry corresponding to the n-step update will
@@ -209,11 +209,20 @@ def update_q_S_A(
     :param evaluated_states: Evaluated states.
     """
 
+    # if we're currently far enough along (i.e., have accumulated sufficient rewards), then update.
     update_t = curr_t - n_steps + 1
     if update_t in t_state_a_g:
         update_state, update_a, g = t_state_a_g[update_t]
-        td_target = g + agent.gamma * next_state_q_s_a
+
+        # the discount on the next state-action value is exponentiated to n_steps, as we're bootstrapping it starting
+        # from the update_t. for n_steps==1, the discount applied to g will have been 1 (agent.gamma**0) and the
+        # discount applied here to next_state_q_s_a will be agent.gamma.
+        td_target = g + (agent.gamma ** n_steps) * next_state_q_s_a
+
+        # initialize and update the state-action pair with the target
         lazy_initialize_q_S_A(q_S_A=q_S_A, state=update_state, a=update_a, alpha=alpha, weighted=False)
         q_S_A[update_state][update_a].update(td_target)
+
+        # note the evaluated state and remove from our n-step structure
         evaluated_states.add(update_state)
         del t_state_a_g[update_t]
