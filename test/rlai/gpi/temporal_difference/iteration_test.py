@@ -7,6 +7,7 @@ from rlai.agents.mdp import StochasticMdpAgent
 from rlai.environments.mdp import Gridworld
 from rlai.gpi.temporal_difference.evaluation import Mode
 from rlai.gpi.temporal_difference.iteration import iterate_value_q_pi
+from test.rlai.utils import get_pi_fixture, get_q_S_A_fixture
 
 
 def test_sarsa_iterate_value_q_pi():
@@ -155,7 +156,7 @@ def test_n_step_q_learning_iterate_value_q_pi():
 
     mdp_agent.initialize_equiprobable_policy(mdp_environment.SS)
 
-    iterate_value_q_pi(
+    q_S_A = iterate_value_q_pi(
         agent=mdp_agent,
         environment=mdp_environment,
         num_improvements=10,
@@ -166,20 +167,14 @@ def test_n_step_q_learning_iterate_value_q_pi():
         epsilon=0.05
     )
 
-    # pickle doesn't like to unpickle instances with custom __hash__ functions
-    pi = {
-        s.i: {
-            a: mdp_agent.pi[s][a]
-            for a in mdp_agent.pi[s]
-        }
-        for s in mdp_agent.pi
-    }
+    pi = get_pi_fixture(mdp_agent.pi)
+    q_S_A = get_q_S_A_fixture(q_S_A)
 
     # uncomment the following line and run test to update fixture
     # with open(f'{os.path.dirname(__file__)}/fixtures/test_td_n_step_q_learning_iteration_of_value_q_pi.pickle', 'wb') as file:
-    #     pickle.dump(pi, file)
+    #     pickle.dump((pi, q_S_A), file)
 
     with open(f'{os.path.dirname(__file__)}/fixtures/test_td_n_step_q_learning_iteration_of_value_q_pi.pickle', 'rb') as file:
-        fixture = pickle.load(file)
+        fixture_pi, fixture_q_S_A = pickle.load(file)
 
-    assert pi == fixture
+    assert pi == fixture_pi and q_S_A == fixture_q_S_A

@@ -84,26 +84,25 @@ def evaluate_q_pi(
             next_t = curr_t + 1
             agent.sense(next_state, next_t)
 
+            # initialize the n-step accumulator at the current time for the current state and action
+            t_state_a_g[curr_t] = (curr_state, curr_a, 0.0)
+
             # get prior time steps for which truncated return g should be updated. if n_steps is None, then get all
             # prior time steps (equivalent to infinite n_steps, or Monte Carlo).
-            t_state_a_g[curr_t] = (curr_state, curr_a, 0.0)
             if n_steps is None:
                 prior_t_values = list(t_state_a_g.keys())
             else:
                 # in 1-step td, the earliest time step is the current time step; in 2-step, the earliest time step is
                 # the prior time step, etc. always update through the current time step.
-                earliest_t = curr_t - n_steps + 1
+                earliest_t = max(0, curr_t - n_steps + 1)
                 prior_t_values = range(earliest_t, curr_t + 1)
 
             # pass reward to prior state-action values, discounting based on time step differences (the reward should
             # not be discounted for the current time step).
             for t in prior_t_values:
-                if t in t_state_a_g:
-                    state, a, g = t_state_a_g[t]
-                    discount = agent.gamma ** (curr_t - t)
-                    t_state_a_g[t] = (state, a, g + discount * next_reward.r)
-                else:
-                    break
+                state, a, g = t_state_a_g[t]
+                discount = agent.gamma ** (curr_t - t)
+                t_state_a_g[t] = (state, a, g + discount * next_reward.r)
 
             next_a = None
 
@@ -128,7 +127,7 @@ def evaluate_q_pi(
                     # then select the action uniformly randomly.
                     elif mode == Mode.Q_LEARNING:
                         if next_state in q_S_A and len(q_S_A[next_state]) > 0:
-                            td_target_a = max(q_S_A[next_state], key=lambda a: q_S_A[next_state][a].get_value())
+                            td_target_a = max(q_S_A[next_state], key=lambda action: q_S_A[next_state][action].get_value())
                         else:
                             td_target_a = sample_list_item(next_state.AA, probs=None, random_state=environment.random_state)
                     else:
@@ -160,6 +159,7 @@ def evaluate_q_pi(
             total_reward += next_reward.r
 
         # flush out the remaining n-step updates, with all next state-action values being zero.
+        n_steps = len(t_state_a_g) + 1
         while len(t_state_a_g):
             update_q_S_A(
                 q_S_A=q_S_A,
