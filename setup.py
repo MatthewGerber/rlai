@@ -7,7 +7,8 @@ from setuptools import (
 INSTALL_REQUIREMENTS = [
     'scipy==1.5.2',
     'matplotlib==3.3.1',
-    'numpy==1.19.0'
+    'numpy==1.19.0',
+    'gym==0.17.3'
 ]
 
 TEST_REQUIREMENTS = [

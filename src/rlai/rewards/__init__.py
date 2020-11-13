@@ -1,8 +1,11 @@
+from typing import Optional
+
+
 class Reward:
 
     def __init__(
             self,
-            i: int,
+            i: Optional[int],
             r: float
     ):
         """

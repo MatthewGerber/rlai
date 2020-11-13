@@ -46,8 +46,8 @@ def test_learn():
     )
 
     # uncomment the following line and run test to update fixture
-    with open(f'{os.path.dirname(__file__)}/fixtures/test_mancala.pickle', 'wb') as file:
-        pickle.dump(p1.pi, file)
+    # with open(f'{os.path.dirname(__file__)}/fixtures/test_mancala.pickle', 'wb') as file:
+    #     pickle.dump(p1.pi, file)
 
     with open(f'{os.path.dirname(__file__)}/fixtures/test_mancala.pickle', 'rb') as file:
         fixture = pickle.load(file)

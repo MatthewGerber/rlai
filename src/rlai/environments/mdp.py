@@ -25,10 +25,13 @@ class MdpEnvironment(Environment, ABC):
             self
     ) -> State:
         """
-        Reset the the environment.
+        Reset the the environment to a random nonterminal state, if any are specified, or to None.
         """
 
-        self.state = self.random_state.choice(self.nonterminal_states)
+        if len(self.nonterminal_states) > 0:
+            self.state = self.random_state.choice(self.nonterminal_states)
+        else:
+            self.state = None
 
         return self.state
 
@@ -70,17 +73,23 @@ class MdpEnvironment(Environment, ABC):
             self,
             name: str,
             random_state: RandomState,
-            SS: List[MdpState],
-            RR: List[Reward]
+            SS: Optional[List[MdpState]] = None,
+            RR: Optional[List[Reward]] = None
     ):
         """
         Initialize the MDP environment.
 
         :param name: Name.
         :param random_state: Random state.
-        :param SS: List of states.
-        :param RR: List of rewards.
+        :param SS: Prespecified list of states, or None for no prespecification.
+        :param RR: Prespecified list of rewards, or None for no prespecification.
         """
+
+        if SS is None:
+            SS = []
+
+        if RR is None:
+            RR = []
 
         super().__init__(
             name=name,
