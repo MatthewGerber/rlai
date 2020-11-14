@@ -4,7 +4,7 @@ import pickle
 from numpy.random import RandomState
 
 from rlai.agents.mdp import StochasticMdpAgent
-from rlai.environments.gym import Gym
+from rlai.environments.openai_gym import Gym
 from rlai.gpi.temporal_difference.evaluation import Mode
 from rlai.gpi.temporal_difference.iteration import iterate_value_q_pi
 from test.rlai.utils import get_pi_fixture, get_q_S_A_fixture
@@ -22,7 +22,8 @@ def test_learn():
 
     gym = Gym(
         gym_id='CartPole-v1',
-        random_state=random_state
+        random_state=random_state,
+        continuous_state_discretization_resolution=0.001
     )
 
     q_S_A = iterate_value_q_pi(

@@ -13,6 +13,9 @@ from rlai.states.mdp import MdpState
 
 
 class GymState(MdpState):
+    """
+    State of a Gym environment.
+    """
 
     def advance(
             self,
@@ -20,10 +23,18 @@ class GymState(MdpState):
             t: int,
             a: Action
     ) -> Tuple[State, Reward]:
+        """
+        Advance the state.
+
+        :param environment: Environment.
+        :param t: Time step.
+        :param a: Action.
+        :return: 2-tuple of next state and reward.
+        """
 
         environment: Gym
 
-        observation, reward, done, info = environment.gym_native.step(action=a)
+        observation, reward, done, _ = environment.gym_native.step(action=a.i)
 
         next_state = GymState(
             environment=environment,
@@ -39,6 +50,14 @@ class GymState(MdpState):
             observation,
             terminal: bool,
     ):
+        """
+        Initialize the state.
+
+        :param environment: Environment.
+        :param observation: Observation.
+        :param terminal: Whether the state is terminal.
+        """
+
         environment: Gym
 
         super().__init__(
@@ -49,6 +68,9 @@ class GymState(MdpState):
 
 
 class Gym(MdpEnvironment):
+    """
+    Generalized Gym environment.
+    """
 
     @classmethod
     def init_from_arguments(
@@ -61,6 +83,10 @@ class Gym(MdpEnvironment):
     def reset_for_new_run(
             self
     ) -> State:
+        """
+        Reset the environment for a new run (episode).
+        :return: Initial state.
+        """
 
         super().reset_for_new_run()
 
@@ -92,7 +118,7 @@ class Gym(MdpEnvironment):
             if self.continuous_state_discretization_resolution is None:
                 raise ValueError('Attempted to discrete a Box environment without a resolution.')
 
-            state_id_str = '-'.join(
+            state_id_str = '|'.join(
                 str(int(state_dim_value / self.continuous_state_discretization_resolution))
                 for state_dim_value in observation
             )
@@ -123,6 +149,8 @@ class Gym(MdpEnvironment):
         self.gym_native = gym.make(
             id=gym_id
         )
+
+        self.gym_native.seed(random_state.randint(1000))
 
         if continuous_state_discretization_resolution is not None and not isinstance(self.gym_native.observation_space, Box):
             raise ValueError(f'Continuous-state discretization is only valid for Box environments.')
