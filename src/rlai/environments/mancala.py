@@ -1,10 +1,11 @@
+from argparse import ArgumentParser
 from typing import Tuple, List, Optional, Dict
 
 from numpy.random import RandomState
 
 from rlai.actions import Action
 from rlai.agents import Agent
-from rlai.agents.mdp import Human
+from rlai.agents.mdp import Human, StochasticMdpAgent
 from rlai.environments import Environment
 from rlai.environments.mdp import MdpEnvironment
 from rlai.rewards import Reward
@@ -180,13 +181,56 @@ class Mancala(MdpEnvironment):
     Environment for the mancala game.
     """
 
+    @staticmethod
+    def human_player_mutator(
+            environment,
+            **kwargs
+    ):
+        """
+        Change the Mancala environment to let a human play the trained agent.
+
+        :param environment: Environment.
+        :param kwargs: Unused args.
+        """
+
+        environment: Mancala
+        environment.player_2 = Human()
+
     @classmethod
     def init_from_arguments(
             cls,
             args: List[str],
             random_state: RandomState
     ) -> Tuple[Environment, List[str]]:
-        pass
+        """
+        Initialize an environment from arguments.
+
+        :param args: Arguments.
+        :param random_state: Random state.
+        :return: 2-tuple of an environment and a list of unparsed arguments.
+        """
+
+        parser = ArgumentParser()
+
+        parser.add_argument(
+            '--initial-count',
+            type=int,
+            help='Initial seed count in each pit.'
+        )
+
+        parsed_args, unparsed_args = parser.parse_known_args(args)
+
+        mancala = Mancala(
+            random_state=random_state,
+            player_2=StochasticMdpAgent(
+                'environmental agent',
+                random_state,
+                1
+            ),
+            **vars(parsed_args)
+        )
+
+        return mancala, unparsed_args
 
     def get_state_i(
             self

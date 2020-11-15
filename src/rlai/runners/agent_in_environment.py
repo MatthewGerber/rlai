@@ -1,4 +1,3 @@
-import importlib
 import os
 import sys
 from argparse import ArgumentParser
@@ -11,23 +10,7 @@ from numpy.random import RandomState
 from rlai.agents.mdp import MdpAgent
 from rlai.runners import FIGURES_DIRECTORY
 from rlai.runners.monitor import Monitor
-
-
-def load_class(
-        fully_qualified_class_name: str
-):
-    """
-    Load class from its fully-qualified name (e.g., xxx.yyy.Class).
-
-    :param fully_qualified_class_name: Name.
-    :return: Class reference.
-    """
-
-    (module_name, fully_qualified_class_name) = fully_qualified_class_name.rsplit('.', 1)
-    module_ref = importlib.import_module(module_name)
-    class_ref = getattr(module_ref, fully_qualified_class_name)
-
-    return class_ref
+from rlai.utils import load_class
 
 
 def run(

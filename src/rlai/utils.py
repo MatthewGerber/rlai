@@ -1,3 +1,4 @@
+import importlib
 from importlib import import_module
 from typing import List, Any, Optional, Callable
 
@@ -147,8 +148,8 @@ def sample_list_item(
 
 
 def import_function(
-        name
-) -> Callable:
+        name: str
+) -> Optional[Callable]:
     """
     Import function from fully-qualified name.
 
@@ -156,8 +157,28 @@ def import_function(
     :return: Function.
     """
 
+    if name is None:
+        return None
+
     module_name, function_name = name.rsplit('.', maxsplit=1)
     function_module = import_module(module_name)
     function = getattr(function_module, function_name)
 
     return function
+
+
+def load_class(
+        fully_qualified_class_name: str
+):
+    """
+    Load class from its fully-qualified name (e.g., xxx.yyy.Class).
+
+    :param fully_qualified_class_name: Name.
+    :return: Class reference.
+    """
+
+    (module_name, fully_qualified_class_name) = fully_qualified_class_name.rsplit('.', 1)
+    module_ref = importlib.import_module(module_name)
+    class_ref = getattr(module_ref, fully_qualified_class_name)
+
+    return class_ref

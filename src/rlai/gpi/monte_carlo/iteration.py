@@ -1,3 +1,4 @@
+import os
 import pickle
 import warnings
 from typing import Dict, Optional
@@ -5,6 +6,7 @@ from typing import Dict, Optional
 from rlai.actions import Action
 from rlai.agents.mdp import MdpAgent
 from rlai.environments.mdp import MdpEnvironment
+from rlai.environments.openai_gym import Gym
 from rlai.gpi.improvement import improve_policy_with_q_pi
 from rlai.gpi.monte_carlo.evaluation import evaluate_q_pi
 from rlai.gpi.utils import get_q_pi_for_evaluated_states, plot_policy_iteration
@@ -52,6 +54,9 @@ def iterate_value_q_pi(
     if (epsilon is None or epsilon == 0.0) and off_policy_agent is None:
         warnings.warn('Epsilon is 0.0 and there is no off-policy agent. Exploration and convergence not guaranteed. Consider passing epsilon > 0 or a soft off-policy agent to maintain exploration.')
 
+    if checkpoint_path is not None:
+        checkpoint_path = os.path.expanduser(checkpoint_path)
+
     q_S_A = initial_q_S_A
     i = 0
     iteration_average_reward = []
@@ -90,6 +95,12 @@ def iterate_value_q_pi(
 
         if num_improvements_per_checkpoint is not None and i % num_improvements_per_checkpoint == 0:
 
+            # gym environments cannot be pickled
+            environment_original = None
+            if isinstance(environment, Gym):
+                environment_original = environment
+                environment = None
+
             resume_args = {
                 'agent': agent,
                 'environment': environment,
@@ -105,6 +116,9 @@ def iterate_value_q_pi(
 
             with open(checkpoint_path, 'wb') as checkpoint_file:
                 pickle.dump(resume_args, checkpoint_file)
+
+            if environment_original is not None:
+                environment = environment_original
 
         if i >= num_improvements:
             break

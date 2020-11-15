@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from argparse import Namespace, ArgumentParser
-from typing import Tuple, List, Any, final
+from typing import Tuple, List, Any, final, Optional
 
 from numpy.random import RandomState
 
@@ -46,13 +46,16 @@ class Environment(ABC):
     @abstractmethod
     def reset_for_new_run(
             self
-    ) -> State:
+    ) -> Optional[State]:
         """
         Reset the the environment.
 
         :return: New state.
         """
-        pass
+
+        self.num_resets += 1
+
+        return None
 
     @final
     def run(
@@ -106,6 +109,7 @@ class Environment(ABC):
 
         self.name = name
         self.random_state = random_state
+        self.num_resets = 0
 
     def __str__(
             self

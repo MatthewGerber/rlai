@@ -1,3 +1,5 @@
+import os
+from argparse import ArgumentParser
 from typing import List, Tuple, Any, Dict, Optional
 
 import gym
@@ -78,13 +80,55 @@ class Gym(MdpEnvironment):
             args: List[str],
             random_state: RandomState
     ) -> Tuple[Any, List[str]]:
-        pass
+        """
+        Initialize an environment from arguments.
+
+        :param args: Arguments.
+        :param random_state: Random state.
+        :return: 2-tuple of an environment and a list of unparsed arguments.
+        """
+
+        parser = ArgumentParser()
+
+        parser.add_argument(
+            '--gym-id',
+            type=str,
+            help='Initial seed count in each pit.'
+        )
+
+        parser.add_argument(
+            '--continuous-state-discretization-resolution',
+            type=float,
+            help='Continuous-state discretization resolution.'
+        )
+
+        parser.add_argument(
+            '--render-every-nth-episode',
+            type=int,
+            help='How often to render episodes.'
+        )
+
+        parser.add_argument(
+            '--video-directory',
+            type=str,
+            help='Local directory in which to store rendered videos.'
+        )
+
+        parsed_args, unparsed_args = parser.parse_known_args(args)
+
+        gym_env = Gym(
+            random_state=random_state,
+            **vars(parsed_args)
+        )
+
+        return gym_env, unparsed_args
 
     def reset_for_new_run(
             self
     ) -> State:
         """
         Reset the environment for a new run (episode).
+
         :return: Initial state.
         """
 
@@ -134,7 +178,9 @@ class Gym(MdpEnvironment):
             self,
             random_state: RandomState,
             gym_id: str,
-            continuous_state_discretization_resolution: Optional[float] = None
+            continuous_state_discretization_resolution: Optional[float] = None,
+            render_every_nth_episode: Optional[int] = None,
+            video_directory: Optional[str] = None
     ):
         """
         Initialize the environment.
@@ -144,18 +190,27 @@ class Gym(MdpEnvironment):
         :param continuous_state_discretization_resolution: A discretization resolution for continuous-state
         environments. Providing this value allows the environment to be used with discrete-state methods via
         discretization of the continuous-state dimensions.
+        :param render_every_nth_episode: If passed, the environment will render an episode video per this value.
+        :param video_directory: Directory in which to store rendered videos.
         """
+
+        super().__init__(
+            name=f'gym ({gym_id})',
+            random_state=random_state
+        )
 
         self.gym_native = gym.make(
             id=gym_id
         )
 
-        self.gym_native.seed(random_state.randint(1000))
-
         if continuous_state_discretization_resolution is not None and not isinstance(self.gym_native.observation_space, Box):
             raise ValueError(f'Continuous-state discretization is only valid for Box environments.')
 
+        if render_every_nth_episode is not None:
+            self.gym_native = gym.wrappers.Monitor(self.gym_native, directory=os.path.expanduser(video_directory), video_callable=lambda episode_id: episode_id % render_every_nth_episode == 0, force=True)
+
         self.continuous_state_discretization_resolution = continuous_state_discretization_resolution
+        self.gym_native.seed(random_state.randint(1000))
         self.state_id_str_int: Dict[str, int] = {}
 
         if isinstance(self.gym_native.action_space, Discrete):
@@ -167,8 +222,3 @@ class Gym(MdpEnvironment):
             ]
         else:
             raise ValueError(f'Unknown Gym action space type:  {type(self.gym_native.action_space)}')
-
-        super().__init__(
-            name=f'gym ({gym_id})',
-            random_state=random_state
-        )

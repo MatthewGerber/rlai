@@ -28,6 +28,8 @@ class MdpEnvironment(Environment, ABC):
         Reset the the environment to a random nonterminal state, if any are specified, or to None.
         """
 
+        super().reset_for_new_run()
+
         if len(self.nonterminal_states) > 0:
             self.state = self.random_state.choice(self.nonterminal_states)
         else:

@@ -4,101 +4,88 @@ from typing import List
 
 from numpy.random import RandomState
 
-from rlai.agents.mdp import Human, StochasticMdpAgent
-from rlai.environments.mancala import Mancala
 from rlai.gpi.utils import resume_from_checkpoint
-from rlai.utils import import_function
-
-
-def human_player_mutator(
-        environment: Mancala,
-        **kwargs
-):
-    """
-    Change the Mancala environment to let a human play the trained agent.
-
-    :param environment: Environment.
-    :param kwargs: Unused args.
-    """
-    environment.player_2 = Human()
+from rlai.utils import import_function, load_class
 
 
 def run(
         args: List[str]
 ):
-    parser = ArgumentParser(description='Run the Mancala game.')
+    parser = ArgumentParser(description='Run the trainer.')
 
     parser.add_argument(
         '--train',
         action='store_true',
-        help='Train a Mancala agent.'
+        help='Train an agent in an environment.'
+    )
+
+    parser.add_argument(
+        '--agent',
+        type=str,
+        help='Fully-qualified type name of agent to train.'
+    )
+
+    parser.add_argument(
+        '--environment',
+        type=str,
+        help='Fully-qualified type name of environment to train agent in.'
     )
 
     parser.add_argument(
         '--train-function',
         type=str,
-        help='Fully-qualified type name of function to use for training the Mancala agent.'
+        help='Fully-qualified type name of function to use for training the agent.'
     )
 
     parser.add_argument(
         '--resume-train',
         action='store_true',
-        help='Resume training a Mancala agent from the checkpoint path.'
-    )
-
-    parser.add_argument(
-        '--play-human',
-        action='store_true',
-        help='Let a human play the trained agent interactively.'
+        help='Resume training an agent from a checkpoint path.'
     )
 
     parsed_args, unparsed_args = parser.parse_known_args(args)
 
+    train_function = import_function(parsed_args.train_function)
+
+    random_state = RandomState(12345)
+
     if parsed_args.train:
 
-        random_state = RandomState(12345)
-
-        p2 = StochasticMdpAgent(
-            'player 2',
-            random_state,
-            1
+        agent_class = load_class(parsed_args.agent)
+        agents, unparsed_args = agent_class.init_from_arguments(
+            args=unparsed_args,
+            random_state=random_state
         )
 
-        mancala: Mancala = Mancala(
-            initial_count=4,
-            random_state=random_state,
-            player_2=p2
-        )
+        if len(agents) != 1:
+            raise ValueError('Training is only supported for single agents. Please specify one agent.')
 
-        p1 = StochasticMdpAgent(
-            'player 1',
-            random_state,
-            1
-        )
+        agent = agents[0]
 
-        train_function = import_function(parsed_args.train_function)
+        environment_class = load_class(parsed_args.environment)
+        environment, unparsed_args = environment_class.init_from_arguments(
+            args=unparsed_args,
+            random_state=random_state
+        )
 
         function_args_parser = ArgumentParser('Training function argument parser')
 
         function_args_parser.add_argument(
             '--num-improvements',
             type=int,
-            default=1000,
             help='Number of improvements.'
         )
 
         function_args_parser.add_argument(
             '--num-episodes-per-improvement',
             type=int,
-            default=500,
             help='Number of episodes per improvement.'
         )
 
         function_args_parser.add_argument(
             '--update-upon-every-visit',
             type=bool,
-            default=False,
-            help='Whether or not to update Q-values upon each visit.'
+            help='Whether or not to update values upon each visit.'
         )
 
         function_args_parser.add_argument(
@@ -131,40 +118,51 @@ def run(
             help='Path to checkpoint file.'
         )
 
+        function_args_parser.add_argument(
+            '--mode',
+            type=str,
+            help='Q-learning mode (SARSA, Q_LEARNING, EXPECTED_SARSA).'
+        )
+
+        function_args_parser.add_argument(
+            '--n-steps',
+            type=int,
+            help='N-step update value.'
+        )
+
         parsed_train_function_args, unparsed_train_function_args = function_args_parser.parse_known_args(unparsed_args)
 
         if len(unparsed_train_function_args) > 0:
             raise ValueError(f'Unparsed training function arguments remain:  {unparsed_train_function_args}')
 
         train_function(
-            agent=p1,
-            environment=mancala,
+            agent=agent,
+            environment=environment,
             **{
                 arg: v
-                for arg, v in vars(parsed_train_function_args)
+                for arg, v in vars(parsed_train_function_args).items()
                 if v is not None
             }
         )
 
     elif parsed_args.resume_train:
 
+        # some environments cannot be pickled (e.g., gym). provide a default if we lack one.
+        if hasattr(parsed_args, 'environment'):
+            environment_class = load_class(parsed_args.environment)
+            default_environment, _ = environment_class.init_from_arguments(
+                args=unparsed_args,
+                random_state=random_state
+            )
+        else:
+            default_environment = None
+
         train_function = import_function(parsed_args.train_function)
 
         resume_from_checkpoint(
             checkpoint_path=parsed_args.train_checkpoint_path,
             resume_function=train_function,
-            num_improvements=500
-        )
-
-    elif parsed_args.play_human:
-
-        train_function = import_function(parsed_args.train_function)
-
-        resume_from_checkpoint(
-            checkpoint_path=parsed_args.train_checkpoint_path,
-            resume_function=train_function,
-            resume_args_mutator=human_player_mutator,
-            num_improvements=500
+            default_environment=default_environment
         )
 
 

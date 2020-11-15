@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 
 from rlai.actions import Action
 from rlai.agents.mdp import MdpAgent
+from rlai.environments import Environment
 from rlai.environments.mdp import MdpEnvironment
 from rlai.states.mdp import MdpState
 from rlai.utils import IncrementalSampleAverager
@@ -124,16 +125,17 @@ def plot_policy_iteration(
 def resume_from_checkpoint(
         checkpoint_path: str,
         resume_function: Callable,
+        default_environment: Optional[Environment] = None,
         new_checkpoint_path: Optional[str] = None,
         resume_args_mutator: Callable = None,
         **new_args
 ) -> MdpAgent:
     """
-    Resume the execution of a previous call to `rlai.gpi.monte_carlo.iteration.iterate_value_q_pi`, based on a stored
-    checkpoint.
+    Resume the execution of a previous optimization based on a stored checkpoint.
 
     :param checkpoint_path: Path to checkpoint file.
     :param resume_function: Function to resume.
+    :param default_environment: Default environment to use, if the checkpoint doesn't contain one.
     :param new_checkpoint_path: Path to new checkpoint file, if the original should be left as it is. Pass `None` to
     use and overwrite `checkpoint_path` with new checkpoints.
     :param resume_args_mutator: A function called prior to resumption. This function will be passed a dictionary of
@@ -152,6 +154,9 @@ def resume_from_checkpoint(
     print('.done')
 
     resume_args['checkpoint_path'] = new_checkpoint_path
+
+    if resume_args['environment'] is None:
+        resume_args['environment'] = default_environment
 
     if new_args is not None:
         resume_args.update(new_args)
