@@ -1,12 +1,15 @@
+import math
 import os
 from argparse import ArgumentParser
+from itertools import product
 from typing import List, Tuple, Any, Dict, Optional
 
 import gym
+import numpy as np
 from gym.spaces import Discrete, Box
 from numpy.random import RandomState
 
-from rlai.actions import Action
+from rlai.actions import Action, DiscretizedAction
 from rlai.environments import Environment
 from rlai.environments.mdp import MdpEnvironment
 from rlai.rewards import Reward
@@ -36,7 +39,13 @@ class GymState(MdpState):
 
         environment: Gym
 
-        observation, reward, done, _ = environment.gym_native.step(action=a.i)
+        # map discretized actions back to continuous space
+        if isinstance(a, DiscretizedAction):
+            gym_action = a.continuous_value
+        else:
+            gym_action = a.i
+
+        observation, reward, done, _ = environment.gym_native.step(action=gym_action)
 
         next_state = GymState(
             environment=environment,
@@ -100,6 +109,12 @@ class Gym(MdpEnvironment):
             '--continuous-state-discretization-resolution',
             type=float,
             help='Continuous-state discretization resolution.'
+        )
+
+        parser.add_argument(
+            '--continuous-action-discretization-resolution',
+            type=float,
+            help='Continuous-action discretization resolution.'
         )
 
         parser.add_argument(
@@ -179,6 +194,7 @@ class Gym(MdpEnvironment):
             random_state: RandomState,
             gym_id: str,
             continuous_state_discretization_resolution: Optional[float] = None,
+            continuous_action_discretization_resolution: Optional[float] = None,
             render_every_nth_episode: Optional[int] = None,
             video_directory: Optional[str] = None
     ):
@@ -190,6 +206,9 @@ class Gym(MdpEnvironment):
         :param continuous_state_discretization_resolution: A discretization resolution for continuous-state
         environments. Providing this value allows the environment to be used with discrete-state methods via
         discretization of the continuous-state dimensions.
+        :param continuous_action_discretization_resolution: A discretization resolution for continuous-action
+        environments. Providing this value allows the environment to be used with discrete-action methods via
+        discretization of the continuous-action dimensions.
         :param render_every_nth_episode: If passed, the environment will render an episode video per this value.
         :param video_directory: Directory in which to store rendered videos.
         """
@@ -204,7 +223,10 @@ class Gym(MdpEnvironment):
         )
 
         if continuous_state_discretization_resolution is not None and not isinstance(self.gym_native.observation_space, Box):
-            raise ValueError(f'Continuous-state discretization is only valid for Box environments.')
+            raise ValueError(f'Continuous-state discretization is only valid for Box state-space environments.')
+
+        if continuous_action_discretization_resolution is not None and not isinstance(self.gym_native.action_space, Box):
+            raise ValueError(f'Continuous-action discretization is only valid for Box action-space environments.')
 
         if render_every_nth_episode is not None:
             self.gym_native = gym.wrappers.Monitor(self.gym_native, directory=os.path.expanduser(video_directory), video_callable=lambda episode_id: episode_id % render_every_nth_episode == 0, force=True)
@@ -213,6 +235,7 @@ class Gym(MdpEnvironment):
         self.gym_native.seed(random_state.randint(1000))
         self.state_id_str_int: Dict[str, int] = {}
 
+        # action space is already discrete. initialize n actions.
         if isinstance(self.gym_native.action_space, Discrete):
             self.actions = [
                 Action(
@@ -220,5 +243,28 @@ class Gym(MdpEnvironment):
                 )
                 for i in range(self.gym_native.action_space.n)
             ]
+
+        # action space is continuous. discretize.
+        elif isinstance(self.gym_native.action_space, Box):
+
+            box = self.gym_native.action_space
+
+            # continuous n-dimensional action space with identical bounds on each dimension
+            if len(box.shape) == 1:
+                action_discretizations = [
+                    np.linspace(low, high, math.ceil((high - low) / continuous_action_discretization_resolution))
+                    for low, high in zip(box.low, box.high)
+                ]
+            else:
+                raise ValueError(f'Unknown format of continuous action space:  {box}')
+
+            self.actions = [
+                DiscretizedAction(
+                    i=i,
+                    continuous_value=np.array(n_dim_action)
+                )
+                for i, n_dim_action in enumerate(product(*action_discretizations))
+            ]
+
         else:
             raise ValueError(f'Unknown Gym action space type:  {type(self.gym_native.action_space)}')

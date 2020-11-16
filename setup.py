@@ -8,7 +8,8 @@ INSTALL_REQUIREMENTS = [
     'scipy==1.5.2',
     'matplotlib==3.3.1',
     'numpy==1.19.0',
-    'gym==0.17.3'
+    'gym==0.17.3',
+    'mujoco-py==2.0.2.13'
 ]
 
 TEST_REQUIREMENTS = [

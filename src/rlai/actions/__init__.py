@@ -1,3 +1,7 @@
+from typing import Optional
+import numpy as np
+
+
 class Action:
     """
     Base class for all actions.
@@ -6,7 +10,7 @@ class Action:
     def __init__(
             self,
             i: int,
-            name: str = None
+            name: Optional[str] = None
     ):
         """
         Initialize the action.
@@ -64,3 +68,30 @@ class Action:
         """
 
         return self.i != other.i
+
+
+class DiscretizedAction(Action):
+    """
+    Action that is derived from discretizing an n-dimensional continuous action space.
+    """
+
+    def __init__(
+            self,
+            i: int,
+            continuous_value: np.ndarray,
+            name: Optional[str] = None
+    ):
+        """
+        Initialize the action.
+
+        :param i: Identifier for the action.
+        :param continuous_value: Continuous n-dimensional action.
+        :param name: Name (optional).
+        """
+
+        super().__init__(
+            i=i,
+            name=name
+        )
+
+        self.continuous_value = continuous_value
