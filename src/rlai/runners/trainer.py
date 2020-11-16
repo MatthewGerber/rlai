@@ -45,12 +45,87 @@ def run(
 
     parsed_args, unparsed_args = parser.parse_known_args(args)
 
+    train_function_arg_parser = ArgumentParser('Training function argument parser')
+
+    train_function_arg_parser.add_argument(
+        '--num-improvements',
+        type=int,
+        help='Number of improvements.'
+    )
+
+    train_function_arg_parser.add_argument(
+        '--num-episodes-per-improvement',
+        type=int,
+        help='Number of episodes per improvement.'
+    )
+
+    train_function_arg_parser.add_argument(
+        '--update-upon-every-visit',
+        type=bool,
+        help='Whether or not to update values upon each visit.'
+    )
+
+    train_function_arg_parser.add_argument(
+        '--alpha',
+        type=float,
+        help='Step size.'
+    )
+
+    train_function_arg_parser.add_argument(
+        '--epsilon',
+        type=float,
+        help='Total probability mass to allocate across all policy actions.'
+    )
+
+    train_function_arg_parser.add_argument(
+        '--num-improvements-per-plot',
+        type=int,
+        help='Number of improvements per plot.'
+    )
+
+    train_function_arg_parser.add_argument(
+        '--num-improvements-per-checkpoint',
+        type=int,
+        help='Number of improvements per checkpoint.'
+    )
+
+    train_function_arg_parser.add_argument(
+        '--checkpoint-path',
+        type=str,
+        help='Path to checkpoint file.'
+    )
+
+    train_function_arg_parser.add_argument(
+        '--mode',
+        type=str,
+        help='Q-learning mode (SARSA, Q_LEARNING, EXPECTED_SARSA).'
+    )
+
+    train_function_arg_parser.add_argument(
+        '--n-steps',
+        type=int,
+        help='N-step update value.'
+    )
+
+    train_function_arg_parser.add_argument(
+        '--new-checkpoint-path',
+        type=str,
+        help='New checkpoint path.'
+    )
+
+    parsed_train_function_args, unparsed_args = train_function_arg_parser.parse_known_args(unparsed_args)
+
     train_function = import_function(parsed_args.train_function)
+
+    train_function_args = {
+        arg: v
+        for arg, v in vars(parsed_train_function_args).items()
+        if v is not None
+    }
 
     random_state = RandomState(12345)
 
-    if parsed_args.train:
-
+    if parsed_args.agent is not None:
         agent_class = load_class(parsed_args.agent)
         agents, unparsed_args = agent_class.init_from_arguments(
             args=unparsed_args,
@@ -60,110 +135,29 @@ def run(
         if len(agents) != 1:
             raise ValueError('Training is only supported for single agents. Please specify one agent.')
 
-        agent = agents[0]
+        train_function_args['agent'] = agents[0]
 
+    if parsed_args.environment is not None:
         environment_class = load_class(parsed_args.environment)
-        environment, unparsed_args = environment_class.init_from_arguments(
+        train_function_args['environment'], unparsed_args = environment_class.init_from_arguments(
             args=unparsed_args,
             random_state=random_state
         )
 
-        function_args_parser = ArgumentParser('Training function argument parser')
+    if len(unparsed_args) > 0:
+        raise ValueError(f'Unparsed arguments remain:  {unparsed_args}')
 
-        function_args_parser.add_argument(
-            '--num-improvements',
-            type=int,
-            help='Number of improvements.'
-        )
-
-        function_args_parser.add_argument(
-            '--num-episodes-per-improvement',
-            type=int,
-            help='Number of episodes per improvement.'
-        )
-
-        function_args_parser.add_argument(
-            '--update-upon-every-visit',
-            type=bool,
-            help='Whether or not to update values upon each visit.'
-        )
-
-        function_args_parser.add_argument(
-            '--alpha',
-            type=float,
-            help='Step size.'
-        )
-
-        function_args_parser.add_argument(
-            '--epsilon',
-            type=float,
-            help='Total probability mass to allocate across all policy actions.'
-        )
-
-        function_args_parser.add_argument(
-            '--num-improvements-per-plot',
-            type=int,
-            help='Number of improvements per plot.'
-        )
-
-        function_args_parser.add_argument(
-            '--num-improvements-per-checkpoint',
-            type=int,
-            help='Number of improvements per checkpoint.'
-        )
-
-        function_args_parser.add_argument(
-            '--checkpoint-path',
-            type=str,
-            help='Path to checkpoint file.'
-        )
-
-        function_args_parser.add_argument(
-            '--mode',
-            type=str,
-            help='Q-learning mode (SARSA, Q_LEARNING, EXPECTED_SARSA).'
-        )
-
-        function_args_parser.add_argument(
-            '--n-steps',
-            type=int,
-            help='N-step update value.'
-        )
-
-        parsed_train_function_args, unparsed_train_function_args = function_args_parser.parse_known_args(unparsed_args)
-
-        if len(unparsed_train_function_args) > 0:
-            raise ValueError(f'Unparsed training function arguments remain:  {unparsed_train_function_args}')
-
+    if parsed_args.train:
         train_function(
-            agent=agent,
-            environment=environment,
-            **{
-                arg: v
-                for arg, v in vars(parsed_train_function_args).items()
-                if v is not None
-            }
+            **train_function_args
         )
-
     elif parsed_args.resume_train:
-
-        # some environments cannot be pickled (e.g., gym). provide a default if we lack one.
-        if hasattr(parsed_args, 'environment'):
-            environment_class = load_class(parsed_args.environment)
-            default_environment, _ = environment_class.init_from_arguments(
-                args=unparsed_args,
-                random_state=random_state
-            )
-        else:
-            default_environment = None
-
-        train_function = import_function(parsed_args.train_function)
-
         resume_from_checkpoint(
-            checkpoint_path=parsed_args.train_checkpoint_path,
             resume_function=train_function,
-            default_environment=default_environment
+            **train_function_args
         )
+    else:
+        raise ValueError('Unknown trainer action.')
 
 
 if __name__ == '__main__':
