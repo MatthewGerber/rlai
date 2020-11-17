@@ -34,7 +34,8 @@ def test_learn():
         alpha=0.1,
         mode=Mode.SARSA,
         n_steps=1,
-        epsilon=0.05
+        epsilon=0.05,
+        make_final_policy_greedy=False
     )
 
     pi = get_pi_fixture(mdp_agent.pi)

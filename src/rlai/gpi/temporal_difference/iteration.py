@@ -24,6 +24,7 @@ def iterate_value_q_pi(
         mode: Union[Mode, str],
         n_steps: Optional[int],
         epsilon: float,
+        make_final_policy_greedy: bool,
         num_improvements_per_plot: Optional[int] = None,
         num_improvements_per_checkpoint: Optional[int] = None,
         checkpoint_path: Optional[str] = None,
@@ -42,6 +43,8 @@ def iterate_value_q_pi(
     :param n_steps: Number of steps (see `rlai.gpi.temporal_difference.evaluation.evaluate_q_pi`).
     :param epsilon: Total probability mass to spread across all actions, resulting in an epsilon-greedy policy. Must
     be strictly > 0.
+    :param make_final_policy_greedy: Whether or not to make the agent's final policy greedy with respect to the q-values
+    that have been learned, regardless of the value of epsilon used to estimate the q-values.
     :param num_improvements_per_plot: Number of improvements to make before plotting the per-improvement average. Pass
     None to turn off all plotting.
     :param num_improvements_per_checkpoint: Number of improvements per checkpoint save.
@@ -106,12 +109,13 @@ def iterate_value_q_pi(
             resume_args = {
                 'agent': agent,
                 'environment': environment,
-                'num_improvements': num_improvements,
+                'num_improvements': num_improvements - i,
                 'num_episodes_per_improvement': num_episodes_per_improvement,
                 'alpha': alpha,
                 'mode': mode,
                 'n_steps': n_steps,
                 'epsilon': epsilon,
+                'make_final_policy_greedy': make_final_policy_greedy,
                 'num_improvements_per_plot': num_improvements_per_plot,
                 'num_improvements_per_checkpoint': num_improvements_per_checkpoint,
                 'initial_q_S_A': q_S_A
@@ -127,5 +131,12 @@ def iterate_value_q_pi(
             break
 
     print(f'Value iteration of q_pi terminated after {i} iteration(s).')
+
+    if make_final_policy_greedy:
+        q_pi = get_q_pi_for_evaluated_states(q_S_A, None)
+        improve_policy_with_q_pi(
+            agent=agent,
+            q_pi=q_pi
+        )
 
     return q_S_A

@@ -32,7 +32,8 @@ def test_sarsa_iterate_value_q_pi():
         alpha=0.1,
         mode=Mode.SARSA,
         n_steps=1,
-        epsilon=0.05
+        epsilon=0.05,
+        make_final_policy_greedy=False
     )
 
     pi = get_pi_fixture(mdp_agent.pi)
@@ -70,7 +71,8 @@ def test_q_learning_iterate_value_q_pi():
         alpha=0.1,
         mode=Mode.Q_LEARNING,
         n_steps=1,
-        epsilon=0.05
+        epsilon=0.05,
+        make_final_policy_greedy=False
     )
 
     pi = get_pi_fixture(mdp_agent.pi)
@@ -108,7 +110,8 @@ def test_expected_sarsa_iterate_value_q_pi():
         alpha=0.1,
         mode=Mode.EXPECTED_SARSA,
         n_steps=1,
-        epsilon=0.05
+        epsilon=0.05,
+        make_final_policy_greedy=False
     )
 
     pi = get_pi_fixture(mdp_agent.pi)
@@ -146,7 +149,8 @@ def test_n_step_q_learning_iterate_value_q_pi():
         alpha=0.1,
         mode=Mode.Q_LEARNING,
         n_steps=3,
-        epsilon=0.05
+        epsilon=0.05,
+        make_final_policy_greedy=False
     )
 
     pi = get_pi_fixture(mdp_agent.pi)

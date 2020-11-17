@@ -41,6 +41,7 @@ def test_learn():
         num_episodes_per_improvement=100,
         update_upon_every_visit=False,
         epsilon=0.05,
+        make_final_policy_greedy=False,
         num_improvements_per_checkpoint=3,
         checkpoint_path=checkpoint_path
     )
@@ -87,7 +88,8 @@ def test_learn():
         num_improvements=5,
         num_episodes_per_improvement=100,
         update_upon_every_visit=False,
-        epsilon=0.05
+        epsilon=0.05,
+        make_final_policy_greedy=False
     )
 
     assert no_checkpoint_p1.pi == resumed_p1.pi

@@ -78,6 +78,12 @@ def run(
     )
 
     train_function_arg_parser.add_argument(
+        '--make-final-policy-greedy',
+        type=float,
+        help='Whether or not to make the final policy greedy after training is complete.'
+    )
+
+    train_function_arg_parser.add_argument(
         '--num-improvements-per-plot',
         type=int,
         help='Number of improvements per plot.'

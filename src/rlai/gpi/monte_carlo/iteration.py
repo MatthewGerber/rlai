@@ -23,6 +23,7 @@ def iterate_value_q_pi(
         num_episodes_per_improvement: int,
         update_upon_every_visit: bool,
         epsilon: Optional[float],
+        make_final_policy_greedy: bool,
         off_policy_agent: Optional[MdpAgent] = None,
         num_improvements_per_plot: Optional[int] = None,
         num_improvements_per_checkpoint: Optional[int] = None,
@@ -41,6 +42,8 @@ def iterate_value_q_pi(
     :param update_upon_every_visit: See `rlai.gpi.monte_carlo.evaluation.evaluate_q_pi`.
     :param epsilon: Total probability mass to spread across all actions, resulting in an epsilon-greedy policy. Must
     be >= 0 if provided.
+    :param make_final_policy_greedy: Whether or not to make the agent's final policy greedy with respect to the q-values
+    that have been learned, regardless of the value of epsilon used to estimate the q-values.
     :param off_policy_agent: See `rlai.gpi.monte_carlo.evaluation.evaluate_q_pi`. The policy of this agent will not
     updated by this function.
     :param num_improvements_per_plot: Number of improvements to make before plotting the per-improvement average. Pass
@@ -52,7 +55,7 @@ def iterate_value_q_pi(
     """
 
     if (epsilon is None or epsilon == 0.0) and off_policy_agent is None:
-        warnings.warn('Epsilon is 0.0 and there is no off-policy agent. Exploration and convergence not guaranteed. Consider passing epsilon > 0 or a soft off-policy agent to maintain exploration.')
+        warnings.warn('epsilon is 0.0 and there is no off-policy agent. Exploration and convergence not guaranteed. Consider passing epsilon > 0 or a soft off-policy agent to maintain exploration.')
 
     if checkpoint_path is not None:
         checkpoint_path = os.path.expanduser(checkpoint_path)
@@ -95,19 +98,20 @@ def iterate_value_q_pi(
 
         if num_improvements_per_checkpoint is not None and i % num_improvements_per_checkpoint == 0:
 
-            # gym environments cannot be pickled
-            environment_original = None
+            # gym environments cannot be pickled, so just save the native id so that we can resume it later.
+            gym_native = None
             if isinstance(environment, Gym):
-                environment_original = environment
-                environment = None
+                gym_native = environment.gym_native
+                environment.gym_native = environment.gym_native.spec.id
 
             resume_args = {
                 'agent': agent,
                 'environment': environment,
-                'num_improvements': num_improvements,
+                'num_improvements': num_improvements - i,
                 'num_episodes_per_improvement': num_episodes_per_improvement,
                 'update_upon_every_visit': update_upon_every_visit,
                 'epsilon': epsilon,
+                'make_final_policy_greedy': make_final_policy_greedy,
                 'off_policy_agent': off_policy_agent,
                 'num_improvements_per_plot': num_improvements_per_plot,
                 'num_improvements_per_checkpoint': num_improvements_per_checkpoint,
@@ -117,12 +121,19 @@ def iterate_value_q_pi(
             with open(checkpoint_path, 'wb') as checkpoint_file:
                 pickle.dump(resume_args, checkpoint_file)
 
-            if environment_original is not None:
-                environment = environment_original
+            if gym_native is not None:
+                environment.gym_native = gym_native
 
         if i >= num_improvements:
             break
 
     print(f'Value iteration of q_pi terminated after {i} iteration(s).')
+
+    if make_final_policy_greedy:
+        q_pi = get_q_pi_for_evaluated_states(q_S_A, None)
+        improve_policy_with_q_pi(
+            agent=agent,
+            q_pi=q_pi
+        )
 
     return q_S_A

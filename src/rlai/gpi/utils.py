@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from rlai.actions import Action
 from rlai.agents.mdp import MdpAgent
 from rlai.environments.mdp import MdpEnvironment
+from rlai.environments.openai_gym import Gym
 from rlai.states.mdp import MdpState
 from rlai.utils import IncrementalSampleAverager
 
@@ -71,16 +72,16 @@ def lazy_initialize_q_S_A(
 
 def get_q_pi_for_evaluated_states(
         q_S_A: Dict[MdpState, Dict[Action, IncrementalSampleAverager]],
-        evaluated_states: Set[MdpState]
-):
+        evaluated_states: Optional[Set[MdpState]]
+) -> Dict[MdpState, Dict[Action, float]]:
     """
-    Get the q_pi that only includes states visited in the current iteration. There is no need to update the agent's
+    Get the q_pi that only includes the subset of states that were evaluated. There is no need to update the agent's
     policy for states that weren't evaluated, and this will dramatically cut down computation for environments with
     large state spaces.
 
-    :param q_S_A:
-    :param evaluated_states:
-    :return:
+    :param q_S_A: State-action value estimators.
+    :param evaluated_states: States that were evaluated, or None to include all states.
+    :return: Dictionary of state-action value estimates.
     """
 
     q_pi = {
@@ -89,7 +90,7 @@ def get_q_pi_for_evaluated_states(
             for a in q_S_A[s]
         }
         for s in q_S_A
-        if s in evaluated_states
+        if evaluated_states is None or s in evaluated_states
     }
 
     return q_pi
@@ -152,6 +153,28 @@ def resume_from_checkpoint(
     print('.done')
 
     resume_args['checkpoint_path'] = os.path.expanduser(new_checkpoint_path)
+
+    # because the native gym environments cannot be pickled, we only retain a string identifier for the native gym
+    # object as the value of `environment.gym_native`. the only way to resume such an environment is for the caller to
+    # pass in an instantiated gym environment as a new argument value. the id of this object must match the id in the
+    # resume args's environment.gym_native. if it does match, then grab the native gym environment and use it in the
+    # resume args.
+    resume_environment = resume_args.get('environment')
+    if isinstance(resume_environment, Gym):
+
+        passed_environment = new_args.get('environment')
+        if passed_environment is None:
+            raise ValueError('No environment passed when resuming an assumed OpenAI Gym environment.')
+
+        passed_environment: Gym
+
+        passed_id = passed_environment.gym_native.spec.id
+        if passed_id != resume_environment.gym_native:
+            raise ValueError(f'Attempted to resume Gym environment {resume_environment.gym_native}, but passed environment is {passed_id}')
+
+        resume_environment.gym_native = passed_environment.gym_native
+
+        del new_args['environment']
 
     if new_args is not None:
         resume_args.update(new_args)
