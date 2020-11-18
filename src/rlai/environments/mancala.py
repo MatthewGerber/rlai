@@ -1,11 +1,11 @@
 from argparse import ArgumentParser
-from typing import Tuple, List, Optional, Dict
+from typing import Tuple, List, Optional
 
 from numpy.random import RandomState
 
 from rlai.actions import Action
 from rlai.agents import Agent
-from rlai.agents.mdp import Human, StochasticMdpAgent
+from rlai.agents.mdp import Human, StochasticMdpAgent, MdpAgent
 from rlai.environments import Environment
 from rlai.environments.mdp import MdpEnvironment
 from rlai.rewards import Reward
@@ -38,7 +38,8 @@ class MancalaState(MdpState):
             self,
             environment: Environment,
             t: int,
-            a: Action
+            a: Action,
+            agent: MdpAgent
     ) -> Tuple[MdpState, Reward]:
         """
         Advance from the current state given an action.
@@ -46,6 +47,7 @@ class MancalaState(MdpState):
         :param environment: Environment.
         :param t: Current time step.
         :param a: Action.
+        :param agent: Agent.
         :return: 2-tuple of next state and next reward.
         """
 
@@ -56,7 +58,8 @@ class MancalaState(MdpState):
         go_again = environment.sow_and_capture(picked_pocket)
         next_state = MancalaState(
             mancala=environment,
-            player_1=MancalaState.player_1_is_next(picked_pocket, go_again)
+            player_1=MancalaState.player_1_is_next(picked_pocket, go_again),
+            agent=agent
         )
 
         # check for termination
@@ -66,6 +69,7 @@ class MancalaState(MdpState):
 
         # if the agent (player 1) does not get to go again, let the environmental agent take its turn(s)
         elif not go_again:
+
             while True:
 
                 environment.player_2.sense(next_state, t)
@@ -79,13 +83,15 @@ class MancalaState(MdpState):
                 go_again = environment.sow_and_capture(picked_pocket)
                 next_state = MancalaState(
                     mancala=environment,
-                    player_1=MancalaState.player_1_is_next(picked_pocket, go_again)
+                    player_1=MancalaState.player_1_is_next(picked_pocket, go_again),
+                    agent=agent
                 )
 
                 # check for termination
                 if next_state.terminal:
                     next_reward = environment.get_terminal_reward()
                     break
+
                 # take another turn if earned
                 elif not go_again:
                     break
@@ -95,17 +101,21 @@ class MancalaState(MdpState):
     def __init__(
             self,
             mancala,
-            player_1: bool
+            player_1: bool,
+            agent: MdpAgent
     ):
         """
         Initialize the state.
 
         :param mancala: Mancala environment
         :param player_1: First player (agent).
+        :param agent: Agent.
         """
 
+        mancala: Mancala
+
         super().__init__(
-            i=mancala.get_state_i(),
+            i=agent.get_state_i('-'.join(str(pit.count) for pit in mancala.board)),
             AA=mancala.get_feasible_actions(player_1),
             terminal=mancala.is_terminal()
         )
@@ -225,6 +235,7 @@ class Mancala(MdpEnvironment):
             player_2=StochasticMdpAgent(
                 'environmental agent',
                 random_state,
+                None,
                 1
             ),
             **vars(parsed_args)
@@ -232,37 +243,29 @@ class Mancala(MdpEnvironment):
 
         return mancala, unparsed_args
 
-    def get_state_i(
-            self
-    ) -> int:
-        """
-        Get the integer identifier for the current board configuration (state). The returned value is guaranteed to be
-        the same for the same board configuration, both throughout the life of the current object as well as after the
-        current object has been pickled for later use (e.g., in checkpoint-based resumption).
-
-        :return: Integer identifier.
-        """
-
-        state_id_str = '-'.join(str(pit.count) for pit in self.board)
-        if state_id_str not in self.state_id_str_int:
-            self.state_id_str_int[state_id_str] = len(self.state_id_str_int)
-
-        return self.state_id_str_int[state_id_str]
-
     def reset_for_new_run(
-            self
+            self,
+            agent: MdpAgent
     ) -> State:
         """
         Reset the game to the initial state.
+
+        :param agent: Agent.
         """
 
-        super().reset_for_new_run()
+        super().reset_for_new_run(agent)
 
         for pocket in self.board:
             if pocket.store:
                 pocket.count = 0
             else:
                 pocket.count = self.initial_count
+
+        self.state = MancalaState(
+            mancala=self,
+            player_1=True,
+            agent=agent
+        )
 
         return self.state
 
@@ -402,12 +405,9 @@ class Mancala(MdpEnvironment):
         self.initial_count = initial_count
         self.player_2 = player_2
 
-        self.state_id_str_int: Dict[str, int] = {}
         self.r_win = Reward(0, 1.0)
         self.r_lose = Reward(1, -1.0)
         self.r_none = Reward(2, 0.0)
-
-        RR = [self.r_win, self.r_lose, self.r_none]
 
         self.player_1_pockets = [
             Pit(True, self.initial_count, False)
@@ -443,14 +443,7 @@ class Mancala(MdpEnvironment):
             player_1_pocket.opposing_pocket = opposing_player_2_pocket
             opposing_player_2_pocket.opposing_pocket = player_1_pocket
 
-        initial_state = MancalaState(
-            mancala=self,
-            player_1=True
-        )
-
         super().__init__(
             name='mancala',
-            random_state=random_state,
-            SS=[initial_state],
-            RR=RR
+            random_state=random_state
         )

@@ -17,13 +17,13 @@ def test_learn():
     mdp_agent = StochasticMdpAgent(
         'agent',
         random_state,
+        0.001,
         1
     )
 
     gym = Gym(
         gym_id='CartPole-v1',
-        random_state=random_state,
-        continuous_state_discretization_resolution=0.001
+        random_state=random_state
     )
 
     q_S_A = iterate_value_q_pi(

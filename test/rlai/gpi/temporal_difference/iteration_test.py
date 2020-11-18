@@ -19,6 +19,7 @@ def test_sarsa_iterate_value_q_pi():
     mdp_agent = StochasticMdpAgent(
         'test',
         random_state,
+        None,
         1
     )
 
@@ -58,6 +59,7 @@ def test_q_learning_iterate_value_q_pi():
     mdp_agent = StochasticMdpAgent(
         'test',
         random_state,
+        None,
         1
     )
 
@@ -97,6 +99,7 @@ def test_expected_sarsa_iterate_value_q_pi():
     mdp_agent = StochasticMdpAgent(
         'test',
         random_state,
+        None,
         1
     )
 
@@ -136,6 +139,7 @@ def test_n_step_q_learning_iterate_value_q_pi():
     mdp_agent = StochasticMdpAgent(
         'test',
         random_state,
+        None,
         1
     )
 

@@ -4,6 +4,7 @@ from typing import List, Dict, Tuple, Optional
 import numpy as np
 
 from rlai.actions import Action
+from rlai.agents import Agent
 from rlai.environments import Environment
 from rlai.meta import rl_text
 from rlai.rewards import Reward
@@ -22,7 +23,8 @@ class MdpState(State, ABC):
             self,
             environment: Environment,
             t: int,
-            a: Action
+            a: Action,
+            agent: Agent
     ) -> Tuple[State, Reward]:
         """
         Advance from the current state given an action.
@@ -30,6 +32,7 @@ class MdpState(State, ABC):
         :param environment: Environment.
         :param t: Current time step.
         :param a: Action.
+        :param agent: Agent.
         :return: 2-tuple of next state and next reward.
         """
         pass
@@ -109,7 +112,8 @@ class ModelBasedMdpState(MdpState):
             self,
             environment: Environment,
             t: int,
-            a: Action
+            a: Action,
+            agent: Agent
     ) -> Tuple[State, Reward]:
         """
         Advance from the current state given an action, based on the current state's model probability distribution.
@@ -117,6 +121,7 @@ class ModelBasedMdpState(MdpState):
         :param environment: Environment.
         :param t: Current time step.
         :param a: Action.
+        :param agent: Agent.
         :return: 2-tuple of next state and next reward.
         """
 

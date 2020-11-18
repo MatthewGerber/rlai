@@ -45,11 +45,13 @@ class Environment(ABC):
 
     @abstractmethod
     def reset_for_new_run(
-            self
+            self,
+            agent: Agent
     ) -> Optional[State]:
         """
         Reset the the environment.
 
+        :param agent: Agent.
         :return: New state.
         """
 

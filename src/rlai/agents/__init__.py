@@ -134,7 +134,7 @@ class Agent(ABC):
     def __init__(
             self,
             name: str,
-            random_state: RandomState
+            random_state: RandomState,
     ):
         """
         Initialize the agent.
@@ -151,6 +151,7 @@ class Agent(ABC):
         self.most_recent_state: Optional[State] = None
         self.most_recent_state_tick: Optional[int] = None
         self.N_t_A: Dict[Action, int] = {}
+        self.state_id_str_int: Dict[str, int] = {}
 
     def __str__(
             self

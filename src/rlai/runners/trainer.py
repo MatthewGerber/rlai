@@ -79,7 +79,7 @@ def run(
 
     train_function_arg_parser.add_argument(
         '--make-final-policy-greedy',
-        type=float,
+        type=bool,
         help='Whether or not to make the final policy greedy after training is complete.'
     )
 

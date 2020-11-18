@@ -1,6 +1,6 @@
 from abc import ABC
 from argparse import Namespace, ArgumentParser
-from typing import List, Tuple, Optional, Dict, Callable
+from typing import List, Tuple, Optional, Dict, Callable, Union
 
 import numpy as np
 from numpy.random import RandomState
@@ -31,6 +31,12 @@ class MdpAgent(Agent, ABC):
         parsed_args, unparsed_args = super().parse_arguments(args)
 
         parser = ArgumentParser(allow_abbrev=False)
+
+        parser.add_argument(
+            '--continuous-state-discretization-resolution',
+            type=float,
+            help='Continuous-state discretization resolution.'
+        )
 
         parser.add_argument(
             '--gamma',
@@ -115,10 +121,44 @@ class MdpAgent(Agent, ABC):
 
         self.solver_function(self, **self.solver_function_args)
 
+    def get_state_i(
+            self,
+            state_descriptor: Union[str, np.ndarray]
+    ) -> int:
+        """
+        Get the integer identifier for a state. The returned value is guaranteed to be the same for the same state,
+        both throughout the life of the current agent as well as after the current agent has been pickled for later
+        use (e.g., in checkpoint-based resumption).
+
+        :param state_descriptor: State descriptor, either a string (for discrete states) or an array representing a
+        position within an n-dimensional continuous state space.
+
+        :return: Integer identifier.
+        """
+
+        if isinstance(state_descriptor, np.ndarray):
+
+            if self.continuous_state_discretization_resolution is None:
+                raise ValueError('Attempted to discretize a continuous state without a resolution.')
+
+            state_descriptor = '|'.join(
+                str(int(state_dim_value / self.continuous_state_discretization_resolution))
+                for state_dim_value in state_descriptor
+            )
+
+        elif not isinstance(state_descriptor, str):
+            raise ValueError(f'Unknown state space type:  {type(state_descriptor)}')
+
+        if state_descriptor not in self.state_id_str_int:
+            self.state_id_str_int[state_descriptor] = len(self.state_id_str_int)
+
+        return self.state_id_str_int[state_descriptor]
+
     def __init__(
             self,
             name: str,
             random_state: RandomState,
+            continuous_state_discretization_resolution: Optional[float],
             gamma: float,
             solver_function: Optional[Callable] = None,
             solver_function_args: Optional[Dict] = None
@@ -129,6 +169,9 @@ class MdpAgent(Agent, ABC):
 
         :param name: Name of the agent.
         :param random_state: Random state.
+        :param continuous_state_discretization_resolution: A discretization resolution for continuous-state
+        environments. Providing this value allows the agent to be used with discrete-state methods via
+        discretization of the continuous-state dimensions.
         :param gamma: Discount.
         :param solver_function: Solver function. Required in order to call `self.solve_mdp`.
         :param solver_function_args: Solver function arguments. Required in order to call `self.solve_mdp`.
@@ -139,6 +182,7 @@ class MdpAgent(Agent, ABC):
             random_state=random_state
         )
 
+        self.continuous_state_discretization_resolution = continuous_state_discretization_resolution
         self.gamma = gamma
         self.solver_function = solver_function
         self.solver_function_args = solver_function_args
@@ -180,6 +224,7 @@ class StochasticMdpAgent(MdpAgent):
             StochasticMdpAgent(
                 name=f'stochastic (gamma={parsed_args.gamma})',
                 random_state=random_state,
+                continuous_state_discretization_resolution=parsed_args.continuous_state_discretization_resolution,
                 gamma=parsed_args.gamma,
                 solver_function=solver_function,
                 solver_function_args=solver_function_arguments
@@ -238,6 +283,7 @@ class StochasticMdpAgent(MdpAgent):
             self,
             name: str,
             random_state: RandomState,
+            continuous_state_discretization_resolution: Optional[float],
             gamma: float,
             solver_function: Optional[Callable] = None,
             solver_function_args: Optional[Dict] = None
@@ -247,6 +293,9 @@ class StochasticMdpAgent(MdpAgent):
 
         :param name: Name of the agent.
         :param random_state: Random state.
+        :param continuous_state_discretization_resolution: A discretization resolution for continuous-state
+        environments. Providing this value allows the agent to be used with discrete-state methods via
+        discretization of the continuous-state dimensions.
         :param gamma: Discount.
         :param solver_function: Solver function. Required in order to call `self.solve_mdp`.
         :param solver_function_args: Solver function arguments. Required in order to call `self.solve_mdp`.
@@ -255,6 +304,7 @@ class StochasticMdpAgent(MdpAgent):
         super().__init__(
             name=name,
             random_state=random_state,
+            continuous_state_discretization_resolution=continuous_state_discretization_resolution,
             gamma=gamma,
             solver_function=solver_function,
             solver_function_args=solver_function_args
@@ -316,5 +366,6 @@ class Human(MdpAgent):
         super().__init__(
             name='human',
             random_state=None,
+            continuous_state_discretization_resolution=None,
             gamma=1
         )

@@ -17,6 +17,7 @@ def test_learn():
     p2 = StochasticMdpAgent(
         'player 2',
         random_state,
+        None,
         1
     )
 
@@ -29,6 +30,7 @@ def test_learn():
     p1 = StochasticMdpAgent(
         'player 1',
         random_state,
+        None,
         1
     )
 
@@ -67,6 +69,7 @@ def test_learn():
     p2 = StochasticMdpAgent(
         'player 2',
         random_state,
+        None,
         1
     )
 
@@ -79,6 +82,7 @@ def test_learn():
     no_checkpoint_p1 = StochasticMdpAgent(
         'player 1',
         random_state,
+        None,
         1
     )
 

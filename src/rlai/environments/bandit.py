@@ -153,15 +153,17 @@ class KArmedBandit(Environment):
         return bandit, unparsed_args
 
     def reset_for_new_run(
-            self
+            self,
+            agent: Agent
     ) -> State:
         """
         Reset the the bandit, initializing arms to new expected values.
 
+        :param agent: Agent.
         :return: New State.
         """
 
-        super().reset_for_new_run()
+        super().reset_for_new_run(agent)
 
         # get new arm reward means and initialize new arms
         q_star_means = self.random_state.normal(loc=self.q_star_mean, scale=self.q_star_variance, size=self.k)
@@ -209,7 +211,7 @@ class KArmedBandit(Environment):
         """
 
         if self.random_state.random_sample() < self.reset_probability:
-            self.reset_for_new_run()
+            self.reset_for_new_run(agent)
 
         action = agent.act(t=t)
         monitor.report(t=t, agent_action=action, optimal_action=Action(self.best_arm.i))

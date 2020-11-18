@@ -5,8 +5,8 @@ import numpy as np
 from numpy.random import RandomState
 
 from rlai.agents.mdp import StochasticMdpAgent
-from rlai.gpi.dynamic_programming.evaluation import evaluate_v_pi, evaluate_q_pi
 from rlai.environments.mdp import Gridworld
+from rlai.gpi.dynamic_programming.evaluation import evaluate_v_pi, evaluate_q_pi
 
 
 def test_evaluate_v_pi():
@@ -18,6 +18,7 @@ def test_evaluate_v_pi():
     mdp_agent = StochasticMdpAgent(
         'test',
         random_state,
+        None,
         1
     )
 
@@ -66,6 +67,7 @@ def test_evaluate_q_pi():
     mdp_agent = StochasticMdpAgent(
         'test',
         random_state,
+        None,
         1
     )
 
@@ -108,5 +110,3 @@ def test_evaluate_q_pi():
         fixture = pickle.load(file)
 
     assert q_pi == fixture
-
-

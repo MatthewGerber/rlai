@@ -4,8 +4,8 @@ import pickle
 from numpy.random import RandomState
 
 from rlai.agents.mdp import StochasticMdpAgent
-from rlai.gpi.dynamic_programming.iteration import iterate_value_v_pi
 from rlai.environments.mdp import GamblersProblem
+from rlai.gpi.dynamic_programming.iteration import iterate_value_v_pi
 
 
 def test_gamblers_problem():
@@ -21,6 +21,7 @@ def test_gamblers_problem():
     mdp_agent_v_pi_value_iteration = StochasticMdpAgent(
         'test',
         random_state,
+        None,
         1
     )
 

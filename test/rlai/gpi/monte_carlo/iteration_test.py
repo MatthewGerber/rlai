@@ -18,6 +18,7 @@ def test_iterate_value_q_pi():
     mdp_agent = StochasticMdpAgent(
         'test',
         random_state,
+        None,
         1
     )
 
@@ -57,6 +58,7 @@ def test_off_policy_monte_carlo():
     mdp_agent = StochasticMdpAgent(
         'test',
         random_state,
+        None,
         1
     )
     mdp_agent.initialize_equiprobable_policy(mdp_environment.SS)
@@ -65,6 +67,7 @@ def test_off_policy_monte_carlo():
     off_policy_agent = StochasticMdpAgent(
         'test',
         random_state,
+        None,
         1
     )
     off_policy_agent.initialize_equiprobable_policy(mdp_environment.SS)

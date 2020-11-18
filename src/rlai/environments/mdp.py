@@ -7,6 +7,7 @@ from numpy.random import RandomState
 
 from rlai.actions import Action
 from rlai.agents import Agent
+from rlai.agents.mdp import MdpAgent
 from rlai.environments import Environment
 from rlai.meta import rl_text
 from rlai.rewards import Reward
@@ -22,13 +23,16 @@ class MdpEnvironment(Environment, ABC):
     """
 
     def reset_for_new_run(
-            self
+            self,
+            agent: MdpAgent
     ) -> State:
         """
         Reset the the environment to a random nonterminal state, if any are specified, or to None.
+
+        :param agent: Agent.
         """
 
-        super().reset_for_new_run()
+        super().reset_for_new_run(agent)
 
         if len(self.nonterminal_states) > 0:
             self.state = self.random_state.choice(self.nonterminal_states)
@@ -58,7 +62,8 @@ class MdpEnvironment(Environment, ABC):
         self.state, next_reward = self.state.advance(
             environment=self,
             t=t,
-            a=a
+            a=a,
+            agent=agent
         )
 
         agent.sense(

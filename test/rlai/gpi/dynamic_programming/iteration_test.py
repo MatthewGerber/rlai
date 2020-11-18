@@ -16,6 +16,7 @@ def test_policy_iteration():
     mdp_agent_v_pi = StochasticMdpAgent(
         'test',
         random_state,
+        None,
         1
     )
 
@@ -31,6 +32,7 @@ def test_policy_iteration():
     mdp_agent_q_pi = StochasticMdpAgent(
         'test',
         random_state,
+        None,
         1
     )
 
@@ -56,6 +58,7 @@ def test_value_iteration():
     mdp_agent_v_pi_policy_iteration = StochasticMdpAgent(
         'test',
         random_state,
+        None,
         1
     )
 
@@ -71,6 +74,7 @@ def test_value_iteration():
     mdp_agent_v_pi_value_iteration = StochasticMdpAgent(
         'test',
         random_state,
+        None,
         1
     )
 
@@ -89,6 +93,7 @@ def test_value_iteration():
     mdp_agent_q_pi_value_iteration = StochasticMdpAgent(
         'test',
         random_state,
+        None,
         1
     )
 

@@ -17,6 +17,7 @@ def test_evaluate_v_pi():
     mdp_agent = StochasticMdpAgent(
         'test',
         random_state,
+        None,
         1
     )
 
@@ -53,6 +54,7 @@ def test_evaluate_q_pi():
     mdp_agent = StochasticMdpAgent(
         'test',
         random_state,
+        None,
         1
     )
 

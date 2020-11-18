@@ -113,7 +113,7 @@ def run(
         num_runs_per_print = int(parsed_args.n_runs * 0.05)
         for r in range(parsed_args.n_runs):
 
-            state = environment.reset_for_new_run()
+            state = environment.reset_for_new_run(agent)
             agent.reset_for_new_run(state)
             monitor.reset_for_new_run()
 
