@@ -25,6 +25,12 @@ class Environment(ABC):
 
         parser = ArgumentParser(allow_abbrev=False)
 
+        parser.add_argument(
+            '--T',
+            type=int,
+            help='Maximum number of time steps to run.'
+        )
+
         return parser.parse_known_args(args)
 
     @classmethod
@@ -63,22 +69,25 @@ class Environment(ABC):
     def run(
             self,
             agent,  # can't provide Agent type hint due to circular reference with Environment
-            T: int,
             monitor: Monitor
     ):
         """
         Run the environment with an agent.
 
         :param agent: Agent to run.
-        :param T: Number of time steps to run.
         :param monitor: Monitor.
         """
 
-        # use any to short-circuit the runs if any step returns True (for termination)
-        any(
-            self.run_step(t, agent, monitor)
-            for t in range(T)
-        )
+        t = 0
+        have_T = self.T is not None
+        while True:
+
+            terminate = self.run_step(t, agent, monitor)
+
+            t += 1
+
+            if terminate or (have_T and t >= self.T):
+                break
 
     @abstractmethod
     def run_step(
@@ -100,17 +109,21 @@ class Environment(ABC):
     def __init__(
             self,
             name: str,
-            random_state: RandomState
+            random_state: RandomState,
+            T: Optional[int]
     ):
         """
         Initialize the environment.
 
         :param name: Name of the environment.
         :param random_state: Random state.
+        :param T: Maximum number of steps to run, or None for no limit.
         """
 
         self.name = name
         self.random_state = random_state
+        self.T = T
+
         self.num_resets = 0
 
     def __str__(

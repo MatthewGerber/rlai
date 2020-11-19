@@ -8,9 +8,7 @@ def test_monitor():
 
     T = 100
 
-    monitor = Monitor(
-        T=T
-    )
+    monitor = Monitor()
 
     rng = RandomState(12345)
 
@@ -27,9 +25,21 @@ def test_monitor():
             action_reward=rewards[t]
         )
 
-    assert np.array_equal(monitor.t_count_optimal_action, [
-        1 if action == optimal else 0
-        for action, optimal in zip(actions, optimal_actions)
-    ])
+    assert np.array_equal(
+        [
+            monitor.t_count_optimal_action[t]
+            for t in sorted(monitor.t_count_optimal_action)
+        ],
+        [
+            1 if action == optimal else 0
+            for action, optimal in zip(actions, optimal_actions)
+        ]
+    )
 
-    assert np.array_equal([averager.get_value() for averager in monitor.t_average_cumulative_reward], np.cumsum(rewards))
+    assert np.array_equal(
+        [
+            monitor.t_average_cumulative_reward[t].get_value()
+            for t in sorted(monitor.t_average_cumulative_reward)
+        ],
+        np.cumsum(rewards)
+    )

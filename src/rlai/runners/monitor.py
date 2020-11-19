@@ -34,6 +34,15 @@ class Monitor:
         :param action_reward: Reward obtained.
         """
 
+        if t not in self.t_count_optimal_action:
+            self.t_count_optimal_action[t] = 0
+
+        if t not in self.t_average_reward:
+            self.t_average_reward[t] = IncrementalSampleAverager()
+
+        if t not in self.t_average_cumulative_reward:
+            self.t_average_cumulative_reward[t] = IncrementalSampleAverager()
+
         if agent_action is not None and optimal_action is not None and agent_action == optimal_action:
             self.t_count_optimal_action[t] += 1
 
@@ -45,25 +54,14 @@ class Monitor:
         self.most_recent_time_step = t
 
     def __init__(
-            self,
-            T: int
+            self
     ):
         """
         Initialize the monitor.
-
-        :param T: Number of time steps in run.
         """
 
-        self.T = T
-
-        self.t_count_optimal_action = [0] * self.T
-        self.t_average_reward = [
-            IncrementalSampleAverager()
-            for _ in range(self.T)
-        ]
+        self.t_count_optimal_action = {}
+        self.t_average_reward = {}
+        self.t_average_cumulative_reward = {}
         self.cumulative_reward = 0.0
-        self.t_average_cumulative_reward = [
-            IncrementalSampleAverager()
-            for _ in range(self.T)
-        ]
         self.most_recent_time_step: Optional[int] = None

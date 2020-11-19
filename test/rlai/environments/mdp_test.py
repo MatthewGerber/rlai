@@ -13,8 +13,9 @@ def test_gamblers_problem():
     random_state = RandomState(12345)
 
     mdp_environment: GamblersProblem = GamblersProblem(
-        'gamblers problems',
+        'gamblers problem',
         random_state=random_state,
+        T=None,
         p_h=0.4
     )
 

@@ -41,16 +41,37 @@ def test_run():
 
             assert monitor.cumulative_reward == monitor_fixture.cumulative_reward
 
-            assert_array_equal(monitor.t_count_optimal_action, monitor_fixture.t_count_optimal_action)
-
             assert_array_equal(
-                [r.get_value() for r in monitor.t_average_reward],
-                [r.get_value() for r in monitor_fixture.t_average_reward]
+                [
+                    monitor.t_count_optimal_action[t]
+                    for t in sorted(monitor.t_count_optimal_action)
+                ],
+                [
+                    monitor_fixture.t_count_optimal_action[t]
+                    for t in sorted(monitor_fixture.t_count_optimal_action)
+                ]
             )
 
             assert_array_equal(
-                [r.get_value() for r in monitor.t_average_cumulative_reward],
-                [r.get_value() for r in monitor_fixture.t_average_cumulative_reward]
+                [
+                    monitor.t_average_reward[t].get_value()
+                    for t in sorted(monitor.t_average_reward)
+                ],
+                [
+                    monitor_fixture.t_average_reward[t].get_value()
+                    for t in sorted(monitor_fixture.t_average_reward)
+                ]
+            )
+
+            assert_array_equal(
+                [
+                    monitor.t_average_cumulative_reward[t].get_value()
+                    for t in sorted(monitor.t_average_cumulative_reward)
+                ],
+                [
+                    monitor_fixture.t_average_cumulative_reward[t].get_value()
+                    for t in sorted(monitor_fixture.t_average_cumulative_reward)
+                ]
             )
 
         print('passed.')

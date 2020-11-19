@@ -80,6 +80,7 @@ class MdpEnvironment(Environment, ABC):
             self,
             name: str,
             random_state: RandomState,
+            T: Optional[int],
             SS: Optional[List[MdpState]] = None,
             RR: Optional[List[Reward]] = None
     ):
@@ -88,6 +89,7 @@ class MdpEnvironment(Environment, ABC):
 
         :param name: Name.
         :param random_state: Random state.
+        :param T: Maximum number of steps to run, or None for no limit.
         :param SS: Prespecified list of states, or None for no prespecification.
         :param RR: Prespecified list of rewards, or None for no prespecification.
         """
@@ -100,7 +102,8 @@ class MdpEnvironment(Environment, ABC):
 
         super().__init__(
             name=name,
-            random_state=random_state
+            random_state=random_state,
+            T=T
         )
 
         self.SS = SS
@@ -140,6 +143,7 @@ class Gridworld(MdpEnvironment):
         g = Gridworld(
             name='Example 4.1',
             random_state=random_state,
+            T=None,
             n_rows=4,
             n_columns=4,
             terminal_states=[(0, 0), (3, 3)],
@@ -233,6 +237,7 @@ class Gridworld(MdpEnvironment):
             self,
             name: str,
             random_state: RandomState,
+            T: Optional[int],
             n_rows: int,
             n_columns: int,
             terminal_states: List[Tuple[int, int]],
@@ -243,6 +248,7 @@ class Gridworld(MdpEnvironment):
 
         :param name: Name.
         :param random_state: Random state.
+        :param T: Maximum number of steps to run, or None for no limit.
         :param n_rows: Number of row.
         :param n_columns: Number of columns.
         :param terminal_states: List of terminal-state locations.
@@ -275,6 +281,7 @@ class Gridworld(MdpEnvironment):
         super().__init__(
             name=name,
             random_state=random_state,
+            T=T,
             SS=SS,
             RR=RR
         )
@@ -348,6 +355,7 @@ class GamblersProblem(MdpEnvironment):
             self,
             name: str,
             random_state: RandomState,
+            T: Optional[int],
             p_h: float
     ):
         """
@@ -355,6 +363,7 @@ class GamblersProblem(MdpEnvironment):
 
         :param name: Name.
         :param random_state: Random state.
+        :param T: Maximum number of steps to run, or None for no limit.
         :param p_h: Probability of coin toss coming up heads.
         """
 
@@ -392,6 +401,7 @@ class GamblersProblem(MdpEnvironment):
         super().__init__(
             name=name,
             random_state=random_state,
+            T=T,
             SS=SS,
             RR=RR
         )

@@ -226,6 +226,7 @@ class KArmedBandit(Environment):
     def __init__(
             self,
             random_state: RandomState,
+            T: Optional[int],
             k: int,
             q_star_mean: float,
             q_star_variance: float,
@@ -235,17 +236,19 @@ class KArmedBandit(Environment):
         """
         Initialize the bandit.
 
+        :param random_state: Random state.
+        :param T: Maximum number of steps to run, or None for no limit.
         :param k: Number of arms.
         :param q_star_mean: Mean of q_star.
         :param q_star_variance: Variance of q_star.
         :param reward_variance: Reward variance.
         :param reset_probability: Per-step probability of resetting (nonstationarity).
-        :param random_state: Random state.
         """
 
         super().__init__(
             name=f'{k}-armed bandit',
-            random_state=random_state
+            random_state=random_state,
+            T=T
         )
 
         self.k = k

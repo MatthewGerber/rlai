@@ -25,12 +25,6 @@ def run(
     )
 
     parser.add_argument(
-        '--T',
-        type=int,
-        help='Number of time steps per run.'
-    )
-
-    parser.add_argument(
         '--pdf-save-path',
         type=str,
         help='Path to save PDF to.'
@@ -108,10 +102,7 @@ def run(
 
         print(f'Running {agent} agent in {environment} environment...')
 
-        monitor = Monitor(
-            T=parsed_args.T
-        )
-
+        monitor = Monitor()
         monitors.append(monitor)
 
         num_runs_per_print = math.ceil(parsed_args.n_runs * 0.05)
@@ -123,7 +114,6 @@ def run(
 
             environment.run(
                 agent=agent,
-                T=parsed_args.T,
                 monitor=monitor
             )
 
@@ -133,18 +123,18 @@ def run(
                 print(f'{percent_done:.0f}% complete (finished {num_runs_finished} of {parsed_args.n_runs} runs)...')
 
         reward_ax.plot([
-            averager.get_value()
-            for averager in monitor.t_average_reward
+            monitor.t_average_reward[t].get_value()
+            for t in sorted(monitor.t_average_reward)
         ], linewidth=1, label=agent.name)
 
         cum_reward_ax.plot([
-            averager.get_value()
-            for averager in monitor.t_average_cumulative_reward
+            monitor.t_average_cumulative_reward[t].get_value()
+            for t in sorted(monitor.t_average_cumulative_reward)
         ], linewidth=1, linestyle='--', label=agent.name)
 
         optimal_action_ax.plot([
-            count_optimal_action / parsed_args.n_runs
-            for count_optimal_action in monitor.t_count_optimal_action
+            monitor.t_count_optimal_action[t] / parsed_args.n_runs
+            for t in sorted(monitor.t_count_optimal_action)
         ], linewidth=1, label=agent.name)
 
         print()

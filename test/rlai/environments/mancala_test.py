@@ -22,8 +22,9 @@ def test_learn():
     )
 
     mancala: Mancala = Mancala(
-        initial_count=4,
         random_state=random_state,
+        T=None,
+        initial_count=4,
         player_2=p2
     )
 
@@ -74,8 +75,9 @@ def test_learn():
     )
 
     mancala: Mancala = Mancala(
-        initial_count=4,
         random_state=random_state,
+        T=None,
+        initial_count=4,
         player_2=p2
     )
 

@@ -1,4 +1,4 @@
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 from typing import Tuple, List, Optional
 
 from numpy.random import RandomState
@@ -207,6 +207,32 @@ class Mancala(MdpEnvironment):
         environment.player_2 = Human()
 
     @classmethod
+    def parse_arguments(
+            cls,
+            args
+    ) -> Tuple[Namespace, List[str]]:
+        """
+        Parse arguments.
+
+        :param args: Arguments.
+        :return: 2-tuple of parsed and unparsed arguments.
+        """
+
+        parsed_args, unparsed_args = super().parse_arguments(args)
+
+        parser = ArgumentParser(allow_abbrev=False)
+
+        parser.add_argument(
+            '--initial-count',
+            type=int,
+            help='Initial seed count in each pit.'
+        )
+
+        parsed_args, unparsed_args = parser.parse_known_args(unparsed_args, parsed_args)
+
+        return parsed_args, unparsed_args
+
+    @classmethod
     def init_from_arguments(
             cls,
             args: List[str],
@@ -220,15 +246,7 @@ class Mancala(MdpEnvironment):
         :return: 2-tuple of an environment and a list of unparsed arguments.
         """
 
-        parser = ArgumentParser()
-
-        parser.add_argument(
-            '--initial-count',
-            type=int,
-            help='Initial seed count in each pit.'
-        )
-
-        parsed_args, unparsed_args = parser.parse_known_args(args)
+        parsed_args, unparsed_args = cls.parse_arguments(args)
 
         mancala = Mancala(
             random_state=random_state,
@@ -390,17 +408,25 @@ class Mancala(MdpEnvironment):
 
     def __init__(
             self,
-            initial_count: int,
             random_state: RandomState,
+            T: Optional[int],
+            initial_count: int,
             player_2: Agent
     ):
         """
         Initialize the game.
 
-        :param initial_count: Initial count for each pit.
         :param random_state: Random state.
+        :param T: Maximum number of steps to run, or None for no limit.
+        :param initial_count: Initial count for each pit.
         :param player_2: Agent for player 2.
         """
+
+        super().__init__(
+            name='mancala',
+            random_state=random_state,
+            T=T
+        )
 
         self.initial_count = initial_count
         self.player_2 = player_2
@@ -442,8 +468,3 @@ class Mancala(MdpEnvironment):
         for player_1_pocket, opposing_player_2_pocket in zip(self.player_1_pockets, reversed(self.player_2_pockets)):
             player_1_pocket.opposing_pocket = opposing_player_2_pocket
             opposing_player_2_pocket.opposing_pocket = player_1_pocket
-
-        super().__init__(
-            name='mancala',
-            random_state=random_state
-        )

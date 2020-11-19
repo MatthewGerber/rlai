@@ -1,6 +1,6 @@
 import math
 import os
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 from itertools import product
 from typing import List, Tuple, Any, Optional
 
@@ -50,6 +50,9 @@ class GymState(MdpState):
 
         observation, reward, done, _ = environment.gym_native.step(action=gym_action)
 
+        if environment.render_current_episode:
+            environment.gym_native.render()
+
         next_state = GymState(
             environment=environment,
             observation=observation,
@@ -90,20 +93,20 @@ class Gym(MdpEnvironment):
     """
 
     @classmethod
-    def init_from_arguments(
+    def parse_arguments(
             cls,
-            args: List[str],
-            random_state: RandomState
-    ) -> Tuple[Any, List[str]]:
+            args
+    ) -> Tuple[Namespace, List[str]]:
         """
-        Initialize an environment from arguments.
+        Parse arguments.
 
         :param args: Arguments.
-        :param random_state: Random state.
-        :return: 2-tuple of an environment and a list of unparsed arguments.
+        :return: 2-tuple of parsed and unparsed arguments.
         """
 
-        parser = ArgumentParser()
+        parsed_args, unparsed_args = super().parse_arguments(args)
+
+        parser = ArgumentParser(allow_abbrev=False)
 
         parser.add_argument(
             '--gym-id',
@@ -120,16 +123,34 @@ class Gym(MdpEnvironment):
         parser.add_argument(
             '--render-every-nth-episode',
             type=int,
-            help='How often to render episodes.'
+            help='How often to render episodes into videos.'
         )
 
         parser.add_argument(
             '--video-directory',
             type=str,
-            help='Local directory in which to store rendered videos.'
+            help='Local directory in which to save rendered videos. Must be an empty directory. Ignore to only display videos.'
         )
 
-        parsed_args, unparsed_args = parser.parse_known_args(args)
+        parsed_args, unparsed_args = parser.parse_known_args(unparsed_args, parsed_args)
+
+        return parsed_args, unparsed_args
+
+    @classmethod
+    def init_from_arguments(
+            cls,
+            args: List[str],
+            random_state: RandomState
+    ) -> Tuple[Any, List[str]]:
+        """
+        Initialize an environment from arguments.
+
+        :param args: Arguments.
+        :param random_state: Random state.
+        :return: 2-tuple of an environment and a list of unparsed arguments.
+        """
+
+        parsed_args, unparsed_args = cls.parse_arguments(args)
 
         gym_env = Gym(
             random_state=random_state,
@@ -151,7 +172,14 @@ class Gym(MdpEnvironment):
 
         super().reset_for_new_run(agent)
 
+        # subtract 1 from number of resets in order to render the first episode
+        if self.display_only_rendering:
+            self.render_current_episode = (self.num_resets - 1) % self.render_every_nth_episode == 0
+
         observation = self.gym_native.reset()
+
+        if self.render_current_episode:
+            self.gym_native.render()
 
         self.state = GymState(
             environment=self,
@@ -165,6 +193,7 @@ class Gym(MdpEnvironment):
     def __init__(
             self,
             random_state: RandomState,
+            T: Optional[int],
             gym_id: str,
             continuous_action_discretization_resolution: Optional[float] = None,
             render_every_nth_episode: Optional[int] = None,
@@ -174,6 +203,7 @@ class Gym(MdpEnvironment):
         Initialize the environment.
 
         :param random_state: Random state.
+        :param T: Maximum number of steps to run, or None for no limit.
         :param gym_id: Gym identifier. See https://gym.openai.com/envs for a list.
         :param continuous_action_discretization_resolution: A discretization resolution for continuous-action
         environments. Providing this value allows the environment to be used with discrete-action methods via
@@ -184,18 +214,37 @@ class Gym(MdpEnvironment):
 
         super().__init__(
             name=f'gym ({gym_id})',
-            random_state=random_state
+            random_state=random_state,
+            T=T
         )
 
         self.gym_native = gym.make(
             id=gym_id
         )
 
+        if self.T is not None:
+            self.gym_native._max_episode_steps = T
+
         if continuous_action_discretization_resolution is not None and not isinstance(self.gym_native.action_space, Box):
             raise ValueError(f'Continuous-action discretization is only valid for Box action-space environments.')
 
-        if render_every_nth_episode is not None:
-            self.gym_native = gym.wrappers.Monitor(self.gym_native, directory=os.path.expanduser(video_directory), video_callable=lambda episode_id: episode_id % render_every_nth_episode == 0, force=True)
+        # set up rendering...either display-only or saved videos
+        self.render_every_nth_episode = render_every_nth_episode
+        self.display_only_rendering = False
+        self.render_current_episode = False
+        if self.render_every_nth_episode is not None:
+
+            if self.render_every_nth_episode <= 0:
+                raise ValueError('render_every_nth_episode must be > 0 if provided.')
+
+            # display-only if we don't have a video directory
+            if video_directory is None:
+                self.display_only_rendering = True
+                self.render_current_episode = True
+
+            # saved videos via wrapper
+            else:
+                self.gym_native = gym.wrappers.Monitor(self.gym_native, directory=os.path.expanduser(video_directory), video_callable=lambda episode_id: episode_id % self.render_every_nth_episode == 0)
 
         self.gym_native.seed(random_state.randint(1000))
 

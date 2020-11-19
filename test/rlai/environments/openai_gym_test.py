@@ -22,8 +22,9 @@ def test_learn():
     )
 
     gym = Gym(
-        gym_id='CartPole-v1',
-        random_state=random_state
+        random_state=random_state,
+        T=None,
+        gym_id='CartPole-v1'
     )
 
     q_S_A = iterate_value_q_pi(
