@@ -13,7 +13,7 @@
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
     <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/rlai/runners/trainer.py" />
-    <option name="PARAMETERS" value="--resume-train --environment &quot;rlai.environments.openai_gym.Gym&quot; --gym-id &quot;CartPole-v1&quot; --render-every-nth-episode 500 --video-directory &quot;~/Desktop/cartpole_videos_resume&quot; --train-function &quot;rlai.gpi.temporal_difference.iteration.iterate_value_q_pi&quot; --num-improvements 10 --checkpoint-path &quot;~/Desktop/cartpole.pickle&quot; --new-checkpoint-path &quot;~/Desktop/cartpole_resume.pickle&quot;" />
+    <option name="PARAMETERS" value="--resume-train --environment &quot;rlai.environments.openai_gym.Gym&quot; --gym-id &quot;CartPole-v1&quot; --render-every-nth-episode 5000 --video-directory &quot;~/Desktop/cartpole_videos_resume&quot; --train-function &quot;rlai.gpi.temporal_difference.iteration.iterate_value_q_pi&quot; --checkpoint-path &quot;~/Desktop/cartpole_checkpoint.pickle&quot; --save-agent-path &quot;~/Desktop/cartpole_agent.pickle&quot;" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />

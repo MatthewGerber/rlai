@@ -67,7 +67,7 @@ def iterate_value_q_pi(
     iteration_average_reward = []
     iteration_total_states = []
     iteration_num_states_updated = []
-    while True:
+    while i < num_improvements:
 
         print(f'Value iteration {i + 1}:  ', end='')
 
@@ -126,9 +126,6 @@ def iterate_value_q_pi(
 
             if gym_native is not None:
                 environment.gym_native = gym_native
-
-        if i >= num_improvements:
-            break
 
     print(f'Value iteration of q_pi terminated after {i} iteration(s).')
 

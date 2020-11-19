@@ -199,7 +199,7 @@ class Gym(MdpEnvironment):
 
         self.gym_native.seed(random_state.randint(1000))
 
-        # action space is already discrete. initialize n actions.
+        # action space is already discrete. initialize n actions from it.
         if isinstance(self.gym_native.action_space, Discrete):
             self.actions = [
                 Action(
@@ -208,7 +208,7 @@ class Gym(MdpEnvironment):
                 for i in range(self.gym_native.action_space.n)
             ]
 
-        # action space is continuous. discretize.
+        # action space is continuous. discretize it.
         elif isinstance(self.gym_native.action_space, Box):
 
             box = self.gym_native.action_space

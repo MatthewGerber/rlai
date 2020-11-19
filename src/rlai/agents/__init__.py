@@ -151,7 +151,6 @@ class Agent(ABC):
         self.most_recent_state: Optional[State] = None
         self.most_recent_state_tick: Optional[int] = None
         self.N_t_A: Dict[Action, int] = {}
-        self.state_id_str_int: Dict[str, int] = {}
 
     def __str__(
             self

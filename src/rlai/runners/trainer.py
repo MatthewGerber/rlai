@@ -1,4 +1,7 @@
+import os
+import pickle
 import sys
+import warnings
 from argparse import ArgumentParser
 from typing import List
 
@@ -43,7 +46,16 @@ def run(
         help='Resume training an agent from a checkpoint path.'
     )
 
+    parser.add_argument(
+        '--save-agent-path',
+        type=str,
+        help='Path to store resulting agent to.'
+    )
+
     parsed_args, unparsed_args = parser.parse_known_args(args)
+
+    if parsed_args.save_agent_path is None:
+        raise ValueError('No --save-agent-path specified. Cannot save agent.')
 
     train_function_arg_parser = ArgumentParser('Training function argument parser')
 
@@ -131,6 +143,8 @@ def run(
 
     random_state = RandomState(12345)
 
+    agent = None
+
     if parsed_args.agent is not None:
         agent_class = load_class(parsed_args.agent)
         agents, unparsed_args = agent_class.init_from_arguments(
@@ -141,7 +155,8 @@ def run(
         if len(agents) != 1:
             raise ValueError('Training is only supported for single agents. Please specify one agent.')
 
-        train_function_args['agent'] = agents[0]
+        agent = agents[0]
+        train_function_args['agent'] = agent
 
     if parsed_args.environment is not None:
         environment_class = load_class(parsed_args.environment)
@@ -158,12 +173,20 @@ def run(
             **train_function_args
         )
     elif parsed_args.resume_train:
-        resume_from_checkpoint(
+        agent = resume_from_checkpoint(
             resume_function=train_function,
             **train_function_args
         )
     else:
         raise ValueError('Unknown trainer action.')
+
+    if agent is None:
+        warnings.warn('No agent resulting at end of training. Nothing to save.')
+    else:
+        with open(os.path.expanduser(parsed_args.save_agent_path), 'wb') as f:
+            pickle.dump(agent, f)
+
+    print(f'Training complete. Saved agent to {parsed_args.save_agent_path}')
 
 
 if __name__ == '__main__':

@@ -1,4 +1,6 @@
+import math
 import os
+import pickle
 import sys
 from argparse import ArgumentParser
 from typing import List
@@ -7,8 +9,6 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 from numpy.random import RandomState
 
-from rlai.agents.mdp import MdpAgent
-from rlai.runners import FIGURES_DIRECTORY
 from rlai.runners.monitor import Monitor
 from rlai.utils import load_class
 
@@ -16,52 +16,56 @@ from rlai.utils import load_class
 def run(
         args: List[str]
 ):
-    random_state = RandomState(12345)
-
     parser = ArgumentParser(description='Run an agent within an environment.', allow_abbrev=False)
 
     parser.add_argument(
         '--n-runs',
         type=int,
-        default=2000,
         help='Number of runs.'
     )
 
     parser.add_argument(
         '--T',
         type=int,
-        default=1000,
         help='Number of time steps per run.'
+    )
+
+    parser.add_argument(
+        '--pdf-save-path',
+        type=str,
+        help='Path to save PDF to.'
     )
 
     parser.add_argument(
         '--figure-name',
         type=str,
-        default='_'.join(args),
-        help='Name of output figure.'
-    )
-
-    parser.add_argument(
-        '--save-to-pdf',
-        action='store_true',
-        help='Whether or not to save the output figure to disk as a PDF.'
+        help='Name for figure that is generated.'
     )
 
     parser.add_argument(
         '--environment',
         type=str,
-        default='rlai.environments.bandit.KArmedBandit',
         help='Fully-qualified class name of environment.'
     )
 
     parser.add_argument(
         '--agent',
         type=str,
-        default='rlai.agents.greedy.EpsilonGreedy',
-        help='Fully-qualified class name of agent.'
+        help='Either (1) the fully-qualified class name of agent, or (2) a path to a pickled agent.'
+    )
+
+    parser.add_argument(
+        '--random-seed',
+        type=int,
+        help='Random seed. Omit to generate an arbitrary random seed.'
     )
 
     parsed_args, unparsed_args = parser.parse_known_args(args)
+
+    if parsed_args.random_seed is None:
+        random_state = RandomState()
+    else:
+        random_state = RandomState(parsed_args.random_seed)
 
     # init environment
     environment_class = load_class(parsed_args.environment)
@@ -70,27 +74,27 @@ def run(
         random_state=random_state
     )
 
-    # init agent(s)
-    agent_class = load_class(parsed_args.agent)
-    agents, unparsed_args = agent_class.init_from_arguments(
-        args=unparsed_args,
-        random_state=random_state
-    )
+    # init agent from file if it's a path
+    if os.path.exists(os.path.expanduser(parsed_args.agent)):
+        with open(os.path.expanduser(parsed_args.agent), 'rb') as f:
+            agents = [pickle.load(f)]
+
+    # otherwise, parse arguments for agent
+    else:
+        agent_class = load_class(parsed_args.agent)
+        agents, unparsed_args = agent_class.init_from_arguments(
+            args=unparsed_args,
+            random_state=random_state
+        )
 
     # no unparsed arguments should remain
     if len(unparsed_args) > 0:
         raise ValueError(f'Unparsed arguments:  {unparsed_args}')
 
-    # if we're running mdp agents, have each agent solve the mdp with the specified function/parameters.
-    for agent in agents:
-        if isinstance(agent, MdpAgent):
-            agent.initialize_equiprobable_policy(environment.SS)
-            agent.solve_mdp()
-
-    # set up plot
+    # set up plot to pdf
     pdf = None
-    if parsed_args.save_to_pdf:
-        pdf = PdfPages(os.path.join(FIGURES_DIRECTORY, parsed_args.figure_name + '.pdf'))
+    if parsed_args.pdf_save_path:
+        pdf = PdfPages(parsed_args.pdf_save_path)
 
     fig, axs = plt.subplots(2, 1, sharex='all', figsize=(6, 9))
 
@@ -110,7 +114,7 @@ def run(
 
         monitors.append(monitor)
 
-        num_runs_per_print = int(parsed_args.n_runs * 0.05)
+        num_runs_per_print = math.ceil(parsed_args.n_runs * 0.05)
         for r in range(parsed_args.n_runs):
 
             state = environment.reset_for_new_run(agent)
@@ -145,12 +149,14 @@ def run(
 
         print()
 
-    reward_ax.set_title(parsed_args.figure_name)
+    if parsed_args.figure_name is not None:
+        reward_ax.set_title(parsed_args.figure_name)
+
     reward_ax.set_xlabel('Time step')
-    reward_ax.set_ylabel(f'Per-step reward (averaged over {parsed_args.n_runs} runs)')
+    reward_ax.set_ylabel(f'Per-step reward (averaged over {parsed_args.n_runs} run(s))')
     reward_ax.grid()
     reward_ax.legend()
-    cum_reward_ax.set_ylabel(f'Cumulative reward (averaged over {parsed_args.n_runs} runs)')
+    cum_reward_ax.set_ylabel(f'Cumulative reward (averaged over {parsed_args.n_runs} run(s))')
     cum_reward_ax.legend(loc='lower right')
 
     optimal_action_ax.set_xlabel('Time step')

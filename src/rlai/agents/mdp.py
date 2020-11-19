@@ -1,6 +1,6 @@
 from abc import ABC
 from argparse import Namespace, ArgumentParser
-from typing import List, Tuple, Optional, Dict, Callable, Union
+from typing import List, Tuple, Optional, Dict, Union
 
 import numpy as np
 from numpy.random import RandomState
@@ -8,7 +8,7 @@ from numpy.random import RandomState
 from rlai.actions import Action
 from rlai.agents import Agent
 from rlai.states.mdp import MdpState
-from rlai.utils import sample_list_item, import_function
+from rlai.utils import sample_list_item
 
 
 class MdpAgent(Agent, ABC):
@@ -49,47 +49,6 @@ class MdpAgent(Agent, ABC):
 
         return parsed_args, unparsed_args
 
-    @staticmethod
-    def parse_mdp_solver_args(
-            args
-    ) -> Tuple[Namespace, List[str]]:
-        """
-        Parse arguments for the specified MDP solver.
-
-        :param args: Aguments.
-        :return: 2-tuple of parsed and unparsed arguments.
-        """
-
-        parser = ArgumentParser(allow_abbrev=False)
-
-        parser.add_argument(
-            '--mdp-solver',
-            type=str,
-            help='Fully-qualified name of the MDP solver function to use.'
-        )
-
-        parser.add_argument(
-            '--theta',
-            type=float,
-            help='Minimum tolerated change in value estimates, below which policy evaluation terminates.'
-        )
-
-        parser.add_argument(
-            '--update-in-place',
-            action='store_true',
-            help='Update the policy in place (usually quicker).'
-        )
-
-        parser.add_argument(
-            '--evaluation-iterations-per-improvement',
-            type=int,
-            help='Number of policy evaluation iterations to execute for each iteration of improvement.'
-        )
-
-        parsed_args, unparsed_args = parser.parse_known_args(args)
-
-        return parsed_args, unparsed_args
-
     def initialize_equiprobable_policy(
             self,
             SS: List[MdpState]
@@ -110,16 +69,6 @@ class MdpAgent(Agent, ABC):
             }
             for s in SS
         }
-
-    def solve_mdp(
-            self
-    ):
-        """
-        Solve the current agent's MDP using the function and arguments passed to the constructor (e.g., from the
-        command line).
-        """
-
-        self.solver_function(self, **self.solver_function_args)
 
     def get_state_i(
             self,
@@ -159,9 +108,7 @@ class MdpAgent(Agent, ABC):
             name: str,
             random_state: RandomState,
             continuous_state_discretization_resolution: Optional[float],
-            gamma: float,
-            solver_function: Optional[Callable] = None,
-            solver_function_args: Optional[Dict] = None
+            gamma: float
     ):
         """
         Initialize the agent with an empty policy. Call `initialize_equiprobable_policy` to initialize the policy for
@@ -173,8 +120,6 @@ class MdpAgent(Agent, ABC):
         environments. Providing this value allows the agent to be used with discrete-state methods via
         discretization of the continuous-state dimensions.
         :param gamma: Discount.
-        :param solver_function: Solver function. Required in order to call `self.solve_mdp`.
-        :param solver_function_args: Solver function arguments. Required in order to call `self.solve_mdp`.
         """
 
         super().__init__(
@@ -184,10 +129,9 @@ class MdpAgent(Agent, ABC):
 
         self.continuous_state_discretization_resolution = continuous_state_discretization_resolution
         self.gamma = gamma
-        self.solver_function = solver_function
-        self.solver_function_args = solver_function_args
 
         self.pi: Dict[MdpState, Dict[Action, float]] = {}
+        self.state_id_str_int: Dict[str, int] = {}
 
 
 class StochasticMdpAgent(MdpAgent):
@@ -209,25 +153,14 @@ class StochasticMdpAgent(MdpAgent):
         :return: 2-tuple of a list of agents and a list of unparsed arguments.
         """
 
-        # get the mdp solver and arguments
-        parsed_mdp_args, unparsed_args = cls.parse_mdp_solver_args(args)
-        solver_function = import_function(parsed_mdp_args.mdp_solver)
-        solver_function_arguments = {
-            k: v
-            for k, v in vars(parsed_mdp_args).items()
-            if k != 'mdp_solver' and v is not None
-        }
-
-        parsed_args, unparsed_args = cls.parse_arguments(unparsed_args)
+        parsed_args, unparsed_args = cls.parse_arguments(args)
 
         agents = [
             StochasticMdpAgent(
                 name=f'stochastic (gamma={parsed_args.gamma})',
                 random_state=random_state,
                 continuous_state_discretization_resolution=parsed_args.continuous_state_discretization_resolution,
-                gamma=parsed_args.gamma,
-                solver_function=solver_function,
-                solver_function_args=solver_function_arguments
+                gamma=parsed_args.gamma
             )
         ]
 
@@ -284,9 +217,7 @@ class StochasticMdpAgent(MdpAgent):
             name: str,
             random_state: RandomState,
             continuous_state_discretization_resolution: Optional[float],
-            gamma: float,
-            solver_function: Optional[Callable] = None,
-            solver_function_args: Optional[Dict] = None
+            gamma: float
     ):
         """
         Initialize the agent.
@@ -297,17 +228,13 @@ class StochasticMdpAgent(MdpAgent):
         environments. Providing this value allows the agent to be used with discrete-state methods via
         discretization of the continuous-state dimensions.
         :param gamma: Discount.
-        :param solver_function: Solver function. Required in order to call `self.solve_mdp`.
-        :param solver_function_args: Solver function arguments. Required in order to call `self.solve_mdp`.
         """
 
         super().__init__(
             name=name,
             random_state=random_state,
             continuous_state_discretization_resolution=continuous_state_discretization_resolution,
-            gamma=gamma,
-            solver_function=solver_function,
-            solver_function_args=solver_function_args
+            gamma=gamma
         )
 
 
