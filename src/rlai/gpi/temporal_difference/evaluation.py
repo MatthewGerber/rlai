@@ -78,7 +78,7 @@ def evaluate_q_pi(
         curr_a = agent.act(curr_t)
         total_reward = 0.0
         t_state_a_g: Dict[int, Tuple[MdpState, Action, float]] = {}  # dictionary from time steps to tuples of state, action, and truncated return.
-        while not curr_state.terminal:
+        while not curr_state.terminal and (environment.T is None or curr_t < environment.T):
 
             next_state, next_reward = curr_state.advance(environment, curr_t, curr_a, agent)
             next_t = curr_t + 1

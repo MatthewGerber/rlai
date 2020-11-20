@@ -222,8 +222,8 @@ class Gym(MdpEnvironment):
             id=gym_id
         )
 
-        if self.T is not None:
-            self.gym_native._max_episode_steps = T
+        # the native gym object uses the max value, so set it to something crazy huge if we're not given a T.
+        self.gym_native._max_episode_steps = 999999999999 if self.T is None else self.T
 
         if continuous_action_discretization_resolution is not None and not isinstance(self.gym_native.action_space, Box):
             raise ValueError(f'Continuous-action discretization is only valid for Box action-space environments.')

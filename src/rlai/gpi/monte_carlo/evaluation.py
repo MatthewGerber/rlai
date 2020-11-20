@@ -48,7 +48,7 @@ def evaluate_v_pi(
         t = 0
         state_first_t = {}
         t_state_reward = []
-        while not state.terminal:
+        while not state.terminal and (environment.T is None or t < environment.T):
 
             if state not in state_first_t:
                 state_first_t[state] = t
@@ -146,7 +146,7 @@ def evaluate_q_pi(
         state_action_first_t = None if update_upon_every_visit else {}
         t_state_action_reward = []
         total_reward = 0.0
-        while not state.terminal:
+        while not state.terminal and (environment.T is None or t < environment.T):
 
             evaluated_states.add(state)
 
