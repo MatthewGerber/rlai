@@ -1,5 +1,6 @@
 import os
 import pickle
+import statistics
 from typing import Dict, Optional, Set, List, Callable
 
 import matplotlib.pyplot as plt
@@ -99,7 +100,8 @@ def get_q_pi_for_evaluated_states(
 def plot_policy_iteration(
         iteration_average_reward: List[float],
         iteration_total_states: List[int],
-        iteration_num_states_updated: List[int]
+        iteration_num_states_updated: List[int],
+        elapsed_seconds_average_rewards: Dict[int, List[float]]
 ):
     """
     Plot status of policy iteration.
@@ -107,19 +109,39 @@ def plot_policy_iteration(
     :param iteration_average_reward: Average reward per iteration.
     :param iteration_total_states: Total number of states per iteration.
     :param iteration_num_states_updated: Number of states updated per iteration.
+    :param elapsed_seconds_average_rewards: Elapsed seconds and average rewards.
     """
 
     plt.close('all')
-    plt.plot(iteration_average_reward, '-', label='average')
-    plt.xlabel('Iteration')
-    plt.ylabel('Reward')
-    plt.grid()
-    state_space_ax = plt.twinx()
+
+    # noinspection PyTypeChecker
+    fig, axs = plt.subplots(nrows=1, ncols=2, sharey=True, figsize=(12, 6))
+
+    # reward per iteration
+    ax = axs[0]
+    ax.plot(iteration_average_reward, '-', label='average')
+    ax.set_xlabel('Iteration')
+    ax.set_ylabel('Reward per episode')
+    ax.legend(loc='upper left')
+    ax.grid()
+
+    # twin-x states per iteration
+    state_space_ax = ax.twinx()
     state_space_ax.plot(iteration_total_states, '--', color='orange', label='total')
     state_space_ax.plot(iteration_num_states_updated, '-', color='orange', label='updated')
     state_space_ax.set_yscale('log')
     state_space_ax.set_ylabel('# states')
-    state_space_ax.legend()
+    state_space_ax.legend(loc='center right')
+
+    # reward over elapsed time
+    ax = axs[1]
+    seconds = list(sorted(elapsed_seconds_average_rewards.keys()))
+    ax.plot(seconds, [statistics.mean(elapsed_seconds_average_rewards[s]) for s in seconds], '-', label='average')
+    ax.set_xlabel('Elapsed time (seconds)')
+    ax.set_ylabel('Reward per episode')
+    ax.legend()
+    ax.grid()
+
     plt.show()
 
 

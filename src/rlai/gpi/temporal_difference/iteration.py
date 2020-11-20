@@ -1,5 +1,6 @@
 import os
 import pickle
+from datetime import datetime
 from typing import Optional, Dict, Union
 
 from rlai.actions import Action
@@ -67,6 +68,8 @@ def iterate_value_q_pi(
     iteration_average_reward = []
     iteration_total_states = []
     iteration_num_states_updated = []
+    elapsed_seconds_average_rewards = {}
+    start_datetime = datetime.now()
     while i < num_improvements:
 
         print(f'Value iteration {i + 1}:  ', end='')
@@ -93,10 +96,16 @@ def iterate_value_q_pi(
         iteration_total_states.append(len(q_S_A))
         iteration_num_states_updated.append(num_states_updated)
 
+        elapsed_seconds = int((datetime.now() - start_datetime).total_seconds())
+        if elapsed_seconds not in elapsed_seconds_average_rewards:
+            elapsed_seconds_average_rewards[elapsed_seconds] = []
+
+        elapsed_seconds_average_rewards[elapsed_seconds].append(average_reward)
+
         i += 1
 
         if num_improvements_per_plot is not None and i % num_improvements_per_plot == 0:
-            plot_policy_iteration(iteration_average_reward, iteration_total_states, iteration_num_states_updated)
+            plot_policy_iteration(iteration_average_reward, iteration_total_states, iteration_num_states_updated, elapsed_seconds_average_rewards)
 
         if num_improvements_per_checkpoint is not None and i % num_improvements_per_checkpoint == 0:
 
