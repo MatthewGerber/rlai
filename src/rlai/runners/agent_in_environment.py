@@ -9,13 +9,21 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 from numpy.random import RandomState
 
+from rlai.meta import rl_text
 from rlai.runners.monitor import Monitor
 from rlai.utils import load_class
 
 
+@rl_text(chapter='Training and Running Agents', page=1)
 def run(
         args: List[str]
 ):
+    """
+    Run a trained agent in an environment.
+
+    :param args: Arguments.
+    """
+
     parser = ArgumentParser(description='Run an agent within an environment.', allow_abbrev=False)
 
     parser.add_argument(

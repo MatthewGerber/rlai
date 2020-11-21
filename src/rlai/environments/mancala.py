@@ -8,6 +8,7 @@ from rlai.agents import Agent
 from rlai.agents.mdp import Human, StochasticMdpAgent, MdpAgent
 from rlai.environments import Environment
 from rlai.environments.mdp import MdpEnvironment
+from rlai.meta import rl_text
 from rlai.rewards import Reward
 from rlai.states import State
 from rlai.states.mdp import MdpState
@@ -186,9 +187,21 @@ class Pit:
         return f'{self.i}:  Player {1 if self.player_1 else 2}, {self.count}{"*" if self.store else ""}'
 
 
+@rl_text(chapter='Specialized Environments', page=1)
 class Mancala(MdpEnvironment):
     """
-    Environment for the mancala game.
+    Environment for the mancala game. This is a simple game with many rule variations, and it provides a greater
+    challenge in terms of implementation and state-space size than the gridworld. I have implemented a fairly common
+    variation summarized below.
+
+    * One row of 6 pockets per player, each starting with 4 seeds.
+    * Landing in the store earns another turn.
+    * Landing in own empty pocket steals.
+    * Game terminates when a player's pockets are clear.
+    * Winner determined by store count.
+
+    A couple hours of Monte Carlo optimization explores more than 1 million states when playing against an equiprobable
+    random opponent.
     """
 
     @staticmethod

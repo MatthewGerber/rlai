@@ -1,7 +1,12 @@
 # Table of Contents
 - [Introduction](#introduction)
 - [Figures](#figures)
-- [Mancala](#mancala)
+- [Specialized Environments](#specialized-environments)
+  - [`rlai.environments.mancala.Mancala`](#rlaienvironmentsmancalamancala)
+  - [`rlai.environments.openai_gym.Gym`](#rlaienvironmentsopenai_gymgym)
+- [Training and Running Agents](#training-and-running-agents)
+  - [`rlai.runners.agent_in_environment.run`](#rlairunnersagent_in_environmentrun)
+  - [`rlai.runners.trainer.run`](#rlairunnerstrainerrun)
 - [Chapter 2](#chapter-2)
   - [`rlai.environments.bandit.Arm`](#rlaienvironmentsbanditarm)
   - [`rlai.agents.q_value.EpsilonGreedy`](#rlaiagentsq_valueepsilongreedy)
@@ -12,8 +17,8 @@
   - [`rlai.agents.h_value.PreferenceGradient`](#rlaiagentsh_valuepreferencegradient)
 - [Chapter 3](#chapter-3)
   - [`rlai.environments.mancala.MancalaState`](#rlaienvironmentsmancalamancalastate)
-  - [`rlai.environments.mancala.Mancala`](#rlaienvironmentsmancalamancala)
   - [`rlai.environments.mdp.MdpEnvironment`](#rlaienvironmentsmdpmdpenvironment)
+  - [`rlai.environments.openai_gym.GymState`](#rlaienvironmentsopenai_gymgymstate)
   - [`rlai.states.mdp.MdpState`](#rlaistatesmdpmdpstate)
   - [`rlai.states.mdp.ModelBasedMdpState`](#rlaistatesmdpmodelbasedmdpstate)
   - [`rlai.environments.mdp.Gridworld`](#rlaienvironmentsmdpgridworld)
@@ -56,24 +61,39 @@ repository public well before finishing. But the remaining objectives are fairly
 A list of figures can be found [here](src/rlai/figures). Most of these are reproductions of those shown in the text; 
 however, even the reproductions typically provide detail not shown in the text.
 
-# Mancala
-This is a simple game with many rule variations, and it provides a greater challenge in terms of implementation and 
-state-space size than the gridworld. I have implemented a fairly common variation summarized below.
+# Specialized Environments
+## `rlai.environments.mancala.Mancala`
+```
+Environment for the mancala game. This is a simple game with many rule variations, and it provides a greater
+    challenge in terms of implementation and state-space size than the gridworld. I have implemented a fairly common
+    variation summarized below.
 
-* One row of 6 pockets per player, each starting with 4 seeds.
-* Landing in the store earns another turn.
-* Landing in own empty pocket steals.
-* Game terminates when a player's pockets are clear.
-* Winner determined by store count.
+    * One row of 6 pockets per player, each starting with 4 seeds.
+    * Landing in the store earns another turn.
+    * Landing in own empty pocket steals.
+    * Game terminates when a player's pockets are clear.
+    * Winner determined by store count.
 
-A couple hours of Monte Carlo optimization explores more than 1 million states when playing against an equiprobable 
-random opponent (shown [here](src/rlai/figures/Mancala%20Learning.png)).
+    A couple hours of Monte Carlo optimization explores more than 1 million states when playing against an equiprobable
+    random opponent.
+```
+## `rlai.environments.openai_gym.Gym`
+```
+Generalized Gym environment. Any OpenAI Gym environment can be executed by supplying the appropriate identifier.
+```
+# Training and Running Agents
+## `rlai.runners.agent_in_environment.run`
+```
+Run a trained agent in an environment.
 
-Key files are listed below.
+    :param args: Arguments.
+```
+## `rlai.runners.trainer.run`
+```
+Train an agent in an environment.
 
-* [Environment](src/rlai/environments/mancala.py)
-* [Test](test/rlai/environments/mancala_test.py)
-
+    :param args: Arguments.
+```
 # Chapter 2
 ## `rlai.environments.bandit.Arm`
 ```
@@ -109,13 +129,13 @@ Preference-gradient agent.
 ```
 State of the mancala game. In charge of representing the entirety of the game state and advancing to the next state.
 ```
-## `rlai.environments.mancala.Mancala`
-```
-Environment for the mancala game.
-```
 ## `rlai.environments.mdp.MdpEnvironment`
 ```
 MDP environment.
+```
+## `rlai.environments.openai_gym.GymState`
+```
+State of a Gym environment.
 ```
 ## `rlai.states.mdp.MdpState`
 ```
@@ -286,6 +306,8 @@ Run Monte Carlo value iteration on an agent using state-action value estimates. 
     :param update_upon_every_visit: See `rlai.gpi.monte_carlo.evaluation.evaluate_q_pi`.
     :param epsilon: Total probability mass to spread across all actions, resulting in an epsilon-greedy policy. Must
     be >= 0 if provided.
+    :param make_final_policy_greedy: Whether or not to make the agent's final policy greedy with respect to the q-values
+    that have been learned, regardless of the value of epsilon used to estimate the q-values.
     :param off_policy_agent: See `rlai.gpi.monte_carlo.evaluation.evaluate_q_pi`. The policy of this agent will not
     updated by this function.
     :param num_improvements_per_plot: Number of improvements to make before plotting the per-improvement average. Pass
@@ -305,7 +327,7 @@ Modes of temporal-difference evaluation:  SARSA (on-policy), Q-Learning (off-pol
 ```
 Perform temporal-difference (TD) evaluation of an agent's policy within an environment, returning state-action
     values. This evaluation function implements both on-policy TD learning (SARSA) as well as off-policy TD learning
-    (Q-learning and expected SARSA).
+    (Q-learning and expected SARSA), and n-step updates are implemented for all learning modes.
 
     :param agent: Agent containing target policy to be optimized.
     :param environment: Environment.
@@ -332,6 +354,8 @@ Run temporal-difference value iteration on an agent using state-action value est
     :param n_steps: Number of steps (see `rlai.gpi.temporal_difference.evaluation.evaluate_q_pi`).
     :param epsilon: Total probability mass to spread across all actions, resulting in an epsilon-greedy policy. Must
     be strictly > 0.
+    :param make_final_policy_greedy: Whether or not to make the agent's final policy greedy with respect to the q-values
+    that have been learned, regardless of the value of epsilon used to estimate the q-values.
     :param num_improvements_per_plot: Number of improvements to make before plotting the per-improvement average. Pass
     None to turn off all plotting.
     :param num_improvements_per_checkpoint: Number of improvements per checkpoint save.

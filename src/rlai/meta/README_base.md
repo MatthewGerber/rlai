@@ -16,21 +16,3 @@ repository public well before finishing. But the remaining objectives are fairly
 # Figures
 A list of figures can be found [here](src/rlai/figures). Most of these are reproductions of those shown in the text; 
 however, even the reproductions typically provide detail not shown in the text.
-
-# Mancala
-This is a simple game with many rule variations, and it provides a greater challenge in terms of implementation and 
-state-space size than the gridworld. I have implemented a fairly common variation summarized below.
-
-* One row of 6 pockets per player, each starting with 4 seeds.
-* Landing in the store earns another turn.
-* Landing in own empty pocket steals.
-* Game terminates when a player's pockets are clear.
-* Winner determined by store count.
-
-A couple hours of Monte Carlo optimization explores more than 1 million states when playing against an equiprobable 
-random opponent (shown [here](src/rlai/figures/Mancala%20Learning.png)).
-
-Key files are listed below.
-
-* [Environment](src/rlai/environments/mancala.py)
-* [Test](test/rlai/environments/mancala_test.py)

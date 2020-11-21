@@ -13,6 +13,7 @@ from rlai.actions import Action, DiscretizedAction
 from rlai.agents.mdp import MdpAgent
 from rlai.environments import Environment
 from rlai.environments.mdp import MdpEnvironment
+from rlai.meta import rl_text
 from rlai.rewards import Reward
 from rlai.states import State
 from rlai.states.mdp import MdpState
@@ -87,9 +88,10 @@ class GymState(MdpState):
         )
 
 
+@rl_text(chapter='Specialized Environments', page=1)
 class Gym(MdpEnvironment):
     """
-    Generalized Gym environment.
+    Generalized Gym environment. Any OpenAI Gym environment can be executed by supplying the appropriate identifier.
     """
 
     @classmethod

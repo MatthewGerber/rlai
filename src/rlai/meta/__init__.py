@@ -1,7 +1,7 @@
 import importlib
 import os
 import pkgutil
-from typing import Set, Dict, List
+from typing import Set, Dict, List, Union
 
 import md_toc
 
@@ -9,13 +9,14 @@ import rlai
 
 
 def rl_text(
-        chapter: int,
+        chapter: Union[int, str],
         page: int
 ):
     """
     Decorator for RL text references.
 
-    :param chapter: Chapter within RL text that describes the Python element being decorated.
+    :param chapter: Either an integer chapter within RL text that describes the Python element being decorated, or a
+    string chapter about something else.
     :param page: Page within RL text that describes the Python element being decorated.
     :return: Decorator function.
     """
@@ -61,8 +62,6 @@ def summarize(
                     full_path = f'{attribute.__module__}.{attribute.__name__}'
                     if full_path not in paths_summarized:
 
-                        # print(f'{full_path} ({attribute.rl_text_description}):{attribute.__doc__}')
-
                         chapter = attribute.rl_text_chapter
                         page = attribute.rl_text_page
 
@@ -95,8 +94,18 @@ def main():
 
     # write markdown file
     with open(meta_md_path, 'w') as meta_md:
+
         meta_md.write(f'<!--TOC-->\n\n{readme_base}\n\n')
-        for chapter in sorted(chapter_page_descriptions):
+
+        # write sorted string chapters
+        for chapter in sorted(filter(lambda ch: isinstance(ch, str), chapter_page_descriptions)):
+            meta_md.write(f'# {chapter}\n')
+            for page in sorted(chapter_page_descriptions[chapter]):
+                for description in sorted(chapter_page_descriptions[chapter][page]):
+                    meta_md.write(description)
+
+        # write sorted numeric chapters
+        for chapter in sorted(filter(lambda ch: isinstance(ch, int), chapter_page_descriptions)):
             meta_md.write(f'# Chapter {chapter}\n')
             for page in sorted(chapter_page_descriptions[chapter]):
                 for description in sorted(chapter_page_descriptions[chapter][page]):

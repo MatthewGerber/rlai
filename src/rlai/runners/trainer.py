@@ -8,12 +8,20 @@ from typing import List
 from numpy.random import RandomState
 
 from rlai.gpi.utils import resume_from_checkpoint
+from rlai.meta import rl_text
 from rlai.utils import import_function, load_class
 
 
+@rl_text(chapter='Training and Running Agents', page=1)
 def run(
         args: List[str]
 ):
+    """
+    Train an agent in an environment.
+
+    :param args: Arguments.
+    """
+
     parser = ArgumentParser(description='Run the trainer.')
 
     parser.add_argument(
