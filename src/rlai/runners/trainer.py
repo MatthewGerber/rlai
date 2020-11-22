@@ -3,7 +3,7 @@ import pickle
 import sys
 import warnings
 from argparse import ArgumentParser
-from typing import List
+from typing import List, Tuple, Optional
 
 from numpy.random import RandomState
 
@@ -15,11 +15,12 @@ from rlai.utils import import_function, load_class
 @rl_text(chapter='Training and Running Agents', page=1)
 def run(
         args: List[str]
-):
+) -> Tuple[Optional[str], str]:
     """
     Train an agent in an environment.
 
     :param args: Arguments.
+    :returns: 2-tuple of the checkpoint path (if any) and the saved agent path.
     """
 
     parser = ArgumentParser(description='Run the trainer.')
@@ -188,13 +189,20 @@ def run(
     else:
         raise ValueError('Unknown trainer action.')
 
+    print('Training complete.')
+
     if agent is None:
         warnings.warn('No agent resulting at end of training. Nothing to save.')
     else:
         with open(os.path.expanduser(parsed_args.save_agent_path), 'wb') as f:
             pickle.dump(agent, f)
 
-    print(f'Training complete. Saved agent to {parsed_args.save_agent_path}')
+        print(f'Saved agent to {parsed_args.save_agent_path}')
+
+    return (
+        train_function_args['new_checkpoint_path'] if 'new_checkpoint_path' in train_function_args else train_function_args['checkpoint_path'],
+        parsed_args.save_agent_path
+    )
 
 
 if __name__ == '__main__':

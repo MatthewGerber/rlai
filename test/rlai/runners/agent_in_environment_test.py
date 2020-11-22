@@ -27,10 +27,10 @@ def test_run():
         run_monitor[run_args] = run(run_args.split())
 
     # uncomment the following line and run test to update fixture
-    # with open(f'{os.path.dirname(__file__)}/fixtures/test_run.pickle', 'wb') as file:
+    # with open(f'{os.path.dirname(__file__)}/fixtures/agent_in_environment_test.pickle', 'wb') as file:
     #     pickle.dump(run_monitor, file)
 
-    with open(f'{os.path.dirname(__file__)}/fixtures/test_run.pickle', 'rb') as file:
+    with open(f'{os.path.dirname(__file__)}/fixtures/agent_in_environment_test.pickle', 'rb') as file:
         run_monitor_fixture = pickle.load(file)
 
     for run_args, run_args_fixture in zip(run_args_list, run_monitor_fixture.keys()):

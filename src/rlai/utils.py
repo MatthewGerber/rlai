@@ -113,6 +113,20 @@ class IncrementalSampleAverager:
 
         return str(self.average)
 
+    def __eq__(
+            self,
+            other
+    ) -> bool:
+
+        return self.get_value() == other.get_value()
+
+    def __ne__(
+            self,
+            other
+    ) -> bool:
+
+        return self.get_value() != other.get_value()
+
 
 def sample_list_item(
         x: List[Any],
