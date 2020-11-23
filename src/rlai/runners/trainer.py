@@ -125,7 +125,7 @@ def run(
     train_function_arg_parser.add_argument(
         '--mode',
         type=str,
-        help='Q-learning mode (SARSA, Q_LEARNING, EXPECTED_SARSA).'
+        help='Temporal difference evaluation mode (SARSA, Q_LEARNING, EXPECTED_SARSA).'
     )
 
     train_function_arg_parser.add_argument(

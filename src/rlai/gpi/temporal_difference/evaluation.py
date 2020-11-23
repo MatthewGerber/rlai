@@ -212,6 +212,7 @@ def update_q_S_A(
     # if we're currently far enough along (i.e., have accumulated sufficient rewards), then update.
     update_t = curr_t - n_steps + 1
     if update_t in t_state_a_g:
+
         update_state, update_a, g = t_state_a_g[update_t]
 
         # the discount on the next state-action value is exponentiated to n_steps, as we're bootstrapping it starting
