@@ -155,7 +155,17 @@ def evaluate_q_pi(
             # advance the episode
             curr_t = next_t
             curr_state = next_state
-            curr_a = agent.act(next_t) if next_a is None else next_a  # if the next action has not been set, then we're off-policy and the agent should determine the next action.
+
+            # if the next action has not been set and there are feasible actions, then we're off-policy and the agent
+            # should determine the next action.
+            if next_a is None and len(agent.most_recent_state.AA) > 0:
+                curr_a = agent.act(next_t)
+
+            # otherwise, we're either on-policy (in which case the agent has already selected the next action to use) or
+            # there aren't any feasible actions (in which case the episode should be terminating).
+            else:
+                curr_a = next_a
+
             total_reward += next_reward.r
 
         # flush out the remaining n-step updates, with all next state-action values being zero.

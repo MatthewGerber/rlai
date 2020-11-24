@@ -187,7 +187,7 @@ class Pit:
         return f'{self.i}:  Player {1 if self.player_1 else 2}, {self.count}{"*" if self.store else ""}'
 
 
-@rl_text(chapter='Specialized Environments', page=1)
+@rl_text(chapter='Environments', page=1)
 class Mancala(MdpEnvironment):
     """
     Environment for the mancala game. This is a simple game with many rule variations, and it provides a greater

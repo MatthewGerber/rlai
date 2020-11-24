@@ -88,7 +88,7 @@ class GymState(MdpState):
         )
 
 
-@rl_text(chapter='Specialized Environments', page=1)
+@rl_text(chapter='Environments', page=1)
 class Gym(MdpEnvironment):
     """
     Generalized Gym environment. Any OpenAI Gym environment can be executed by supplying the appropriate identifier.
