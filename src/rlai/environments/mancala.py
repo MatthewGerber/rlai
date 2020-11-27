@@ -19,22 +19,6 @@ class MancalaState(MdpState):
     State of the mancala game. In charge of representing the entirety of the game state and advancing to the next state.
     """
 
-    @staticmethod
-    def player_1_is_next(
-            picked_pocket,
-            go_again: bool
-    ) -> bool:
-        """
-        Gets whether or not it is player 1's turn next, based on the pocket that was just picked and whether sowing from
-        that pocket has earned another turn.
-
-        :param picked_pocket: Pocket that was picked.
-        :param go_again: Whether or not sowing from the picked pocket earned another turn.
-        :return: True if player 1 is next and False otherwise.
-        """
-
-        return (picked_pocket.player_1 and go_again) or (not picked_pocket.player_1 and not go_again)
-
     def advance(
             self,
             environment: Environment,
@@ -48,7 +32,7 @@ class MancalaState(MdpState):
         :param environment: Environment.
         :param t: Current time step.
         :param a: Action.
-        :param agent: Agent.
+        :param agent: Agent used to generate on-the-fly state identifiers.
         :return: 2-tuple of next state and next reward.
         """
 
@@ -59,8 +43,7 @@ class MancalaState(MdpState):
         go_again = environment.sow_and_capture(picked_pocket)
         next_state = MancalaState(
             mancala=environment,
-            player_1=MancalaState.player_1_is_next(picked_pocket, go_again),
-            agent=agent
+            agent_to_sense_state=agent if go_again else environment.player_2
         )
 
         # check for termination
@@ -84,8 +67,7 @@ class MancalaState(MdpState):
                 go_again = environment.sow_and_capture(picked_pocket)
                 next_state = MancalaState(
                     mancala=environment,
-                    player_1=MancalaState.player_1_is_next(picked_pocket, go_again),
-                    agent=agent
+                    agent_to_sense_state=environment.player_2 if go_again else agent
                 )
 
                 # check for termination
@@ -102,22 +84,32 @@ class MancalaState(MdpState):
     def __init__(
             self,
             mancala,
-            player_1: bool,
-            agent: MdpAgent
+            agent_to_sense_state: MdpAgent
     ):
         """
         Initialize the state.
 
         :param mancala: Mancala environment
-        :param player_1: First player (agent).
-        :param agent: Agent.
+        :param agent_to_sense_state: Agent that will sense the state.
         """
 
         mancala: Mancala
 
+        agent_is_player_1 = agent_to_sense_state != mancala.player_2
+
+        # get the pits ordered from the perspective of the player that will sense the resulting statea
+        if agent_is_player_1:
+            state_pits = mancala.player_1_pockets + [mancala.player_1_store] + mancala.player_2_pockets + [mancala.player_2_store]
+        else:
+            state_pits = mancala.player_2_pockets + [mancala.player_2_store] + mancala.player_1_pockets + [mancala.player_1_store]
+
+        # get state index from the agent that will sense the state
+        state_i_str = '|'.join(str(pit.count) for pit in state_pits)
+        state_i = agent_to_sense_state.get_state_i(state_i_str)
+
         super().__init__(
-            i=agent.get_state_i('-'.join(str(pit.count) for pit in mancala.board)),
-            AA=mancala.get_feasible_actions(player_1),
+            i=state_i,
+            AA=mancala.get_feasible_actions(agent_is_player_1),
             terminal=mancala.is_terminal()
         )
 
@@ -281,7 +273,7 @@ class Mancala(MdpEnvironment):
         """
         Reset the game to the initial state.
 
-        :param agent: Agent.
+        :param agent: Agent used to generate on-the-fly state identifiers.
         """
 
         super().reset_for_new_run(agent)
@@ -294,8 +286,7 @@ class Mancala(MdpEnvironment):
 
         self.state = MancalaState(
             mancala=self,
-            player_1=True,
-            agent=agent
+            agent_to_sense_state=agent
         )
 
         return self.state

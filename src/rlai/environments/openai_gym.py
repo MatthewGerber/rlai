@@ -168,7 +168,7 @@ class Gym(MdpEnvironment):
         """
         Reset the environment for a new run (episode).
 
-        :param agent: Agent.
+        :param agent: Agent used to generate on-the-fly state identifiers.
         :return: Initial state.
         """
 

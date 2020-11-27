@@ -162,7 +162,7 @@ def resume_from_checkpoint(
     :param resume_args_mutator: A function called prior to resumption. This function will be passed a dictionary of
     arguments comprising the checkpoint. The passed function can change these arguments if desired.
     :param new_args: As a simpler alternative to `resume_args_mutator`, pass any keyword arguments that should replace
-    those in the checkpoint.
+    those in the checkpoint. Only those with non-None values will be used.
     :return: The updated agent.
     """
 
@@ -199,7 +199,11 @@ def resume_from_checkpoint(
         del new_args['environment']
 
     if new_args is not None:
-        resume_args.update(new_args)
+        resume_args.update({
+            arg: v
+            for arg, v in new_args.items()
+            if v is not None
+        })
 
     if resume_args_mutator is not None:
         resume_args_mutator(**resume_args)

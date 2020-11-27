@@ -82,8 +82,8 @@ def run(
 
     train_function_arg_parser.add_argument(
         '--update-upon-every-visit',
-        type=bool,
-        help='Whether or not to update values upon each visit.'
+        action='store_true',
+        help='Pass to update values upon each visit.'
     )
 
     train_function_arg_parser.add_argument(
@@ -100,8 +100,8 @@ def run(
 
     train_function_arg_parser.add_argument(
         '--make-final-policy-greedy',
-        type=bool,
-        help='Whether or not to make the final policy greedy after training is complete.'
+        action='store_true',
+        help='Pass to make the final policy greedy after training is complete.'
     )
 
     train_function_arg_parser.add_argument(
@@ -144,10 +144,13 @@ def run(
 
     train_function = import_function(parsed_args.train_function)
 
+    # filter parsed arguments to those accepted by the training
+    # noinspection PyUnresolvedReferences
+    train_function_arg_names = train_function.__code__.co_varnames
     train_function_args = {
         arg: v
         for arg, v in vars(parsed_train_function_args).items()
-        if v is not None
+        if arg in train_function_arg_names
     }
 
     random_state = RandomState(12345)

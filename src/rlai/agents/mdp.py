@@ -41,7 +41,6 @@ class MdpAgent(Agent, ABC):
         parser.add_argument(
             '--gamma',
             type=float,
-            default=0.1,
             help='Discount factor.'
         )
 
@@ -159,8 +158,7 @@ class StochasticMdpAgent(MdpAgent):
             StochasticMdpAgent(
                 name=f'stochastic (gamma={parsed_args.gamma})',
                 random_state=random_state,
-                continuous_state_discretization_resolution=parsed_args.continuous_state_discretization_resolution,
-                gamma=parsed_args.gamma
+                **vars(parsed_args)
             )
         ]
 

@@ -119,7 +119,8 @@ def evaluate_q_pi(
                     )
                 else:
 
-                    # SARSA:  agent determines the t-d target action as well as the episode's next action (on-policy)
+                    # SARSA:  agent determines the t-d target action as well as the episode's next action, which are
+                    # the same (on-policy)
                     if mode == Mode.SARSA:
                         td_target_a = next_a = agent.act(next_t)
 
@@ -139,6 +140,10 @@ def evaluate_q_pi(
                     else:
                         next_state_q_s_a = 0.0
 
+                # if we're off-policy, then we won't yet have a next action. ask the agent for it now.
+                if next_a is None:
+                    next_a = agent.act(next_t)
+
             # only update if n_steps is finite (not monte carlo)
             if n_steps is not None:
                 update_q_S_A(
@@ -155,25 +160,16 @@ def evaluate_q_pi(
             # advance the episode
             curr_t = next_t
             curr_state = next_state
-
-            # if the next action has not been set and there are feasible actions, then we're off-policy and the agent
-            # should determine the next action.
-            if next_a is None and len(agent.most_recent_state.AA) > 0:
-                curr_a = agent.act(next_t)
-
-            # otherwise, we're either on-policy (in which case the agent has already selected the next action to use) or
-            # there aren't any feasible actions (in which case the episode should be terminating).
-            else:
-                curr_a = next_a
+            curr_a = next_a
 
             total_reward += next_reward.r
 
         # flush out the remaining n-step updates, with all next state-action values being zero.
-        n_steps = len(t_state_a_g) + 1
+        flush_n_steps = len(t_state_a_g) + 1
         while len(t_state_a_g):
             update_q_S_A(
                 q_S_A=q_S_A,
-                n_steps=n_steps,
+                n_steps=flush_n_steps,
                 curr_t=curr_t,
                 t_state_a_g=t_state_a_g,
                 agent=agent,

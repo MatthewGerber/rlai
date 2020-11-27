@@ -136,8 +136,9 @@ def evaluate_q_pi(
     episodes_per_print = max(1, int(num_episodes * 0.05))
     for episode_i in range(num_episodes):
 
-        # reset the environment for the new run, and reset the agent accordingly.
-        state = environment.reset_for_new_run(episode_generation_agent)
+        # reset the environment for the new run (always use the agent we're learning about, as state identifiers come
+        # from it), and reset the episode generate agent accordingly.
+        state = environment.reset_for_new_run(agent)
         episode_generation_agent.reset_for_new_run(state)
 
         # simulate until episode termination, keeping a trace of state-action pairs and their immediate rewards, as well
@@ -161,7 +162,7 @@ def evaluate_q_pi(
             if state_action_first_t is not None and state_a not in state_action_first_t:
                 state_action_first_t[state_a] = t
 
-            next_state, next_reward = state.advance(environment, t, a, episode_generation_agent)
+            next_state, next_reward = state.advance(environment, t, a, agent)
             t_state_action_reward.append((t, state_a, next_reward))
             total_reward += next_reward.r
             state = next_state

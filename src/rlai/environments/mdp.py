@@ -29,7 +29,7 @@ class MdpEnvironment(Environment, ABC):
         """
         Reset the the environment to a random nonterminal state, if any are specified, or to None.
 
-        :param agent: Agent.
+        :param agent: Agent used to generate on-the-fly state identifiers.
         """
 
         super().reset_for_new_run(agent)

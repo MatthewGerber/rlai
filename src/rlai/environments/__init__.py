@@ -57,7 +57,7 @@ class Environment(ABC):
         """
         Reset the the environment.
 
-        :param agent: Agent.
+        :param agent: Agent used to generate on-the-fly state identifiers.
         :return: New state.
         """
 

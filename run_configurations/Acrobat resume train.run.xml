@@ -13,7 +13,7 @@
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
     <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/rlai/runners/trainer.py" />
-    <option name="PARAMETERS" value="--resume-train --environment &quot;rlai.environments.openai_gym.Gym&quot; --gym-id &quot;Acrobot-v1&quot; --render-every-nth-episode 1000 --video-directory &quot;~/Desktop/acrobat_videos_resume&quot; --train-function &quot;rlai.gpi.temporal_difference.iteration.iterate_value_q_pi&quot; --num-improvements 10000 --alpha 0.01 --epsilon 0.001 --checkpoint-path &quot;~/Desktop/acrobat_checkpoint.pickle&quot; --save-agent-path &quot;~/Desktop/acrobat_agent.pickle&quot;" />
+    <option name="PARAMETERS" value="--resume-train --environment &quot;rlai.environments.openai_gym.Gym&quot; --gym-id &quot;Acrobot-v1&quot; --render-every-nth-episode 1000 --video-directory &quot;~/Desktop/acrobat_videos_resume&quot; --train-function &quot;rlai.gpi.temporal_difference.iteration.iterate_value_q_pi&quot; --num-improvements 10000 --epsilon 0.001 --checkpoint-path &quot;~/Desktop/acrobat_checkpoint.pickle&quot; --save-agent-path &quot;~/Desktop/acrobat_agent.pickle&quot;" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />
