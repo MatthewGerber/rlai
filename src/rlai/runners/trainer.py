@@ -82,8 +82,9 @@ def run(
 
     train_function_arg_parser.add_argument(
         '--update-upon-every-visit',
-        action='store_true',
-        help='Pass to update values upon each visit.'
+        type=str,
+        choices=['True', 'False'],
+        help='Whether or not to update values upon each visit to a state or state-action pair.'
     )
 
     train_function_arg_parser.add_argument(
@@ -100,8 +101,9 @@ def run(
 
     train_function_arg_parser.add_argument(
         '--make-final-policy-greedy',
-        action='store_true',
-        help='Pass to make the final policy greedy after training is complete.'
+        type=str,
+        choices=['True', 'False'],
+        help='Whether or not to make the final policy greedy after training is complete.'
     )
 
     train_function_arg_parser.add_argument(
@@ -142,9 +144,16 @@ def run(
 
     parsed_train_function_args, unparsed_args = train_function_arg_parser.parse_known_args(unparsed_args)
 
+    # convert boolean strings to bools
+    if parsed_train_function_args.update_upon_every_visit is not None:
+        parsed_train_function_args.update_upon_every_visit = parsed_train_function_args.update_upon_every_visit == 'True'
+
+    if parsed_train_function_args.make_final_policy_greedy is not None:
+        parsed_train_function_args.make_final_policy_greedy = parsed_train_function_args.make_final_policy_greedy == 'True'
+
     train_function = import_function(parsed_args.train_function)
 
-    # filter parsed arguments to those accepted by the training
+    # filter parsed arguments to those accepted by the training function that will be called
     # noinspection PyUnresolvedReferences
     train_function_arg_names = train_function.__code__.co_varnames
     train_function_args = {

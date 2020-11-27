@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="MountainCar resume train" type="PythonConfigurationType" factoryName="Python" folderName="OpenAI Gym">
+  <configuration default="false" name="Acrobat run" type="PythonConfigurationType" factoryName="Python" folderName="OpenAI Gym">
     <module name="rl" />
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />
@@ -12,8 +12,8 @@
     <option name="ADD_CONTENT_ROOTS" value="true" />
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-    <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/rlai/runners/trainer.py" />
-    <option name="PARAMETERS" value="--resume-train --environment &quot;rlai.environments.openai_gym.Gym&quot; --gym-id &quot;MountainCar-v0&quot; --train-function &quot;rlai.gpi.temporal_difference.iteration.iterate_value_q_pi&quot; --checkpoint-path &quot;~/Desktop/mountaincar_checkpoint.pickle&quot; --save-agent-path &quot;~/Desktop/mountaincar_agent.pickle&quot;" />
+    <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/rlai/runners/agent_in_environment.py" />
+    <option name="PARAMETERS" value="--agent &quot;../../../trained_agents/acrobat/acrobat_agent.pickle&quot; --environment &quot;rlai.environments.openai_gym.Gym&quot; --gym-id &quot;Acrobot-v1&quot; --render-every-nth-episode 1 --n-runs 1 --T 1000" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />
