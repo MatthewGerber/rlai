@@ -4,11 +4,13 @@ import numpy as np
 from numpy.random import RandomState
 
 from rlai.actions import Action
+from rlai.meta import rl_text
 from rlai.rewards import Reward
 from rlai.states import State
 from rlai.utils import sample_list_item
 
 
+@rl_text(chapter=8, page=161)
 class StochasticEnvironmentModel:
     """
     A stochastic environment model.
@@ -22,7 +24,7 @@ class StochasticEnvironmentModel:
             reward: Reward
     ):
         """
-        Update the model with an observed next state and reward, given a preceding state and action.
+        Update the model with an observed subsequent state and reward, given a preceding state and action.
 
         :param state: State.
         :param action: Action taken in state.
@@ -45,16 +47,17 @@ class StochasticEnvironmentModel:
 
     def sample(
             self,
-            state: State,
-            action: Action
-    ) -> Tuple[State, float]:
+            random_state: RandomState
+    ) -> Tuple[State, Action, State, float]:
         """
-        Sample a subsequent state and reward given a current state and action.
+        Sample the environment model.
 
-        :param state: Current state.
-        :param action: Action.
-        :return: 2-tuple of subsequent state and reward.
+        :param random_state: Random state.
+        :return: 4-tuple of state, action, next state, and next reward.
         """
+
+        state = sample_list_item(list(self.state_action_next_state_reward_count.keys()), None, random_state)
+        action = sample_list_item(list(self.state_action_next_state_reward_count[state].keys()), None, random_state)
 
         next_state_reward_count = self.state_action_next_state_reward_count[state][action]
         next_state_rewards = list(next_state_reward_count.keys())
@@ -64,18 +67,15 @@ class StochasticEnvironmentModel:
             for next_state_reward in next_state_rewards
         ])
 
-        return sample_list_item(next_state_rewards, probs, self.random_state)
+        next_state, reward = sample_list_item(next_state_rewards, probs, random_state)
+
+        return state, action, next_state, reward
 
     def __init__(
-            self,
-            random_state: RandomState
+            self
     ):
         """
         Initialize the environment model.
-
-        :param random_state: Random State
         """
-
-        self.random_state = random_state
 
         self.state_action_next_state_reward_count: Dict[State, Dict[Action, Dict[Tuple[State, float], int]]] = {}
