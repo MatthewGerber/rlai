@@ -67,6 +67,7 @@ def iterate_value_q_pi(
     if isinstance(mode, str):
         mode = Mode[mode]
 
+    # initialize a planning environment if needed
     if num_planning_improvements_per_direct_improvement is None:
         planning_environment = None
     else:
@@ -95,6 +96,7 @@ def iterate_value_q_pi(
             alpha=alpha,
             mode=mode,
             n_steps=n_steps,
+            environment_model=None if planning_environment is None else planning_environment.model,
             initial_q_S_A=q_S_A
         )
 
@@ -110,7 +112,8 @@ def iterate_value_q_pi(
         iteration_total_states.append(len(q_S_A))
         iteration_num_states_updated.append(num_states_updated)
 
-        # run planning by recursively calling into the current function with the planning environment
+        # run planning by recursively calling into the current function with the planning environment, but without
+        # planning, plotting, etc.
         if planning_environment is not None:
             iterate_value_q_pi(
                 agent=agent,

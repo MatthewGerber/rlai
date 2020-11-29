@@ -450,7 +450,7 @@ class MdpPlanningEnvironment(MdpEnvironment):
             random_state: RandomState
     ) -> Tuple[Any, List[str]]:
         """
-        No to be called.
+        Not to be called.
         """
 
         raise ValueError('Planning environments are not intended to be initialized from arguments.')
