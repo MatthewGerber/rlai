@@ -83,13 +83,19 @@ def evaluate_q_pi(
         t_state_a_g: Dict[int, Tuple[MdpState, Action, float]] = {}  # dictionary from time steps to tuples of state, action, and truncated return.
         while not curr_state.terminal and (environment.T is None or curr_t < environment.T):
 
-            next_state, next_reward = curr_state.advance(environment, curr_t, curr_a, agent)
+            next_state, next_reward = curr_state.advance(
+                environment=environment,
+                t=curr_t,
+                a=curr_a,
+                agent=agent
+            )
+
             next_t = curr_t + 1
             agent.sense(next_state, next_t)
 
             # update environment model (for planning)
             if environment_model is not None:
-                environment_model.update(curr_state, curr_a, next_state, next_reward.r)
+                environment_model.update(curr_state, curr_a, next_state, next_reward)
 
             # initialize the n-step accumulator at the current time for the current state and action
             t_state_a_g[curr_t] = (curr_state, curr_a, 0.0)

@@ -1,5 +1,6 @@
 from abc import ABC
 from argparse import Namespace, ArgumentParser
+from copy import copy
 from functools import partial
 from typing import List, Tuple, Optional, final, Any
 
@@ -484,7 +485,26 @@ class MdpPlanningEnvironment(MdpEnvironment):
 
         next_state, r = environment.model.sample_next_state_and_reward(state, a, random_state)
 
+        next_state = environment.rewire_for_planning(next_state)
+
         return next_state, Reward(None, r)
+
+    def rewire_for_planning(
+            self,
+            state: State
+    ) -> State:
+        """
+        Rewire a state to run the planning advancement function, which samples the model instead of interacting with the
+        actual environment.
+
+        :param state: State to rewire.
+        :return: Copy of state, appropriately rewired.
+        """
+
+        state = copy(state)
+        state.advance = partial(self.advance_state, state=state, random_state=self.random_state)
+
+        return state
 
     def reset_for_new_run(
             self,
@@ -497,11 +517,7 @@ class MdpPlanningEnvironment(MdpEnvironment):
         :return: New state.
         """
 
-        self.state = self.model.sample_state(self.random_state)
-
-        # overwrite the advance function to run the planning advancement function, which samples the model instead of
-        # interacting with the actual environment.
-        self.state.advance = partial(self.advance_state, random_state=self.random_state)
+        self.state = self.rewire_for_planning(self.model.sample_state(self.random_state))
 
         return self.state
 

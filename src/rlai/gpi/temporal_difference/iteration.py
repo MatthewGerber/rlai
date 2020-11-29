@@ -115,6 +115,7 @@ def iterate_value_q_pi(
         # run planning by recursively calling into the current function with the planning environment, but without
         # planning, plotting, etc.
         if planning_environment is not None:
+            print(f'Running {num_planning_improvements_per_direct_improvement} planning improvement(s).')
             iterate_value_q_pi(
                 agent=agent,
                 environment=planning_environment,
@@ -131,6 +132,7 @@ def iterate_value_q_pi(
                 checkpoint_path=None,
                 initial_q_S_A=q_S_A
             )
+            print('Finished planning.')
 
         elapsed_seconds = int((datetime.now() - start_datetime).total_seconds())
         if elapsed_seconds not in elapsed_seconds_average_rewards:
