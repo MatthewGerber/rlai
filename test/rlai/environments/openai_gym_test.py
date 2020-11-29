@@ -36,6 +36,7 @@ def test_learn():
         mode=Mode.SARSA,
         n_steps=1,
         epsilon=0.05,
+        num_planning_improvements_per_direct_improvement=None,
         make_final_policy_greedy=False
     )
 

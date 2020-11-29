@@ -34,6 +34,7 @@ def test_sarsa_iterate_value_q_pi():
         mode=Mode.SARSA,
         n_steps=1,
         epsilon=0.05,
+        num_planning_improvements_per_direct_improvement=None,
         make_final_policy_greedy=False
     )
 
@@ -74,6 +75,7 @@ def test_q_learning_iterate_value_q_pi():
         mode=Mode.Q_LEARNING,
         n_steps=1,
         epsilon=0.05,
+        num_planning_improvements_per_direct_improvement=None,
         make_final_policy_greedy=False
     )
 
@@ -114,6 +116,7 @@ def test_expected_sarsa_iterate_value_q_pi():
         mode=Mode.EXPECTED_SARSA,
         n_steps=1,
         epsilon=0.05,
+        num_planning_improvements_per_direct_improvement=None,
         make_final_policy_greedy=False
     )
 
@@ -154,6 +157,7 @@ def test_n_step_q_learning_iterate_value_q_pi():
         mode=Mode.Q_LEARNING,
         n_steps=3,
         epsilon=0.05,
+        num_planning_improvements_per_direct_improvement=None,
         make_final_policy_greedy=False
     )
 

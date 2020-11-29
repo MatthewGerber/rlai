@@ -137,6 +137,12 @@ def run(
     )
 
     train_function_arg_parser.add_argument(
+        '--num-planning-improvements-per-direct-improvement',
+        type=int,
+        help='Number of planning improvements to make for each direct improvement.'
+    )
+
+    train_function_arg_parser.add_argument(
         '--new-checkpoint-path',
         type=str,
         help='New checkpoint path.'
