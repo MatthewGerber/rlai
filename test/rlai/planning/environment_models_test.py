@@ -38,11 +38,14 @@ def test_stochastic_environment_model():
 
     environment_sequence = []
     for i in range(1000):
-        environment_sequence.append(model.sample(random_state))
+        state = model.sample_state(random_state)
+        action = model.sample_action(state, random_state)
+        next_state, reward = model.sample_next_state_and_reward(state, action, random_state)
+        environment_sequence.append((next_state, reward))
 
     # uncomment the following line and run test to update fixture
-    with open(f'{os.path.dirname(__file__)}/fixtures/test_stochastic_environment_model.pickle', 'wb') as file:
-        pickle.dump(environment_sequence, file)
+    # with open(f'{os.path.dirname(__file__)}/fixtures/test_stochastic_environment_model.pickle', 'wb') as file:
+    #     pickle.dump(environment_sequence, file)
 
     with open(f'{os.path.dirname(__file__)}/fixtures/test_stochastic_environment_model.pickle', 'rb') as file:
         environment_sequence_fixture = pickle.load(file)

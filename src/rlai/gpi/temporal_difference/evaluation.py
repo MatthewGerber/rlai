@@ -6,7 +6,7 @@ from rlai.agents.mdp import MdpAgent
 from rlai.environments.mdp import MdpEnvironment
 from rlai.gpi.utils import lazy_initialize_q_S_A, initialize_q_S_A
 from rlai.meta import rl_text
-from rlai.planning.environment_models import StochasticEnvironmentModel
+from rlai.planning.environment_models import EnvironmentModel
 from rlai.states.mdp import MdpState
 from rlai.utils import IncrementalSampleAverager, sample_list_item
 
@@ -38,8 +38,8 @@ def evaluate_q_pi(
         alpha: Optional[float],
         mode: Mode,
         n_steps: Optional[int],
-        initial_q_S_A: Dict[MdpState, Dict[Action, IncrementalSampleAverager]] = None,
-        initial_environment_model: StochasticEnvironmentModel = None
+        environment_model: Optional[EnvironmentModel],
+        initial_q_S_A: Dict[MdpState, Dict[Action, IncrementalSampleAverager]]
 ) -> Tuple[Dict[MdpState, Dict[Action, IncrementalSampleAverager]], Set[MdpState], float]:
     """
     Perform temporal-difference (TD) evaluation of an agent's policy within an environment, returning state-action
@@ -53,8 +53,9 @@ def evaluate_q_pi(
     :param mode: Evaluation mode (see `rlai.gpi.temporal_difference.evaluation.Mode`).
     :param n_steps: Number of steps to accumulate rewards before updating estimated state-action values. Must be in the
     range [1, inf], or None for infinite step size (Monte Carlo evaluation).
+    :param environment_model: Environment model to be updated with experience gained during evaluation, or None to
+    ignore the environment model.
     :param initial_q_S_A: Initial guess at state-action value, or None for no guess.
-    :param initial_environment_model: Initial guess at the environment model, or None for no guess.
     :return: 3-tuple of (1) dictionary of all MDP states and their action-value averagers under the agent's policy, (2)
     set of only those states that were evaluated, and (3) the average reward obtained per episode.
     """
@@ -67,8 +68,6 @@ def evaluate_q_pi(
     evaluated_states = set()
 
     q_S_A = initialize_q_S_A(initial_q_S_A, environment, evaluated_states)
-    environment_model = StochasticEnvironmentModel() if initial_environment_model is None else initial_environment_model
-
     episode_reward_averager = IncrementalSampleAverager()
     episodes_per_print = max(1, int(num_episodes * 0.05))
     for episode_i in range(num_episodes):
@@ -89,7 +88,8 @@ def evaluate_q_pi(
             agent.sense(next_state, next_t)
 
             # update environment model (for planning)
-            environment_model.update(curr_state, curr_a, next_state, next_reward.r)
+            if environment_model is not None:
+                environment_model.update(curr_state, curr_a, next_state, next_reward.r)
 
             # initialize the n-step accumulator at the current time for the current state and action
             t_state_a_g[curr_t] = (curr_state, curr_a, 0.0)

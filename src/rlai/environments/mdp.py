@@ -1,6 +1,7 @@
 from abc import ABC
 from argparse import Namespace, ArgumentParser
-from typing import List, Tuple, Optional, final
+from functools import partial
+from typing import List, Tuple, Optional, final, Any
 
 import numpy as np
 from numpy.random import RandomState
@@ -10,6 +11,7 @@ from rlai.agents import Agent
 from rlai.agents.mdp import MdpAgent
 from rlai.environments import Environment
 from rlai.meta import rl_text
+from rlai.planning.environment_models import StochasticEnvironmentModel
 from rlai.rewards import Reward
 from rlai.runners.monitor import Monitor
 from rlai.states import State
@@ -432,3 +434,99 @@ class GamblersProblem(MdpEnvironment):
 
         for s in self.SS:
             s.check_marginal_probabilities()
+
+
+@rl_text(chapter=8, page=163)
+class MdpPlanningEnvironment(MdpEnvironment):
+    """
+    An MDP planning environment, used to generate simulated experience based on a model of the MDP that is learned
+    through direct experience.
+    """
+
+    @classmethod
+    def init_from_arguments(
+            cls,
+            args: List[str],
+            random_state: RandomState
+    ) -> Tuple[Any, List[str]]:
+        """
+        No to be called.
+        """
+
+        raise ValueError('Planning environments are not intended to be initialized from arguments.')
+
+    @staticmethod
+    def advance_state(
+            state: State,
+            environment: Environment,
+            t: int,
+            a: Action,
+            agent: Agent,
+            random_state: RandomState
+    ) -> Tuple[State, Reward]:
+        """
+        Advance a planning state.
+
+        :param state: State to be advanced.
+        :param environment: Environment.
+        :param t: Time step.
+        :param a: Action chosen by agent. If this action has not yet been observed for the passed `state`, then this
+        function will randomly sample an action that has been observed for the passed `state`.
+        :param agent: Agent.
+        :param random_state: Random state.
+        :return: 2-tuple of next-state and reward.
+        """
+
+        environment: MdpPlanningEnvironment
+
+        if a not in environment.model.state_action_next_state_count[state]:
+            a = environment.model.sample_action(state, random_state)
+
+        next_state, r = environment.model.sample_next_state_and_reward(state, a, random_state)
+
+        return next_state, Reward(None, r)
+
+    def reset_for_new_run(
+            self,
+            agent: Agent
+    ) -> Optional[State]:
+        """
+        Reset the planning environment.
+
+        :param agent: Agent.
+        :return: New state.
+        """
+
+        self.state = self.model.sample_state(self.random_state)
+
+        # overwrite the advance function to run the planning advancement function, which samples the model instead of
+        # interacting with the actual environment.
+        self.state.advance = partial(self.advance_state, random_state=self.random_state)
+
+        return self.state
+
+    def __init__(
+            self,
+            name: str,
+            random_state: RandomState,
+            T: Optional[int],
+            model: StochasticEnvironmentModel
+    ):
+        """
+        Initialize the planning environment.
+
+        :param name: Name of the environment.
+        :param random_state: Random state.
+        :param T: Maximum number of steps to run, or None for no limit.
+        :param model: Model to be learned from direct experience for the purpose of planning from simulated experience.
+        """
+
+        super().__init__(
+            name=name,
+            random_state=random_state,
+            T=T
+        )
+
+        self.model = model
+
+        self.state: Optional[State] = None
