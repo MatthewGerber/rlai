@@ -30,7 +30,7 @@ with open(path.join(path.abspath(path.dirname(__file__)), 'README.md'), encoding
 
 setup(
     name='rlai',
-    version='0.11.0',
+    version='0.12.0.dev0',
     description='Reinforcement Learning:  An Introduction',
     long_description=long_description,
     long_description_content_type='text/markdown',
