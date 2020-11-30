@@ -462,8 +462,7 @@ class MdpPlanningEnvironment(MdpEnvironment):
             environment: Environment,
             t: int,
             a: Action,
-            agent: Agent,
-            random_state: RandomState
+            agent: Agent
     ) -> Tuple[State, Reward]:
         """
         Advance a planning state.
@@ -474,16 +473,15 @@ class MdpPlanningEnvironment(MdpEnvironment):
         :param a: Action chosen by agent. If this action has not yet been observed for the passed `state`, then this
         function will randomly sample an action that has been observed for the passed `state`.
         :param agent: Agent.
-        :param random_state: Random state.
         :return: 2-tuple of next-state and reward.
         """
 
         environment: MdpPlanningEnvironment
 
-        if a not in environment.model.state_action_next_state_count[state]:
-            a = environment.model.sample_action(state, random_state)
+        if not environment.model.is_defined_for_state_action(state, a):
+            a = environment.model.sample_action(state, environment.random_state)
 
-        next_state, r = environment.model.sample_next_state_and_reward(state, a, random_state)
+        next_state, r = environment.model.sample_next_state_and_reward(state, a, environment.random_state)
 
         next_state = environment.rewire_for_planning(next_state)
 
@@ -494,15 +492,16 @@ class MdpPlanningEnvironment(MdpEnvironment):
             state: State
     ) -> State:
         """
-        Rewire a state to run the planning advancement function, which samples the model instead of interacting with the
-        actual environment.
+        Rewire a state to run the planning advancement function, which samples the environment model instead of
+        interacting with the actual environment.
 
         :param state: State to rewire.
         :return: Copy of state, appropriately rewired.
         """
 
         state = copy(state)
-        state.advance = partial(self.advance_state, state=state, random_state=self.random_state)
+
+        state.advance = partial(self.advance_state, state=state)
 
         return state
 

@@ -35,6 +35,21 @@ class EnvironmentModel(ABC):
         """
         pass
 
+    @abstractmethod
+    def is_defined_for_state_action(
+            self,
+            state: State,
+            action: Action
+    ) -> bool:
+        """
+        Check whether the current model is defined for a state.
+
+        :param state: State.
+        :param action: Action.
+        :return: True if defined and False otherwise.
+        """
+        pass
+
 
 @rl_text(chapter=8, page=170)
 class StochasticEnvironmentModel(EnvironmentModel):
@@ -86,6 +101,21 @@ class StochasticEnvironmentModel(EnvironmentModel):
         """
 
         return sample_list_item(list(self.state_action_next_state_count.keys()), None, random_state)
+
+    def is_defined_for_state_action(
+            self,
+            state: State,
+            action: Action
+    ) -> bool:
+        """
+        Check whether the current model is defined for a state-action pair.
+
+        :param state: State.
+        :param action: Action.
+        :return: True if defined and False otherwise.
+        """
+
+        return state in self.state_action_next_state_count and action in self.state_action_next_state_count[state]
 
     def sample_action(
             self,

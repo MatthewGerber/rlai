@@ -41,6 +41,10 @@
   - [`rlai.gpi.temporal_difference.evaluation.Mode`](#rlaigpitemporal_differenceevaluationmode)
   - [`rlai.gpi.temporal_difference.evaluation.evaluate_q_pi`](#rlaigpitemporal_differenceevaluationevaluate_q_pi)
   - [`rlai.gpi.temporal_difference.iteration.iterate_value_q_pi`](#rlaigpitemporal_differenceiterationiterate_value_q_pi)
+- [Chapter 8](#chapter-8)
+  - [`rlai.planning.environment_models.EnvironmentModel`](#rlaiplanningenvironment_modelsenvironmentmodel)
+  - [`rlai.environments.mdp.MdpPlanningEnvironment`](#rlaienvironmentsmdpmdpplanningenvironment)
+  - [`rlai.planning.environment_models.StochasticEnvironmentModel`](#rlaiplanningenvironment_modelsstochasticenvironmentmodel)
 <!--TOC-->
 
 # Introduction
@@ -337,6 +341,8 @@ Perform temporal-difference (TD) evaluation of an agent's policy within an envir
     :param mode: Evaluation mode (see `rlai.gpi.temporal_difference.evaluation.Mode`).
     :param n_steps: Number of steps to accumulate rewards before updating estimated state-action values. Must be in the
     range [1, inf], or None for infinite step size (Monte Carlo evaluation).
+    :param environment_model: Environment model to be updated with experience gained during evaluation, or None to
+    ignore the environment model.
     :param initial_q_S_A: Initial guess at state-action value, or None for no guess.
     :return: 3-tuple of (1) dictionary of all MDP states and their action-value averagers under the agent's policy, (2)
     set of only those states that were evaluated, and (3) the average reward obtained per episode.
@@ -355,6 +361,8 @@ Run temporal-difference value iteration on an agent using state-action value est
     :param n_steps: Number of steps (see `rlai.gpi.temporal_difference.evaluation.evaluate_q_pi`).
     :param epsilon: Total probability mass to spread across all actions, resulting in an epsilon-greedy policy. Must
     be strictly > 0.
+    :param num_planning_improvements_per_direct_improvement: Number of planning improvements to make for each
+    improvement based on actual experience. Pass None for no planning.
     :param make_final_policy_greedy: Whether or not to make the agent's final policy greedy with respect to the q-values
     that have been learned, regardless of the value of epsilon used to estimate the q-values.
     :param num_improvements_per_plot: Number of improvements to make before plotting the per-improvement average. Pass
@@ -363,4 +371,18 @@ Run temporal-difference value iteration on an agent using state-action value est
     :param checkpoint_path: Checkpoint path. Must be provided if `num_improvements_per_checkpoint` is provided.
     :param initial_q_S_A: Initial state-action value estimates (primarily useful for restarting from a checkpoint).
     :return: Dictionary of state-action value estimators.
+```
+# Chapter 8
+## `rlai.planning.environment_models.EnvironmentModel`
+```
+An environment model.
+```
+## `rlai.environments.mdp.MdpPlanningEnvironment`
+```
+An MDP planning environment, used to generate simulated experience based on a model of the MDP that is learned
+    through direct experience.
+```
+## `rlai.planning.environment_models.StochasticEnvironmentModel`
+```
+A stochastic environment model.
 ```
