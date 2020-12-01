@@ -37,6 +37,7 @@ def test_learn():
         n_steps=1,
         epsilon=0.05,
         num_planning_improvements_per_direct_improvement=None,
+        planning_advancement_mode=None,
         make_final_policy_greedy=False
     )
 

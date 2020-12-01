@@ -4,7 +4,7 @@ import pickle
 from numpy.random import RandomState
 
 from rlai.agents.mdp import StochasticMdpAgent
-from rlai.environments.mdp import Gridworld
+from rlai.environments.mdp import Gridworld, PlanningAdvancementMode
 from rlai.gpi.temporal_difference.evaluation import Mode
 from rlai.gpi.temporal_difference.iteration import iterate_value_q_pi
 from test.rlai.utils import get_pi_fixture, get_q_S_A_fixture
@@ -35,6 +35,7 @@ def test_sarsa_iterate_value_q_pi():
         n_steps=1,
         epsilon=0.05,
         num_planning_improvements_per_direct_improvement=None,
+        planning_advancement_mode=None,
         make_final_policy_greedy=False
     )
 
@@ -76,6 +77,7 @@ def test_sarsa_iterate_value_q_pi_make_greedy():
         n_steps=1,
         epsilon=0.05,
         num_planning_improvements_per_direct_improvement=None,
+        planning_advancement_mode=None,
         make_final_policy_greedy=True
     )
 
@@ -92,7 +94,7 @@ def test_sarsa_iterate_value_q_pi_make_greedy():
     assert pi == pi_fixture and q_S_A == q_S_A_fixture
 
 
-def test_sarsa_iterate_value_q_pi_with_planning():
+def test_sarsa_iterate_value_q_pi_with_trajectory_planning():
 
     random_state = RandomState(12345)
 
@@ -117,6 +119,7 @@ def test_sarsa_iterate_value_q_pi_with_planning():
         n_steps=1,
         epsilon=0.05,
         num_planning_improvements_per_direct_improvement=10,
+        planning_advancement_mode=PlanningAdvancementMode.TRAJECTORY_SAMPLING,
         num_improvements_per_plot=100,
         make_final_policy_greedy=True
     )
@@ -159,6 +162,7 @@ def test_q_learning_iterate_value_q_pi():
         n_steps=1,
         epsilon=0.05,
         num_planning_improvements_per_direct_improvement=None,
+        planning_advancement_mode=None,
         make_final_policy_greedy=False
     )
 
@@ -200,6 +204,7 @@ def test_expected_sarsa_iterate_value_q_pi():
         n_steps=1,
         epsilon=0.05,
         num_planning_improvements_per_direct_improvement=None,
+        planning_advancement_mode=None,
         make_final_policy_greedy=False
     )
 
@@ -241,6 +246,7 @@ def test_n_step_q_learning_iterate_value_q_pi():
         n_steps=3,
         epsilon=0.05,
         num_planning_improvements_per_direct_improvement=None,
+        planning_advancement_mode=None,
         make_final_policy_greedy=False
     )
 

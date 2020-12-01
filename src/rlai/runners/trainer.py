@@ -143,6 +143,12 @@ def run(
     )
 
     train_function_arg_parser.add_argument(
+        '--planning-advancement-mode',
+        type=str,
+        help='Planning advancement mode.'
+    )
+
+    train_function_arg_parser.add_argument(
         '--new-checkpoint-path',
         type=str,
         help='New checkpoint path.'

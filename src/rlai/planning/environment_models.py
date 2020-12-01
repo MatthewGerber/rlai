@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from queue import PriorityQueue
-from typing import Tuple, Dict, Optional
+from typing import Tuple, Dict, Optional, List
 
 import numpy as np
 from numpy.random import RandomState
@@ -54,13 +54,11 @@ class EnvironmentModel(ABC):
 
     @abstractmethod
     def get_state_action_with_highest_priority(
-            self,
-            remove: bool
+            self
     ) -> Optional[Tuple[State, Action]]:
         """
         Get the state-action pair with the highest priority.
 
-        :param remove: True to remove the state-action pair from the collection.
         :return: 2-tuple of state-action pair, or None if the priority queue is empty.
         """
         pass
@@ -118,6 +116,28 @@ class StochasticEnvironmentModel(EnvironmentModel):
             self.state_reward_averager[next_state] = IncrementalSampleAverager()
 
         self.state_reward_averager[next_state].update(reward.r)
+
+    def get_predecessor_state_action_rewards(
+            self,
+            state: State
+    ) -> List[Tuple[State, Action, float]]:
+        """
+        Get a list of predecessor state-action-reward tuples for a given state.
+
+        :param state: State.
+        :return: List of predecessor state-action-reward 3-tuples for a given state.
+        """
+
+        return [
+            (
+                pred_state,
+                pred_action,
+                self.state_reward_averager[state].get_value()
+            )
+            for pred_state in self.state_action_next_state_count
+            for pred_action in self.state_action_next_state_count[pred_state]
+            if state in self.state_action_next_state_count[pred_state][pred_action]
+        ]
 
     def sample_state(
             self,
@@ -212,18 +232,16 @@ class StochasticEnvironmentModel(EnvironmentModel):
             self.state_action_priority.put((priority, (state, action)))
 
     def get_state_action_with_highest_priority(
-            self,
-            remove: bool
-    ) -> Optional[Tuple[State, Action]]:
+            self
+    ) -> Tuple[Optional[State], Optional[Action]]:
         """
         Get the state-action pair with the highest priority.
 
-        :param remove: True to remove the state-action pair from the collection.
-        :return: 2-tuple of state-action pair, or None if the priority queue is empty.
+        :return: 2-tuple of state-action pair, or (None, None) if the priority queue is empty.
         """
 
         if self.state_action_priority.empty():
-            return None
+            return None, None
         else:
             return self.state_action_priority.get()[1]
 

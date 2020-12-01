@@ -27,7 +27,7 @@ def iterate_value_q_pi(
         n_steps: Optional[int],
         epsilon: float,
         num_planning_improvements_per_direct_improvement: Optional[int],
-        planning_advancement_mode: Optional[PlanningAdvancementMode],
+        planning_advancement_mode: Optional[Union[PlanningAdvancementMode, str]],
         make_final_policy_greedy: bool,
         num_improvements_per_plot: Optional[int] = None,
         num_improvements_per_checkpoint: Optional[int] = None,
@@ -69,7 +69,10 @@ def iterate_value_q_pi(
     if isinstance(mode, str):
         mode = Mode[mode]
 
-    # initialize a planning environment if needed
+    if isinstance(planning_advancement_mode, str):
+        planning_advancement_mode = PlanningAdvancementMode[planning_advancement_mode]
+
+    # initialize a new planning environment if needed
     if num_planning_improvements_per_direct_improvement is None:
         planning_environment = None
     else:
@@ -92,6 +95,7 @@ def iterate_value_q_pi(
 
         print(f'Value iteration {i + 1}:  ', end='')
 
+        # interact with the environment and (optionally) build a model of the environment for planning purposes
         q_S_A, evaluated_states, average_reward = evaluate_q_pi(
             agent=agent,
             environment=environment,
@@ -128,6 +132,7 @@ def iterate_value_q_pi(
                 n_steps=n_steps,
                 epsilon=epsilon,
                 num_planning_improvements_per_direct_improvement=None,
+                planning_advancement_mode=planning_advancement_mode,
                 make_final_policy_greedy=False,
                 num_improvements_per_plot=None,
                 num_improvements_per_checkpoint=None,
