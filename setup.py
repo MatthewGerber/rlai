@@ -9,7 +9,8 @@ INSTALL_REQUIREMENTS = [
     'matplotlib==3.3.1',
     'numpy==1.19.0',
     'gym==0.17.3',
-    'mujoco-py==2.0.2.13'
+    'mujoco-py==2.0.2.13',
+    'Box2D==2.3.10'
 ]
 
 TEST_REQUIREMENTS = [
