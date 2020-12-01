@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import Tuple, Dict
+from queue import PriorityQueue
+from typing import Tuple, Dict, Optional
 
 import numpy as np
 from numpy.random import RandomState
@@ -32,6 +33,35 @@ class EnvironmentModel(ABC):
         :param action: Action taken in state.
         :param next_state: Subsequent state.
         :param reward: Subsequent reward.
+        """
+        pass
+
+    @abstractmethod
+    def add_state_action_priority(
+            self,
+            state: State,
+            action: Action,
+            priority: float
+    ):
+        """
+        Add a state-action priority.
+
+        :param state: State.
+        :param action: Action.
+        :param priority: Priority.
+        """
+        pass
+
+    @abstractmethod
+    def get_state_action_with_highest_priority(
+            self,
+            remove: bool
+    ) -> Optional[Tuple[State, Action]]:
+        """
+        Get the state-action pair with the highest priority.
+
+        :param remove: True to remove the state-action pair from the collection.
+        :return: 2-tuple of state-action pair, or None if the priority queue is empty.
         """
         pass
 
@@ -164,6 +194,39 @@ class StochasticEnvironmentModel(EnvironmentModel):
 
         return next_state, reward
 
+    def add_state_action_priority(
+            self,
+            state: State,
+            action: Action,
+            priority: float
+    ):
+        """
+        Add a state-action priority. The addition is ignored if its priority does not exceed the threshold.
+
+        :param state: State.
+        :param action: Action.
+        :param priority: Priority.
+        """
+
+        if priority > self.priority_theta:
+            self.state_action_priority.put((priority, (state, action)))
+
+    def get_state_action_with_highest_priority(
+            self,
+            remove: bool
+    ) -> Optional[Tuple[State, Action]]:
+        """
+        Get the state-action pair with the highest priority.
+
+        :param remove: True to remove the state-action pair from the collection.
+        :return: 2-tuple of state-action pair, or None if the priority queue is empty.
+        """
+
+        if self.state_action_priority.empty():
+            return None
+        else:
+            return self.state_action_priority.get()[1]
+
     def __init__(
             self
     ):
@@ -173,3 +236,5 @@ class StochasticEnvironmentModel(EnvironmentModel):
 
         self.state_action_next_state_count: Dict[State, Dict[Action, Dict[State, int]]] = {}
         self.state_reward_averager: Dict[State, IncrementalSampleAverager] = {}
+        self.priority_theta = 0.1
+        self.state_action_priority: PriorityQueue = PriorityQueue()

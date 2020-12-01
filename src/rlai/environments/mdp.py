@@ -1,3 +1,4 @@
+import enum
 from abc import ABC
 from argparse import Namespace, ArgumentParser
 from copy import copy
@@ -437,6 +438,16 @@ class GamblersProblem(MdpEnvironment):
             s.check_marginal_probabilities()
 
 
+@rl_text(chapter=8, page=168)
+class PlanningAdvancementMode(enum.Enum):
+    """
+    Modes of planning advancement:  PRIORITIZED_SWEEPING and TRAJECTORY_SAMPLING.
+    """
+
+    PRIORITIZED_SWEEPING = enum.auto()
+    TRAJECTORY_SAMPLING = enum.auto()
+
+
 @rl_text(chapter=8, page=163)
 class MdpPlanningEnvironment(MdpEnvironment):
     """
@@ -457,43 +468,55 @@ class MdpPlanningEnvironment(MdpEnvironment):
         raise ValueError('Planning environments are not intended to be initialized from arguments.')
 
     @staticmethod
-    def advance_state(
+    def planning_advance(
             state: State,
             environment: Environment,
             t: int,
             a: Action,
             agent: Agent
-    ) -> Tuple[State, Reward]:
+    ) -> Tuple[Tuple[State, State, Action], Reward]:
         """
-        Advance a planning state.
+        Advance a planning state using whatever advancement mode is specified in the current planning environment.
 
         :param state: State to be advanced.
         :param environment: Environment.
         :param t: Time step.
         :param a: Action chosen by agent. If this action has not yet been observed for the passed `state`, then this
-        function will randomly sample an action that has been observed for the passed `state`.
+        function will randomly sample an action that has been observed for the passed `state`. The revised action will
+        be returned.
         :param agent: Agent.
-        :return: 2-tuple of next-state and reward.
+        :return: 3-tuple of (1) (possibly revised) current state, next-state, and (possibly revised) actions, and (2)
+        reward.
         """
 
         environment: MdpPlanningEnvironment
 
-        if not environment.model.is_defined_for_state_action(state, a):
-            a = environment.model.sample_action(state, environment.random_state)
+        curr_state = state
 
-        next_state, r = environment.model.sample_next_state_and_reward(state, a, environment.random_state)
+        if environment.mode == PlanningAdvancementMode.TRAJECTORY_SAMPLING:
 
-        next_state = environment.rewire_for_planning(next_state)
+            # sample a random action if the given one is not defined by the model
+            if not environment.model.is_defined_for_state_action(state, a):
+                a = environment.model.sample_action(state, environment.random_state)
 
-        return next_state, Reward(None, r)
+            next_state, r = environment.model.sample_next_state_and_reward(state, a, environment.random_state)
 
-    def rewire_for_planning(
+            next_state = environment.rewire_for_trajectory_sampling(next_state)
+
+        elif environment.mode == PlanningAdvancementMode.PRIORITIZED_SWEEPING:
+
+            # get S, A with highest priority, sample model, etc. will need the td evaluation function here.
+            pass
+            
+        return (curr_state, next_state, a), Reward(None, r)
+
+    def rewire_for_trajectory_sampling(
             self,
             state: State
     ) -> State:
         """
-        Rewire a state to run the planning advancement function, which samples the environment model instead of
-        interacting with the actual environment.
+        Rewire a state to run the advancement function for trajectory sampling, which samples the environment model
+        instead of interacting with the actual environment.
 
         :param state: State to rewire.
         :return: Copy of state, appropriately rewired.
@@ -501,7 +524,7 @@ class MdpPlanningEnvironment(MdpEnvironment):
 
         state = copy(state)
 
-        state.advance = partial(self.advance_state, state=state)
+        state.advance = partial(self.planning_advance, state=state)
 
         return state
 
@@ -516,7 +539,10 @@ class MdpPlanningEnvironment(MdpEnvironment):
         :return: New state.
         """
 
-        self.state = self.rewire_for_planning(self.model.sample_state(self.random_state))
+        self.state = self.model.sample_state(self.random_state)
+
+        if self.mode == PlanningAdvancementMode.TRAJECTORY_SAMPLING:
+            self.state = self.rewire_for_trajectory_sampling(self.state)
 
         return self.state
 
@@ -525,7 +551,8 @@ class MdpPlanningEnvironment(MdpEnvironment):
             name: str,
             random_state: RandomState,
             T: Optional[int],
-            model: StochasticEnvironmentModel
+            model: StochasticEnvironmentModel,
+            mode: PlanningAdvancementMode
     ):
         """
         Initialize the planning environment.
@@ -534,6 +561,7 @@ class MdpPlanningEnvironment(MdpEnvironment):
         :param random_state: Random state.
         :param T: Maximum number of steps to run, or None for no limit.
         :param model: Model to be learned from direct experience for the purpose of planning from simulated experience.
+        :param mode: Planning advancement mode.
         """
 
         super().__init__(
@@ -543,5 +571,6 @@ class MdpPlanningEnvironment(MdpEnvironment):
         )
 
         self.model = model
+        self.mode = mode
 
         self.state: Optional[State] = None

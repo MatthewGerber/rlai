@@ -90,6 +90,12 @@ def evaluate_q_pi(
                 agent=agent
             )
 
+            # in the case of planning-based advancement that uses trajectory sampling, the agent might have chosen an
+            # action that is not defined by the environment model. in such cases, the advancement will return a 2-tuple
+            # of the next state and the revised action. unpack them.
+            if isinstance(next_state, tuple):
+                curr_state, next_state, curr_a = next_state
+
             next_t = curr_t + 1
             agent.sense(next_state, next_t)
 
@@ -167,7 +173,8 @@ def evaluate_q_pi(
                     agent=agent,
                     next_state_q_s_a=next_state_q_s_a,
                     alpha=alpha,
-                    evaluated_states=evaluated_states
+                    evaluated_states=evaluated_states,
+                    environment_model=environment_model
                 )
 
             # advance the episode
@@ -188,7 +195,8 @@ def evaluate_q_pi(
                 agent=agent,
                 next_state_q_s_a=0.0,
                 alpha=alpha,
-                evaluated_states=evaluated_states
+                evaluated_states=evaluated_states,
+                environment_model=environment_model
             )
             curr_t += 1
 
@@ -209,7 +217,8 @@ def update_q_S_A(
         agent: MdpAgent,
         next_state_q_s_a: float,
         alpha: float,
-        evaluated_states: Set[MdpState]
+        evaluated_states: Set[MdpState],
+        environment_model: Optional[EnvironmentModel]
 ):
     """
     Update the value of the n-step state/action pair with the n-step TD target. The n-step TD target is the truncated
@@ -226,6 +235,8 @@ def update_q_S_A(
     :param next_state_q_s_a: Next state-action value.
     :param alpha: Step size.
     :param evaluated_states: Evaluated states.
+    :param environment_model: Environment model to be updated with experience gained during evaluation, or None to
+    ignore the environment model.
     """
 
     # if we're currently far enough along (i.e., have accumulated sufficient rewards), then update.
@@ -239,9 +250,17 @@ def update_q_S_A(
         # discount applied here to next_state_q_s_a will be agent.gamma.
         td_target = g + (agent.gamma ** n_steps) * next_state_q_s_a
 
-        # initialize and update the state-action pair with the target
+        # initialize and update the state-action pair with the target value. first calculate the update error for
+        # possible use in updating the environment model.
         lazy_initialize_q_S_A(q_S_A=q_S_A, state=update_state, a=update_a, alpha=alpha, weighted=False)
-        q_S_A[update_state][update_a].update(td_target)
+        averager = q_S_A[update_state][update_a]
+        error = td_target - averager.get_value()
+        averager.update(td_target)
+
+        # note that the priority queue returns values with the smallest priority. so negate the error to get the state-
+        # action pairs with highest error to come out of the queue first.
+        if environment_model is not None:
+            environment_model.add_state_action_priority(update_state, update_a, -abs(error))
 
         # note the evaluated state and remove from our n-step structure
         evaluated_states.add(update_state)

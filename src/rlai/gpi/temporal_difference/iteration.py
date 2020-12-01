@@ -5,7 +5,7 @@ from typing import Optional, Dict, Union
 
 from rlai.actions import Action
 from rlai.agents.mdp import MdpAgent
-from rlai.environments.mdp import MdpEnvironment, MdpPlanningEnvironment
+from rlai.environments.mdp import MdpEnvironment, MdpPlanningEnvironment, PlanningAdvancementMode
 from rlai.environments.openai_gym import Gym
 from rlai.gpi.improvement import improve_policy_with_q_pi
 from rlai.gpi.temporal_difference.evaluation import evaluate_q_pi, Mode
@@ -27,6 +27,7 @@ def iterate_value_q_pi(
         n_steps: Optional[int],
         epsilon: float,
         num_planning_improvements_per_direct_improvement: Optional[int],
+        planning_advancement_mode: Optional[PlanningAdvancementMode],
         make_final_policy_greedy: bool,
         num_improvements_per_plot: Optional[int] = None,
         num_improvements_per_checkpoint: Optional[int] = None,
@@ -48,6 +49,7 @@ def iterate_value_q_pi(
     be strictly > 0.
     :param num_planning_improvements_per_direct_improvement: Number of planning improvements to make for each
     improvement based on actual experience. Pass None for no planning.
+    :param planning_advancement_mode: Planning advancement mode.
     :param make_final_policy_greedy: Whether or not to make the agent's final policy greedy with respect to the q-values
     that have been learned, regardless of the value of epsilon used to estimate the q-values.
     :param num_improvements_per_plot: Number of improvements to make before plotting the per-improvement average. Pass
@@ -75,7 +77,8 @@ def iterate_value_q_pi(
             name=f'{environment.name} (planning)',
             random_state=environment.random_state,
             T=None,
-            model=StochasticEnvironmentModel()
+            model=StochasticEnvironmentModel(),
+            mode=planning_advancement_mode
         )
 
     q_S_A = initial_q_S_A
@@ -112,8 +115,7 @@ def iterate_value_q_pi(
         iteration_total_states.append(len(q_S_A))
         iteration_num_states_updated.append(num_states_updated)
 
-        # run planning by recursively calling into the current function with the planning environment, but without
-        # planning, plotting, etc.
+        # run planning through a recursive call to the iteration method, passing the planning environment.
         if planning_environment is not None:
             print(f'Running {num_planning_improvements_per_direct_improvement} planning improvement(s).')
             iterate_value_q_pi(
