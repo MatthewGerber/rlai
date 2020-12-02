@@ -445,7 +445,12 @@ class PlanningAdvancementMode(enum.Enum):
     Modes of planning advancement:  PRIORITIZED_SWEEPING and TRAJECTORY_SAMPLING.
     """
 
+    # State-action transitions are prioritized based on the degree to which learning updates their values, and
+    # transitions with the highest priority are explored during planning.
     PRIORITIZED_SWEEPING = enum.auto()
+
+    # State-action transitions are selected by the agent based on the agent's policy, and the selected transitions are
+    # explored during planning.
     TRAJECTORY_SAMPLING = enum.auto()
 
 
@@ -453,7 +458,7 @@ class PlanningAdvancementMode(enum.Enum):
 class MdpPlanningEnvironment(MdpEnvironment):
     """
     An MDP planning environment, used to generate simulated experience based on a model of the MDP that is learned
-    through direct experience.
+    through direct experience with the actual environment.
     """
 
     @classmethod

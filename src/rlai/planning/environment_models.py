@@ -221,15 +221,19 @@ class StochasticEnvironmentModel(EnvironmentModel):
             priority: float
     ):
         """
-        Add a state-action priority. The addition is ignored if its priority does not exceed the threshold.
+        Add a state-action priority.
 
         :param state: State.
         :param action: Action.
-        :param priority: Priority.
+        :param priority: Priority. Lower numbers are higher priority.
         """
 
-        if priority > self.priority_theta:
-            self.state_action_priority.put((priority, (state, action)))
+        if self.priority_theta is None or priority < self.priority_theta:
+
+            # use counter to break all ties
+            self.num_priorities += 1
+
+            self.state_action_priority.put((priority, self.num_priorities, (state, action)))
 
     def get_state_action_with_highest_priority(
             self
@@ -243,16 +247,22 @@ class StochasticEnvironmentModel(EnvironmentModel):
         if self.state_action_priority.empty():
             return None, None
         else:
-            return self.state_action_priority.get()[1]
+            return self.state_action_priority.get()[2]
 
     def __init__(
-            self
+            self,
+            priority_theta: Optional[float]
     ):
         """
         Initialize the environment model.
+
+        :param priority_theta: Priority threshold, below which state-action pairs are added to the priority queue for
+        exploration during planning-based learning. Pass None for no threshold (accept all state-action pairs).
         """
+
+        self.priority_theta = priority_theta
 
         self.state_action_next_state_count: Dict[State, Dict[Action, Dict[State, int]]] = {}
         self.state_reward_averager: Dict[State, IncrementalSampleAverager] = {}
-        self.priority_theta = 0.1
         self.state_action_priority: PriorityQueue = PriorityQueue()
+        self.num_priorities = 0

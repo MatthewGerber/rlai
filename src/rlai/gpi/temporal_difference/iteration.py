@@ -49,7 +49,8 @@ def iterate_value_q_pi(
     be strictly > 0.
     :param num_planning_improvements_per_direct_improvement: Number of planning improvements to make for each
     improvement based on actual experience. Pass None for no planning.
-    :param planning_advancement_mode: Planning advancement mode.
+    :param planning_advancement_mode: Planning advancement mode to use. Only valid if
+    `num_planning_improvements_per_direct_improvement` is > 0.
     :param make_final_policy_greedy: Whether or not to make the agent's final policy greedy with respect to the q-values
     that have been learned, regardless of the value of epsilon used to estimate the q-values.
     :param num_improvements_per_plot: Number of improvements to make before plotting the per-improvement average. Pass
@@ -72,15 +73,17 @@ def iterate_value_q_pi(
     if isinstance(planning_advancement_mode, str):
         planning_advancement_mode = PlanningAdvancementMode[planning_advancement_mode]
 
-    # initialize a new planning environment if needed
+    # ignore planning
     if num_planning_improvements_per_direct_improvement is None:
         planning_environment = None
+
+    # initialize a new planning environment to be learned
     else:
         planning_environment = MdpPlanningEnvironment(
             name=f'{environment.name} (planning)',
             random_state=environment.random_state,
             T=None,
-            model=StochasticEnvironmentModel(),
+            model=StochasticEnvironmentModel(None),
             mode=planning_advancement_mode
         )
 

@@ -54,8 +54,8 @@ def evaluate_q_pi(
     :param mode: Evaluation mode (see `rlai.gpi.temporal_difference.evaluation.Mode`).
     :param n_steps: Number of steps to accumulate rewards before updating estimated state-action values. Must be in the
     range [1, inf], or None for infinite step size (Monte Carlo evaluation).
-    :param environment_model: Environment model to be updated with experience gained during evaluation, or None to
-    ignore the environment model.
+    :param environment_model: Environment model to learn through experience gained during evaluation, or None to not
+    learn an environment model.
     :param initial_q_S_A: Initial guess at state-action value, or None for no guess.
     :return: 3-tuple of (1) dictionary of all MDP states and their action-value averagers under the agent's policy, (2)
     set of only those states that were evaluated, and (3) the average reward obtained per episode.
@@ -312,6 +312,7 @@ def update_q_S_A(
 
         # note that the priority queue returns values with the smallest priority. so negate the error to get the state-
         # action pairs with highest error to come out of the queue first.
+        # TODO:  Figure out how to avoid adding to priority queue when not using prioritized sweeping.
         if environment_model is not None:
             environment_model.add_state_action_priority(update_state, update_a, -abs(error))
 
