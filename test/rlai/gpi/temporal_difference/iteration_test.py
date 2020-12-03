@@ -4,9 +4,10 @@ import pickle
 from numpy.random import RandomState
 
 from rlai.agents.mdp import StochasticMdpAgent
-from rlai.environments.mdp import Gridworld, PlanningAdvancementMode
+from rlai.environments.mdp import Gridworld, TrajectorySamplingMdpPlanningEnvironment
 from rlai.gpi.temporal_difference.evaluation import Mode
 from rlai.gpi.temporal_difference.iteration import iterate_value_q_pi
+from rlai.planning.environment_models import StochasticEnvironmentModel
 from test.rlai.utils import get_pi_fixture, get_q_S_A_fixture
 
 
@@ -34,8 +35,7 @@ def test_sarsa_iterate_value_q_pi():
         mode=Mode.SARSA,
         n_steps=1,
         epsilon=0.05,
-        num_planning_improvements_per_direct_improvement=None,
-        planning_advancement_mode=None,
+        planning_environment=None,
         make_final_policy_greedy=False
     )
 
@@ -76,8 +76,7 @@ def test_sarsa_iterate_value_q_pi_make_greedy():
         mode=Mode.SARSA,
         n_steps=1,
         epsilon=0.05,
-        num_planning_improvements_per_direct_improvement=None,
-        planning_advancement_mode=None,
+        planning_environment=None,
         make_final_policy_greedy=True
     )
 
@@ -107,6 +106,14 @@ def test_sarsa_iterate_value_q_pi_with_trajectory_planning():
         1
     )
 
+    planning_environment = TrajectorySamplingMdpPlanningEnvironment(
+        'test planning',
+        random_state,
+        None,
+        StochasticEnvironmentModel(),
+        10
+    )
+
     mdp_agent.initialize_equiprobable_policy(mdp_environment.SS)
 
     q_S_A = iterate_value_q_pi(
@@ -118,8 +125,7 @@ def test_sarsa_iterate_value_q_pi_with_trajectory_planning():
         mode=Mode.SARSA,
         n_steps=1,
         epsilon=0.05,
-        num_planning_improvements_per_direct_improvement=10,
-        planning_advancement_mode=PlanningAdvancementMode.TRAJECTORY_SAMPLING,
+        planning_environment=planning_environment,
         num_improvements_per_plot=100,
         make_final_policy_greedy=True
     )
@@ -161,8 +167,7 @@ def test_q_learning_iterate_value_q_pi():
         mode=Mode.Q_LEARNING,
         n_steps=1,
         epsilon=0.05,
-        num_planning_improvements_per_direct_improvement=None,
-        planning_advancement_mode=None,
+        planning_environment=None,
         make_final_policy_greedy=False
     )
 
@@ -203,8 +208,7 @@ def test_expected_sarsa_iterate_value_q_pi():
         mode=Mode.EXPECTED_SARSA,
         n_steps=1,
         epsilon=0.05,
-        num_planning_improvements_per_direct_improvement=None,
-        planning_advancement_mode=None,
+        planning_environment=None,
         make_final_policy_greedy=False
     )
 
@@ -245,8 +249,7 @@ def test_n_step_q_learning_iterate_value_q_pi():
         mode=Mode.Q_LEARNING,
         n_steps=3,
         epsilon=0.05,
-        num_planning_improvements_per_direct_improvement=None,
-        planning_advancement_mode=None,
+        planning_environment=None,
         make_final_policy_greedy=False
     )
 

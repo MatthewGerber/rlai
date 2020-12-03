@@ -1,9 +1,9 @@
-import enum
-from abc import ABC
+from abc import ABC, abstractmethod
 from argparse import Namespace, ArgumentParser
 from copy import copy
 from functools import partial
-from typing import List, Tuple, Optional, final, Any, Dict
+from queue import PriorityQueue
+from typing import List, Tuple, Optional, final, Dict
 
 import numpy as np
 from numpy.random import RandomState
@@ -439,22 +439,7 @@ class GamblersProblem(MdpEnvironment):
             s.check_marginal_probabilities()
 
 
-@rl_text(chapter=8, page=168)
-class PlanningAdvancementMode(enum.Enum):
-    """
-    Modes of planning advancement:  PRIORITIZED_SWEEPING and TRAJECTORY_SAMPLING.
-    """
-
-    # State-action transitions are prioritized based on the degree to which learning updates their values, and
-    # transitions with the highest priority are explored during planning.
-    PRIORITIZED_SWEEPING = enum.auto()
-
-    # State-action transitions are selected by the agent based on the agent's policy, and the selected transitions are
-    # explored during planning.
-    TRAJECTORY_SAMPLING = enum.auto()
-
-
-@rl_text(chapter=8, page=163)
+@rl_text(chapter=8, page=159)
 class MdpPlanningEnvironment(MdpEnvironment):
     """
     An MDP planning environment, used to generate simulated experience based on a model of the MDP that is learned
@@ -462,18 +447,33 @@ class MdpPlanningEnvironment(MdpEnvironment):
     """
 
     @classmethod
-    def init_from_arguments(
+    def parse_arguments(
             cls,
-            args: List[str],
-            random_state: RandomState
-    ) -> Tuple[Any, List[str]]:
+            args
+    ) -> Tuple[Namespace, List[str]]:
         """
-        Not to be called.
+        Parse arguments.
+
+        :param args: Arguments.
+        :return: 2-tuple of parsed and unparsed arguments.
         """
 
-        raise ValueError('Planning environments are not intended to be initialized from arguments.')
+        parsed_args, unparsed_args = super().parse_arguments(args)
+
+        parser = ArgumentParser(allow_abbrev=False)
+
+        parser.add_argument(
+            '--num-planning-improvements-per-direct-improvement',
+            type=int,
+            help='Number of planning improvements to make for each direct improvement.'
+        )
+
+        parsed_args, unparsed_args = parser.parse_known_args(unparsed_args, parsed_args)
+
+        return parsed_args, unparsed_args
 
     @staticmethod
+    @abstractmethod
     def planning_advance(
             state: State,
             environment: Environment,
@@ -482,57 +482,18 @@ class MdpPlanningEnvironment(MdpEnvironment):
             agent: MdpAgent
     ) -> Tuple[Tuple[State, Action, State], Reward]:
         """
-        Advance a planning state using the advancement mode specified in the current planning environment.
+        Advance a planning state.
 
         :param state: State to be advanced.
         :param environment: Environment.
         :param t: Time step.
-        :param a: Action chosen by agent. If this action has not yet been observed for the passed `state`, then this
-        function will randomly sample an action that has been observed for the passed `state`. The revised action will
-        be returned.
+        :param a: Action.
         :param agent: Agent.
-        :return: 3-tuple of (1) (possibly revised) current state, (possibly revised) current action, and next-state, and
-        (2) reward.
+        :return: 3-tuple of (1) current state, current action, and next-state, and (2) reward.
         """
+        pass
 
-        environment: MdpPlanningEnvironment
-
-        if environment.mode == PlanningAdvancementMode.TRAJECTORY_SAMPLING:
-
-            # sample a random action if the given one is not defined by the model
-            if not environment.model.is_defined_for_state_action(state, a):
-                a = environment.model.sample_action(state, environment.random_state)
-
-            next_state, r = environment.model.sample_next_state_and_reward(state, a, environment.random_state)
-
-        elif environment.mode == PlanningAdvancementMode.PRIORITIZED_SWEEPING:
-
-            state, a = environment.model.get_state_action_with_highest_priority()
-
-            # if there is nothing left in the priority queue, then the planning episode is done.
-            if state is None:
-                next_state = copy(state)
-                next_state.terminal = True
-                r = 0.0
-            else:
-
-                # sample next state and reward from model
-                next_state, r = environment.model.sample_next_state_and_reward(state, a, environment.random_state)
-
-                # add predecessors into priority queue
-                for pred_state, pred_action, r in environment.model.get_predecessor_state_action_rewards(state):
-                    pred_state: MdpState
-                    target_value = r + agent.gamma * environment.bootstrap_function(state=state, t=t+1)
-                    priority = -abs(target_value - environment.q_S_A[pred_state][pred_action].get_value())
-                    environment.model.add_state_action_priority(pred_state, pred_action, priority)
-
-        else:
-            raise ValueError(f'Unknown planning advancement mode:  {environment.mode}')
-
-        next_state = environment.rewire_advance_for_planning(next_state)
-
-        return (state, a, next_state), Reward(None, r)
-
+    @final
     def rewire_advance_for_planning(
             self,
             state: State
@@ -555,7 +516,7 @@ class MdpPlanningEnvironment(MdpEnvironment):
             agent: Agent
     ) -> Optional[State]:
         """
-        Reset the planning environment.
+        Reset the planning environment to a randomly sampled state.
 
         :param agent: Agent.
         :return: New state.
@@ -571,7 +532,7 @@ class MdpPlanningEnvironment(MdpEnvironment):
             random_state: RandomState,
             T: Optional[int],
             model: StochasticEnvironmentModel,
-            mode: PlanningAdvancementMode
+            num_planning_improvements_per_direct_improvement: int
     ):
         """
         Initialize the planning environment.
@@ -580,7 +541,8 @@ class MdpPlanningEnvironment(MdpEnvironment):
         :param random_state: Random state.
         :param T: Maximum number of steps to run, or None for no limit.
         :param model: Model to be learned from direct experience for the purpose of planning from simulated experience.
-        :param mode: Planning advancement mode.
+        :param num_planning_improvements_per_direct_improvement: Number of planning improvements to make for each
+        improvement based on actual experience. Pass None for no planning.
         """
 
         super().__init__(
@@ -590,8 +552,293 @@ class MdpPlanningEnvironment(MdpEnvironment):
         )
 
         self.model = model
-        self.mode = mode
+        self.num_planning_improvements_per_direct_improvement = num_planning_improvements_per_direct_improvement
 
-        self.state: Optional[State] = None
+
+@rl_text(chapter=8, page=168)
+class PrioritizedSweepingMdpPlanningEnvironment(MdpPlanningEnvironment):
+    """
+    State-action transitions are prioritized based on the degree to which learning updates their values, and transitions
+    with the highest priority are explored during planning.
+    """
+
+    @classmethod
+    def parse_arguments(
+            cls,
+            args
+    ) -> Tuple[Namespace, List[str]]:
+        """
+        Parse arguments.
+
+        :param args: Arguments.
+        :return: 2-tuple of parsed and unparsed arguments.
+        """
+
+        parsed_args, unparsed_args = super().parse_arguments(args)
+
+        parser = ArgumentParser(allow_abbrev=False)
+
+        parser.add_argument(
+            '--priority-theta',
+            type=float,
+            help='Threshold on priority values, below which state-action pairs are added to the priority queue.'
+        )
+
+        parsed_args, unparsed_args = parser.parse_known_args(unparsed_args, parsed_args)
+
+        return parsed_args, unparsed_args
+
+    @classmethod
+    def init_from_arguments(
+            cls,
+            args: List[str],
+            random_state: RandomState
+    ) -> Tuple[Environment, List[str]]:
+        """
+        Initialize an environment from arguments.
+
+        :param args: Arguments.
+        :param random_state: Random state.
+        :return: 2-tuple of an environment and a list of unparsed arguments.
+        """
+
+        parsed_args, unparsed_args = cls.parse_arguments(args)
+
+        planning_environment = PrioritizedSweepingMdpPlanningEnvironment(
+            name=f"prioritized planning (theta={parsed_args.priority_theta})",
+            random_state=random_state,
+            model=StochasticEnvironmentModel(),
+            **vars(parsed_args)
+        )
+
+        return planning_environment, unparsed_args
+
+    @staticmethod
+    def planning_advance(
+            state: State,
+            environment: Environment,
+            t: int,
+            a: Action,
+            agent: MdpAgent
+    ) -> Tuple[Tuple[State, Action, State], Reward]:
+        """
+        Advance a planning state based on priorities.
+
+        :param state: State to be advanced.
+        :param environment: Environment.
+        :param t: Time step.
+        :param a: Action.
+        :param agent: Agent.
+        :return: 3-tuple of (1) current state, current action, and next-state, and (2) reward.
+        """
+
+        environment: PrioritizedSweepingMdpPlanningEnvironment
+
+        state, a = environment.get_state_action_with_highest_priority()
+
+        # if there is nothing left in the priority queue, then the planning episode is done.
+        if state is None:
+            next_state = copy(state)
+            next_state.terminal = True
+            r = 0.0
+        else:
+
+            # sample next state and reward from model
+            next_state, r = environment.model.sample_next_state_and_reward(state, a, environment.random_state)
+
+            # add predecessors into priority queue
+            for pred_state, pred_action, r in environment.get_predecessor_state_action_rewards(state):
+                pred_state: MdpState
+                target_value = r + agent.gamma * environment.bootstrap_function(state=state, t=t+1)
+                priority = -abs(target_value - environment.q_S_A[pred_state][pred_action].get_value())
+                environment.add_state_action_priority(pred_state, pred_action, priority)
+
+        next_state = environment.rewire_advance_for_planning(next_state)
+
+        return (state, a, next_state), Reward(None, r)
+
+    def get_predecessor_state_action_rewards(
+            self,
+            state: State
+    ) -> List[Tuple[State, Action, float]]:
+        """
+        Get a list of predecessor state-action-reward tuples for a given state.
+
+        :param state: State.
+        :return: List of predecessor state-action-reward 3-tuples for a given state.
+        """
+
+        return [
+            (
+                pred_state,
+                pred_action,
+                self.model.state_reward_averager[state].get_value()
+            )
+            for pred_state in self.model.state_action_next_state_count
+            for pred_action in self.model.state_action_next_state_count[pred_state]
+            if state in self.model.state_action_next_state_count[pred_state][pred_action]
+        ]
+
+    def add_state_action_priority(
+            self,
+            state: State,
+            action: Action,
+            priority: float
+    ):
+        """
+        Add a state-action priority.
+
+        :param state: State.
+        :param action: Action.
+        :param priority: Priority. Lower numbers are higher priority.
+        """
+
+        if self.priority_theta is None or priority < self.priority_theta:
+
+            # use counter to break all ties
+            self.num_priorities += 1
+
+            self.state_action_priority.put((priority, self.num_priorities, (state, action)))
+
+    def get_state_action_with_highest_priority(
+            self
+    ) -> Tuple[Optional[State], Optional[Action]]:
+        """
+        Get the state-action pair with the highest priority.
+
+        :return: 2-tuple of state-action pair, or (None, None) if the priority queue is empty.
+        """
+
+        if self.state_action_priority.empty():
+            return None, None
+        else:
+            return self.state_action_priority.get()[2]
+
+    def __init__(
+            self,
+            name: str,
+            random_state: RandomState,
+            T: Optional[int],
+            model: StochasticEnvironmentModel,
+            num_planning_improvements_per_direct_improvement: int,
+            priority_theta: Optional[float]
+    ):
+        """
+        Initialize the planning environment.
+
+        :param name: Name of the environment.
+        :param random_state: Random state.
+        :param T: Maximum number of steps to run, or None for no limit.
+        :param model: Model to be learned from direct experience for the purpose of planning from simulated experience.
+        :param num_planning_improvements_per_direct_improvement: Number of planning improvements to run per direct
+        improvement.
+        :param priority_theta: Priority threshold, below which state-action pairs are added to the priority queue for
+        exploration during planning-based learning. Pass None for no threshold (accept all state-action pairs).
+        """
+
+        super().__init__(
+            name=name,
+            random_state=random_state,
+            T=T,
+            model=model,
+            num_planning_improvements_per_direct_improvement=num_planning_improvements_per_direct_improvement
+        )
+
+        self.priority_theta = priority_theta
+
+        self.state_action_priority: PriorityQueue = PriorityQueue()
+        self.num_priorities = 0
         self.bootstrap_function: Optional[partial] = None
         self.q_S_A: Optional[Dict[MdpState, Dict[Action, IncrementalSampleAverager]]] = None
+
+
+@rl_text(chapter=8, page=174)
+class TrajectorySamplingMdpPlanningEnvironment(MdpPlanningEnvironment):
+    """
+    State-action transitions are selected by the agent based on the agent's policy, and the selected transitions are
+    explored during planning.
+    """
+
+    @classmethod
+    def init_from_arguments(
+            cls,
+            args: List[str],
+            random_state: RandomState
+    ) -> Tuple[Environment, List[str]]:
+        """
+        Initialize an environment from arguments.
+
+        :param args: Arguments.
+        :param random_state: Random state.
+        :return: 2-tuple of an environment and a list of unparsed arguments.
+        """
+
+        parsed_args, unparsed_args = cls.parse_arguments(args)
+
+        planning_environment = TrajectorySamplingMdpPlanningEnvironment(
+            name=f"trajectory planning",
+            random_state=random_state,
+            model=StochasticEnvironmentModel(),
+            **vars(parsed_args)
+        )
+
+        return planning_environment, unparsed_args
+
+    @staticmethod
+    def planning_advance(
+            state: State,
+            environment: Environment,
+            t: int,
+            a: Action,
+            agent: MdpAgent
+    ) -> Tuple[Tuple[State, Action, State], Reward]:
+        """
+        Advance a planning state.
+
+        :param state: State to be advanced.
+        :param environment: Environment.
+        :param t: Time step.
+        :param a: Action.
+        :param agent: Agent.
+        :return: 3-tuple of (1) current state, current action, and next-state, and (2) reward.
+        """
+
+        environment: TrajectorySamplingMdpPlanningEnvironment
+
+        # sample a random action if the given one is not defined by the model
+        if not environment.model.is_defined_for_state_action(state, a):
+            a = environment.model.sample_action(state, environment.random_state)
+
+        # sample next state and reward from model
+        next_state, r = environment.model.sample_next_state_and_reward(state, a, environment.random_state)
+
+        next_state = environment.rewire_advance_for_planning(next_state)
+
+        return (state, a, next_state), Reward(None, r)
+
+    def __init__(
+            self,
+            name: str,
+            random_state: RandomState,
+            T: Optional[int],
+            model: StochasticEnvironmentModel,
+            num_planning_improvements_per_direct_improvement: int
+    ):
+        """
+        Initialize the planning environment.
+
+        :param name: Name of the environment.
+        :param random_state: Random state.
+        :param T: Maximum number of steps to run, or None for no limit.
+        :param model: Model to be learned from direct experience for the purpose of planning from simulated experience.
+        :param num_planning_improvements_per_direct_improvement: Number of planning improvements to run per direct
+        improvement.
+        """
+
+        super().__init__(
+            name=name,
+            random_state=random_state,
+            T=T,
+            model=model,
+            num_planning_improvements_per_direct_improvement=num_planning_improvements_per_direct_improvement
+        )

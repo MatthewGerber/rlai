@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
-from queue import PriorityQueue
-from typing import Tuple, Dict, Optional, List
+from typing import Tuple, Dict
 
 import numpy as np
 from numpy.random import RandomState
@@ -33,33 +32,6 @@ class EnvironmentModel(ABC):
         :param action: Action taken in state.
         :param next_state: Subsequent state.
         :param reward: Subsequent reward.
-        """
-        pass
-
-    @abstractmethod
-    def add_state_action_priority(
-            self,
-            state: State,
-            action: Action,
-            priority: float
-    ):
-        """
-        Add a state-action priority.
-
-        :param state: State.
-        :param action: Action.
-        :param priority: Priority.
-        """
-        pass
-
-    @abstractmethod
-    def get_state_action_with_highest_priority(
-            self
-    ) -> Optional[Tuple[State, Action]]:
-        """
-        Get the state-action pair with the highest priority.
-
-        :return: 2-tuple of state-action pair, or None if the priority queue is empty.
         """
         pass
 
@@ -116,28 +88,6 @@ class StochasticEnvironmentModel(EnvironmentModel):
             self.state_reward_averager[next_state] = IncrementalSampleAverager()
 
         self.state_reward_averager[next_state].update(reward.r)
-
-    def get_predecessor_state_action_rewards(
-            self,
-            state: State
-    ) -> List[Tuple[State, Action, float]]:
-        """
-        Get a list of predecessor state-action-reward tuples for a given state.
-
-        :param state: State.
-        :return: List of predecessor state-action-reward 3-tuples for a given state.
-        """
-
-        return [
-            (
-                pred_state,
-                pred_action,
-                self.state_reward_averager[state].get_value()
-            )
-            for pred_state in self.state_action_next_state_count
-            for pred_action in self.state_action_next_state_count[pred_state]
-            if state in self.state_action_next_state_count[pred_state][pred_action]
-        ]
 
     def sample_state(
             self,
@@ -214,55 +164,12 @@ class StochasticEnvironmentModel(EnvironmentModel):
 
         return next_state, reward
 
-    def add_state_action_priority(
-            self,
-            state: State,
-            action: Action,
-            priority: float
-    ):
-        """
-        Add a state-action priority.
-
-        :param state: State.
-        :param action: Action.
-        :param priority: Priority. Lower numbers are higher priority.
-        """
-
-        if self.priority_theta is None or priority < self.priority_theta:
-
-            # use counter to break all ties
-            self.num_priorities += 1
-
-            self.state_action_priority.put((priority, self.num_priorities, (state, action)))
-
-    def get_state_action_with_highest_priority(
-            self
-    ) -> Tuple[Optional[State], Optional[Action]]:
-        """
-        Get the state-action pair with the highest priority.
-
-        :return: 2-tuple of state-action pair, or (None, None) if the priority queue is empty.
-        """
-
-        if self.state_action_priority.empty():
-            return None, None
-        else:
-            return self.state_action_priority.get()[2]
-
     def __init__(
-            self,
-            priority_theta: Optional[float]
+            self
     ):
         """
         Initialize the environment model.
-
-        :param priority_theta: Priority threshold, below which state-action pairs are added to the priority queue for
-        exploration during planning-based learning. Pass None for no threshold (accept all state-action pairs).
         """
-
-        self.priority_theta = priority_theta
 
         self.state_action_next_state_count: Dict[State, Dict[Action, Dict[State, int]]] = {}
         self.state_reward_averager: Dict[State, IncrementalSampleAverager] = {}
-        self.state_action_priority: PriorityQueue = PriorityQueue()
-        self.num_priorities = 0

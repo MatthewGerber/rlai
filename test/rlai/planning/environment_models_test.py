@@ -14,7 +14,7 @@ def test_stochastic_environment_model():
 
     random_state = RandomState(12345)
 
-    model = StochasticEnvironmentModel(None)
+    model = StochasticEnvironmentModel()
 
     actions = [
         Action(i)
@@ -48,16 +48,3 @@ def test_stochastic_environment_model():
         environment_sequence_fixture = pickle.load(file)
 
     assert environment_sequence == environment_sequence_fixture
-
-    # test state-action prioritization
-    model.add_state_action_priority(State(1, []), Action(1), 0.2)
-    model.add_state_action_priority(State(2, []), Action(2), 0.1)
-    model.add_state_action_priority(State(3, []), Action(3), 0.3)
-    s, a = model.get_state_action_with_highest_priority()
-    assert s.i == 2 and a.i == 2
-    s, a = model.get_state_action_with_highest_priority()
-    assert s.i == 1 and a.i == 1
-    s, a = model.get_state_action_with_highest_priority()
-    assert s.i == 3 and a.i == 3
-    s, a = model.get_state_action_with_highest_priority()
-    assert s is None and a is None

@@ -4,10 +4,9 @@ from typing import Dict, Set, Tuple, Optional
 
 from rlai.actions import Action
 from rlai.agents.mdp import MdpAgent
-from rlai.environments.mdp import MdpEnvironment, MdpPlanningEnvironment
+from rlai.environments.mdp import MdpEnvironment, MdpPlanningEnvironment, PrioritizedSweepingMdpPlanningEnvironment
 from rlai.gpi.utils import lazy_initialize_q_S_A, initialize_q_S_A
 from rlai.meta import rl_text
-from rlai.planning.environment_models import EnvironmentModel
 from rlai.states.mdp import MdpState
 from rlai.utils import IncrementalSampleAverager, sample_list_item
 
@@ -39,7 +38,7 @@ def evaluate_q_pi(
         alpha: Optional[float],
         mode: Mode,
         n_steps: Optional[int],
-        environment_model: Optional[EnvironmentModel],
+        planning_environment: MdpPlanningEnvironment,
         initial_q_S_A: Dict[MdpState, Dict[Action, IncrementalSampleAverager]]
 ) -> Tuple[Dict[MdpState, Dict[Action, IncrementalSampleAverager]], Set[MdpState], float]:
     """
@@ -54,8 +53,8 @@ def evaluate_q_pi(
     :param mode: Evaluation mode (see `rlai.gpi.temporal_difference.evaluation.Mode`).
     :param n_steps: Number of steps to accumulate rewards before updating estimated state-action values. Must be in the
     range [1, inf], or None for infinite step size (Monte Carlo evaluation).
-    :param environment_model: Environment model to learn through experience gained during evaluation, or None to not
-    learn an environment model.
+    :param planning_environment: Planning environment to learn through experience gained during evaluation, or None to
+    not learn an environment model.
     :param initial_q_S_A: Initial guess at state-action value, or None for no guess.
     :return: 3-tuple of (1) dictionary of all MDP states and their action-value averagers under the agent's policy, (2)
     set of only those states that were evaluated, and (3) the average reward obtained per episode.
@@ -70,11 +69,11 @@ def evaluate_q_pi(
 
     q_S_A = initialize_q_S_A(initial_q_S_A, environment, evaluated_states)
 
-    # if we're planning, then set necessary variables on the planning environment. prioritized sampling requires access
-    # to the bootstrapped state-action value function, and it also requires access to the state-action value estimators.
-    planning = False
-    if isinstance(environment, MdpPlanningEnvironment):
-        planning = True
+    planning = isinstance(environment, MdpPlanningEnvironment)
+
+    # prioritized sampling requires access to the bootstrapped state-action value function, and it also requires
+    # access to the state-action value estimators.
+    if isinstance(environment, PrioritizedSweepingMdpPlanningEnvironment):
         environment.bootstrap_function = partial(
             get_bootstrapped_state_action_value,
             mode=mode,
@@ -120,8 +119,8 @@ def evaluate_q_pi(
             agent.sense(next_state, next_t)
 
             # if we're building an environment model, then update it with the transition we just observed.
-            if environment_model is not None:
-                environment_model.update(curr_state, curr_a, next_state, next_reward)
+            if planning_environment is not None:
+                planning_environment.model.update(curr_state, curr_a, next_state, next_reward)
 
             # initialize the n-step, truncated return accumulator at the current time for the current state and action
             t_state_a_g[curr_t] = (curr_state, curr_a, 0.0)
@@ -164,7 +163,7 @@ def evaluate_q_pi(
                     next_state_q_s_a=next_state_q_s_a,
                     alpha=alpha,
                     evaluated_states=evaluated_states,
-                    environment_model=environment_model
+                    planning_environment=planning_environment
                 )
 
             # advance the episode
@@ -186,7 +185,7 @@ def evaluate_q_pi(
                 next_state_q_s_a=0.0,
                 alpha=alpha,
                 evaluated_states=evaluated_states,
-                environment_model=environment_model
+                planning_environment=planning_environment
             )
             curr_t += 1
 
@@ -271,7 +270,7 @@ def update_q_S_A(
         next_state_q_s_a: float,
         alpha: float,
         evaluated_states: Set[MdpState],
-        environment_model: Optional[EnvironmentModel]
+        planning_environment: Optional[MdpPlanningEnvironment]
 ):
     """
     Update the value of the n-step state/action pair with the n-step TD target. The n-step TD target is the truncated
@@ -288,7 +287,7 @@ def update_q_S_A(
     :param next_state_q_s_a: Next state-action value.
     :param alpha: Step size.
     :param evaluated_states: Evaluated states.
-    :param environment_model: Environment model to be updated with experience gained during evaluation, or None to
+    :param planning_environment: Planning environment to be updated with experience gained during evaluation, or None to
     ignore the environment model.
     """
 
@@ -310,11 +309,11 @@ def update_q_S_A(
         error = td_target - averager.get_value()
         averager.update(td_target)
 
-        # note that the priority queue returns values with the smallest priority. so negate the error to get the state-
-        # action pairs with highest error to come out of the queue first.
-        # TODO:  Figure out how to avoid adding to priority queue when not using prioritized sweeping.
-        if environment_model is not None:
-            environment_model.add_state_action_priority(update_state, update_a, -abs(error))
+        # if we're using prioritized-sweep planning, then update the priority queue. note that the priority queue
+        # returns values with the lowest priority first. so negate the error to get the state-action pairs with highest
+        # error to come out of the queue first.
+        if isinstance(planning_environment, PrioritizedSweepingMdpPlanningEnvironment):
+            planning_environment.add_state_action_priority(update_state, update_a, -abs(error))
 
         # note the evaluated state and remove from our n-step structure
         evaluated_states.add(update_state)

@@ -3,9 +3,12 @@ import pickle
 
 from numpy.random import RandomState
 
+from rlai.actions import Action
 from rlai.agents.mdp import StochasticMdpAgent
-from rlai.environments.mdp import GamblersProblem
+from rlai.environments.mdp import GamblersProblem, PrioritizedSweepingMdpPlanningEnvironment
 from rlai.gpi.dynamic_programming.iteration import iterate_value_v_pi
+from rlai.planning.environment_models import StochasticEnvironmentModel
+from rlai.states import State
 
 
 def test_gamblers_problem():
@@ -49,3 +52,28 @@ def test_gamblers_problem():
         fixture = pickle.load(file)
 
     assert v_pi == fixture
+
+
+def test_prioritized_planning_environment():
+
+    rng = RandomState(12345)
+
+    planning_environment = PrioritizedSweepingMdpPlanningEnvironment(
+        'test',
+        rng,
+        None,
+        StochasticEnvironmentModel(),
+        1,
+        priority_theta=0.3
+    )
+
+    planning_environment.add_state_action_priority(State(1, []), Action(1), 0.2)
+    planning_environment.add_state_action_priority(State(2, []), Action(2), 0.1)
+    planning_environment.add_state_action_priority(State(3, []), Action(3), 0.3)
+
+    s, a = planning_environment.get_state_action_with_highest_priority()
+    assert s.i == 2 and a.i == 2
+    s, a = planning_environment.get_state_action_with_highest_priority()
+    assert s.i == 1 and a.i == 1
+    s, a = planning_environment.get_state_action_with_highest_priority()
+    assert s is None and a is None
