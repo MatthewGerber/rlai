@@ -33,6 +33,8 @@ def test_run():
     with open(f'{os.path.dirname(__file__)}/fixtures/agent_in_environment_test.pickle', 'rb') as file:
         run_monitor_fixture = pickle.load(file)
 
+    assert len(run_args_list) == len(run_monitor_fixture.keys())
+
     for run_args, run_args_fixture in zip(run_args_list, run_monitor_fixture.keys()):
 
         print(f'Checking test results for run {run_args}...', end='')

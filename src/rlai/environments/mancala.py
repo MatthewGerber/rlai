@@ -19,68 +19,6 @@ class MancalaState(MdpState):
     State of the mancala game. In charge of representing the entirety of the game state and advancing to the next state.
     """
 
-    def advance(
-            self,
-            environment: Environment,
-            t: int,
-            a: Action,
-            agent: MdpAgent
-    ) -> Tuple[MdpState, Reward]:
-        """
-        Advance from the current state given an action.
-
-        :param environment: Environment.
-        :param t: Current time step.
-        :param a: Action.
-        :param agent: Agent used to generate on-the-fly state identifiers.
-        :return: 2-tuple of next state and next reward.
-        """
-
-        environment: Mancala
-
-        # pick and sow from pocket
-        picked_pocket = environment.board[a.i]
-        go_again = environment.sow_and_capture(picked_pocket)
-        next_state = MancalaState(
-            mancala=environment,
-            agent_to_sense_state=agent if go_again else environment.player_2
-        )
-
-        # check for termination
-        next_reward = environment.r_none
-        if next_state.terminal:
-            next_reward = environment.get_terminal_reward()
-
-        # if the agent (player 1) does not get to go again, let the environmental agent take its turn(s)
-        elif not go_again:
-
-            while True:
-
-                environment.player_2.sense(next_state, t)
-
-                # if the environmental agent is human, then render the board for them to see.
-                if isinstance(environment.player_2, Human):
-                    environment.render()
-
-                p2_a = environment.player_2.act(t)
-                picked_pocket = environment.board[p2_a.i]
-                go_again = environment.sow_and_capture(picked_pocket)
-                next_state = MancalaState(
-                    mancala=environment,
-                    agent_to_sense_state=environment.player_2 if go_again else agent
-                )
-
-                # check for termination
-                if next_state.terminal:
-                    next_reward = environment.get_terminal_reward()
-                    break
-
-                # take another turn if earned
-                elif not go_again:
-                    break
-
-        return next_state, next_reward
-
     def __init__(
             self,
             mancala,
@@ -265,6 +203,66 @@ class Mancala(MdpEnvironment):
         )
 
         return mancala, unparsed_args
+
+    def advance(
+            self,
+            state: MdpState,
+            t: int,
+            a: Action,
+            agent: MdpAgent
+    ) -> Tuple[MdpState, Reward]:
+        """
+        Advance from the current state given an action.
+
+        :param state: State to advance.
+        :param t: Current time step.
+        :param a: Action.
+        :param agent: Agent used to generate on-the-fly state identifiers.
+        :return: 2-tuple of next state and next reward.
+        """
+
+        # pick and sow from pocket
+        picked_pocket = self.board[a.i]
+        go_again = self.sow_and_capture(picked_pocket)
+        next_state = MancalaState(
+            mancala=self,
+            agent_to_sense_state=agent if go_again else self.player_2
+        )
+
+        # check for termination
+        next_reward = self.r_none
+        if next_state.terminal:
+            next_reward = self.get_terminal_reward()
+
+        # if the agent (player 1) does not get to go again, let the environmental agent take its turn(s)
+        elif not go_again:
+
+            while True:
+
+                self.player_2.sense(next_state, t)
+
+                # if the environmental agent is human, then render the board for them to see.
+                if isinstance(self.player_2, Human):
+                    self.render()
+
+                p2_a = self.player_2.act(t)
+                picked_pocket = self.board[p2_a.i]
+                go_again = self.sow_and_capture(picked_pocket)
+                next_state = MancalaState(
+                    mancala=self,
+                    agent_to_sense_state=self.player_2 if go_again else agent
+                )
+
+                # check for termination
+                if next_state.terminal:
+                    next_reward = self.get_terminal_reward()
+                    break
+
+                # take another turn if earned
+                elif not go_again:
+                    break
+
+        return next_state, next_reward
 
     def reset_for_new_run(
             self,

@@ -109,9 +109,9 @@ def test_sarsa_iterate_value_q_pi_with_trajectory_planning():
     planning_environment = TrajectorySamplingMdpPlanningEnvironment(
         'test planning',
         random_state,
-        None,
         StochasticEnvironmentModel(),
-        10
+        10,
+        None
     )
 
     mdp_agent.initialize_equiprobable_policy(mdp_environment.SS)

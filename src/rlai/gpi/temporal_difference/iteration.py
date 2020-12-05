@@ -5,7 +5,7 @@ from typing import Optional, Dict, Union
 
 from rlai.actions import Action
 from rlai.agents.mdp import MdpAgent
-from rlai.environments.mdp import MdpEnvironment, MdpPlanningEnvironment
+from rlai.environments.mdp import MdpEnvironment, MdpPlanningEnvironment, PrioritizedSweepingMdpPlanningEnvironment
 from rlai.environments.openai_gym import Gym
 from rlai.gpi.improvement import improve_policy_with_q_pi
 from rlai.gpi.temporal_difference.evaluation import evaluate_q_pi, Mode
@@ -139,6 +139,10 @@ def iterate_value_q_pi(
             if isinstance(environment, Gym):
                 gym_native = environment.gym_native
                 environment.gym_native = environment.gym_native.spec.id
+
+            # priority queues cannot be pickled since they contain thread locks
+            if isinstance(planning_environment, PrioritizedSweepingMdpPlanningEnvironment):
+                planning_environment.state_action_priority = None
 
             resume_args = {
                 'agent': agent,

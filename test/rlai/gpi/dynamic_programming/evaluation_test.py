@@ -26,6 +26,7 @@ def test_evaluate_v_pi():
 
     v_pi, _ = evaluate_v_pi(
         agent=mdp_agent,
+        environment=mdp_environment,
         theta=0.001,
         num_iterations=None,
         update_in_place=True
@@ -33,6 +34,7 @@ def test_evaluate_v_pi():
 
     v_pi_not_in_place, _ = evaluate_v_pi(
         agent=mdp_agent,
+        environment=mdp_environment,
         theta=0.001,
         num_iterations=None,
         update_in_place=False
@@ -75,6 +77,7 @@ def test_evaluate_q_pi():
 
     q_pi, _ = evaluate_q_pi(
         agent=mdp_agent,
+        environment=mdp_environment,
         theta=0.001,
         num_iterations=None,
         update_in_place=True
@@ -82,6 +85,7 @@ def test_evaluate_q_pi():
 
     q_pi_not_in_place, _ = evaluate_q_pi(
         agent=mdp_agent,
+        environment=mdp_environment,
         theta=0.001,
         num_iterations=None,
         update_in_place=False
