@@ -39,12 +39,6 @@ def test_gamblers_problem():
         True
     )
 
-    # pickle doesn't like to unpickle instances with custom __hash__ functions
-    v_pi = {
-        s.i: v_pi[s]
-        for s in v_pi
-    }
-
     # uncomment the following line and run test to update fixture
     # with open(f'{os.path.dirname(__file__)}/fixtures/test_gamblers_problem.pickle', 'wb') as file:
     #     pickle.dump(v_pi, file)

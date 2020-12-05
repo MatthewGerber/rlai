@@ -29,12 +29,6 @@ def test_evaluate_v_pi():
         num_episodes=1000
     )
 
-    # pickle doesn't like to unpickle instances with custom __hash__ functions
-    v_pi = {
-        s.i: v_pi[s]
-        for s in v_pi
-    }
-
     # uncomment the following line and run test to update fixture
     # with open(f'{os.path.dirname(__file__)}/fixtures/test_monte_carlo_evaluation_of_state_value.pickle', 'wb') as file:
     #     pickle.dump(v_pi, file)
@@ -71,20 +65,11 @@ def test_evaluate_q_pi():
     assert len(q_S_A) == len(evaluated_states)
     assert all(s in q_S_A for s in evaluated_states)
 
-    # pickle doesn't like to unpickle instances with custom __hash__ functions
-    q_pi = {
-        s.i: {
-            a: q_S_A[s][a].get_value()
-            for a in q_S_A[s]
-        }
-        for s in q_S_A
-    }
-
     # uncomment the following line and run test to update fixture
     # with open(f'{os.path.dirname(__file__)}/fixtures/test_monte_carlo_evaluation_of_state_action_value.pickle', 'wb') as file:
-    #     pickle.dump(q_pi, file)
+    #     pickle.dump(q_S_A, file)
 
     with open(f'{os.path.dirname(__file__)}/fixtures/test_monte_carlo_evaluation_of_state_action_value.pickle', 'rb') as file:
         fixture = pickle.load(file)
 
-    assert q_pi == fixture
+    assert q_S_A == fixture

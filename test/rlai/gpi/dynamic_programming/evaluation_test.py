@@ -44,12 +44,6 @@ def test_evaluate_v_pi():
 
     assert np.allclose(list(v_pi.values()), list(v_pi_not_in_place.values()), atol=0.01)
 
-    # pickle doesn't like to unpickle instances with custom __hash__ functions
-    v_pi = {
-        s.i: v_pi[s]
-        for s in v_pi
-    }
-
     # uncomment the following line and run test to update fixture
     # with open(f'{os.path.dirname(__file__)}/fixtures/test_iterative_policy_evaluation_of_state_value.pickle', 'wb') as file:
     #     pickle.dump(v_pi, file)
@@ -96,15 +90,6 @@ def test_evaluate_q_pi():
     for s in q_pi:
         for a in q_pi[s]:
             assert np.allclose(q_pi[s][a], q_pi_not_in_place[s][a], atol=0.01)
-
-    # pickle doesn't like to unpickle instances with custom __hash__ functions
-    q_pi = {
-        s.i: {
-            a.i: q_pi[s][a]
-            for a in q_pi[s]
-        }
-        for s in q_pi
-    }
 
     # uncomment the following line and run test to update fixture
     # with open(f'{os.path.dirname(__file__)}/fixtures/test_iterative_policy_evaluation_of_action_value.pickle', 'wb') as file:
