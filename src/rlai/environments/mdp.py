@@ -137,7 +137,7 @@ class MdpEnvironment(Environment, ABC):
         self.state: Optional[MdpState] = None
 
 
-@rl_text(chapter=3, page=47)
+@rl_text(chapter=3, page=48)
 class ModelBasedMdpEnvironment(MdpEnvironment, ABC):
     """
     Model-based MDP environment. Adds the specification of a probability distribution over next states and rewards.
@@ -581,7 +581,7 @@ class MdpPlanningEnvironment(MdpEnvironment, ABC):
         """
 
         # don't call super's argument parser, so that we do not pick up the --T argument intended for the actual
-        # environment isn't sucked up here.
+        # environment. we're going to use --T-planning instead (see below).
 
         parser = ArgumentParser(allow_abbrev=False)
 

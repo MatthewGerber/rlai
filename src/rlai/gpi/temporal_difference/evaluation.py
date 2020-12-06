@@ -106,10 +106,9 @@ def evaluate_q_pi(
                 agent=agent
             )
 
-            # in the case of planning-based advancement, the planning environment might revise the current state and
-            # current action (e.g., if trajectory sampling and the agent chose an action that is not defined by the
-            # environment model, or in all cases of prioritized sweeping). in such cases, the advancement will return a
-            # 3-tuple comprising the current state/action and next state. unpack them.
+            # in the case of a planning-based advancement, the planning environment returns a 3-tuple of the current
+            # state, current action, and next state. this is because the planning environment may revise any one of
+            # these variables to conduct the planning process (e.g., by prioritized sweeping).
             if planning:
                 curr_state, curr_a, next_state = advance_result
             else:

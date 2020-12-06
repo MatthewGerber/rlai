@@ -21,7 +21,7 @@
   - [`rlai.environments.mdp.MdpEnvironment`](#rlaienvironmentsmdpmdpenvironment)
   - [`rlai.environments.openai_gym.GymState`](#rlaienvironmentsopenai_gymgymstate)
   - [`rlai.states.mdp.MdpState`](#rlaistatesmdpmdpstate)
-  - [`rlai.states.mdp.ModelBasedMdpState`](#rlaistatesmdpmodelbasedmdpstate)
+  - [`rlai.environments.mdp.ModelBasedMdpEnvironment`](#rlaienvironmentsmdpmodelbasedmdpenvironment)
   - [`rlai.environments.mdp.Gridworld`](#rlaienvironmentsmdpgridworld)
 - [Chapter 4](#chapter-4)
   - [`rlai.gpi.dynamic_programming.evaluation.evaluate_v_pi`](#rlaigpidynamic_programmingevaluationevaluate_v_pi)
@@ -42,9 +42,11 @@
   - [`rlai.gpi.temporal_difference.evaluation.evaluate_q_pi`](#rlaigpitemporal_differenceevaluationevaluate_q_pi)
   - [`rlai.gpi.temporal_difference.iteration.iterate_value_q_pi`](#rlaigpitemporal_differenceiterationiterate_value_q_pi)
 - [Chapter 8](#chapter-8)
-  - [`rlai.planning.environment_models.EnvironmentModel`](#rlaiplanningenvironment_modelsenvironmentmodel)
   - [`rlai.environments.mdp.MdpPlanningEnvironment`](#rlaienvironmentsmdpmdpplanningenvironment)
+  - [`rlai.planning.environment_models.EnvironmentModel`](#rlaiplanningenvironment_modelsenvironmentmodel)
+  - [`rlai.environments.mdp.PrioritizedSweepingMdpPlanningEnvironment`](#rlaienvironmentsmdpprioritizedsweepingmdpplanningenvironment)
   - [`rlai.planning.environment_models.StochasticEnvironmentModel`](#rlaiplanningenvironment_modelsstochasticenvironmentmodel)
+  - [`rlai.environments.mdp.TrajectorySamplingMdpPlanningEnvironment`](#rlaienvironmentsmdptrajectorysamplingmdpplanningenvironment)
 <!--TOC-->
 
 # Introduction
@@ -144,11 +146,11 @@ State of a Gym environment.
 ```
 ## `rlai.states.mdp.MdpState`
 ```
-Model-free MDP state.
+State of an MDP.
 ```
-## `rlai.states.mdp.ModelBasedMdpState`
+## `rlai.environments.mdp.ModelBasedMdpEnvironment`
 ```
-Model-based MDP state. Adds the specification of a probability distribution over next states and rewards.
+Model-based MDP environment. Adds the specification of a probability distribution over next states and rewards.
 ```
 ## `rlai.environments.mdp.Gridworld`
 ```
@@ -161,6 +163,7 @@ Perform iterative policy evaluation of an agent's policy within an environment, 
 
     :param agent: MDP agent. Must contain a policy `pi` that has been fully initialized with instances of
     `rlai.states.mdp.ModelBasedMdpState`.
+    :param environment: Model-based MDP environment to evaluate.
     :param theta: Minimum tolerated change in state value estimates, below which evaluation terminates. Either `theta`
     or `num_iterations` (or both) can be specified, but passing neither will raise an exception.
     :param num_iterations: Number of evaluation iterations to execute.  Either `theta` or `num_iterations` (or both)
@@ -175,6 +178,7 @@ Perform iterative policy evaluation of an agent's policy within an environment, 
 Perform iterative policy evaluation of an agent's policy within an environment, returning state-action values.
 
     :param agent: MDP agent.
+    :param environment: Model-based MDP environment to evaluate.
     :param theta: Minimum tolerated change in state value estimates, below which evaluation terminates. Either `theta`
     or `num_iterations` (or both) can be specified, but passing neither will raise an exception.
     :param num_iterations: Number of evaluation iterations to execute.  Either `theta` or `num_iterations` (or both)
@@ -196,6 +200,7 @@ Improve an agent's policy according to its state-value estimates. This makes the
     accepts model-free states since state-action values are estimated directly.
 
     :param agent: Agent.
+    :param environment: Model-based environment.
     :param v_pi: State-value estimates for the agent's policy.
     :return: Number of states in which the policy was updated.
 ```
@@ -217,6 +222,7 @@ Run policy iteration on an agent using state-value estimates.
 
     :param agent: MDP agent. Must contain a policy `pi` that has been fully initialized with instances of
     `rlai.states.mdp.ModelBasedMdpState`.
+    :param environment: Model-based MDP environment to evaluate.
     :param theta: See `evaluate_q_pi`.
     :param update_in_place: See `evaluate_q_pi`.
     :return: Final state-action value estimates.
@@ -227,6 +233,7 @@ Run policy iteration on an agent using state-value estimates.
 
     :param agent: MDP agent. Must contain a policy `pi` that has been fully initialized with instances of
     `rlai.states.mdp.ModelBasedMdpState`.
+    :param environment: Model-based MDP environment to evaluate.
     :param theta: See `evaluate_v_pi`.
     :param update_in_place: See `evaluate_v_pi`.
     :return: Final state-value estimates.
@@ -237,6 +244,7 @@ Run dynamic programming value iteration on an agent using state-value estimates.
 
     :param agent: MDP agent. Must contain a policy `pi` that has been fully initialized with instances of
     `rlai.states.mdp.ModelBasedMdpState`.
+    :param environment: Model-based MDP environment to evaluate.
     :param theta: See `evaluate_v_pi`.
     :param evaluation_iterations_per_improvement: Number of policy evaluation iterations to execute for each iteration
     of improvement (e.g., passing 1 results in Equation 4.10).
@@ -253,6 +261,7 @@ Run value iteration on an agent using state-action value estimates.
 
     :param agent: MDP agent. Must contain a policy `pi` that has been fully initialized with instances of
     `rlai.states.mdp.ModelBasedMdpState`.
+    :param environment: Model-based MDP environment to evaluate.
     :param theta: See `evaluate_q_pi`.
     :param evaluation_iterations_per_improvement: Number of policy evaluation iterations to execute for each iteration
     of improvement.
@@ -341,8 +350,8 @@ Perform temporal-difference (TD) evaluation of an agent's policy within an envir
     :param mode: Evaluation mode (see `rlai.gpi.temporal_difference.evaluation.Mode`).
     :param n_steps: Number of steps to accumulate rewards before updating estimated state-action values. Must be in the
     range [1, inf], or None for infinite step size (Monte Carlo evaluation).
-    :param environment_model: Environment model to be updated with experience gained during evaluation, or None to
-    ignore the environment model.
+    :param planning_environment: Planning environment to learn through experience gained during evaluation, or None to
+    not learn an environment model.
     :param initial_q_S_A: Initial guess at state-action value, or None for no guess.
     :return: 3-tuple of (1) dictionary of all MDP states and their action-value averagers under the agent's policy, (2)
     set of only those states that were evaluated, and (3) the average reward obtained per episode.
@@ -361,8 +370,7 @@ Run temporal-difference value iteration on an agent using state-action value est
     :param n_steps: Number of steps (see `rlai.gpi.temporal_difference.evaluation.evaluate_q_pi`).
     :param epsilon: Total probability mass to spread across all actions, resulting in an epsilon-greedy policy. Must
     be strictly > 0.
-    :param num_planning_improvements_per_direct_improvement: Number of planning improvements to make for each
-    improvement based on actual experience. Pass None for no planning.
+    :param planning_environment: Planning environment to learn and use.
     :param make_final_policy_greedy: Whether or not to make the agent's final policy greedy with respect to the q-values
     that have been learned, regardless of the value of epsilon used to estimate the q-values.
     :param num_improvements_per_plot: Number of improvements to make before plotting the per-improvement average. Pass
@@ -373,16 +381,26 @@ Run temporal-difference value iteration on an agent using state-action value est
     :return: Dictionary of state-action value estimators.
 ```
 # Chapter 8
+## `rlai.environments.mdp.MdpPlanningEnvironment`
+```
+An MDP planning environment, used to generate simulated experience based on a model of the MDP that is learned
+    through direct experience with the actual environment.
+```
 ## `rlai.planning.environment_models.EnvironmentModel`
 ```
 An environment model.
 ```
-## `rlai.environments.mdp.MdpPlanningEnvironment`
+## `rlai.environments.mdp.PrioritizedSweepingMdpPlanningEnvironment`
 ```
-An MDP planning environment, used to generate simulated experience based on a model of the MDP that is learned
-    through direct experience.
+State-action transitions are prioritized based on the degree to which learning updates their values, and transitions
+    with the highest priority are explored during planning.
 ```
 ## `rlai.planning.environment_models.StochasticEnvironmentModel`
 ```
 A stochastic environment model.
+```
+## `rlai.environments.mdp.TrajectorySamplingMdpPlanningEnvironment`
+```
+State-action transitions are selected by the agent based on the agent's policy, and the selected transitions are
+    explored during planning.
 ```
