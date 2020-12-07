@@ -1,5 +1,5 @@
 # Environments
-### [rlai.environments.mancala.Mancala](../src/rlai/environments/mancala.py)
+### [rlai.environments.mancala.Mancala](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/mancala.py#L121)
 ```
 Environment for the mancala game. This is a simple game with many rule variations, and it provides a greater
     challenge in terms of implementation and state-space size than the gridworld. I have implemented a fairly common
@@ -14,7 +14,7 @@ Environment for the mancala game. This is a simple game with many rule variation
     A couple hours of Monte Carlo optimization explores more than 1 million states when playing against an equiprobable
     random opponent.
 ```
-### [rlai.environments.openai_gym.Gym](../src/rlai/environments/openai_gym.py)
+### [rlai.environments.openai_gym.Gym](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/openai_gym.py#L52)
 ```
 Generalized Gym environment. Any OpenAI Gym environment can be executed by supplying the appropriate identifier.
 ```

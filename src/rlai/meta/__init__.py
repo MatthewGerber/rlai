@@ -2,8 +2,7 @@ import importlib
 import os
 import pkgutil
 from typing import Set, Dict, List, Union
-
-import md_toc
+import inspect
 
 import rlai
 
@@ -51,6 +50,8 @@ def summarize(
     if paths_summarized is None:
         paths_summarized = set()
 
+    repo_src_url = 'https://github.com/MatthewGerber/rlai/tree/master/src/'
+
     for _, module_path, module_is_pkg in pkgutil.iter_modules(pkg.__path__, prefix=pkg.__name__ + '.'):
 
         module = importlib.import_module(module_path)
@@ -71,7 +72,8 @@ def summarize(
                         if page not in chapter_page_descriptions[chapter]:
                             chapter_page_descriptions[chapter][page] = []
 
-                        src_path = f'../src/{full_path.replace(".", "/").rsplit("/", maxsplit=1)[0]}.py'
+                        line_no = inspect.findsource(attribute)[1] + 1
+                        src_path = f'{repo_src_url}{full_path.replace(".", "/").rsplit("/", maxsplit=1)[0]}.py#L{line_no}'
                         chapter_page_descriptions[chapter][page].append(f'### [{full_path}]({src_path})\n```\n{attribute.__doc__.strip()}\n```\n')
 
                         paths_summarized.add(full_path)
