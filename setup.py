@@ -36,7 +36,7 @@ setup(
     long_description_content_type='text/markdown',
     author='Matthew Gerber',
     author_email='gerber.matthew@gmail.com',
-    url='https://github.com/MatthewGerber/rlai',
+    url='https://matthewgerber.github.io/rlai',
     packages=find_namespace_packages(where='src'),
     package_dir={'': 'src'},
     python_requires='==3.8.5',
