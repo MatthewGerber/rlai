@@ -34,4 +34,6 @@ Arguments are explained below.
 
 ## Results
 
-![inverted-pendulum](https://github.com/MatthewGerber/rlai/blob/master/trained_agents/cartpole/cartpole_training.png)
+![inverted-pendulum](https://github.com/MatthewGerber/rlai/raw/master/trained_agents/cartpole/cartpole_training.png)
+
+{% include youtubePlayer.html id="rGnf9CFwD7M" %}
