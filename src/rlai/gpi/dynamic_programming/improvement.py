@@ -1,15 +1,17 @@
 from typing import Dict
 
 from rlai.agents.mdp import MdpAgent
+from rlai.environments.mdp import ModelBasedMdpEnvironment
 from rlai.gpi.improvement import improve_policy_with_q_pi
 from rlai.meta import rl_text
-from rlai.states.mdp import ModelBasedMdpState
+from rlai.states.mdp import MdpState
 
 
 @rl_text(chapter=4, page=76)
 def improve_policy_with_v_pi(
         agent: MdpAgent,
-        v_pi: Dict[ModelBasedMdpState, float]
+        environment: ModelBasedMdpEnvironment,
+        v_pi: Dict[MdpState, float]
 ) -> int:
     """
     Improve an agent's policy according to its state-value estimates. This makes the policy greedy with respect to the
@@ -22,20 +24,20 @@ def improve_policy_with_v_pi(
     accepts model-free states since state-action values are estimated directly.
 
     :param agent: Agent.
+    :param environment: Model-based environment.
     :param v_pi: State-value estimates for the agent's policy.
     :return: Number of states in which the policy was updated.
     """
 
     # calculate state-action values (q) for the agent's policy
-    s: ModelBasedMdpState
     q_S_A = {
         s: {
             a: sum([
-                s.p_S_prime_R_given_A[a][s_prime][r] * (r.r + agent.gamma * v_pi[s_prime])
-                for s_prime in s.p_S_prime_R_given_A[a]
-                for r in s.p_S_prime_R_given_A[a][s_prime]
+                environment.p_S_prime_R_given_S_A[s][a][s_prime][r] * (r.r + agent.gamma * v_pi[s_prime])
+                for s_prime in environment.p_S_prime_R_given_S_A[s][a]
+                for r in environment.p_S_prime_R_given_S_A[s][a][s_prime]
             ])
-            for a in s.p_S_prime_R_given_A
+            for a in environment.p_S_prime_R_given_S_A[s]
         }
         for s in agent.pi
     }

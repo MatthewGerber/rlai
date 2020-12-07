@@ -44,6 +44,12 @@ def run(
     )
 
     parser.add_argument(
+        '--planning-environment',
+        type=str,
+        help='Fully-qualified type name of planning environment to train agent in.'
+    )
+
+    parser.add_argument(
         '--train-function',
         type=str,
         help='Fully-qualified type name of function to use for training the agent.'
@@ -137,12 +143,6 @@ def run(
     )
 
     train_function_arg_parser.add_argument(
-        '--num-planning-improvements-per-direct-improvement',
-        type=int,
-        help='Number of planning improvements to make for each direct improvement.'
-    )
-
-    train_function_arg_parser.add_argument(
         '--new-checkpoint-path',
         type=str,
         help='New checkpoint path.'
@@ -191,6 +191,15 @@ def run(
             args=unparsed_args,
             random_state=random_state
         )
+
+    if parsed_args.planning_environment is not None:
+        planning_environment_class = load_class(parsed_args.planning_environment)
+        train_function_args['planning_environment'], unparsed_args = planning_environment_class.init_from_arguments(
+            args=unparsed_args,
+            random_state=random_state
+        )
+    else:
+        train_function_args['planning_environment'] = None
 
     if len(unparsed_args) > 0:
         raise ValueError(f'Unparsed arguments remain:  {unparsed_args}')

@@ -25,7 +25,7 @@ class IncrementalSampleAverager:
             self,
             value: float,
             weight: Optional[float] = None
-    ) -> float:
+    ):
         """
         Update the sample average with a new value.
 
@@ -37,8 +37,6 @@ class IncrementalSampleAverager:
           * else:  arbitrary weighting scheme (e.g., used for off-policy importance sampling).
 
         If `weighted` was True in the constructor, then a non-None value must be passed here.
-
-        :return: Updated sample average.
         """
 
         if weight is not None and not self.weighted:
@@ -60,8 +58,6 @@ class IncrementalSampleAverager:
             step_size = 1 / self.n
 
         self.average = self.average + step_size * (value - self.average)
-
-        return self.average
 
     def get_value(
             self

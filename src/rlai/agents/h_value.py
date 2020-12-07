@@ -1,5 +1,5 @@
 from argparse import Namespace, ArgumentParser
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 import numpy as np
 from numpy.random import RandomState
@@ -186,5 +186,5 @@ class PreferenceGradient(Agent):
             alpha=reward_average_alpha
         )
 
-        self.H_t_A: np.ndarray = None
-        self.Pr_A: np.ndarray = None
+        self.H_t_A: Optional[np.array] = None
+        self.Pr_A: Optional[np.array] = None

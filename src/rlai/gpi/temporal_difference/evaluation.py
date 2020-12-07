@@ -1,12 +1,12 @@
 import enum
+from functools import partial
 from typing import Dict, Set, Tuple, Optional
 
 from rlai.actions import Action
 from rlai.agents.mdp import MdpAgent
-from rlai.environments.mdp import MdpEnvironment
+from rlai.environments.mdp import MdpEnvironment, MdpPlanningEnvironment, PrioritizedSweepingMdpPlanningEnvironment
 from rlai.gpi.utils import lazy_initialize_q_S_A, initialize_q_S_A
 from rlai.meta import rl_text
-from rlai.planning.environment_models import EnvironmentModel
 from rlai.states.mdp import MdpState
 from rlai.utils import IncrementalSampleAverager, sample_list_item
 
@@ -38,7 +38,7 @@ def evaluate_q_pi(
         alpha: Optional[float],
         mode: Mode,
         n_steps: Optional[int],
-        environment_model: Optional[EnvironmentModel],
+        planning_environment: MdpPlanningEnvironment,
         initial_q_S_A: Dict[MdpState, Dict[Action, IncrementalSampleAverager]]
 ) -> Tuple[Dict[MdpState, Dict[Action, IncrementalSampleAverager]], Set[MdpState], float]:
     """
@@ -53,8 +53,8 @@ def evaluate_q_pi(
     :param mode: Evaluation mode (see `rlai.gpi.temporal_difference.evaluation.Mode`).
     :param n_steps: Number of steps to accumulate rewards before updating estimated state-action values. Must be in the
     range [1, inf], or None for infinite step size (Monte Carlo evaluation).
-    :param environment_model: Environment model to be updated with experience gained during evaluation, or None to
-    ignore the environment model.
+    :param planning_environment: Planning environment to learn through experience gained during evaluation, or None to
+    not learn an environment model.
     :param initial_q_S_A: Initial guess at state-action value, or None for no guess.
     :return: 3-tuple of (1) dictionary of all MDP states and their action-value averagers under the agent's policy, (2)
     set of only those states that were evaluated, and (3) the average reward obtained per episode.
@@ -68,6 +68,22 @@ def evaluate_q_pi(
     evaluated_states = set()
 
     q_S_A = initialize_q_S_A(initial_q_S_A, environment, evaluated_states)
+
+    planning = isinstance(environment, MdpPlanningEnvironment)
+
+    # prioritized sampling requires access to the bootstrapped state-action value function, and it also requires
+    # access to the state-action value estimators.
+    if isinstance(environment, PrioritizedSweepingMdpPlanningEnvironment):
+        environment.bootstrap_function = partial(
+            get_bootstrapped_state_action_value,
+            mode=mode,
+            agent=agent,
+            q_S_A=q_S_A,
+            environment=environment
+        )
+        environment.q_S_A = q_S_A
+
+    # run episodes
     episode_reward_averager = IncrementalSampleAverager()
     episodes_per_print = max(1, int(num_episodes * 0.05))
     for episode_i in range(num_episodes):
@@ -83,21 +99,29 @@ def evaluate_q_pi(
         t_state_a_g: Dict[int, Tuple[MdpState, Action, float]] = {}  # dictionary from time steps to tuples of state, action, and truncated return.
         while not curr_state.terminal and (environment.T is None or curr_t < environment.T):
 
-            next_state, next_reward = curr_state.advance(
-                environment=environment,
+            advance_result, next_reward = environment.advance(
+                state=curr_state,
                 t=curr_t,
                 a=curr_a,
                 agent=agent
             )
 
+            # in the case of a planning-based advancement, the planning environment returns a 3-tuple of the current
+            # state, current action, and next state. this is because the planning environment may revise any one of
+            # these variables to conduct the planning process (e.g., by prioritized sweeping).
+            if planning:
+                curr_state, curr_a, next_state = advance_result
+            else:
+                next_state = advance_result
+
             next_t = curr_t + 1
             agent.sense(next_state, next_t)
 
-            # update environment model (for planning)
-            if environment_model is not None:
-                environment_model.update(curr_state, curr_a, next_state, next_reward)
+            # if we're building an environment model, then update it with the transition we just observed.
+            if planning_environment is not None:
+                planning_environment.model.update(curr_state, curr_a, next_state, next_reward)
 
-            # initialize the n-step accumulator at the current time for the current state and action
+            # initialize the n-step, truncated return accumulator at the current time for the current state and action
             t_state_a_g[curr_t] = (curr_state, curr_a, 0.0)
 
             # get prior time steps for which truncated return g should be updated. if n_steps is None, then get all
@@ -117,45 +141,15 @@ def evaluate_q_pi(
                 discount = agent.gamma ** (curr_t - t)
                 t_state_a_g[t] = (state, a, g + discount * next_reward.r)
 
-            next_a = None
-
-            # if the next state is terminal, then all next q-values are zero.
-            if next_state.terminal:
-                next_state_q_s_a = 0.0
-            else:
-
-                # EXPECTED_SARSA:  get expected q-value based on current policy and q-value estimates
-                if mode == Mode.EXPECTED_SARSA:
-                    next_state_q_s_a = sum(
-                        (agent.pi[next_state][a] if next_state in agent.pi else 1 / len(next_state.AA)) * (q_S_A[next_state][a].get_value() if next_state in q_S_A and a in q_S_A[next_state] else 0.0)
-                        for a in next_state.AA
-                    )
-                else:
-
-                    # SARSA:  agent determines the t-d target action as well as the episode's next action, which are
-                    # the same (on-policy)
-                    if mode == Mode.SARSA:
-                        td_target_a = next_a = agent.act(next_t)
-
-                    # Q-LEARNING:  select the action with max q-value from the next state. if no q-values are estimated,
-                    # then select the action uniformly randomly.
-                    elif mode == Mode.Q_LEARNING:
-                        if next_state in q_S_A and len(q_S_A[next_state]) > 0:
-                            td_target_a = max(q_S_A[next_state], key=lambda action: q_S_A[next_state][action].get_value())
-                        else:
-                            td_target_a = sample_list_item(next_state.AA, probs=None, random_state=environment.random_state)
-                    else:
-                        raise ValueError(f'Unknown TD mode:  {mode}')
-
-                    # get the next state-action value if we have an estimate for it; otherwise, it's zero.
-                    if next_state in q_S_A and td_target_a in q_S_A[next_state]:
-                        next_state_q_s_a = q_S_A[next_state][td_target_a].get_value()
-                    else:
-                        next_state_q_s_a = 0.0
-
-                # if we're off-policy, then we won't yet have a next action. ask the agent for it now.
-                if next_a is None:
-                    next_a = agent.act(next_t)
+            # get the next state's bootstrapped value and next action, based on the bootstrapping mode.
+            next_state_q_s_a, next_a = get_bootstrapped_state_action_value(
+                state=next_state,
+                t=next_t,
+                mode=mode,
+                agent=agent,
+                q_S_A=q_S_A,
+                environment=environment
+            )
 
             # only update if n_steps is finite (not monte carlo)
             if n_steps is not None:
@@ -167,7 +161,8 @@ def evaluate_q_pi(
                     agent=agent,
                     next_state_q_s_a=next_state_q_s_a,
                     alpha=alpha,
-                    evaluated_states=evaluated_states
+                    evaluated_states=evaluated_states,
+                    planning_environment=planning_environment
                 )
 
             # advance the episode
@@ -188,7 +183,8 @@ def evaluate_q_pi(
                 agent=agent,
                 next_state_q_s_a=0.0,
                 alpha=alpha,
-                evaluated_states=evaluated_states
+                evaluated_states=evaluated_states,
+                planning_environment=planning_environment
             )
             curr_t += 1
 
@@ -201,6 +197,69 @@ def evaluate_q_pi(
     return q_S_A, evaluated_states, episode_reward_averager.get_value()
 
 
+def get_bootstrapped_state_action_value(
+        state: MdpState,
+        t: int,
+        mode: Mode,
+        agent: MdpAgent,
+        q_S_A: Dict[MdpState, Dict[Action, IncrementalSampleAverager]],
+        environment: MdpEnvironment
+) -> Tuple[float, Action]:
+    """
+    Get the bootstrapped state-action value for a state, also returning the next action.
+
+    :param state: State.
+    :param t: Time step.
+    :param mode: Bootstrap mode.
+    :param agent: Agent.
+    :param q_S_A: Current state-action value estimates.
+    :param environment: Environment.
+    :return: 2-tuple of the state's bootstrapped state-action value and the next action.
+    """
+
+    next_a = None
+
+    # if the state is terminal, then all q-values are zero.
+    if state.terminal:
+        bootstrapped_s_a_value = 0.0
+    else:
+
+        # EXPECTED_SARSA:  get expected q-value based on current policy and q-value estimates
+        if mode == Mode.EXPECTED_SARSA:
+            bootstrapped_s_a_value = sum(
+                (agent.pi[state][a] if state in agent.pi else 1 / len(state.AA)) * (q_S_A[state][a].get_value() if state in q_S_A and a in q_S_A[state] else 0.0)
+                for a in state.AA
+            )
+        else:
+
+            # SARSA:  agent determines the t-d target action as well as the episode's next action, which are the same
+            # (we're on-policy)
+            if mode == Mode.SARSA:
+                td_target_a = next_a = agent.act(t)
+
+            # Q-LEARNING:  select the action with max q-value from the state. if no q-values are estimated, then select
+            # the action uniformly randomly.
+            elif mode == Mode.Q_LEARNING:
+                if state in q_S_A and len(q_S_A[state]) > 0:
+                    td_target_a = max(q_S_A[state], key=lambda action: q_S_A[state][action].get_value())
+                else:
+                    td_target_a = sample_list_item(state.AA, probs=None, random_state=environment.random_state)
+            else:
+                raise ValueError(f'Unknown TD mode:  {mode}')
+
+            # get the state-action value if we have an estimate for it; otherwise, it's zero.
+            if state in q_S_A and td_target_a in q_S_A[state]:
+                bootstrapped_s_a_value = q_S_A[state][td_target_a].get_value()
+            else:
+                bootstrapped_s_a_value = 0.0
+
+        # if we're off-policy, then we won't yet have a next action. ask the agent for it now.
+        if next_a is None:
+            next_a = agent.act(t)
+
+    return bootstrapped_s_a_value, next_a
+
+
 def update_q_S_A(
         q_S_A: Dict[MdpState, Dict[Action, IncrementalSampleAverager]],
         n_steps: Optional[int],
@@ -209,7 +268,8 @@ def update_q_S_A(
         agent: MdpAgent,
         next_state_q_s_a: float,
         alpha: float,
-        evaluated_states: Set[MdpState]
+        evaluated_states: Set[MdpState],
+        planning_environment: Optional[MdpPlanningEnvironment]
 ):
     """
     Update the value of the n-step state/action pair with the n-step TD target. The n-step TD target is the truncated
@@ -226,6 +286,8 @@ def update_q_S_A(
     :param next_state_q_s_a: Next state-action value.
     :param alpha: Step size.
     :param evaluated_states: Evaluated states.
+    :param planning_environment: Planning environment to be updated with experience gained during evaluation, or None to
+    ignore the environment model.
     """
 
     # if we're currently far enough along (i.e., have accumulated sufficient rewards), then update.
@@ -239,9 +301,18 @@ def update_q_S_A(
         # discount applied here to next_state_q_s_a will be agent.gamma.
         td_target = g + (agent.gamma ** n_steps) * next_state_q_s_a
 
-        # initialize and update the state-action pair with the target
+        # initialize and update the state-action pair with the target value. first calculate the update error for
+        # possible use in updating the environment model.
         lazy_initialize_q_S_A(q_S_A=q_S_A, state=update_state, a=update_a, alpha=alpha, weighted=False)
-        q_S_A[update_state][update_a].update(td_target)
+        averager = q_S_A[update_state][update_a]
+        error = td_target - averager.get_value()
+        averager.update(td_target)
+
+        # if we're using prioritized-sweep planning, then update the priority queue. note that the priority queue
+        # returns values with the lowest priority first. so negate the error to get the state-action pairs with highest
+        # error to come out of the queue first.
+        if isinstance(planning_environment, PrioritizedSweepingMdpPlanningEnvironment):
+            planning_environment.add_state_action_priority(update_state, update_a, -abs(error))
 
         # note the evaluated state and remove from our n-step structure
         evaluated_states.add(update_state)

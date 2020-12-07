@@ -7,7 +7,6 @@ from rlai.agents.mdp import StochasticMdpAgent
 from rlai.environments.openai_gym import Gym
 from rlai.gpi.temporal_difference.evaluation import Mode
 from rlai.gpi.temporal_difference.iteration import iterate_value_q_pi
-from test.rlai.utils import get_pi_fixture, get_q_S_A_fixture
 
 
 def test_learn():
@@ -36,18 +35,15 @@ def test_learn():
         mode=Mode.SARSA,
         n_steps=1,
         epsilon=0.05,
-        num_planning_improvements_per_direct_improvement=None,
+        planning_environment=None,
         make_final_policy_greedy=False
     )
 
-    pi = get_pi_fixture(mdp_agent.pi)
-    q_S_A = get_q_S_A_fixture(q_S_A)
-
     # uncomment the following line and run test to update fixture
     # with open(f'{os.path.dirname(__file__)}/fixtures/test_gym.pickle', 'wb') as file:
-    #     pickle.dump((pi, q_S_A), file)
+    #     pickle.dump((mdp_agent.pi, q_S_A), file)
 
     with open(f'{os.path.dirname(__file__)}/fixtures/test_gym.pickle', 'rb') as file:
         fixture_pi, fixture_q_S_A = pickle.load(file)
 
-    assert pi == fixture_pi and q_S_A == fixture_q_S_A
+    assert mdp_agent.pi == fixture_pi and q_S_A == fixture_q_S_A

@@ -7,7 +7,7 @@ from numpy.random import RandomState
 from rlai.actions import Action
 from rlai.meta import rl_text
 from rlai.rewards import Reward
-from rlai.states import State
+from rlai.states.mdp import MdpState
 from rlai.utils import sample_list_item, IncrementalSampleAverager
 
 
@@ -20,9 +20,9 @@ class EnvironmentModel(ABC):
     @abstractmethod
     def update(
             self,
-            state: State,
+            state: MdpState,
             action: Action,
-            next_state: State,
+            next_state: MdpState,
             reward: Reward
     ):
         """
@@ -38,7 +38,7 @@ class EnvironmentModel(ABC):
     @abstractmethod
     def is_defined_for_state_action(
             self,
-            state: State,
+            state: MdpState,
             action: Action
     ) -> bool:
         """
@@ -59,9 +59,9 @@ class StochasticEnvironmentModel(EnvironmentModel):
 
     def update(
             self,
-            state: State,
+            state: MdpState,
             action: Action,
-            next_state: State,
+            next_state: MdpState,
             reward: Reward
     ):
         """
@@ -92,7 +92,7 @@ class StochasticEnvironmentModel(EnvironmentModel):
     def sample_state(
             self,
             random_state: RandomState
-    ) -> State:
+    ) -> MdpState:
         """
         Sample a previously encountered state uniformly.
 
@@ -104,7 +104,7 @@ class StochasticEnvironmentModel(EnvironmentModel):
 
     def is_defined_for_state_action(
             self,
-            state: State,
+            state: MdpState,
             action: Action
     ) -> bool:
         """
@@ -119,7 +119,7 @@ class StochasticEnvironmentModel(EnvironmentModel):
 
     def sample_action(
             self,
-            state: State,
+            state: MdpState,
             random_state: RandomState
     ) -> Action:
         """
@@ -134,10 +134,10 @@ class StochasticEnvironmentModel(EnvironmentModel):
 
     def sample_next_state_and_reward(
             self,
-            state: State,
+            state: MdpState,
             action: Action,
             random_state: RandomState
-    ) -> Tuple[State, float]:
+    ) -> Tuple[MdpState, float]:
         """
         Sample the environment model.
 
@@ -171,5 +171,5 @@ class StochasticEnvironmentModel(EnvironmentModel):
         Initialize the environment model.
         """
 
-        self.state_action_next_state_count: Dict[State, Dict[Action, Dict[State, int]]] = {}
-        self.state_reward_averager: Dict[State, IncrementalSampleAverager] = {}
+        self.state_action_next_state_count: Dict[MdpState, Dict[Action, Dict[MdpState, int]]] = {}
+        self.state_reward_averager: Dict[MdpState, IncrementalSampleAverager] = {}

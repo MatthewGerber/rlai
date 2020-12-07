@@ -24,6 +24,7 @@ def test_policy_iteration():
 
     iterate_policy_v_pi(
         mdp_agent_v_pi,
+        mdp_environment,
         0.001,
         True
     )
@@ -40,6 +41,7 @@ def test_policy_iteration():
 
     iterate_policy_q_pi(
         mdp_agent_q_pi,
+        mdp_environment,
         0.001,
         True
     )
@@ -66,6 +68,7 @@ def test_value_iteration():
 
     iterate_policy_v_pi(
         mdp_agent_v_pi_policy_iteration,
+        mdp_environment,
         0.001,
         True
     )
@@ -82,6 +85,7 @@ def test_value_iteration():
 
     iterate_value_v_pi(
         mdp_agent_v_pi_value_iteration,
+        mdp_environment,
         0.001,
         1,
         True
@@ -101,6 +105,7 @@ def test_value_iteration():
 
     iterate_value_q_pi(
         mdp_agent_q_pi_value_iteration,
+        mdp_environment,
         0.001,
         1,
         True

@@ -4,10 +4,10 @@ import pickle
 from numpy.random import RandomState
 
 from rlai.agents.mdp import StochasticMdpAgent
-from rlai.environments.mdp import Gridworld
+from rlai.environments.mdp import Gridworld, TrajectorySamplingMdpPlanningEnvironment
 from rlai.gpi.temporal_difference.evaluation import Mode
 from rlai.gpi.temporal_difference.iteration import iterate_value_q_pi
-from test.rlai.utils import get_pi_fixture, get_q_S_A_fixture
+from rlai.planning.environment_models import StochasticEnvironmentModel
 
 
 def test_sarsa_iterate_value_q_pi():
@@ -34,21 +34,18 @@ def test_sarsa_iterate_value_q_pi():
         mode=Mode.SARSA,
         n_steps=1,
         epsilon=0.05,
-        num_planning_improvements_per_direct_improvement=None,
+        planning_environment=None,
         make_final_policy_greedy=False
     )
 
-    pi = get_pi_fixture(mdp_agent.pi)
-    q_S_A = get_q_S_A_fixture(q_S_A)
-
     # uncomment the following line and run test to update fixture
     # with open(f'{os.path.dirname(__file__)}/fixtures/test_td_iteration_of_value_q_pi.pickle', 'wb') as file:
-    #     pickle.dump((pi, q_S_A), file)
+    #     pickle.dump((mdp_agent.pi, q_S_A), file)
 
     with open(f'{os.path.dirname(__file__)}/fixtures/test_td_iteration_of_value_q_pi.pickle', 'rb') as file:
         pi_fixture, q_S_A_fixture = pickle.load(file)
 
-    assert pi == pi_fixture and q_S_A == q_S_A_fixture
+    assert mdp_agent.pi == pi_fixture and q_S_A == q_S_A_fixture
 
 
 def test_sarsa_iterate_value_q_pi_make_greedy():
@@ -75,24 +72,21 @@ def test_sarsa_iterate_value_q_pi_make_greedy():
         mode=Mode.SARSA,
         n_steps=1,
         epsilon=0.05,
-        num_planning_improvements_per_direct_improvement=None,
+        planning_environment=None,
         make_final_policy_greedy=True
     )
 
-    pi = get_pi_fixture(mdp_agent.pi)
-    q_S_A = get_q_S_A_fixture(q_S_A)
-
     # uncomment the following line and run test to update fixture
     # with open(f'{os.path.dirname(__file__)}/fixtures/test_td_iteration_of_value_q_pi_make_greedy.pickle', 'wb') as file:
-    #     pickle.dump((pi, q_S_A), file)
+    #     pickle.dump((mdp_agent.pi, q_S_A), file)
 
     with open(f'{os.path.dirname(__file__)}/fixtures/test_td_iteration_of_value_q_pi_make_greedy.pickle', 'rb') as file:
         pi_fixture, q_S_A_fixture = pickle.load(file)
 
-    assert pi == pi_fixture and q_S_A == q_S_A_fixture
+    assert mdp_agent.pi == pi_fixture and q_S_A == q_S_A_fixture
 
 
-def test_sarsa_iterate_value_q_pi_with_planning():
+def test_sarsa_iterate_value_q_pi_with_trajectory_planning():
 
     random_state = RandomState(12345)
 
@@ -103,6 +97,14 @@ def test_sarsa_iterate_value_q_pi_with_planning():
         random_state,
         None,
         1
+    )
+
+    planning_environment = TrajectorySamplingMdpPlanningEnvironment(
+        'test planning',
+        random_state,
+        StochasticEnvironmentModel(),
+        10,
+        None
     )
 
     mdp_agent.initialize_equiprobable_policy(mdp_environment.SS)
@@ -116,22 +118,19 @@ def test_sarsa_iterate_value_q_pi_with_planning():
         mode=Mode.SARSA,
         n_steps=1,
         epsilon=0.05,
-        num_planning_improvements_per_direct_improvement=10,
+        planning_environment=planning_environment,
         num_improvements_per_plot=100,
         make_final_policy_greedy=True
     )
 
-    pi = get_pi_fixture(mdp_agent.pi)
-    q_S_A = get_q_S_A_fixture(q_S_A)
-
     # uncomment the following line and run test to update fixture
     # with open(f'{os.path.dirname(__file__)}/fixtures/test_td_iteration_of_value_q_pi_planning.pickle', 'wb') as file:
-    #     pickle.dump((pi, q_S_A), file)
+    #     pickle.dump((mdp_agent.pi, q_S_A), file)
 
     with open(f'{os.path.dirname(__file__)}/fixtures/test_td_iteration_of_value_q_pi_planning.pickle', 'rb') as file:
         pi_fixture, q_S_A_fixture = pickle.load(file)
 
-    assert pi == pi_fixture and q_S_A == q_S_A_fixture
+    assert mdp_agent.pi == pi_fixture and q_S_A == q_S_A_fixture
 
 
 def test_q_learning_iterate_value_q_pi():
@@ -158,21 +157,18 @@ def test_q_learning_iterate_value_q_pi():
         mode=Mode.Q_LEARNING,
         n_steps=1,
         epsilon=0.05,
-        num_planning_improvements_per_direct_improvement=None,
+        planning_environment=None,
         make_final_policy_greedy=False
     )
 
-    pi = get_pi_fixture(mdp_agent.pi)
-    q_S_A = get_q_S_A_fixture(q_S_A)
-
     # uncomment the following line and run test to update fixture
     # with open(f'{os.path.dirname(__file__)}/fixtures/test_td_q_learning_iteration_of_value_q_pi.pickle', 'wb') as file:
-    #     pickle.dump((pi, q_S_A), file)
+    #     pickle.dump((mdp_agent.pi, q_S_A), file)
 
     with open(f'{os.path.dirname(__file__)}/fixtures/test_td_q_learning_iteration_of_value_q_pi.pickle', 'rb') as file:
         pi_fixture, q_S_A_fixture = pickle.load(file)
 
-    assert pi == pi_fixture and q_S_A == q_S_A_fixture
+    assert mdp_agent.pi == pi_fixture and q_S_A == q_S_A_fixture
 
 
 def test_expected_sarsa_iterate_value_q_pi():
@@ -199,21 +195,18 @@ def test_expected_sarsa_iterate_value_q_pi():
         mode=Mode.EXPECTED_SARSA,
         n_steps=1,
         epsilon=0.05,
-        num_planning_improvements_per_direct_improvement=None,
+        planning_environment=None,
         make_final_policy_greedy=False
     )
 
-    pi = get_pi_fixture(mdp_agent.pi)
-    q_S_A = get_q_S_A_fixture(q_S_A)
-
     # uncomment the following line and run test to update fixture
     # with open(f'{os.path.dirname(__file__)}/fixtures/test_td_expected_sarsa_iteration_of_value_q_pi.pickle', 'wb') as file:
-    #     pickle.dump((pi, q_S_A), file)
+    #     pickle.dump((mdp_agent.pi, q_S_A), file)
 
     with open(f'{os.path.dirname(__file__)}/fixtures/test_td_expected_sarsa_iteration_of_value_q_pi.pickle', 'rb') as file:
         pi_fixture, q_S_A_fixture = pickle.load(file)
 
-    assert pi == pi_fixture and q_S_A == q_S_A_fixture
+    assert mdp_agent.pi == pi_fixture and q_S_A == q_S_A_fixture
 
 
 def test_n_step_q_learning_iterate_value_q_pi():
@@ -240,18 +233,15 @@ def test_n_step_q_learning_iterate_value_q_pi():
         mode=Mode.Q_LEARNING,
         n_steps=3,
         epsilon=0.05,
-        num_planning_improvements_per_direct_improvement=None,
+        planning_environment=None,
         make_final_policy_greedy=False
     )
 
-    pi = get_pi_fixture(mdp_agent.pi)
-    q_S_A = get_q_S_A_fixture(q_S_A)
-
     # uncomment the following line and run test to update fixture
     # with open(f'{os.path.dirname(__file__)}/fixtures/test_td_n_step_q_learning_iteration_of_value_q_pi.pickle', 'wb') as file:
-    #     pickle.dump((pi, q_S_A), file)
+    #     pickle.dump((mdp_agent.pi, q_S_A), file)
 
     with open(f'{os.path.dirname(__file__)}/fixtures/test_td_n_step_q_learning_iteration_of_value_q_pi.pickle', 'rb') as file:
         fixture_pi, fixture_q_S_A = pickle.load(file)
 
-    assert pi == fixture_pi and q_S_A == fixture_q_S_A
+    assert mdp_agent.pi == fixture_pi and q_S_A == fixture_q_S_A

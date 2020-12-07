@@ -6,7 +6,6 @@ from numpy.random import RandomState
 from rlai.agents.mdp import StochasticMdpAgent
 from rlai.environments.mdp import Gridworld
 from rlai.gpi.monte_carlo.iteration import iterate_value_q_pi
-from test.rlai.utils import get_pi_fixture, get_q_S_A_fixture
 
 
 def test_iterate_value_q_pi():
@@ -35,17 +34,14 @@ def test_iterate_value_q_pi():
         num_improvements_per_plot=None
     )
 
-    pi = get_pi_fixture(mdp_agent.pi)
-    q_S_A = get_q_S_A_fixture(q_S_A)
-
     # uncomment the following line and run test to update fixture
     # with open(f'{os.path.dirname(__file__)}/fixtures/test_monte_carlo_iteration_of_value_q_pi.pickle', 'wb') as file:
-    #     pickle.dump((pi, q_S_A), file)
+    #     pickle.dump((mdp_agent.pi, q_S_A), file)
 
     with open(f'{os.path.dirname(__file__)}/fixtures/test_monte_carlo_iteration_of_value_q_pi.pickle', 'rb') as file:
         pi_fixture, q_S_A_fixture = pickle.load(file)
 
-    assert pi == pi_fixture and q_S_A == q_S_A_fixture
+    assert mdp_agent.pi == pi_fixture and q_S_A == q_S_A_fixture
 
 
 def test_off_policy_monte_carlo():
@@ -84,14 +80,11 @@ def test_off_policy_monte_carlo():
         num_improvements_per_plot=None
     )
 
-    pi = get_pi_fixture(mdp_agent.pi)
-    q_S_A = get_q_S_A_fixture(q_S_A)
-
     # uncomment the following line and run test to update fixture
     # with open(f'{os.path.dirname(__file__)}/fixtures/test_monte_carlo_off_policy_iteration_of_value_q_pi.pickle', 'wb') as file:
-    #     pickle.dump((pi, q_S_A), file)
+    #     pickle.dump((mdp_agent.pi, q_S_A), file)
 
     with open(f'{os.path.dirname(__file__)}/fixtures/test_monte_carlo_off_policy_iteration_of_value_q_pi.pickle', 'rb') as file:
         pi_fixture, q_S_A_fixture = pickle.load(file)
 
-    assert pi == pi_fixture and q_S_A == q_S_A_fixture
+    assert mdp_agent.pi == pi_fixture and q_S_A == q_S_A_fixture

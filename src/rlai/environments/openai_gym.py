@@ -11,7 +11,6 @@ from numpy.random import RandomState
 
 from rlai.actions import Action, DiscretizedAction
 from rlai.agents.mdp import MdpAgent
-from rlai.environments import Environment
 from rlai.environments.mdp import MdpEnvironment
 from rlai.meta import rl_text
 from rlai.rewards import Reward
@@ -23,45 +22,6 @@ class GymState(MdpState):
     """
     State of a Gym environment.
     """
-
-    def advance(
-            self,
-            environment: Environment,
-            t: int,
-            a: Action,
-            agent: MdpAgent
-    ) -> Tuple[State, Reward]:
-        """
-        Advance the state.
-
-        :param environment: Environment.
-        :param t: Time step.
-        :param a: Action.
-        :param agent: Agent.
-        :return: 2-tuple of next state and reward.
-        """
-
-        environment: Gym
-
-        # map discretized actions back to continuous space
-        if isinstance(a, DiscretizedAction):
-            gym_action = a.continuous_value
-        else:
-            gym_action = a.i
-
-        observation, reward, done, _ = environment.gym_native.step(action=gym_action)
-
-        if environment.render_current_episode:
-            environment.gym_native.render()
-
-        next_state = GymState(
-            environment=environment,
-            observation=observation,
-            terminal=done,
-            agent=agent
-        )
-
-        return next_state, Reward(i=None, r=reward)
 
     def __init__(
             self,
@@ -160,6 +120,43 @@ class Gym(MdpEnvironment):
         )
 
         return gym_env, unparsed_args
+
+    def advance(
+            self,
+            state: MdpState,
+            t: int,
+            a: Action,
+            agent: MdpAgent
+    ) -> Tuple[MdpState, Reward]:
+        """
+        Advance the state.
+
+        :param state: State to advance.
+        :param t: Time step.
+        :param a: Action.
+        :param agent: Agent.
+        :return: 2-tuple of next state and reward.
+        """
+
+        # map discretized actions back to continuous space
+        if isinstance(a, DiscretizedAction):
+            gym_action = a.continuous_value
+        else:
+            gym_action = a.i
+
+        observation, reward, done, _ = self.gym_native.step(action=gym_action)
+
+        if self.render_current_episode:
+            self.gym_native.render()
+
+        next_state = GymState(
+            environment=self,
+            observation=observation,
+            terminal=done,
+            agent=agent
+        )
+
+        return next_state, Reward(i=None, r=reward)
 
     def reset_for_new_run(
             self,

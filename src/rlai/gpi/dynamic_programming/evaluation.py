@@ -5,23 +5,26 @@ import numpy as np
 
 from rlai.actions import Action
 from rlai.agents.mdp import MdpAgent
+from rlai.environments.mdp import ModelBasedMdpEnvironment
 from rlai.meta import rl_text
-from rlai.states.mdp import ModelBasedMdpState
+from rlai.states.mdp import MdpState
 
 
 @rl_text(chapter=4, page=74)
 def evaluate_v_pi(
         agent: MdpAgent,
+        environment: ModelBasedMdpEnvironment,
         theta: Optional[float],
         num_iterations: Optional[int],
         update_in_place: bool,
-        initial_v_S: Optional[Dict[ModelBasedMdpState, float]] = None
-) -> Tuple[Dict[ModelBasedMdpState, float], float]:
+        initial_v_S: Optional[Dict[MdpState, float]] = None
+) -> Tuple[Dict[MdpState, float], float]:
     """
     Perform iterative policy evaluation of an agent's policy within an environment, returning state values.
 
     :param agent: MDP agent. Must contain a policy `pi` that has been fully initialized with instances of
     `rlai.states.mdp.ModelBasedMdpState`.
+    :param environment: Model-based MDP environment to evaluate.
     :param theta: Minimum tolerated change in state value estimates, below which evaluation terminates. Either `theta`
     or `num_iterations` (or both) can be specified, but passing neither will raise an exception.
     :param num_iterations: Number of evaluation iterations to execute.  Either `theta` or `num_iterations` (or both)
@@ -52,7 +55,6 @@ def evaluate_v_pi(
 
         delta = 0.0
 
-        s: ModelBasedMdpState
         for s in agent.pi:
 
             prev_v = v_S[s]
@@ -60,11 +62,11 @@ def evaluate_v_pi(
             # calculate expected value of current state using current estimates of successor state-values
             new_v = np.sum([
 
-                agent.pi[s][a] * s.p_S_prime_R_given_A[a][s_prime][r] * (r.r + agent.gamma * v_S[s_prime])
+                agent.pi[s][a] * environment.p_S_prime_R_given_S_A[s][a][s_prime][r] * (r.r + agent.gamma * v_S[s_prime])
 
-                for a in s.p_S_prime_R_given_A
-                for s_prime in s.p_S_prime_R_given_A[a]
-                for r in s.p_S_prime_R_given_A[a][s_prime]
+                for a in environment.p_S_prime_R_given_S_A[s]
+                for s_prime in environment.p_S_prime_R_given_S_A[s][a]
+                for r in environment.p_S_prime_R_given_S_A[s][a][s_prime]
             ])
 
             v_S_to_update[s] = new_v
@@ -95,15 +97,17 @@ def evaluate_v_pi(
 @rl_text(chapter=4, page=76)
 def evaluate_q_pi(
         agent: MdpAgent,
+        environment: ModelBasedMdpEnvironment,
         theta: Optional[float],
         num_iterations: Optional[int],
         update_in_place: bool,
-        initial_q_S_A: Dict[ModelBasedMdpState, Dict[Action, float]] = None
-) -> Tuple[Dict[ModelBasedMdpState, Dict[Action, float]], float]:
+        initial_q_S_A: Dict[MdpState, Dict[Action, float]] = None
+) -> Tuple[Dict[MdpState, Dict[Action, float]], float]:
     """
     Perform iterative policy evaluation of an agent's policy within an environment, returning state-action values.
 
     :param agent: MDP agent.
+    :param environment: Model-based MDP environment to evaluate.
     :param theta: Minimum tolerated change in state value estimates, below which evaluation terminates. Either `theta`
     or `num_iterations` (or both) can be specified, but passing neither will raise an exception.
     :param num_iterations: Number of evaluation iterations to execute.  Either `theta` or `num_iterations` (or both)
@@ -119,12 +123,11 @@ def evaluate_q_pi(
         num_iterations=num_iterations
     )
 
-    s: ModelBasedMdpState
     if initial_q_S_A is None:
         q_S_A = {
             s: {
                 a: 0.0
-                for a in s.p_S_prime_R_given_A
+                for a in environment.p_S_prime_R_given_S_A[s]
             }
             for s in agent.pi
         }
@@ -140,7 +143,7 @@ def evaluate_q_pi(
             q_S_A_to_update = {
                 s: {
                     a: 0.0
-                    for a in s.p_S_prime_R_given_A
+                    for a in environment.p_S_prime_R_given_S_A
                 }
                 for s in agent.pi
             }
@@ -149,7 +152,7 @@ def evaluate_q_pi(
 
         # update each state-action value
         for s in agent.pi:
-            for a in s.p_S_prime_R_given_A:
+            for a in environment.p_S_prime_R_given_S_A[s]:
 
                 prev_q = q_S_A[s][a]
 
@@ -157,13 +160,13 @@ def evaluate_q_pi(
                 new_q = np.sum([
 
                     # action is given, so start expectation with state/reward probability.
-                    s.p_S_prime_R_given_A[a][s_prime][r] * (r.r + agent.gamma * np.sum([
+                    environment.p_S_prime_R_given_S_A[s][a][s_prime][r] * (r.r + agent.gamma * np.sum([
                         agent.pi[s_prime][a_prime] * q_S_A[s_prime][a_prime]
-                        for a_prime in s.p_S_prime_R_given_A
+                        for a_prime in environment.p_S_prime_R_given_S_A[s]
                      ]))
 
-                    for s_prime in s.p_S_prime_R_given_A[a]
-                    for r in s.p_S_prime_R_given_A[a][s_prime]
+                    for s_prime in environment.p_S_prime_R_given_S_A[s][a]
+                    for r in environment.p_S_prime_R_given_S_A[s][a][s_prime]
                 ])
 
                 q_S_A_to_update[s][a] = new_q

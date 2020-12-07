@@ -27,13 +27,10 @@ def test_stochastic_environment_model():
     ]
 
     for t in range(1000):
-
         state = sample_list_item(states, None, random_state)
         action = sample_list_item(state.AA, None, random_state)
-
         next_state = sample_list_item(states, None, random_state)
         reward = Reward(None, random_state.randint(10))
-
         model.update(state, action, next_state, reward)
 
     environment_sequence = []
