@@ -13,5 +13,5 @@ generally applicable beyond such examples. The approach taken here should be gen
 This code is distributed via [PyPI](https://pypi.org/project/rlai/) and can be installed with `pip install rlai`.
 
 # Figures
-A list of figures can be found [here](src/rlai/figures). Most of these are reproductions of those shown in the text; 
+A list of figures can be found [here](../src/rlai/figures). Most of these are reproductions of those shown in the text; 
 however, even the reproductions typically provide detail not shown in the text.

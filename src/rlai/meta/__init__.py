@@ -86,7 +86,7 @@ def main():
     # noinspection PyTypeChecker
     summarize(rlai, chapter_page_descriptions)
 
-    meta_md_path = f'{os.path.dirname(__file__)}/../../../README.md'
+    meta_md_path = f'{os.path.dirname(__file__)}/../../../docs/index.md'
 
     # read base readme
     with open('./README_base.md', 'r') as base:
