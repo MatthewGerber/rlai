@@ -1,5 +1,9 @@
 # Inverted Pendulum
-The inverted pendulum is also known as cart-pole balancing.
+The inverted pendulum is also known as cart-pole balancing. You can read more about this environment 
+[here](https://gym.openai.com/envs/CartPole-v1/). Below is an example of running a random (untrained) untrained agent in 
+this environment:
+
+{% include youtubePlayer.html id="rGnf9CFwD7M" %}
 
 ## Training
 
@@ -32,8 +36,17 @@ Arguments are explained below.
 --save-agent-path "~/Desktop/cartpole_agent.pickle"
 ```
 
-## Results
+The training progression is shown below.
 
 ![inverted-pendulum](https://github.com/MatthewGerber/rlai/raw/master/trained_agents/cartpole/cartpole_training.png)
 
-{% include youtubePlayer.html id="rGnf9CFwD7M" %}
+In the left sub-figure above, the left y-axis shows how long the control agent is able to keep the pole balanced, and 
+the right y-axis shows the size of the state space. The right sub-figure shows the same reward y-axis but along a time
+x-axis.
+
+
+## Results
+
+The video below shows the trained agent controlling the inverted pendulum.
+
+{% include youtubePlayer.html id="bnQFT31_WfI" %}
