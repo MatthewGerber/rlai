@@ -47,5 +47,10 @@ setup(
     extras_require={
         'test:python_version == "3.8"': TEST_REQUIREMENTS,
         'dev:python_version == "3.8"': TEST_REQUIREMENTS + DEV_REQUIREMENTS
+    },
+    entry_points={
+        'console_scripts': [
+            'rlai_train=rlai.runners.trainer:run'
+        ]
     }
 )

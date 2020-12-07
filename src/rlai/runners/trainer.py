@@ -14,7 +14,7 @@ from rlai.utils import import_function, load_class
 
 @rl_text(chapter='Training and Running Agents', page=1)
 def run(
-        args: List[str]
+        args: List[str] = None
 ) -> Tuple[Optional[str], str]:
     """
     Train an agent in an environment.
