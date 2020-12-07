@@ -43,7 +43,6 @@ In the left sub-figure above, the left y-axis shows how long the control agent i
 the right y-axis shows the size of the state space. The x-axis shows improvement iterations for the agent's policy.
 The right sub-figure shows the same reward y-axis but along a time x-axis.
 
-
 ## Results
 
 The video below shows the trained agent controlling the inverted pendulum.
