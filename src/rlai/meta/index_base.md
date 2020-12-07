@@ -28,15 +28,3 @@ to train agents for and are instructive for understanding how agents are paramet
 A list of figures can be found [here](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/figures). Most of these 
 are reproductions of those shown in the text; however, even the reproductions typically provide detail not shown in the 
 text.
-
-# General Topics
-### [Environments](ch_Environments.md)
-### [Training and Running Agents](ch_Training_and_Running_Agents.md)
-
-# Book Chapters
-### [Chapter 2:  Multi-armed Bandits](ch_2.md)
-### [Chapter 3:  Finite Markov Decision Processes](ch_3.md)
-### [Chapter 4:  Dynamic Programming](ch_4.md)
-### [Chapter 5:  Monte Carlo Methods](ch_5.md)
-### [Chapter 6:  Temporal-Difference Learning](ch_6.md)
-### [Chapter 8:  Planning and Learning with Tabular Methods](ch_8.md)

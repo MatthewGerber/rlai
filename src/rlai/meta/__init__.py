@@ -112,8 +112,8 @@ def main():
         17: 'Frontiers'
     }
 
-    # read base readme
-    with open('./README_base.md', 'r') as base:
+    # read base index
+    with open('index_base.md', 'r') as base:
         readme_base = base.read().strip()
 
     # write markdown file
