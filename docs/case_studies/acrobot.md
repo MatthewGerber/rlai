@@ -1,7 +1,3 @@
----
-layout: post
----
-
 # Acrobot
 The acrobot is a two-joint, two-link mechanism, and the goal is to get the end of the mechanism to touch the horizontal 
 height marker. You can read more about this environment [here](https://gym.openai.com/envs/Acrobot-v1/). Below is an 
