@@ -17,8 +17,10 @@ INSTALL_REQUIREMENTS = [
 TEST_REQUIREMENTS = [
     'pytest==5.3',
     'pytest-cov==2.8',
+    'coverage==5.3',
     'pytest-runner==5.2',
-    'nose==1.3.7'
+    'nose==1.3.7',
+    'importlib-metadata==3.1.1'
 ]
 
 DEV_REQUIREMENTS = [
