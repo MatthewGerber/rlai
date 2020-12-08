@@ -717,7 +717,7 @@ class PrioritizedSweepingMdpPlanningEnvironment(MdpPlanningEnvironment):
         :param t: Time step.
         :param a: Action.
         :param agent: Agent.
-        :return: 3-tuple of (1) current state, current action, and next-state, and (2) reward.
+        :return: 2-tuple of (1) 3-tuple of current state, current action, and next-state, and (2) reward.
         """
 
         planning_state, a = self.get_state_action_with_highest_priority()
@@ -884,7 +884,7 @@ class TrajectorySamplingMdpPlanningEnvironment(MdpPlanningEnvironment):
         :param t: Time step.
         :param a: Action.
         :param agent: Agent.
-        :return: 3-tuple of (1) current state, current action, and next-state, and (2) reward.
+        :return: 2-tuple of (1) 3-tuple of current state, current action, and next-state, and (2) reward.
         """
 
         # sample a random action if the given one is not defined by the model

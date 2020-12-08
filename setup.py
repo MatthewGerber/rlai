@@ -10,7 +10,8 @@ INSTALL_REQUIREMENTS = [
     'numpy==1.19.0',
     'gym==0.17.3',
     'mujoco-py==2.0.2.13',
-    'Box2D==2.3.10'
+    'Box2D==2.3.10',
+    'python-dateutil==2.8.1'
 ]
 
 TEST_REQUIREMENTS = [
