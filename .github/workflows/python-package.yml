@@ -25,6 +25,8 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
+        virtualenv -p python3.8 ./venv
+        . ./venv/bin/activate
         python -m pip install --upgrade pip
         python -m pip install --upgrade --force-reinstall .[test]
     - name: Lint with flake8
