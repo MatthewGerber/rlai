@@ -11,7 +11,12 @@ INSTALL_REQUIREMENTS = [
     'gym==0.17.3',
     'mujoco-py==2.0.2.13',
     'Box2D==2.3.10',
-    'python-dateutil==2.8.1'
+    'python-dateutil==2.8.1',
+    'importlib-metadata==3.1.1',
+    'packaging==20.7',
+    'more-itertools==8.6.0',
+    'attrs==20.3.0',
+    'pyparsing==2.4.7'
 ]
 
 TEST_REQUIREMENTS = [
@@ -19,12 +24,7 @@ TEST_REQUIREMENTS = [
     'pytest-cov==2.8',
     'coverage==5.3',
     'pytest-runner==5.2',
-    'nose==1.3.7',
-    'importlib-metadata==3.1.1',
-    'packaging==20.7',
-    'more-itertools==8.6.0',
-    'attrs==20.3.0',
-    'pyparsing==2.4.7'
+    'nose==1.3.7'
 ]
 
 DEV_REQUIREMENTS = [
@@ -52,8 +52,8 @@ setup(
     ],
     tests_require=TEST_REQUIREMENTS,
     extras_require={
-        'test:python_version == "3.8"': TEST_REQUIREMENTS,
-        'dev:python_version == "3.8"': TEST_REQUIREMENTS + DEV_REQUIREMENTS
+        'test:python_version == "3.8.5"': TEST_REQUIREMENTS,
+        'dev:python_version == "3.8.5"': TEST_REQUIREMENTS + DEV_REQUIREMENTS
     },
     entry_points={
         'console_scripts': [
