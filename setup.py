@@ -9,7 +9,6 @@ INSTALL_REQUIREMENTS = [
     'matplotlib==3.3.1',
     'numpy==1.19.0',
     'gym==0.17.3',
-    'mujoco-py==2.0.2.13',
     'Box2D==2.3.10',
     'python-dateutil==2.8.1',
     'importlib-metadata==3.1.1',
@@ -33,6 +32,10 @@ DEV_REQUIREMENTS = [
     'flake8==3.7'
 ]
 
+MUJOCO_REQUIREMENTS = [
+    'mujoco-py==2.0.2.13'
+]
+
 with open(path.join(path.abspath(path.dirname(__file__)), 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
@@ -54,7 +57,8 @@ setup(
     tests_require=TEST_REQUIREMENTS,
     extras_require={
         'test:python_version == "3.8.5"': TEST_REQUIREMENTS,
-        'dev:python_version == "3.8.5"': TEST_REQUIREMENTS + DEV_REQUIREMENTS
+        'dev:python_version == "3.8.5"': TEST_REQUIREMENTS + DEV_REQUIREMENTS,
+        'mujoco:python_version == "3.8.5"': MUJOCO_REQUIREMENTS
     },
     entry_points={
         'console_scripts': [
