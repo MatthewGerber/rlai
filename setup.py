@@ -20,7 +20,9 @@ TEST_REQUIREMENTS = [
     'coverage==5.3',
     'pytest-runner==5.2',
     'nose==1.3.7',
-    'importlib-metadata==3.1.1'
+    'importlib-metadata==3.1.1',
+    'packaging==20.7',
+    'more-itertools==8.6.0'
 ]
 
 DEV_REQUIREMENTS = [
