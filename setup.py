@@ -16,7 +16,8 @@ INSTALL_REQUIREMENTS = [
     'packaging==20.7',
     'more-itertools==8.6.0',
     'attrs==20.3.0',
-    'pyparsing==2.4.7'
+    'pyparsing==2.4.7',
+    'future==0.18.2'
 ]
 
 TEST_REQUIREMENTS = [
