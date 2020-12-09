@@ -56,9 +56,9 @@ setup(
     ],
     tests_require=TEST_REQUIREMENTS,
     extras_require={
-        'test:python_version == "3.8.5"': TEST_REQUIREMENTS,
-        'dev:python_version == "3.8.5"': TEST_REQUIREMENTS + DEV_REQUIREMENTS,
-        'mujoco:python_version == "3.8.5"': MUJOCO_REQUIREMENTS
+        'test:': TEST_REQUIREMENTS,
+        'dev:': TEST_REQUIREMENTS + DEV_REQUIREMENTS,
+        'mujoco:': MUJOCO_REQUIREMENTS
     },
     entry_points={
         'console_scripts': [
