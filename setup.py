@@ -24,12 +24,12 @@ TEST_REQUIREMENTS = [
     'pytest-cov==2.8',
     'coverage==5.3',
     'pytest-runner==5.2',
-    'nose==1.3.7'
+    'nose==1.3.7',
+    'flake8==3.7'
 ]
 
 DEV_REQUIREMENTS = [
-    'bump2version==1.0.1',
-    'flake8==3.7'
+    'bump2version==1.0.1'
 ]
 
 MUJOCO_REQUIREMENTS = [
