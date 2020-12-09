@@ -22,7 +22,9 @@ TEST_REQUIREMENTS = [
     'nose==1.3.7',
     'importlib-metadata==3.1.1',
     'packaging==20.7',
-    'more-itertools==8.6.0'
+    'more-itertools==8.6.0',
+    'attrs==20.3.0',
+    'pyparsing==2.4.7'
 ]
 
 DEV_REQUIREMENTS = [
