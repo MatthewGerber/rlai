@@ -25,7 +25,8 @@ TEST_REQUIREMENTS = [
     'coverage==5.3',
     'pytest-runner==5.2',
     'nose==1.3.7',
-    'flake8==3.7'
+    'flake8==3.7',
+    'coveralls==2.2.0'
 ]
 
 DEV_REQUIREMENTS = [

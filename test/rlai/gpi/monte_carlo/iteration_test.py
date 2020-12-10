@@ -30,8 +30,7 @@ def test_iterate_value_q_pi():
         num_episodes_per_improvement=1,
         update_upon_every_visit=False,
         epsilon=0.1,
-        make_final_policy_greedy=False,
-        num_improvements_per_plot=None
+        make_final_policy_greedy=False
     )
 
     # uncomment the following line and run test to update fixture
@@ -76,8 +75,7 @@ def test_off_policy_monte_carlo():
         update_upon_every_visit=True,
         epsilon=0.0,
         make_final_policy_greedy=False,
-        off_policy_agent=off_policy_agent,
-        num_improvements_per_plot=None
+        off_policy_agent=off_policy_agent
     )
 
     # uncomment the following line and run test to update fixture

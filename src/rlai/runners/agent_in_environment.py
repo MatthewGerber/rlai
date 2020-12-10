@@ -62,6 +62,12 @@ def run(
         help='Random seed. Omit to generate an arbitrary random seed.'
     )
 
+    parser.add_argument(
+        '--plot',
+        action='store_true',
+        help='Plot rewards.'
+    )
+
     parsed_args, unparsed_args = parser.parse_known_args(args)
 
     if parsed_args.random_seed is None:
@@ -93,16 +99,19 @@ def run(
     if len(unparsed_args) > 0:
         raise ValueError(f'Unparsed arguments:  {unparsed_args}')
 
-    # set up plot to pdf
+    # set up plotting
     pdf = None
-    if parsed_args.pdf_save_path:
-        pdf = PdfPages(parsed_args.pdf_save_path)
+    reward_ax = cum_reward_ax = optimal_action_ax = None
+    if parsed_args.plot:
 
-    fig, axs = plt.subplots(2, 1, sharex='all', figsize=(6, 9))
+        if parsed_args.pdf_save_path:
+            pdf = PdfPages(parsed_args.pdf_save_path)
 
-    reward_ax = axs[0]
-    cum_reward_ax = reward_ax.twinx()
-    optimal_action_ax = axs[1]
+        _, axs = plt.subplots(2, 1, sharex='all', figsize=(6, 9))
+
+        reward_ax = axs[0]
+        cum_reward_ax = reward_ax.twinx()
+        optimal_action_ax = axs[1]
 
     # run each agent in the environment
     monitors = []
@@ -130,43 +139,48 @@ def run(
                 percent_done = 100 * (num_runs_finished / parsed_args.n_runs)
                 print(f'{percent_done:.0f}% complete (finished {num_runs_finished} of {parsed_args.n_runs} runs)...')
 
-        reward_ax.plot([
-            monitor.t_average_reward[t].get_value()
-            for t in sorted(monitor.t_average_reward)
-        ], linewidth=1, label=agent.name)
+        if parsed_args.plot:
 
-        cum_reward_ax.plot([
-            monitor.t_average_cumulative_reward[t].get_value()
-            for t in sorted(monitor.t_average_cumulative_reward)
-        ], linewidth=1, linestyle='--', label=agent.name)
+            reward_ax.plot([
+                monitor.t_average_reward[t].get_value()
+                for t in sorted(monitor.t_average_reward)
+            ], linewidth=1, label=agent.name)
 
-        optimal_action_ax.plot([
-            monitor.t_count_optimal_action[t] / parsed_args.n_runs
-            for t in sorted(monitor.t_count_optimal_action)
-        ], linewidth=1, label=agent.name)
+            cum_reward_ax.plot([
+                monitor.t_average_cumulative_reward[t].get_value()
+                for t in sorted(monitor.t_average_cumulative_reward)
+            ], linewidth=1, linestyle='--', label=agent.name)
+
+            optimal_action_ax.plot([
+                monitor.t_count_optimal_action[t] / parsed_args.n_runs
+                for t in sorted(monitor.t_count_optimal_action)
+            ], linewidth=1, label=agent.name)
 
         print()
 
-    if parsed_args.figure_name is not None:
-        reward_ax.set_title(parsed_args.figure_name)
+    # finish plotting
+    if parsed_args.plot:
 
-    reward_ax.set_xlabel('Time step')
-    reward_ax.set_ylabel(f'Per-step reward (averaged over {parsed_args.n_runs} run(s))')
-    reward_ax.grid()
-    reward_ax.legend()
-    cum_reward_ax.set_ylabel(f'Cumulative reward (averaged over {parsed_args.n_runs} run(s))')
-    cum_reward_ax.legend(loc='lower right')
+        if parsed_args.figure_name is not None:
+            reward_ax.set_title(parsed_args.figure_name)
 
-    optimal_action_ax.set_xlabel('Time step')
-    optimal_action_ax.set_ylabel(f'% optimal action selected')
-    optimal_action_ax.grid()
-    optimal_action_ax.legend()
+        reward_ax.set_xlabel('Time step')
+        reward_ax.set_ylabel(f'Per-step reward (averaged over {parsed_args.n_runs} run(s))')
+        reward_ax.grid()
+        reward_ax.legend()
+        cum_reward_ax.set_ylabel(f'Cumulative reward (averaged over {parsed_args.n_runs} run(s))')
+        cum_reward_ax.legend(loc='lower right')
 
-    if pdf is None:
-        plt.show()
-    else:
-        pdf.savefig()
-        pdf.close()
+        optimal_action_ax.set_xlabel('Time step')
+        optimal_action_ax.set_ylabel(f'% optimal action selected')
+        optimal_action_ax.grid()
+        optimal_action_ax.legend()
+
+        if pdf is None:
+            plt.show()
+        else:
+            pdf.savefig()
+            pdf.close()
 
     return monitors
 

@@ -119,7 +119,6 @@ def test_sarsa_iterate_value_q_pi_with_trajectory_planning():
         n_steps=1,
         epsilon=0.05,
         planning_environment=planning_environment,
-        num_improvements_per_plot=100,
         make_final_policy_greedy=True
     )
 
