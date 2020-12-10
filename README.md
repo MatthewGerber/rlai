@@ -1,3 +1,5 @@
-![Python package](https://github.com/MatthewGerber/rlai/workflows/Python%20package/badge.svg)
+![Python package](https://github.com/MatthewGerber/rlai/workflows/Python%20package/badge.svg) 
+
+[![Coverage Status](https://coveralls.io/repos/github/MatthewGerber/rlai/badge.svg?branch=master)](https://coveralls.io/github/MatthewGerber/rlai?branch=master)
 
 Please see the [project website](https://matthewgerber.github.io/rlai/) for more information. 
