@@ -35,9 +35,9 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
       env:
-        COVERAGE_FILE: /home/.coverage
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         coverage run -m pytest --cov=rlai ./test
-        mv /home/.coverage ./
+        pwd
+        ls -la
         coveralls
