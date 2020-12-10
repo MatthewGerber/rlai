@@ -37,5 +37,5 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        coverage run -m pytest --cov=rlai ./test
+        coverage run --source=src -m pytest ./test
         coveralls
