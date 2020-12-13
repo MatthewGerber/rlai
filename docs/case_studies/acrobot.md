@@ -53,7 +53,7 @@ quite satisfactory after 1.25 hours of wallclock training time.
 
 ## Results
 
-The video below shows the trained agent controlling the acrobot. Note how the agent develops an oscilating movement to
+The video below shows the trained agent controlling the acrobot. Note how the agent develops an oscillating movement to
 get the free-moving joint progressively higher. After achieving sufficient height of the free-moving joint, it appears 
 that the agent is waiting for random dynamics to swing the end of the mechanism up to the goal line. It is difficult to
 discern a systematic pattern of behavior in the critical final moments of the episode, having watched many 

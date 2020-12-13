@@ -54,6 +54,6 @@ quite satisfactory after 30 minutes of wallclock training time.
 
 ## Results
 
-The video below shows the trained agent controlling the car. Note how the agent develops an oscilating movement.
+The video below shows the trained agent controlling the car. Note how the agent develops an oscillating movement.
 
 {% include youtubePlayer.html id="qjVdoYYnriA" %}
