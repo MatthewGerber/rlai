@@ -10,8 +10,11 @@ some.
 examples covered; however, such implementations do not necessarily lead to reusable and extensible code that is 
 generally applicable beyond such examples. The approach taken here should be generally applicable well beyond the text.
 
-# Installation
-This code is distributed via [PyPI](https://pypi.org/project/rlai/) and can be installed with `pip install rlai`.
+# Source Installation and Use
+This code is distributed via [PyPI](https://pypi.org/project/rlai/) and can be installed with `pip install rlai`. See 
+the [example repository](https://github.com/MatthewGerber/rlai-dependency-example) for how a project might be structured 
+to consume the `rlai` package functionality within source code. Using `rlai` from the command line is shown in some 
+detail in the case studies below.
 
 # Case Studies
 The gridworld and other simple environments (e.g., gambler's problem) are used throughout the package to develop, 
