@@ -100,7 +100,8 @@ def iterate_value_q_pi(
         iteration_total_states.append(len(q_S_A))
         iteration_num_states_updated.append(num_states_updated)
 
-        # run planning through a recursive call to the iteration method, passing the planning environment.
+        # run planning through a recursive call to the iteration method, passing the planning environment as the
+        # environment to interact with and disabling planning in the recursive call.
         if planning_environment is not None:
             print(f'Running {planning_environment.num_planning_improvements_per_direct_improvement} planning improvement(s).')
             iterate_value_q_pi(

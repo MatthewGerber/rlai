@@ -19,12 +19,12 @@ def run(
         args: List[str]
 ):
     """
-    Run a trained agent in an environment.
+    Run an agent within an environment.
 
     :param args: Arguments.
     """
 
-    parser = ArgumentParser(description='Run an agent within an environment.', allow_abbrev=False)
+    parser = ArgumentParser(description='Run an agent within an environment. This does not support learning GPI-style (e.g., monte carlo or temporal difference) learning. See trainer.py for such methods.', allow_abbrev=False)
 
     parser.add_argument(
         '--n-runs',
