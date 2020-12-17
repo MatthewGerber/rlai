@@ -5,10 +5,10 @@ from typing import Dict, Set, Tuple, Optional
 from rlai.actions import Action
 from rlai.agents.mdp import MdpAgent
 from rlai.environments.mdp import MdpEnvironment, MdpPlanningEnvironment, PrioritizedSweepingMdpPlanningEnvironment
-from rlai.gpi.utils import lazy_initialize_q_S_A, initialize_q_S_A
 from rlai.meta import rl_text
 from rlai.states.mdp import MdpState
 from rlai.utils import IncrementalSampleAverager, sample_list_item
+from rlai.value_estimation import StateActionValueEstimator
 
 
 @rl_text(chapter=6, page=130)
@@ -39,8 +39,8 @@ def evaluate_q_pi(
         mode: Mode,
         n_steps: Optional[int],
         planning_environment: MdpPlanningEnvironment,
-        initial_q_S_A: Dict[MdpState, Dict[Action, IncrementalSampleAverager]]
-) -> Tuple[Dict[MdpState, Dict[Action, IncrementalSampleAverager]], Set[MdpState], float]:
+        q_S_A: StateActionValueEstimator
+) -> Tuple[Set[MdpState], float]:
     """
     Perform temporal-difference (TD) evaluation of an agent's policy within an environment, returning state-action
     values. This evaluation function implements both on-policy TD learning (SARSA) as well as off-policy TD learning
@@ -55,9 +55,9 @@ def evaluate_q_pi(
     range [1, inf], or None for infinite step size (Monte Carlo evaluation).
     :param planning_environment: Planning environment to learn through experience gained during evaluation, or None to
     not learn an environment model.
-    :param initial_q_S_A: Initial guess at state-action value, or None for no guess.
-    :return: 3-tuple of (1) dictionary of all MDP states and their action-value averagers under the agent's policy, (2)
-    set of only those states that were evaluated, and (3) the average reward obtained per episode.
+    :param q_S_A: State-action value estimator.
+    :return: 2-tuple of (1) set of only those states that were evaluated, and (2) the average reward obtained per
+    episode.
     """
 
     if n_steps is not None and n_steps < 1:
@@ -66,8 +66,6 @@ def evaluate_q_pi(
     print(f'Running temporal-difference evaluation of q_pi for {num_episodes} episode(s).')
 
     evaluated_states = set()
-
-    q_S_A = initialize_q_S_A(initial_q_S_A, environment, evaluated_states)
 
     planning = isinstance(environment, MdpPlanningEnvironment)
 
@@ -194,7 +192,7 @@ def evaluate_q_pi(
         if episodes_finished % episodes_per_print == 0:
             print(f'Finished {episodes_finished} of {num_episodes} episode(s).')
 
-    return q_S_A, evaluated_states, episode_reward_averager.get_value()
+    return evaluated_states, episode_reward_averager.get_value()
 
 
 def get_bootstrapped_state_action_value(
@@ -202,7 +200,7 @@ def get_bootstrapped_state_action_value(
         t: int,
         mode: Mode,
         agent: MdpAgent,
-        q_S_A: Dict[MdpState, Dict[Action, IncrementalSampleAverager]],
+        q_S_A: StateActionValueEstimator,
         environment: MdpEnvironment
 ) -> Tuple[float, Action]:
     """
@@ -261,7 +259,7 @@ def get_bootstrapped_state_action_value(
 
 
 def update_q_S_A(
-        q_S_A: Dict[MdpState, Dict[Action, IncrementalSampleAverager]],
+        q_S_A: StateActionValueEstimator,
         n_steps: Optional[int],
         curr_t: int,
         t_state_a_g: Dict[int, Tuple[MdpState, Action, float]],
@@ -303,10 +301,10 @@ def update_q_S_A(
 
         # initialize and update the state-action pair with the target value. first calculate the update error for
         # possible use in updating the environment model.
-        lazy_initialize_q_S_A(q_S_A=q_S_A, state=update_state, a=update_a, alpha=alpha, weighted=False)
-        averager = q_S_A[update_state][update_a]
-        error = td_target - averager.get_value()
-        averager.update(td_target)
+        q_S_A.initialize(state=update_state, a=update_a, alpha=alpha, weighted=False)
+        value_estimator = q_S_A[update_state][update_a]
+        error = td_target - value_estimator.get_value()
+        value_estimator.update(td_target)
 
         # if we're using prioritized-sweep planning, then update the priority queue. note that the priority queue
         # returns values with the lowest priority first. so negate the error to get the state-action pairs with highest

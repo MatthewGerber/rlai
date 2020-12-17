@@ -1,100 +1,12 @@
 import os
 import pickle
 import statistics
-from typing import Dict, Optional, Set, List, Callable
+from typing import Dict, Optional, List, Callable
 
 import matplotlib.pyplot as plt
 
-from rlai.actions import Action
 from rlai.agents.mdp import MdpAgent
-from rlai.environments.mdp import MdpEnvironment
 from rlai.environments.openai_gym import Gym
-from rlai.states.mdp import MdpState
-from rlai.utils import IncrementalSampleAverager
-
-
-def initialize_q_S_A(
-        initial_q_S_A: Dict[MdpState, Dict[Action, IncrementalSampleAverager]],
-        environment: MdpEnvironment,
-        evaluated_states: Set[MdpState]
-) -> Dict[MdpState, Dict[Action, IncrementalSampleAverager]]:
-    """
-    Initialize q_S_A structure.
-
-    :param initial_q_S_A: Initial guess at state-action value, or None for no guess.
-    :param environment: Environment.
-    :param evaluated_states: Evaluated states.
-    :return: q_S_A structure.
-    """
-
-    # if no initial guess is provided, then start with an averager for each terminal state. these should never be used.
-    if initial_q_S_A is None:
-        q_S_A = {
-            terminal_state: {
-                a: IncrementalSampleAverager()
-                for a in terminal_state.AA
-            }
-            for terminal_state in environment.terminal_states
-        }
-
-        for s in q_S_A:
-            evaluated_states.add(s)
-
-    # set to initial guess
-    else:
-        q_S_A = initial_q_S_A
-
-    return q_S_A
-
-
-def lazy_initialize_q_S_A(
-        q_S_A: Dict[MdpState, Dict[Action, IncrementalSampleAverager]],
-        state: MdpState,
-        a: Action,
-        alpha: Optional[float],
-        weighted: bool
-):
-    """
-    Lazy-initialize the reward averager for a state-action pair.
-
-    :param q_S_A: State-action averagers.
-    :param state: State.
-    :param a: Action.
-    :param alpha: Step size.
-    :param weighted: Whether the averger should be weighted.
-    """
-
-    if state not in q_S_A:
-        q_S_A[state] = {}
-
-    if a not in q_S_A[state]:
-        q_S_A[state][a] = IncrementalSampleAverager(alpha=alpha, weighted=weighted)
-
-
-def get_q_pi_for_evaluated_states(
-        q_S_A: Dict[MdpState, Dict[Action, IncrementalSampleAverager]],
-        evaluated_states: Optional[Set[MdpState]]
-) -> Dict[MdpState, Dict[Action, float]]:
-    """
-    Get the q_pi that only includes the subset of states that were evaluated. There is no need to update the agent's
-    policy for states that weren't evaluated, and this will dramatically cut down computation for environments with
-    large state spaces.
-
-    :param q_S_A: State-action value estimators.
-    :param evaluated_states: States that were evaluated, or None to include all states.
-    :return: Dictionary of state-action value estimates.
-    """
-
-    q_pi = {
-        s: {
-            a: q_S_A[s][a].get_value()
-            for a in q_S_A[s]
-        }
-        for s in q_S_A
-        if evaluated_states is None or s in evaluated_states
-    }
-
-    return q_pi
 
 
 def plot_policy_iteration(

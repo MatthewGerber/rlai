@@ -2,18 +2,15 @@ import os
 import pickle
 import warnings
 from datetime import datetime
-from typing import Dict, Optional
+from typing import Optional
 
-from rlai.actions import Action
 from rlai.agents.mdp import MdpAgent
 from rlai.environments.mdp import MdpEnvironment
 from rlai.environments.openai_gym import Gym
-from rlai.gpi.improvement import improve_policy_with_q_pi
 from rlai.gpi.monte_carlo.evaluation import evaluate_q_pi
-from rlai.gpi.utils import get_q_pi_for_evaluated_states, plot_policy_iteration
+from rlai.gpi.utils import plot_policy_iteration
 from rlai.meta import rl_text
-from rlai.states.mdp import MdpState
-from rlai.utils import IncrementalSampleAverager
+from rlai.value_estimation import StateActionValueEstimator
 
 
 @rl_text(chapter=5, page=99)
@@ -25,12 +22,12 @@ def iterate_value_q_pi(
         update_upon_every_visit: bool,
         epsilon: Optional[float],
         make_final_policy_greedy: bool,
+        q_S_A: StateActionValueEstimator,
         off_policy_agent: Optional[MdpAgent] = None,
         num_improvements_per_plot: Optional[int] = None,
         num_improvements_per_checkpoint: Optional[int] = None,
-        checkpoint_path: Optional[str] = None,
-        initial_q_S_A: Optional[Dict] = None
-) -> Dict[MdpState, Dict[Action, IncrementalSampleAverager]]:
+        checkpoint_path: Optional[str] = None
+):
     """
     Run Monte Carlo value iteration on an agent using state-action value estimates. This iteration function operates
     over rewards obtained at the end of episodes, so it is only appropriate for episodic tasks.
@@ -45,14 +42,13 @@ def iterate_value_q_pi(
     be >= 0 if provided.
     :param make_final_policy_greedy: Whether or not to make the agent's final policy greedy with respect to the q-values
     that have been learned, regardless of the value of epsilon used to estimate the q-values.
+    :param q_S_A: State-action value estimator.
     :param off_policy_agent: See `rlai.gpi.monte_carlo.evaluation.evaluate_q_pi`. The policy of this agent will not
     updated by this function.
     :param num_improvements_per_plot: Number of improvements to make before plotting the per-improvement average. Pass
     None to turn off all plotting.
     :param num_improvements_per_checkpoint: Number of improvements per checkpoint save.
     :param checkpoint_path: Checkpoint path. Must be provided if `num_improvements_per_checkpoint` is provided.
-    :param initial_q_S_A: Initial state-action value estimates (primarily useful for restarting from a checkpoint).
-    :return: Dictionary of state-action value estimators.
     """
 
     if (epsilon is None or epsilon == 0.0) and off_policy_agent is None:
@@ -61,7 +57,6 @@ def iterate_value_q_pi(
     if checkpoint_path is not None:
         checkpoint_path = os.path.expanduser(checkpoint_path)
 
-    q_S_A = initial_q_S_A
     i = 0
     iteration_average_reward = []
     iteration_total_states = []
@@ -72,21 +67,19 @@ def iterate_value_q_pi(
 
         print(f'Value iteration {i + 1}:  ', end='')
 
-        q_S_A, evaluated_states, average_reward = evaluate_q_pi(
+        evaluated_states, average_reward = evaluate_q_pi(
             agent=agent,
             environment=environment,
             num_episodes=num_episodes_per_improvement,
             exploring_starts=False,
             update_upon_every_visit=update_upon_every_visit,
-            off_policy_agent=off_policy_agent,
-            initial_q_S_A=q_S_A
+            q_S_A=q_S_A,
+            off_policy_agent=off_policy_agent
         )
 
-        q_pi = get_q_pi_for_evaluated_states(q_S_A, evaluated_states)
-
-        num_states_updated = improve_policy_with_q_pi(
+        num_states_updated = q_S_A.update_policy(
             agent=agent,
-            q_pi=q_pi,
+            states=evaluated_states,
             epsilon=epsilon
         )
 
@@ -121,10 +114,10 @@ def iterate_value_q_pi(
                 'update_upon_every_visit': update_upon_every_visit,
                 'epsilon': epsilon,
                 'make_final_policy_greedy': make_final_policy_greedy,
+                'q_S_A': q_S_A,
                 'off_policy_agent': off_policy_agent,
                 'num_improvements_per_plot': num_improvements_per_plot,
-                'num_improvements_per_checkpoint': num_improvements_per_checkpoint,
-                'initial_q_S_A': q_S_A
+                'num_improvements_per_checkpoint': num_improvements_per_checkpoint
             }
 
             with open(checkpoint_path, 'wb') as checkpoint_file:
@@ -136,10 +129,8 @@ def iterate_value_q_pi(
     print(f'Value iteration of q_pi terminated after {i} iteration(s).')
 
     if make_final_policy_greedy:
-        q_pi = get_q_pi_for_evaluated_states(q_S_A, None)
-        improve_policy_with_q_pi(
+        q_S_A.update_policy(
             agent=agent,
-            q_pi=q_pi
+            states=None,
+            epsilon=0.0
         )
-
-    return q_S_A

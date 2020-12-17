@@ -6,6 +6,7 @@ from numpy.random import RandomState
 from rlai.agents.mdp import StochasticMdpAgent
 from rlai.environments.mdp import Gridworld
 from rlai.gpi.monte_carlo.evaluation import evaluate_v_pi, evaluate_q_pi
+from rlai.value_estimation.tabular import TabularStateActionValueEstimator
 
 
 def test_evaluate_v_pi():
@@ -54,12 +55,15 @@ def test_evaluate_q_pi():
 
     mdp_agent.initialize_equiprobable_policy(mdp_environment.SS)
 
-    q_S_A, evaluated_states, _ = evaluate_q_pi(
+    q_S_A = TabularStateActionValueEstimator()
+
+    evaluated_states, _ = evaluate_q_pi(
         agent=mdp_agent,
         environment=mdp_environment,
         num_episodes=1000,
         exploring_starts=True,
-        update_upon_every_visit=False
+        update_upon_every_visit=False,
+        q_S_A=q_S_A
     )
 
     assert len(q_S_A) == len(evaluated_states)

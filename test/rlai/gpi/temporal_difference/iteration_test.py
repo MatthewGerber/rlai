@@ -8,6 +8,7 @@ from rlai.environments.mdp import Gridworld, TrajectorySamplingMdpPlanningEnviro
 from rlai.gpi.temporal_difference.evaluation import Mode
 from rlai.gpi.temporal_difference.iteration import iterate_value_q_pi
 from rlai.planning.environment_models import StochasticEnvironmentModel
+from rlai.value_estimation.tabular import TabularStateActionValueEstimator
 
 
 def test_sarsa_iterate_value_q_pi():
@@ -25,7 +26,9 @@ def test_sarsa_iterate_value_q_pi():
 
     mdp_agent.initialize_equiprobable_policy(mdp_environment.SS)
 
-    q_S_A = iterate_value_q_pi(
+    q_S_A = TabularStateActionValueEstimator()
+
+    iterate_value_q_pi(
         agent=mdp_agent,
         environment=mdp_environment,
         num_improvements=10,
@@ -35,7 +38,8 @@ def test_sarsa_iterate_value_q_pi():
         n_steps=1,
         epsilon=0.05,
         planning_environment=None,
-        make_final_policy_greedy=False
+        make_final_policy_greedy=False,
+        q_S_A=q_S_A
     )
 
     # uncomment the following line and run test to update fixture
@@ -63,7 +67,9 @@ def test_sarsa_iterate_value_q_pi_make_greedy():
 
     mdp_agent.initialize_equiprobable_policy(mdp_environment.SS)
 
-    q_S_A = iterate_value_q_pi(
+    q_S_A = TabularStateActionValueEstimator()
+
+    iterate_value_q_pi(
         agent=mdp_agent,
         environment=mdp_environment,
         num_improvements=10,
@@ -73,7 +79,8 @@ def test_sarsa_iterate_value_q_pi_make_greedy():
         n_steps=1,
         epsilon=0.05,
         planning_environment=None,
-        make_final_policy_greedy=True
+        make_final_policy_greedy=True,
+        q_S_A=q_S_A
     )
 
     # uncomment the following line and run test to update fixture
@@ -109,7 +116,9 @@ def test_sarsa_iterate_value_q_pi_with_trajectory_planning():
 
     mdp_agent.initialize_equiprobable_policy(mdp_environment.SS)
 
-    q_S_A = iterate_value_q_pi(
+    q_S_A = TabularStateActionValueEstimator()
+
+    iterate_value_q_pi(
         agent=mdp_agent,
         environment=mdp_environment,
         num_improvements=100,
@@ -119,7 +128,8 @@ def test_sarsa_iterate_value_q_pi_with_trajectory_planning():
         n_steps=1,
         epsilon=0.05,
         planning_environment=planning_environment,
-        make_final_policy_greedy=True
+        make_final_policy_greedy=True,
+        q_S_A=q_S_A
     )
 
     # uncomment the following line and run test to update fixture
@@ -147,7 +157,9 @@ def test_q_learning_iterate_value_q_pi():
 
     mdp_agent.initialize_equiprobable_policy(mdp_environment.SS)
 
-    q_S_A = iterate_value_q_pi(
+    q_S_A = TabularStateActionValueEstimator()
+
+    iterate_value_q_pi(
         agent=mdp_agent,
         environment=mdp_environment,
         num_improvements=10,
@@ -157,7 +169,8 @@ def test_q_learning_iterate_value_q_pi():
         n_steps=1,
         epsilon=0.05,
         planning_environment=None,
-        make_final_policy_greedy=False
+        make_final_policy_greedy=False,
+        q_S_A=q_S_A
     )
 
     # uncomment the following line and run test to update fixture
@@ -185,7 +198,9 @@ def test_expected_sarsa_iterate_value_q_pi():
 
     mdp_agent.initialize_equiprobable_policy(mdp_environment.SS)
 
-    q_S_A = iterate_value_q_pi(
+    q_S_A = TabularStateActionValueEstimator()
+
+    iterate_value_q_pi(
         agent=mdp_agent,
         environment=mdp_environment,
         num_improvements=10,
@@ -195,7 +210,8 @@ def test_expected_sarsa_iterate_value_q_pi():
         n_steps=1,
         epsilon=0.05,
         planning_environment=None,
-        make_final_policy_greedy=False
+        make_final_policy_greedy=False,
+        q_S_A=q_S_A
     )
 
     # uncomment the following line and run test to update fixture
@@ -223,7 +239,9 @@ def test_n_step_q_learning_iterate_value_q_pi():
 
     mdp_agent.initialize_equiprobable_policy(mdp_environment.SS)
 
-    q_S_A = iterate_value_q_pi(
+    q_S_A = TabularStateActionValueEstimator()
+
+    iterate_value_q_pi(
         agent=mdp_agent,
         environment=mdp_environment,
         num_improvements=10,
@@ -233,7 +251,8 @@ def test_n_step_q_learning_iterate_value_q_pi():
         n_steps=3,
         epsilon=0.05,
         planning_environment=None,
-        make_final_policy_greedy=False
+        make_final_policy_greedy=False,
+        q_S_A=q_S_A
     )
 
     # uncomment the following line and run test to update fixture

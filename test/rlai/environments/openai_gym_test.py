@@ -7,6 +7,7 @@ from rlai.agents.mdp import StochasticMdpAgent
 from rlai.environments.openai_gym import Gym
 from rlai.gpi.temporal_difference.evaluation import Mode
 from rlai.gpi.temporal_difference.iteration import iterate_value_q_pi
+from rlai.value_estimation.tabular import TabularStateActionValueEstimator
 
 
 def test_learn():
@@ -26,7 +27,9 @@ def test_learn():
         gym_id='CartPole-v1'
     )
 
-    q_S_A = iterate_value_q_pi(
+    q_S_A = TabularStateActionValueEstimator()
+
+    iterate_value_q_pi(
         agent=mdp_agent,
         environment=gym,
         num_improvements=10,
@@ -36,7 +39,8 @@ def test_learn():
         n_steps=1,
         epsilon=0.05,
         planning_environment=None,
-        make_final_policy_greedy=False
+        make_final_policy_greedy=False,
+        q_S_A=q_S_A
     )
 
     # uncomment the following line and run test to update fixture

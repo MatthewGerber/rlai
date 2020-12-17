@@ -8,6 +8,7 @@ from rlai.agents.mdp import StochasticMdpAgent
 from rlai.environments.mancala import Mancala
 from rlai.gpi.monte_carlo.iteration import iterate_value_q_pi
 from rlai.gpi.utils import resume_from_checkpoint
+from rlai.value_estimation.tabular import TabularStateActionValueEstimator
 
 
 def test_learn():
@@ -37,6 +38,8 @@ def test_learn():
 
     checkpoint_path = tempfile.NamedTemporaryFile(delete=False).name
 
+    q_S_A = TabularStateActionValueEstimator()
+
     iterate_value_q_pi(
         agent=p1,
         environment=mancala,
@@ -45,6 +48,7 @@ def test_learn():
         update_upon_every_visit=False,
         epsilon=0.05,
         make_final_policy_greedy=False,
+        q_S_A=q_S_A,
         num_improvements_per_checkpoint=3,
         checkpoint_path=checkpoint_path
     )
@@ -88,6 +92,8 @@ def test_learn():
         1
     )
 
+    q_S_A = TabularStateActionValueEstimator()
+
     iterate_value_q_pi(
         agent=no_checkpoint_p1,
         environment=mancala,
@@ -95,7 +101,8 @@ def test_learn():
         num_episodes_per_improvement=100,
         update_upon_every_visit=False,
         epsilon=0.05,
-        make_final_policy_greedy=False
+        make_final_policy_greedy=False,
+        q_S_A=q_S_A
     )
 
     assert no_checkpoint_p1.pi == resumed_p1.pi

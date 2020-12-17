@@ -7,6 +7,7 @@ from rlai.gpi.utils import lazy_initialize_q_S_A, initialize_q_S_A
 from rlai.meta import rl_text
 from rlai.states.mdp import MdpState
 from rlai.utils import IncrementalSampleAverager, sample_list_item
+from rlai.value_estimation import StateActionValueEstimator
 
 
 @rl_text(chapter=5, page=92)
@@ -98,9 +99,9 @@ def evaluate_q_pi(
         num_episodes: int,
         exploring_starts: bool,
         update_upon_every_visit: bool,
+        q_S_A: StateActionValueEstimator,
         off_policy_agent: MdpAgent = None,
-        initial_q_S_A: Dict[MdpState, Dict[Action, IncrementalSampleAverager]] = None
-) -> Tuple[Dict[MdpState, Dict[Action, IncrementalSampleAverager]], Set[MdpState], float]:
+) -> Tuple[Set[MdpState], float]:
     """
     Perform Monte Carlo evaluation of an agent's policy within an environment, returning state-action values. This
     evaluation function operates over rewards obtained at the end of episodes, so it is only appropriate for episodic
@@ -116,20 +117,18 @@ def evaluate_q_pi(
     a nonzero epsilon (see `rlai.gpi.improvement.improve_policy_with_q_pi`).
     :param update_upon_every_visit: True to update each state-action pair upon each visit within an episode, or False to
     update each state-action pair upon the first visit within an episode.
+    :param q_S_A: State-action value estimator.
     :param off_policy_agent: Agent containing behavioral policy used to generate learning episodes. To ensure that the
     state-action value estimates converge to those of the target policy, the policy of the `off_policy_agent` must be
     soft (i.e., have positive probability for all state-action pairs that have positive probabilities in the agent's
     target policy).
-    :param initial_q_S_A: Initial guess at state-action value, or None for no guess.
-    :return: 3-tuple of (1) dictionary of all MDP states and their action-value averagers under the agent's policy, (2)
-    set of only those states that were evaluated, and (3) the average reward obtained per episode.
+    :return: 2-tuple of (1) set of only those states that were evaluated, and (2) the average reward obtained per
+    episode.
     """
 
     print(f'Running Monte Carlo evaluation of q_pi for {num_episodes} episode(s).')
 
     evaluated_states = set()
-
-    q_S_A = initialize_q_S_A(initial_q_S_A, environment, evaluated_states)
 
     episode_generation_agent = agent if off_policy_agent is None else off_policy_agent
     episode_reward_averager = IncrementalSampleAverager()
@@ -185,7 +184,7 @@ def evaluate_q_pi(
 
                 state, a = state_a
 
-                lazy_initialize_q_S_A(q_S_A=q_S_A, state=state, a=a, alpha=None, weighted=True)
+                q_S_A.initialize(state=state, a=a, alpha=None, weighted=True)
 
                 # the following two lines work correctly for on- and off-policy learning. in the former case, the agent
                 # and episode policies are the same, which makes W always equal to 1 (i.e., q_S_A is unweighted...the
@@ -208,4 +207,4 @@ def evaluate_q_pi(
 
     print(f'Completed evaluation. Average reward per episode:  {episode_reward_averager.get_value()}')
 
-    return q_S_A, evaluated_states, episode_reward_averager.get_value()
+    return evaluated_states, episode_reward_averager.get_value()
