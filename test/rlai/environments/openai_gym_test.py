@@ -27,7 +27,7 @@ def test_learn():
         gym_id='CartPole-v1'
     )
 
-    q_S_A = TabularStateActionValueEstimator()
+    q_S_A = TabularStateActionValueEstimator(gym)
 
     iterate_value_q_pi(
         agent=mdp_agent,

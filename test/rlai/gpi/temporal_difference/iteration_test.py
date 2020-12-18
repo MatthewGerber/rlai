@@ -26,7 +26,7 @@ def test_sarsa_iterate_value_q_pi():
 
     mdp_agent.initialize_equiprobable_policy(mdp_environment.SS)
 
-    q_S_A = TabularStateActionValueEstimator()
+    q_S_A = TabularStateActionValueEstimator(mdp_environment)
 
     iterate_value_q_pi(
         agent=mdp_agent,
@@ -67,7 +67,7 @@ def test_sarsa_iterate_value_q_pi_make_greedy():
 
     mdp_agent.initialize_equiprobable_policy(mdp_environment.SS)
 
-    q_S_A = TabularStateActionValueEstimator()
+    q_S_A = TabularStateActionValueEstimator(mdp_environment)
 
     iterate_value_q_pi(
         agent=mdp_agent,
@@ -116,7 +116,7 @@ def test_sarsa_iterate_value_q_pi_with_trajectory_planning():
 
     mdp_agent.initialize_equiprobable_policy(mdp_environment.SS)
 
-    q_S_A = TabularStateActionValueEstimator()
+    q_S_A = TabularStateActionValueEstimator(mdp_environment)
 
     iterate_value_q_pi(
         agent=mdp_agent,
@@ -157,7 +157,7 @@ def test_q_learning_iterate_value_q_pi():
 
     mdp_agent.initialize_equiprobable_policy(mdp_environment.SS)
 
-    q_S_A = TabularStateActionValueEstimator()
+    q_S_A = TabularStateActionValueEstimator(mdp_environment)
 
     iterate_value_q_pi(
         agent=mdp_agent,
@@ -198,7 +198,7 @@ def test_expected_sarsa_iterate_value_q_pi():
 
     mdp_agent.initialize_equiprobable_policy(mdp_environment.SS)
 
-    q_S_A = TabularStateActionValueEstimator()
+    q_S_A = TabularStateActionValueEstimator(mdp_environment)
 
     iterate_value_q_pi(
         agent=mdp_agent,
@@ -239,7 +239,7 @@ def test_n_step_q_learning_iterate_value_q_pi():
 
     mdp_agent.initialize_equiprobable_policy(mdp_environment.SS)
 
-    q_S_A = TabularStateActionValueEstimator()
+    q_S_A = TabularStateActionValueEstimator(mdp_environment)
 
     iterate_value_q_pi(
         agent=mdp_agent,

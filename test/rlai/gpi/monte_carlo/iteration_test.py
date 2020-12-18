@@ -24,7 +24,7 @@ def test_iterate_value_q_pi():
 
     mdp_agent.initialize_equiprobable_policy(mdp_environment.SS)
 
-    q_S_A = TabularStateActionValueEstimator()
+    q_S_A = TabularStateActionValueEstimator(mdp_environment)
 
     iterate_value_q_pi(
         agent=mdp_agent,
@@ -71,7 +71,7 @@ def test_off_policy_monte_carlo():
     )
     off_policy_agent.initialize_equiprobable_policy(mdp_environment.SS)
 
-    q_S_A = TabularStateActionValueEstimator()
+    q_S_A = TabularStateActionValueEstimator(mdp_environment)
 
     iterate_value_q_pi(
         agent=mdp_agent,

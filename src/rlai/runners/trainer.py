@@ -10,6 +10,7 @@ from numpy.random import RandomState
 from rlai.gpi.utils import resume_from_checkpoint
 from rlai.meta import rl_text
 from rlai.utils import import_function, load_class
+from rlai.value_estimation.tabular import TabularStateActionValueEstimator
 
 
 @rl_text(chapter='Training and Running Agents', page=1)
@@ -191,6 +192,9 @@ def run(
             args=unparsed_args,
             random_state=random_state
         )
+
+        # placeholder for when we initialize the state-action value estimator from the command line
+        train_function_args['q_S_A'] = TabularStateActionValueEstimator(train_function_args['environment'])
 
     if parsed_args.planning_environment is not None:
         planning_environment_class = load_class(parsed_args.planning_environment)

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Optional, Iterable
+from typing import Optional, Iterable, Iterator
 
 from rlai.actions import Action
 from rlai.agents.mdp import MdpAgent
@@ -20,6 +20,12 @@ class ValueEstimator(ABC):
     def get_value(
             self
     ) -> float:
+        pass
+
+    @abstractmethod
+    def __str__(
+            self
+    ) -> str:
         pass
 
 
@@ -51,6 +57,12 @@ class ActionValueEstimator(ABC):
     def __len__(
             self
     ) -> int:
+        pass
+
+    @abstractmethod
+    def __iter__(
+            self
+    ) -> Iterator[Action]:
         pass
 
 

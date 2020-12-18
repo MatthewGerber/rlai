@@ -55,7 +55,7 @@ def test_evaluate_q_pi():
 
     mdp_agent.initialize_equiprobable_policy(mdp_environment.SS)
 
-    q_S_A = TabularStateActionValueEstimator()
+    q_S_A = TabularStateActionValueEstimator(mdp_environment)
 
     evaluated_states, _ = evaluate_q_pi(
         agent=mdp_agent,
@@ -66,7 +66,7 @@ def test_evaluate_q_pi():
         q_S_A=q_S_A
     )
 
-    assert len(q_S_A) == len(evaluated_states)
+    assert len(q_S_A) == len(evaluated_states) + 2  # terminal states aren't evaluated
     assert all(s in q_S_A for s in evaluated_states)
 
     # uncomment the following line and run test to update fixture

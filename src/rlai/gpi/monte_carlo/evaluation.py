@@ -1,9 +1,7 @@
 from typing import Dict, Tuple, Set
 
-from rlai.actions import Action
 from rlai.agents.mdp import MdpAgent
 from rlai.environments.mdp import MdpEnvironment
-from rlai.gpi.utils import lazy_initialize_q_S_A, initialize_q_S_A
 from rlai.meta import rl_text
 from rlai.states.mdp import MdpState
 from rlai.utils import IncrementalSampleAverager, sample_list_item

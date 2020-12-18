@@ -274,7 +274,7 @@ def update_q_S_A(
     sum of discounted rewards obtained over n steps, plus the (bootstrapped) discounted future value of the next
     state-action value, as estimated by one of the TD modes.
 
-    :param q_S_A: State-action value estimators.
+    :param q_S_A: State-action value estimator.
     :param n_steps: Number of time steps to accumulate actual rewards for before updating a state-action value.
     :param curr_t: Current time step.
     :param t_state_a_g: Structore of time, state, action, g accumulators. If an n-step update is feasible at the current

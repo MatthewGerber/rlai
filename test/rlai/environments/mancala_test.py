@@ -38,7 +38,7 @@ def test_learn():
 
     checkpoint_path = tempfile.NamedTemporaryFile(delete=False).name
 
-    q_S_A = TabularStateActionValueEstimator()
+    q_S_A = TabularStateActionValueEstimator(mancala)
 
     iterate_value_q_pi(
         agent=p1,
@@ -92,7 +92,7 @@ def test_learn():
         1
     )
 
-    q_S_A = TabularStateActionValueEstimator()
+    q_S_A = TabularStateActionValueEstimator(mancala)
 
     iterate_value_q_pi(
         agent=no_checkpoint_p1,

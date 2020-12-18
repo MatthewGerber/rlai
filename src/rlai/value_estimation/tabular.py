@@ -1,7 +1,8 @@
-from typing import Dict, Optional, Iterable
+from typing import Dict, Optional, Iterable, Iterator
 
 from rlai.actions import Action
 from rlai.agents.mdp import MdpAgent
+from rlai.environments.mdp import MdpEnvironment
 from rlai.gpi.improvement import improve_policy_with_q_pi
 from rlai.states.mdp import MdpState
 from rlai.utils import IncrementalSampleAverager
@@ -35,6 +36,12 @@ class TabularValueEstimator(ValueEstimator):
             alpha=alpha,
             weighted=weighted
         )
+
+    def __str__(
+            self
+    ) -> str:
+
+        return str(self.averager.get_value())
 
 
 class TabularActionValueEstimator(ActionValueEstimator):
@@ -71,6 +78,12 @@ class TabularActionValueEstimator(ActionValueEstimator):
 
         return len(self.q_A)
 
+    def __iter__(
+            self
+    ) -> Iterator[Action]:
+
+        return self.q_A.__iter__()
+
 
 class TabularStateActionValueEstimator(StateActionValueEstimator):
 
@@ -93,12 +106,13 @@ class TabularStateActionValueEstimator(StateActionValueEstimator):
             states: Optional[Iterable[MdpState]],
             epsilon: float
     ) -> int:
+
         q_pi = {
             s: {
                 a: self[s][a].get_value()
-                for a in self[s].q_A
+                for a in self[s]
             }
-            for s in agent.pi
+            for s in self
             if states is None or s in states
         }
 
@@ -111,9 +125,22 @@ class TabularStateActionValueEstimator(StateActionValueEstimator):
         return num_states_updated
 
     def __init__(
-            self
+            self,
+            environment: MdpEnvironment
     ):
         self.q_S_A: Dict[MdpState, TabularActionValueEstimator] = {}
+
+        # for completeness, initialize the estimator for all terminal states. these will not be updated during execution
+        # since no action ever takes an agent out of them; however, terminal states should have a value represented, if
+        # only ever it is zero.
+        for terminal_state in environment.terminal_states:
+            for a in terminal_state.AA:
+                self.initialize(
+                    state=terminal_state,
+                    a=a,
+                    alpha=None,
+                    weighted=False
+                )
 
     def __contains__(
             self,
@@ -121,7 +148,7 @@ class TabularStateActionValueEstimator(StateActionValueEstimator):
     ) -> bool:
 
         return state in self.q_S_A
-    
+
     def __getitem__(
             self,
             state: MdpState
@@ -141,3 +168,27 @@ class TabularStateActionValueEstimator(StateActionValueEstimator):
     ) -> int:
 
         return len(self.q_S_A)
+
+    def __eq__(
+            self,
+            other
+    ) -> bool:
+
+        if len(self.q_S_A) == len(other):
+            for s in self:
+                if len(self.q_S_A[s]) == len(other[s]):
+                    for a in self.q_S_A[s]:
+                        if self.q_S_A[s][a].get_value() != other[s][a].get_value():
+                            return False
+                else:
+                    return False
+        else:
+            return False
+
+        return True
+
+    def __iter__(
+            self
+    ) -> Iterator[MdpState]:
+
+        return self.q_S_A.__iter__()
