@@ -7,6 +7,7 @@ from rlai.agents.mdp import StochasticMdpAgent
 from rlai.environments.mdp import Gridworld
 from rlai.gpi.monte_carlo.evaluation import evaluate_v_pi, evaluate_q_pi
 from rlai.value_estimation.tabular import TabularStateActionValueEstimator
+from test.rlai.utils import tabular_estimator_legacy_eq
 
 
 def test_evaluate_v_pi():
@@ -76,4 +77,4 @@ def test_evaluate_q_pi():
     with open(f'{os.path.dirname(__file__)}/fixtures/test_monte_carlo_evaluation_of_state_action_value.pickle', 'rb') as file:
         fixture = pickle.load(file)
 
-    assert q_S_A == fixture
+    assert tabular_estimator_legacy_eq(q_S_A, fixture)

@@ -19,11 +19,11 @@ Perform temporal-difference (TD) evaluation of an agent's policy within an envir
     range [1, inf], or None for infinite step size (Monte Carlo evaluation).
     :param planning_environment: Planning environment to learn through experience gained during evaluation, or None to
     not learn an environment model.
-    :param initial_q_S_A: Initial guess at state-action value, or None for no guess.
-    :return: 3-tuple of (1) dictionary of all MDP states and their action-value averagers under the agent's policy, (2)
-    set of only those states that were evaluated, and (3) the average reward obtained per episode.
+    :param q_S_A: State-action value estimator.
+    :return: 2-tuple of (1) set of only those states that were evaluated, and (2) the average reward obtained per
+    episode.
 ```
-### [rlai.gpi.temporal_difference.iteration.iterate_value_q_pi](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/temporal_difference/iteration.py#L18)
+### [rlai.gpi.temporal_difference.iteration.iterate_value_q_pi](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/temporal_difference/iteration.py#L15)
 ```
 Run temporal-difference value iteration on an agent using state-action value estimates.
 
@@ -40,10 +40,9 @@ Run temporal-difference value iteration on an agent using state-action value est
     :param planning_environment: Planning environment to learn and use.
     :param make_final_policy_greedy: Whether or not to make the agent's final policy greedy with respect to the q-values
     that have been learned, regardless of the value of epsilon used to estimate the q-values.
+    :param q_S_A: State-action value estimator.
     :param num_improvements_per_plot: Number of improvements to make before plotting the per-improvement average. Pass
     None to turn off all plotting.
     :param num_improvements_per_checkpoint: Number of improvements per checkpoint save.
     :param checkpoint_path: Checkpoint path. Must be provided if `num_improvements_per_checkpoint` is provided.
-    :param initial_q_S_A: Initial state-action value estimates (primarily useful for restarting from a checkpoint).
-    :return: Dictionary of state-action value estimators.
 ```

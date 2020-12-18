@@ -35,6 +35,7 @@ text.
 # General Topics
 ### [Environments](ch_Environments.md)
 ### [Training and Running Agents](ch_Training_and_Running_Agents.md)
+### [Value Estimation](ch_Value_Estimation.md)
 
 # Book Chapters
 ### [Chapter 2:  Multi-armed Bandits](ch_2.md)

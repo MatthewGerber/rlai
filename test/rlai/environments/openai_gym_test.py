@@ -8,6 +8,7 @@ from rlai.environments.openai_gym import Gym
 from rlai.gpi.temporal_difference.evaluation import Mode
 from rlai.gpi.temporal_difference.iteration import iterate_value_q_pi
 from rlai.value_estimation.tabular import TabularStateActionValueEstimator
+from test.rlai.utils import tabular_estimator_legacy_eq
 
 
 def test_learn():
@@ -50,4 +51,4 @@ def test_learn():
     with open(f'{os.path.dirname(__file__)}/fixtures/test_gym.pickle', 'rb') as file:
         fixture_pi, fixture_q_S_A = pickle.load(file)
 
-    assert mdp_agent.pi == fixture_pi and q_S_A == fixture_q_S_A
+    assert mdp_agent.pi == fixture_pi and tabular_estimator_legacy_eq(q_S_A, fixture_q_S_A)

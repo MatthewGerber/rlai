@@ -9,6 +9,7 @@ from rlai.gpi.temporal_difference.evaluation import Mode
 from rlai.gpi.temporal_difference.iteration import iterate_value_q_pi
 from rlai.planning.environment_models import StochasticEnvironmentModel
 from rlai.value_estimation.tabular import TabularStateActionValueEstimator
+from test.rlai.utils import tabular_estimator_legacy_eq
 
 
 def test_sarsa_iterate_value_q_pi():
@@ -49,7 +50,7 @@ def test_sarsa_iterate_value_q_pi():
     with open(f'{os.path.dirname(__file__)}/fixtures/test_td_iteration_of_value_q_pi.pickle', 'rb') as file:
         pi_fixture, q_S_A_fixture = pickle.load(file)
 
-    assert mdp_agent.pi == pi_fixture and q_S_A == q_S_A_fixture
+    assert mdp_agent.pi == pi_fixture and tabular_estimator_legacy_eq(q_S_A, q_S_A_fixture)
 
 
 def test_sarsa_iterate_value_q_pi_make_greedy():
@@ -90,7 +91,7 @@ def test_sarsa_iterate_value_q_pi_make_greedy():
     with open(f'{os.path.dirname(__file__)}/fixtures/test_td_iteration_of_value_q_pi_make_greedy.pickle', 'rb') as file:
         pi_fixture, q_S_A_fixture = pickle.load(file)
 
-    assert mdp_agent.pi == pi_fixture and q_S_A == q_S_A_fixture
+    assert mdp_agent.pi == pi_fixture and tabular_estimator_legacy_eq(q_S_A, q_S_A_fixture)
 
 
 def test_sarsa_iterate_value_q_pi_with_trajectory_planning():
@@ -139,7 +140,7 @@ def test_sarsa_iterate_value_q_pi_with_trajectory_planning():
     with open(f'{os.path.dirname(__file__)}/fixtures/test_td_iteration_of_value_q_pi_planning.pickle', 'rb') as file:
         pi_fixture, q_S_A_fixture = pickle.load(file)
 
-    assert mdp_agent.pi == pi_fixture and q_S_A == q_S_A_fixture
+    assert mdp_agent.pi == pi_fixture and tabular_estimator_legacy_eq(q_S_A, q_S_A_fixture)
 
 
 def test_q_learning_iterate_value_q_pi():
@@ -180,7 +181,7 @@ def test_q_learning_iterate_value_q_pi():
     with open(f'{os.path.dirname(__file__)}/fixtures/test_td_q_learning_iteration_of_value_q_pi.pickle', 'rb') as file:
         pi_fixture, q_S_A_fixture = pickle.load(file)
 
-    assert mdp_agent.pi == pi_fixture and q_S_A == q_S_A_fixture
+    assert mdp_agent.pi == pi_fixture and tabular_estimator_legacy_eq(q_S_A, q_S_A_fixture)
 
 
 def test_expected_sarsa_iterate_value_q_pi():
@@ -221,7 +222,7 @@ def test_expected_sarsa_iterate_value_q_pi():
     with open(f'{os.path.dirname(__file__)}/fixtures/test_td_expected_sarsa_iteration_of_value_q_pi.pickle', 'rb') as file:
         pi_fixture, q_S_A_fixture = pickle.load(file)
 
-    assert mdp_agent.pi == pi_fixture and q_S_A == q_S_A_fixture
+    assert mdp_agent.pi == pi_fixture and tabular_estimator_legacy_eq(q_S_A, q_S_A_fixture)
 
 
 def test_n_step_q_learning_iterate_value_q_pi():
@@ -262,4 +263,4 @@ def test_n_step_q_learning_iterate_value_q_pi():
     with open(f'{os.path.dirname(__file__)}/fixtures/test_td_n_step_q_learning_iteration_of_value_q_pi.pickle', 'rb') as file:
         fixture_pi, fixture_q_S_A = pickle.load(file)
 
-    assert mdp_agent.pi == fixture_pi and q_S_A == fixture_q_S_A
+    assert mdp_agent.pi == fixture_pi and tabular_estimator_legacy_eq(q_S_A, fixture_q_S_A)

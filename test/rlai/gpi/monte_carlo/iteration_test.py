@@ -7,6 +7,7 @@ from rlai.agents.mdp import StochasticMdpAgent
 from rlai.environments.mdp import Gridworld
 from rlai.gpi.monte_carlo.iteration import iterate_value_q_pi
 from rlai.value_estimation.tabular import TabularStateActionValueEstimator
+from test.rlai.utils import tabular_estimator_legacy_eq
 
 
 def test_iterate_value_q_pi():
@@ -44,7 +45,7 @@ def test_iterate_value_q_pi():
     with open(f'{os.path.dirname(__file__)}/fixtures/test_monte_carlo_iteration_of_value_q_pi.pickle', 'rb') as file:
         pi_fixture, q_S_A_fixture = pickle.load(file)
 
-    assert mdp_agent.pi == pi_fixture and q_S_A == q_S_A_fixture
+    assert mdp_agent.pi == pi_fixture and tabular_estimator_legacy_eq(q_S_A, q_S_A_fixture)
 
 
 def test_off_policy_monte_carlo():
@@ -92,4 +93,4 @@ def test_off_policy_monte_carlo():
     with open(f'{os.path.dirname(__file__)}/fixtures/test_monte_carlo_off_policy_iteration_of_value_q_pi.pickle', 'rb') as file:
         pi_fixture, q_S_A_fixture = pickle.load(file)
 
-    assert mdp_agent.pi == pi_fixture and q_S_A == q_S_A_fixture
+    assert mdp_agent.pi == pi_fixture and tabular_estimator_legacy_eq(q_S_A, q_S_A_fixture)

@@ -4,12 +4,17 @@ from rlai.actions import Action
 from rlai.agents.mdp import MdpAgent
 from rlai.environments.mdp import MdpEnvironment
 from rlai.gpi.improvement import improve_policy_with_q_pi
+from rlai.meta import rl_text
 from rlai.states.mdp import MdpState
 from rlai.utils import IncrementalSampleAverager
 from rlai.value_estimation import StateActionValueEstimator, ActionValueEstimator, ValueEstimator
 
 
+@rl_text(chapter='Value Estimation', page=23)
 class TabularValueEstimator(ValueEstimator):
+    """
+    Tabular value estimator.
+    """
 
     def update(
             self,
@@ -44,7 +49,11 @@ class TabularValueEstimator(ValueEstimator):
         return str(self.averager.get_value())
 
 
+@rl_text(chapter='Value Estimation', page=23)
 class TabularActionValueEstimator(ActionValueEstimator):
+    """
+    Tabular action-value estimator.
+    """
 
     def __init__(
             self
@@ -85,7 +94,11 @@ class TabularActionValueEstimator(ActionValueEstimator):
         return self.q_A.__iter__()
 
 
+@rl_text(chapter='Value Estimation', page=23)
 class TabularStateActionValueEstimator(StateActionValueEstimator):
+    """
+    Tabular state-action value estimator.
+    """
 
     def initialize(
             self,
@@ -168,24 +181,6 @@ class TabularStateActionValueEstimator(StateActionValueEstimator):
     ) -> int:
 
         return len(self.q_S_A)
-
-    def __eq__(
-            self,
-            other
-    ) -> bool:
-
-        if len(self.q_S_A) == len(other):
-            for s in self:
-                if len(self.q_S_A[s]) == len(other[s]):
-                    for a in self.q_S_A[s]:
-                        if self.q_S_A[s][a].get_value() != other[s][a].get_value():
-                            return False
-                else:
-                    return False
-        else:
-            return False
-
-        return True
 
     def __iter__(
             self

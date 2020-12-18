@@ -3,6 +3,7 @@ import pickle
 import tempfile
 
 from rlai.runners.trainer import run
+from test.rlai.utils import tabular_estimator_legacy_eq
 
 
 def test_run():
@@ -46,7 +47,7 @@ def test_run():
         checkpoint, agent = run_checkpoint_agent[run_args]
         checkpoint_fixture, agent_fixture = run_fixture[run_args_fixture]
 
-        assert checkpoint['q_S_A'] == checkpoint_fixture['initial_q_S_A']
+        assert tabular_estimator_legacy_eq(checkpoint['q_S_A'], checkpoint_fixture['initial_q_S_A'])
         assert agent.pi == agent_fixture.pi
 
         print('passed.')
