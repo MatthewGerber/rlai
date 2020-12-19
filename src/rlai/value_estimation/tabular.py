@@ -42,12 +42,6 @@ class TabularValueEstimator(ValueEstimator):
             weighted=weighted
         )
 
-    def __str__(
-            self
-    ) -> str:
-
-        return str(self.averager.get_value())
-
 
 @rl_text(chapter='Value Estimation', page=23)
 class TabularActionValueEstimator(ActionValueEstimator):
