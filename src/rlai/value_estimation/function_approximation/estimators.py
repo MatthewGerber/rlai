@@ -1,11 +1,14 @@
-from typing import Optional, Iterable
+from argparse import Namespace, ArgumentParser
+from typing import Optional, Iterable, List, Tuple
 
 from patsy.highlevel import dmatrices
 
 from rlai.actions import Action
 from rlai.agents.mdp import MdpAgent
+from rlai.environments.mdp import MdpEnvironment
 from rlai.meta import rl_text
 from rlai.states.mdp import MdpState
+from rlai.utils import load_class
 from rlai.value_estimation import ValueEstimator, ActionValueEstimator, StateActionValueEstimator
 from rlai.value_estimation.function_approximation.models import FunctionApproximationModel, FeatureExtractor
 
@@ -62,6 +65,57 @@ class ApproximateActionValueEstimator(ActionValueEstimator):
 @rl_text(chapter='Value Estimation', page=195)
 class ApproximateStateActionValueEstimator(StateActionValueEstimator):
 
+    @classmethod
+    def parse_arguments(
+            cls,
+            args
+    ) -> Tuple[Namespace, List[str]]:
+        """
+        Parse arguments.
+
+        :param args: Arguments.
+        :return: 2-tuple of parsed and unparsed arguments.
+        """
+
+        parser = ArgumentParser(allow_abbrev=False)
+
+        # future arguments for this base class can be added here...
+
+        return parser.parse_known_args(args)
+
+    @classmethod
+    def init_from_arguments(
+            cls,
+            args: List[str],
+            environment: MdpEnvironment
+    ) -> Tuple[StateActionValueEstimator, List[str]]:
+        """
+        Initialize a state-action value estimator from arguments.
+
+        :param args: Arguments.
+        :param environment: Environment.
+        :return: 2-tuple of a state-action value estimator and a list of unparsed arguments.
+        """
+
+        parsed_args, unparsed_args = cls.parse_arguments(args)
+
+        model_class = load_class(parsed_args.function_approximation_model)
+        model, unparsed_args = model_class.init_from_arguments(unparsed_args)
+        del parsed_args.function_approximation_model
+
+        feature_extractor_class = load_class(parsed_args.feature_extractor)
+        fex, unparsed_args = feature_extractor_class.init_from_arguments(unparsed_args)
+        del parsed_args.feature_extractor
+
+        estimator = ApproximateStateActionValueEstimator(
+            environment=environment,
+            model=model,
+            feature_extractor=fex,
+            **vars(parsed_args)
+        )
+
+        return estimator, unparsed_args
+
     def initialize(
             self,
             state: MdpState,
@@ -100,10 +154,12 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
 
     def __init__(
             self,
+            environment: MdpEnvironment,
             model: FunctionApproximationModel,
             feature_extractor: FeatureExtractor,
             formula: str
     ):
+        self.environment = environment
         self.model = model
         self.feature_extractor = feature_extractor
         self.formula = formula

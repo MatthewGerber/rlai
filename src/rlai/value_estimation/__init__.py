@@ -1,8 +1,10 @@
 from abc import ABC, abstractmethod
-from typing import Optional, Iterable
+from argparse import Namespace, ArgumentParser
+from typing import Optional, Iterable, Tuple, List, Any
 
 from rlai.actions import Action
 from rlai.agents.mdp import MdpAgent
+from rlai.environments.mdp import MdpEnvironment
 from rlai.states.mdp import MdpState
 
 
@@ -40,6 +42,40 @@ class ActionValueEstimator(ABC):
 
 
 class StateActionValueEstimator(ABC):
+
+    @classmethod
+    def parse_arguments(
+            cls,
+            args
+    ) -> Tuple[Namespace, List[str]]:
+        """
+        Parse arguments.
+
+        :param args: Arguments.
+        :return: 2-tuple of parsed and unparsed arguments.
+        """
+
+        parser = ArgumentParser(allow_abbrev=False)
+
+        # future arguments for this base class can be added here...
+
+        return parser.parse_known_args(args)
+
+    @classmethod
+    @abstractmethod
+    def init_from_arguments(
+            cls,
+            args: List[str],
+            environment: MdpEnvironment
+    ) -> Tuple[Any, List[str]]:
+        """
+        Initialize a state-action value estimator from arguments.
+
+        :param args: Arguments.
+        :param environment: Environment.
+        :return: 2-tuple of a state-action value estimator and a list of unparsed arguments.
+        """
+        pass
 
     @abstractmethod
     def initialize(

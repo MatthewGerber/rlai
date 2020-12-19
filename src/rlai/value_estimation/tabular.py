@@ -1,4 +1,5 @@
-from typing import Dict, Optional, Iterable, Iterator
+from argparse import Namespace, ArgumentParser
+from typing import Dict, Optional, Iterable, Iterator, List, Tuple
 
 from rlai.actions import Action
 from rlai.agents.mdp import MdpAgent
@@ -93,6 +94,50 @@ class TabularStateActionValueEstimator(StateActionValueEstimator):
     """
     Tabular state-action value estimator.
     """
+
+    @classmethod
+    def parse_arguments(
+            cls,
+            args
+    ) -> Tuple[Namespace, List[str]]:
+        """
+        Parse arguments.
+
+        :param args: Arguments.
+        :return: 2-tuple of parsed and unparsed arguments.
+        """
+
+        parsed_args, unparsed_args = super().parse_arguments(args)
+
+        parser = ArgumentParser(allow_abbrev=False)
+
+        # future arguments to be added here...
+
+        parsed_args, unparsed_args = parser.parse_known_args(unparsed_args, parsed_args)
+
+        return parsed_args, unparsed_args
+
+    @classmethod
+    def init_from_arguments(
+            cls,
+            args: List[str],
+            environment: MdpEnvironment
+    ) -> Tuple[StateActionValueEstimator, List[str]]:
+        """
+        Initialize a state-action value estimator from arguments.
+
+        :param args: Arguments.
+        :param environment: Environment.
+        :return: 2-tuple of a state-action value estimator and a list of unparsed arguments.
+        """
+
+        parsed_args, unparsed_args = cls.parse_arguments(args)
+
+        estimator = TabularStateActionValueEstimator(
+            environment=environment
+        )
+
+        return estimator, unparsed_args
 
     def initialize(
             self,
