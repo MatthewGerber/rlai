@@ -42,7 +42,7 @@ class GymState(MdpState):
         environment: Gym
 
         super().__init__(
-            i=agent.get_state_i(observation),
+            i=agent.pi.get_state_i(observation),
             AA=environment.actions,
             terminal=terminal
         )

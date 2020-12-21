@@ -1,9 +1,32 @@
 from typing import Dict
 
 from rlai.actions import Action
+from rlai.policies import Policy
+from rlai.policies.tabular import TabularPolicy
 from rlai.states.mdp import MdpState
 from rlai.utils import IncrementalSampleAverager
 from rlai.value_estimation.tabular import TabularStateActionValueEstimator
+
+
+def tabular_pi_legacy_eq(
+        pi: Policy,
+        fixture: Dict[MdpState, Dict[Action, float]]
+) -> bool:
+
+    pi: TabularPolicy
+
+    if len(pi) == len(fixture):
+        for s in pi:
+            if len(pi[s]) == len(fixture[s]):
+                for a in pi[s]:
+                    if pi[s][a] != fixture[s][a]:
+                        return False
+            else:
+                return False
+    else:
+        return False
+
+    return True
 
 
 def tabular_estimator_legacy_eq(

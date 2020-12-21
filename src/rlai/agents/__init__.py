@@ -5,7 +5,9 @@ from typing import Tuple, List, final, Optional, Dict
 from numpy.random import RandomState
 
 from rlai.actions import Action
+from rlai.policies import Policy
 from rlai.states import State
+from rlai.states.mdp import MdpState
 
 
 class Agent(ABC):
@@ -34,13 +36,15 @@ class Agent(ABC):
     def init_from_arguments(
             cls,
             args: List[str],
-            random_state: RandomState
+            random_state: RandomState,
+            pi: Optional[Policy]
     ) -> List:
         """
         Initialize a list of agents from arguments.
 
         :param args: Arguments.
         :param random_state: Random state.
+        :param pi: Policy.
         :return: List of agents.
         """
         pass
@@ -162,3 +166,63 @@ class Agent(ABC):
         """
 
         return self.name
+
+
+class Human(Agent):
+    """
+    An interactive, human-driven agent that prompts for actions at each time step.
+    """
+
+    @classmethod
+    def init_from_arguments(
+            cls,
+            args: List[str],
+            random_state: RandomState,
+            pi: Optional[Policy]
+    ) -> List:
+
+        raise ValueError('Not implemented')
+
+    def __act__(
+            self,
+            t: int
+    ) -> Action:
+
+        action = None
+
+        while action is None:
+
+            prompt = 'Please select from the following actions:  '
+
+            self.most_recent_state: MdpState
+
+            a_name_i = {
+                a.name: i
+                for i, a in enumerate(self.most_recent_state.AA)
+            }
+
+            for i, name in enumerate(sorted(a_name_i.keys())):
+                prompt += f'{", " if i > 0 else ""}{name}'
+
+            prompt += '\nEnter your selection:  '
+
+            try:
+                chosen_name = input(prompt)
+                action = self.most_recent_state.AA[a_name_i[chosen_name]]
+            except Exception:
+                pass
+
+        return action
+
+    def reward(
+            self,
+            r: float):
+        pass
+
+    def __init__(
+            self
+    ):
+        super().__init__(
+            name='human',
+            random_state=None
+        )

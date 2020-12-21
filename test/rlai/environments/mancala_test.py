@@ -8,37 +8,37 @@ from rlai.agents.mdp import StochasticMdpAgent
 from rlai.environments.mancala import Mancala
 from rlai.gpi.monte_carlo.iteration import iterate_value_q_pi
 from rlai.gpi.utils import resume_from_checkpoint
+from rlai.policies.tabular import TabularPolicy
 from rlai.value_estimation.tabular import TabularStateActionValueEstimator
+from test.rlai.utils import tabular_pi_legacy_eq
 
 
 def test_learn():
 
     random_state = RandomState(12345)
 
-    p2 = StochasticMdpAgent(
-        'player 2',
-        random_state,
-        None,
-        1
-    )
-
     mancala: Mancala = Mancala(
         random_state=random_state,
         T=None,
         initial_count=4,
-        player_2=p2
+        player_2=StochasticMdpAgent(
+            'player 2',
+            random_state,
+            TabularPolicy(None, None),
+            1
+        )
     )
+
+    q_S_A = TabularStateActionValueEstimator(mancala, None)
 
     p1 = StochasticMdpAgent(
         'player 1',
         random_state,
-        None,
+        q_S_A.get_initial_policy(),
         1
     )
 
     checkpoint_path = tempfile.NamedTemporaryFile(delete=False).name
-
-    q_S_A = TabularStateActionValueEstimator(mancala)
 
     iterate_value_q_pi(
         agent=p1,
@@ -60,7 +60,7 @@ def test_learn():
     with open(f'{os.path.dirname(__file__)}/fixtures/test_mancala.pickle', 'rb') as file:
         fixture = pickle.load(file)
 
-    assert p1.pi == fixture
+    assert tabular_pi_legacy_eq(p1.pi, fixture)
 
     resumed_p1 = resume_from_checkpoint(
         checkpoint_path=checkpoint_path,
@@ -71,28 +71,26 @@ def test_learn():
     # run same number of improvements without checkpoint...result should be the same.
     random_state = RandomState(12345)
 
-    p2 = StochasticMdpAgent(
-        'player 2',
-        random_state,
-        None,
-        1
-    )
-
     mancala: Mancala = Mancala(
         random_state=random_state,
         T=None,
         initial_count=4,
-        player_2=p2
+        player_2=StochasticMdpAgent(
+            'player 2',
+            random_state,
+            TabularPolicy(None, None),
+            1
+        )
     )
+
+    q_S_A = TabularStateActionValueEstimator(mancala, None)
 
     no_checkpoint_p1 = StochasticMdpAgent(
         'player 1',
         random_state,
-        None,
+        q_S_A.get_initial_policy(),
         1
     )
-
-    q_S_A = TabularStateActionValueEstimator(mancala)
 
     iterate_value_q_pi(
         agent=no_checkpoint_p1,

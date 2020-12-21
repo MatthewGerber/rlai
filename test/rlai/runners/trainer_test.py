@@ -3,15 +3,14 @@ import pickle
 import tempfile
 
 from rlai.runners.trainer import run
-from test.rlai.utils import tabular_estimator_legacy_eq
 
 
 def test_run():
 
     run_args_list = [
-        f'--train --agent rlai.agents.mdp.StochasticMdpAgent --continuous-state-discretization-resolution 0.1 --gamma 1 --environment rlai.environments.openai_gym.Gym --gym-id CartPole-v1 --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode Q_LEARNING --n-steps 10 --num-improvements 3 --num-episodes-per-improvement 5 --alpha 0.1 --epsilon 0.01 --make-final-policy-greedy True --num-improvements-per-checkpoint 3 --checkpoint-path {tempfile.NamedTemporaryFile(delete=False).name} --save-agent-path {tempfile.NamedTemporaryFile(delete=False).name}',
-        f'--train --agent rlai.agents.mdp.StochasticMdpAgent --gamma 1 --environment rlai.environments.mdp.Gridworld --id example_4_1 --planning-environment rlai.environments.mdp.TrajectorySamplingMdpPlanningEnvironment --num-planning-improvements-per-direct-improvement 10 --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode Q_LEARNING --num-improvements 10 --num-episodes-per-improvement 5 --epsilon 0.01 --make-final-policy-greedy True --num-improvements-per-checkpoint 10 --checkpoint-path {tempfile.NamedTemporaryFile(delete=False).name} --save-agent-path {tempfile.NamedTemporaryFile(delete=False).name}',
-        f'--train --agent rlai.agents.mdp.StochasticMdpAgent --gamma 1 --environment rlai.environments.mdp.Gridworld --id example_4_1 --planning-environment rlai.environments.mdp.PrioritizedSweepingMdpPlanningEnvironment --num-planning-improvements-per-direct-improvement 10 --priority-theta 0.1 --T-planning 50 --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode Q_LEARNING --num-improvements 10 --num-episodes-per-improvement 5 --epsilon 0.01 --make-final-policy-greedy True --num-improvements-per-checkpoint 10 --checkpoint-path {tempfile.NamedTemporaryFile(delete=False).name} --save-agent-path {tempfile.NamedTemporaryFile(delete=False).name}'
+        f'--train --agent rlai.agents.mdp.StochasticMdpAgent --continuous-state-discretization-resolution 0.1 --gamma 1 --environment rlai.environments.openai_gym.Gym --gym-id CartPole-v1 --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode Q_LEARNING --n-steps 10 --num-improvements 3 --num-episodes-per-improvement 5 --alpha 0.1 --epsilon 0.01 --state-action-value-estimator rlai.value_estimation.tabular.TabularStateActionValueEstimator --make-final-policy-greedy True --num-improvements-per-checkpoint 3 --checkpoint-path {tempfile.NamedTemporaryFile(delete=False).name} --save-agent-path {tempfile.NamedTemporaryFile(delete=False).name}',
+        f'--train --agent rlai.agents.mdp.StochasticMdpAgent --gamma 1 --environment rlai.environments.mdp.Gridworld --id example_4_1 --planning-environment rlai.environments.mdp.TrajectorySamplingMdpPlanningEnvironment --num-planning-improvements-per-direct-improvement 10 --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode Q_LEARNING --num-improvements 10 --num-episodes-per-improvement 5 --epsilon 0.01 --state-action-value-estimator rlai.value_estimation.tabular.TabularStateActionValueEstimator --make-final-policy-greedy True --num-improvements-per-checkpoint 10 --checkpoint-path {tempfile.NamedTemporaryFile(delete=False).name} --save-agent-path {tempfile.NamedTemporaryFile(delete=False).name}',
+        f'--train --agent rlai.agents.mdp.StochasticMdpAgent --gamma 1 --environment rlai.environments.mdp.Gridworld --id example_4_1 --planning-environment rlai.environments.mdp.PrioritizedSweepingMdpPlanningEnvironment --num-planning-improvements-per-direct-improvement 10 --priority-theta 0.1 --T-planning 50 --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode Q_LEARNING --num-improvements 10 --num-episodes-per-improvement 5 --epsilon 0.01 --state-action-value-estimator rlai.value_estimation.tabular.TabularStateActionValueEstimator --make-final-policy-greedy True --num-improvements-per-checkpoint 10 --checkpoint-path {tempfile.NamedTemporaryFile(delete=False).name} --save-agent-path {tempfile.NamedTemporaryFile(delete=False).name}'
     ]
 
     run_checkpoint_agent = {}
@@ -47,7 +46,7 @@ def test_run():
         checkpoint, agent = run_checkpoint_agent[run_args]
         checkpoint_fixture, agent_fixture = run_fixture[run_args_fixture]
 
-        assert tabular_estimator_legacy_eq(checkpoint['q_S_A'], checkpoint_fixture['initial_q_S_A'])
-        assert agent.pi == agent_fixture.pi
+        assert checkpoint['q_S_A'] == checkpoint_fixture['q_S_A']
+        assert agent.pi, agent_fixture.pi
 
         print('passed.')

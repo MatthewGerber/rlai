@@ -1,10 +1,11 @@
 from abc import ABC, abstractmethod
 from argparse import Namespace, ArgumentParser
-from typing import Optional, Iterable, Tuple, List, Any
+from typing import Optional, Iterable, Tuple, List, Any, Iterator
 
 from rlai.actions import Action
 from rlai.agents.mdp import MdpAgent
 from rlai.environments.mdp import MdpEnvironment
+from rlai.policies import Policy
 from rlai.states.mdp import MdpState
 
 
@@ -38,6 +39,25 @@ class ActionValueEstimator(ABC):
             self,
             action: Action
     ) -> ValueEstimator:
+        pass
+
+    @abstractmethod
+    def __len__(
+            self
+    ) -> int:
+        pass
+
+    @abstractmethod
+    def __iter__(
+            self
+    ) -> Iterator[Action]:
+        pass
+
+    @abstractmethod
+    def __contains__(
+            self,
+            action: Action
+    ) -> bool:
         pass
 
 
@@ -78,6 +98,12 @@ class StateActionValueEstimator(ABC):
         pass
 
     @abstractmethod
+    def get_initial_policy(
+            self
+    ) -> Policy:
+        pass
+
+    @abstractmethod
     def initialize(
             self,
             state: MdpState,
@@ -101,4 +127,31 @@ class StateActionValueEstimator(ABC):
             self,
             state: MdpState
     ) -> ActionValueEstimator:
+        pass
+
+    @abstractmethod
+    def __len__(
+            self
+    ) -> int:
+        pass
+
+    @abstractmethod
+    def __contains__(
+            self,
+            state: MdpState
+    ) -> bool:
+        pass
+
+    @abstractmethod
+    def __eq__(
+            self,
+            other
+    ) -> bool:
+        pass
+
+    @abstractmethod
+    def __ne__(
+            self,
+            other
+    ) -> bool:
         pass

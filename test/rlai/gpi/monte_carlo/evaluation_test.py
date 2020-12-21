@@ -6,6 +6,7 @@ from numpy.random import RandomState
 from rlai.agents.mdp import StochasticMdpAgent
 from rlai.environments.mdp import Gridworld
 from rlai.gpi.monte_carlo.evaluation import evaluate_v_pi, evaluate_q_pi
+from rlai.policies.tabular import TabularPolicy
 from rlai.value_estimation.tabular import TabularStateActionValueEstimator
 from test.rlai.utils import tabular_estimator_legacy_eq
 
@@ -19,11 +20,9 @@ def test_evaluate_v_pi():
     mdp_agent = StochasticMdpAgent(
         'test',
         random_state,
-        None,
+        TabularPolicy(None, mdp_environment.SS),
         1
     )
-
-    mdp_agent.initialize_equiprobable_policy(mdp_environment.SS)
 
     v_pi = evaluate_v_pi(
         agent=mdp_agent,
@@ -47,16 +46,14 @@ def test_evaluate_q_pi():
 
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state)
 
+    q_S_A = TabularStateActionValueEstimator(mdp_environment, None)
+
     mdp_agent = StochasticMdpAgent(
         'test',
         random_state,
-        None,
+        q_S_A.get_initial_policy(),
         1
     )
-
-    mdp_agent.initialize_equiprobable_policy(mdp_environment.SS)
-
-    q_S_A = TabularStateActionValueEstimator(mdp_environment)
 
     evaluated_states, _ = evaluate_q_pi(
         agent=mdp_agent,

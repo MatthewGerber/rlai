@@ -5,6 +5,7 @@ import numpy as np
 from rlai.actions import Action
 from rlai.agents.mdp import MdpAgent
 from rlai.meta import rl_text
+from rlai.policies.tabular import TabularPolicy
 from rlai.states.mdp import MdpState
 
 
@@ -25,6 +26,9 @@ def improve_policy_with_q_pi(
     be >= 0 if provided.
     :return: Number of states in which the policy was updated.
     """
+
+    # noinspection PyTypeHints
+    agent.pi: TabularPolicy
 
     if epsilon is None:
         epsilon = 0.0

@@ -4,11 +4,12 @@ from typing import Tuple, List, Optional
 from numpy.random import RandomState
 
 from rlai.actions import Action
-from rlai.agents import Agent
-from rlai.agents.mdp import Human, StochasticMdpAgent, MdpAgent
+from rlai.agents import Agent, Human
+from rlai.agents.mdp import StochasticMdpAgent, MdpAgent
 from rlai.environments import Environment
 from rlai.environments.mdp import MdpEnvironment
 from rlai.meta import rl_text
+from rlai.policies.tabular import TabularPolicy
 from rlai.rewards import Reward
 from rlai.states import State
 from rlai.states.mdp import MdpState
@@ -43,7 +44,7 @@ class MancalaState(MdpState):
 
         # get state index from the agent that will sense the state
         state_i_str = '|'.join(str(pit.count) for pit in state_pits)
-        state_i = agent_to_sense_state.get_state_i(state_i_str)
+        state_i = agent_to_sense_state.pi.get_state_i(state_i_str)
 
         super().__init__(
             i=state_i,
@@ -196,7 +197,7 @@ class Mancala(MdpEnvironment):
             player_2=StochasticMdpAgent(
                 'environmental agent',
                 random_state,
-                None,
+                TabularPolicy(None, None),
                 1
             ),
             **vars(parsed_args)

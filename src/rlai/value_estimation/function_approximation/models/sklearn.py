@@ -1,5 +1,5 @@
 from argparse import ArgumentParser, Namespace
-from typing import Tuple, List
+from typing import Tuple, List, Optional
 
 import numpy as np
 from sklearn.linear_model import SGDRegressor
@@ -55,7 +55,7 @@ class SKLearnSGD(FunctionApproximationModel):
             self,
             X: np.ndarray,
             y: np.ndarray,
-            weight: float
+            weight: Optional[float]
     ):
         self.model.partial_fit(X=X, y=y, sample_weight=weight)
 
@@ -71,3 +71,17 @@ class SKLearnSGD(FunctionApproximationModel):
             **kwargs
     ):
         self.model = SGDRegressor(**kwargs)
+
+    def __eq__(
+            self,
+            other
+    ) -> bool:
+
+        raise ValueError('Not implemented')
+
+    def __ne__(
+            self,
+            other
+    ) -> bool:
+
+        raise ValueError('Not implemented')

@@ -6,6 +6,7 @@ from rlai.agents.mdp import MdpAgent
 from rlai.environments.mdp import MdpEnvironment
 from rlai.gpi.improvement import improve_policy_with_q_pi
 from rlai.meta import rl_text
+from rlai.policies.tabular import TabularPolicy
 from rlai.states.mdp import MdpState
 from rlai.utils import IncrementalSampleAverager
 from rlai.value_estimation import StateActionValueEstimator, ActionValueEstimator, ValueEstimator
@@ -42,6 +43,21 @@ class TabularValueEstimator(ValueEstimator):
             alpha=alpha,
             weighted=weighted
         )
+
+    def __eq__(
+            self,
+            other
+    ) -> bool:
+
+        other: TabularValueEstimator
+
+        return self.averager == other.averager
+
+    def __ne__(
+            self,
+            other
+    ) -> bool:
+        return not (self == other)
 
 
 @rl_text(chapter='Value Estimation', page=23)
@@ -88,6 +104,21 @@ class TabularActionValueEstimator(ActionValueEstimator):
 
         return self.q_A.__iter__()
 
+    def __eq__(
+            self,
+            other
+    ) -> bool:
+
+        other: TabularActionValueEstimator
+
+        return self.q_A == other.q_A
+
+    def __ne__(
+            self,
+            other
+    ) -> bool:
+        return not (self == other)
+
 
 @rl_text(chapter='Value Estimation', page=23)
 class TabularStateActionValueEstimator(StateActionValueEstimator):
@@ -111,7 +142,11 @@ class TabularStateActionValueEstimator(StateActionValueEstimator):
 
         parser = ArgumentParser(allow_abbrev=False)
 
-        # future arguments to be added here...
+        parser.add_argument(
+            '--continuous-state-discretization-resolution',
+            type=float,
+            help='Continuous-state discretization resolution.'
+        )
 
         parsed_args, unparsed_args = parser.parse_known_args(unparsed_args, parsed_args)
 
@@ -134,10 +169,20 @@ class TabularStateActionValueEstimator(StateActionValueEstimator):
         parsed_args, unparsed_args = cls.parse_arguments(args)
 
         estimator = TabularStateActionValueEstimator(
-            environment=environment
+            environment=environment,
+            **vars(parsed_args)
         )
 
         return estimator, unparsed_args
+
+    def get_initial_policy(
+            self
+    ) -> TabularPolicy:
+
+        return TabularPolicy(
+            continuous_state_discretization_resolution=self.continuous_state_discretization_resolution,
+            SS=self.environment.SS
+        )
 
     def initialize(
             self,
@@ -178,14 +223,27 @@ class TabularStateActionValueEstimator(StateActionValueEstimator):
 
     def __init__(
             self,
-            environment: MdpEnvironment
+            environment: MdpEnvironment,
+            continuous_state_discretization_resolution: Optional[float]
     ):
+        """
+        Initialize the estimator.
+
+        :param environment: Environment.
+        :param continuous_state_discretization_resolution: A discretization resolution for continuous-state
+        environments. Providing this value allows the agent to be used with discrete-state methods via
+        discretization of the continuous-state dimensions.
+        """
+
+        self.environment = environment
+        self.continuous_state_discretization_resolution = continuous_state_discretization_resolution
+
         self.q_S_A: Dict[MdpState, TabularActionValueEstimator] = {}
 
         # for completeness, initialize the estimator for all terminal states. these will not be updated during execution
         # since no action ever takes an agent out of them; however, terminal states should have a value represented, if
         # only ever it is zero.
-        for terminal_state in environment.terminal_states:
+        for terminal_state in self.environment.terminal_states:
             for a in terminal_state.AA:
                 self.initialize(
                     state=terminal_state,
@@ -226,3 +284,19 @@ class TabularStateActionValueEstimator(StateActionValueEstimator):
     ) -> Iterator[MdpState]:
 
         return self.q_S_A.__iter__()
+
+    def __eq__(
+            self,
+            other
+    ) -> bool:
+
+        other: TabularStateActionValueEstimator
+
+        return self.q_S_A == other.q_S_A
+
+    def __ne__(
+            self,
+            other
+    ) -> bool:
+
+        return not (self == other)

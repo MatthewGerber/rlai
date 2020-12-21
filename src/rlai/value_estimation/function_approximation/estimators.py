@@ -1,5 +1,5 @@
 from argparse import Namespace, ArgumentParser
-from typing import Optional, Iterable, List, Tuple
+from typing import Optional, Iterable, List, Tuple, Iterator
 
 from patsy.highlevel import dmatrices
 
@@ -7,6 +7,7 @@ from rlai.actions import Action
 from rlai.agents.mdp import MdpAgent
 from rlai.environments.mdp import MdpEnvironment
 from rlai.meta import rl_text
+from rlai.policies.function_approximation import FunctionApproximationPolicy
 from rlai.states.mdp import MdpState
 from rlai.utils import load_class
 from rlai.value_estimation import ValueEstimator, ActionValueEstimator, StateActionValueEstimator
@@ -60,6 +61,22 @@ class ApproximateActionValueEstimator(ActionValueEstimator):
     ) -> ApproximateValueEstimator:
 
         return ApproximateValueEstimator(self.estimator, self.state, action)
+
+    def __len__(
+            self
+    ) -> int:
+
+        return len(self.state.AA)
+
+    def __iter__(
+            self
+    ) -> Iterator[Action]:
+
+        return self.state.AA
+
+    def __contains__(self, action: Action) -> bool:
+
+        return self.state.is_feasible(action)
 
 
 @rl_text(chapter='Value Estimation', page=195)
@@ -116,6 +133,12 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
 
         return estimator, unparsed_args
 
+    def get_initial_policy(
+            self
+    ) -> FunctionApproximationPolicy:
+
+        return FunctionApproximationPolicy()
+
     def initialize(
             self,
             state: MdpState,
@@ -138,11 +161,13 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
             state: MdpState,
             a: Action,
             value: float,
-            weight: float
+            weight: Optional[float]
     ):
         df = self.feature_extractor.extract(state, a)
         df['y'] = value
+
         X, y = dmatrices(self.formula, df)
+
         self.model.fit(X, y, weight)
 
     def evaluate(
@@ -170,3 +195,32 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
     ) -> ApproximateActionValueEstimator:
 
         return ApproximateActionValueEstimator(self, state)
+
+    def __len__(
+            self
+    ) -> int:
+
+        return 1
+
+    def __contains__(
+            self,
+            state: MdpState
+    ) -> bool:
+
+        return True
+
+    def __eq__(
+            self,
+            other
+    ) -> bool:
+
+        other: ApproximateStateActionValueEstimator
+
+        return self.model == other.model
+
+    def __ne__(
+            self,
+            other
+    ) -> bool:
+
+        return not (self == other)

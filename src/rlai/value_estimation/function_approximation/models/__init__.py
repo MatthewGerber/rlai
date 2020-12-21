@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from argparse import Namespace, ArgumentParser
-from typing import Tuple, List, Any
+from typing import Tuple, List, Any, Optional
 
 import numpy as np
 import pandas as pd
@@ -48,7 +48,7 @@ class FunctionApproximationModel(ABC):
             self,
             X: np.ndarray,
             y: np.ndarray,
-            weight: float
+            weight: Optional[float]
     ):
         pass
 
@@ -57,6 +57,20 @@ class FunctionApproximationModel(ABC):
             self,
             X: np.ndarray,
     ) -> np.ndarray:
+        pass
+
+    @abstractmethod
+    def __eq__(
+            self,
+            other
+    ) -> bool:
+        pass
+
+    @abstractmethod
+    def __ne__(
+            self,
+            other
+    ) -> bool:
         pass
 
 
@@ -69,3 +83,17 @@ class FeatureExtractor(ABC):
             action: Action
     ) -> pd.DataFrame:
         pass
+
+
+class StateActionIdentityFeatureExtractor(FeatureExtractor):
+
+    def extract(
+            self,
+            state: MdpState,
+            action: Action
+    ) -> pd.DataFrame:
+
+        return pd.DataFrame([
+            state.i,
+            action.i
+        ], columns=['s', 'a'])
