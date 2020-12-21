@@ -1,5 +1,5 @@
 # Chapter 4:  Dynamic Programming
-### [rlai.gpi.dynamic_programming.evaluation.evaluate_v_pi](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/dynamic_programming/evaluation.py#L13)
+### [rlai.gpi.dynamic_programming.evaluation.evaluate_v_pi](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/dynamic_programming/evaluation.py#L14)
 ```
 Perform iterative policy evaluation of an agent's policy within an environment, returning state values.
 
@@ -15,7 +15,7 @@ Perform iterative policy evaluation of an agent's policy within an environment, 
     :return: 2-tuple of (1) dictionary of MDP states and their estimated values under the agent's policy, and (2) final
     value of delta.
 ```
-### [rlai.gpi.dynamic_programming.evaluation.evaluate_q_pi](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/dynamic_programming/evaluation.py#L97)
+### [rlai.gpi.dynamic_programming.evaluation.evaluate_q_pi](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/dynamic_programming/evaluation.py#L101)
 ```
 Perform iterative policy evaluation of an agent's policy within an environment, returning state-action values.
 
@@ -30,7 +30,7 @@ Perform iterative policy evaluation of an agent's policy within an environment, 
     :return: 2-tuple of (1) dictionary of MDP states, actions, and their estimated values under the agent's policy, and
     (2) final value of delta.
 ```
-### [rlai.gpi.dynamic_programming.improvement.improve_policy_with_v_pi](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/dynamic_programming/improvement.py#L10)
+### [rlai.gpi.dynamic_programming.improvement.improve_policy_with_v_pi](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/dynamic_programming/improvement.py#L11)
 ```
 Improve an agent's policy according to its state-value estimates. This makes the policy greedy with respect to the
     state-value estimates. In cases where multiple such greedy actions exist for a state, each of the greedy actions
@@ -46,7 +46,7 @@ Improve an agent's policy according to its state-value estimates. This makes the
     :param v_pi: State-value estimates for the agent's policy.
     :return: Number of states in which the policy was updated.
 ```
-### [rlai.gpi.improvement.improve_policy_with_q_pi](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/improvement.py#L11)
+### [rlai.gpi.improvement.improve_policy_with_q_pi](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/improvement.py#L12)
 ```
 Improve an agent's policy according to its state-action value estimates. This makes the policy greedy with respect
     to the state-action value estimates. In cases where multiple such greedy actions exist for a state, each of the
@@ -93,7 +93,7 @@ Run dynamic programming value iteration on an agent using state-value estimates.
     :param update_in_place: See `evaluate_v_pi`.
     :return: Final state-value estimates.
 ```
-### [rlai.environments.mdp.GamblersProblem](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/mdp.py#L431)
+### [rlai.environments.mdp.GamblersProblem](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/mdp.py#L433)
 ```
 Gambler's problem MDP environment.
 ```

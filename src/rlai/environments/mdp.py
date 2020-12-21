@@ -96,6 +96,7 @@ class MdpEnvironment(Environment, ABC):
         )
 
         agent.reward(next_reward.r)
+
         monitor.report(t=t+1, action_reward=next_reward.r)
 
         return self.state.terminal
@@ -132,6 +133,7 @@ class MdpEnvironment(Environment, ABC):
 
         self.SS = SS
         self.RR = RR
+
         self.terminal_states = [s for s in self.SS if s.terminal]
         self.nonterminal_states = [s for s in self.SS if not s.terminal]
         self.state: Optional[MdpState] = None

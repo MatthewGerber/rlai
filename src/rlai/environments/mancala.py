@@ -15,6 +15,7 @@ from rlai.states import State
 from rlai.states.mdp import MdpState
 
 
+@rl_text(chapter='States', page=1)
 class MancalaState(MdpState):
     """
     State of the mancala game. In charge of representing the entirety of the game state and advancing to the next state.
@@ -400,6 +401,7 @@ class Mancala(MdpEnvironment):
         # go again if the final seed landed in the player's own store
         if sow_pocket.store and sow_pocket.player_1 == pocket.player_1:
             go_again = True
+
         # capture opponent's seeds if the final seed landed in one of the player's empty pits, and the opposing pit
         # contains seeds.
         elif sow_pocket.count == 1 and sow_pocket.player_1 == pocket.player_1 and sow_pocket.opposing_pocket.count > 0:

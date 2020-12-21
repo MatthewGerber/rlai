@@ -23,6 +23,13 @@ class TabularValueEstimator(ValueEstimator):
             value: float,
             weight: Optional[float] = None
     ):
+        """
+        Update the value estimate.
+
+        :param value: New value.
+        :param weight: Weight.
+        """
+
         self.averager.update(
             value=value,
             weight=weight
@@ -31,6 +38,11 @@ class TabularValueEstimator(ValueEstimator):
     def get_value(
             self
     ) -> float:
+        """
+        Get current estimated value.
+
+        :return: Value.
+        """
 
         return self.averager.get_value()
 
@@ -39,6 +51,13 @@ class TabularValueEstimator(ValueEstimator):
             alpha: float,
             weighted: bool
     ):
+        """
+        Initialize the estimator.
+
+        :param alpha: Step size.
+        :param weighted: Whether estimator should be weighted.
+        """
+
         self.averager = IncrementalSampleAverager(
             alpha=alpha,
             weighted=weighted
@@ -48,6 +67,12 @@ class TabularValueEstimator(ValueEstimator):
             self,
             other
     ) -> bool:
+        """
+        Check whether the estimator equals another.
+
+        :param other: Other estimator.
+        :return: True if estimates are equal and False otherwise.
+        """
 
         other: TabularValueEstimator
 
@@ -57,6 +82,13 @@ class TabularValueEstimator(ValueEstimator):
             self,
             other
     ) -> bool:
+        """
+        Check whether the estimator does not equal another.
+
+        :param other: Other estimator.
+        :return: True if estimates are not equal and False otherwise.
+        """
+
         return not (self == other)
 
 
@@ -69,12 +101,22 @@ class TabularActionValueEstimator(ActionValueEstimator):
     def __init__(
             self
     ):
+        """
+        Initialize the estimator.
+        """
+
         self.q_A: Dict[Action, TabularValueEstimator] = {}
 
     def __contains__(
             self,
             action: Action
     ) -> bool:
+        """
+        Check whether action is defined.
+
+        :param action: Action.
+        :return: True if defined and False otherwise.
+        """
 
         return action in self.q_A
 
@@ -82,6 +124,12 @@ class TabularActionValueEstimator(ActionValueEstimator):
             self,
             action: Action
     ) -> TabularValueEstimator:
+        """
+        Get value estimator for an action.
+
+        :param action: Action.
+        :return: Value estimator.
+        """
 
         return self.q_A[action]
 
@@ -90,17 +138,34 @@ class TabularActionValueEstimator(ActionValueEstimator):
             action: Action,
             value_estimator: TabularValueEstimator
     ):
+        """
+        Set the estimator for an action.
+
+        :param action: Action.
+        :param value_estimator: Estimator.
+        """
+
         self.q_A[action] = value_estimator
 
     def __len__(
             self
     ) -> int:
+        """
+        Get number of actions defined by the estimator.
+
+        :return: Number of actions.
+        """
 
         return len(self.q_A)
 
     def __iter__(
             self
     ) -> Iterator[Action]:
+        """
+        Get iterator over actions.
+
+        :return: Iterator.
+        """
 
         return self.q_A.__iter__()
 
@@ -108,6 +173,12 @@ class TabularActionValueEstimator(ActionValueEstimator):
             self,
             other
     ) -> bool:
+        """
+        Check whether the estimator equals another.
+
+        :param other: Other estimator.
+        :return: True if estimates are equal and False otherwise.
+        """
 
         other: TabularActionValueEstimator
 
@@ -117,6 +188,13 @@ class TabularActionValueEstimator(ActionValueEstimator):
             self,
             other
     ) -> bool:
+        """
+        Check whether the estimator does not equal another.
+
+        :param other: Other estimator.
+        :return: True if estimates are not equal and False otherwise.
+        """
+
         return not (self == other)
 
 
@@ -178,6 +256,11 @@ class TabularStateActionValueEstimator(StateActionValueEstimator):
     def get_initial_policy(
             self
     ) -> TabularPolicy:
+        """
+        Get the initial policy defined by the estimator.
+
+        :return: Policy.
+        """
 
         return TabularPolicy(
             continuous_state_discretization_resolution=self.continuous_state_discretization_resolution,
@@ -191,6 +274,16 @@ class TabularStateActionValueEstimator(StateActionValueEstimator):
             alpha: Optional[float],
             weighted: bool
     ):
+        """
+        Initialize the estimator for a state-action pair.
+
+        :param state: State.
+        :param a: Action.
+        :param alpha: Step size.
+        :param weighted: Whether the estimator should be weighted.
+        :return:
+        """
+
         if state not in self:
             self[state] = TabularActionValueEstimator()
 
@@ -203,6 +296,14 @@ class TabularStateActionValueEstimator(StateActionValueEstimator):
             states: Optional[Iterable[MdpState]],
             epsilon: float
     ) -> int:
+        """
+        Update an agent's policy using the current state-action value estimates.
+
+        :param agent: Agent whose policy should be updated.
+        :param states: States to update, or None for all states.
+        :param epsilon: Epsilon.
+        :return: Number of states updated.
+        """
 
         q_pi = {
             s: {
@@ -256,6 +357,12 @@ class TabularStateActionValueEstimator(StateActionValueEstimator):
             self,
             state: MdpState
     ) -> bool:
+        """
+        Check whether a state is defined by the estimator.
+
+        :param state: State.
+        :return: True if defined and False otherise.
+        """
 
         return state in self.q_S_A
 
@@ -263,6 +370,12 @@ class TabularStateActionValueEstimator(StateActionValueEstimator):
             self,
             state: MdpState
     ) -> TabularActionValueEstimator:
+        """
+        Get the action-value estimator for a state.
+
+        :param state: State.
+        :return: Action-value estimator.
+        """
 
         return self.q_S_A[state]
 
@@ -271,17 +384,34 @@ class TabularStateActionValueEstimator(StateActionValueEstimator):
             state: MdpState,
             action_value_estimator: TabularActionValueEstimator
     ):
+        """
+        Set the action-value estimator for a state.
+
+        :param state: State.
+        :param action_value_estimator: Estimator.
+        """
+
         self.q_S_A[state] = action_value_estimator
 
     def __len__(
             self
     ) -> int:
+        """
+        Get number of states defined by the estimator.
+
+        :return: Number of states.
+        """
 
         return len(self.q_S_A)
 
     def __iter__(
             self
-    ) -> Iterator[MdpState]:
+    ) -> Iterator:
+        """
+        Get iterator over state-action items.
+
+        :return: State-action items.
+        """
 
         return self.q_S_A.__iter__()
 
@@ -289,6 +419,12 @@ class TabularStateActionValueEstimator(StateActionValueEstimator):
             self,
             other
     ) -> bool:
+        """
+        Check whether the estimator equals another.
+
+        :param other: Other estimator.
+        :return: True if equal and False otherwise.
+        """
 
         other: TabularStateActionValueEstimator
 
@@ -298,5 +434,11 @@ class TabularStateActionValueEstimator(StateActionValueEstimator):
             self,
             other
     ) -> bool:
+        """
+        Check whether the estimator does not equal another.
+
+        :param other: Other estimator.
+        :return: True if not equal and False otherwise.
+        """
 
         return not (self == other)

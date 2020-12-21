@@ -4,10 +4,15 @@ from typing import Tuple, List, Optional
 import numpy as np
 from sklearn.linear_model import SGDRegressor
 
+from rlai.meta import rl_text
 from rlai.value_estimation.function_approximation.models import FunctionApproximationModel
 
 
+@rl_text(chapter=9, page=200)
 class SKLearnSGD(FunctionApproximationModel):
+    """
+    Wrapper for the sklearn.linear_model.SGDRegressor implemented by scikit-learn.
+    """
 
     @classmethod
     def parse_arguments(
@@ -57,12 +62,26 @@ class SKLearnSGD(FunctionApproximationModel):
             y: np.ndarray,
             weight: Optional[float]
     ):
+        """
+        Fit the model to a matrix of features and a vector of returns.
+
+        :param X: Features.
+        :param y: Returns.
+        :param weight: Weight.
+        """
+
         self.model.partial_fit(X=X, y=y, sample_weight=weight)
 
     def evaluate(
             self,
             X: np.ndarray
     ) -> np.ndarray:
+        """
+        Evaluate the model at a matrix of observations.
+
+        :param X: Observations.
+        :return: Vector of evaluations.
+        """
 
         return self.model.predict(X)
 
@@ -70,12 +89,23 @@ class SKLearnSGD(FunctionApproximationModel):
             self,
             **kwargs
     ):
+        """
+        Initialize the model.
+
+        :param kwargs: Keyword arguments to pass to SGDRegressor.
+        """
         self.model = SGDRegressor(**kwargs)
 
     def __eq__(
             self,
             other
     ) -> bool:
+        """
+        Check whether the model equals another.
+
+        :param other: Other model.
+        :return: True if equal and False otherwise.
+        """
 
         raise ValueError('Not implemented')
 
@@ -83,5 +113,11 @@ class SKLearnSGD(FunctionApproximationModel):
             self,
             other
     ) -> bool:
+        """
+        Check whether the model does not equal another.
+
+        :param other: Other model.
+        :return: True if not equal and False otherwise.
+        """
 
         raise ValueError('Not implemented')

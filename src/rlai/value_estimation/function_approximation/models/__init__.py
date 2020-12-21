@@ -6,10 +6,15 @@ import numpy as np
 import pandas as pd
 
 from rlai.actions import Action
+from rlai.meta import rl_text
 from rlai.states.mdp import MdpState
 
 
+@rl_text(chapter=9, page=197)
 class FunctionApproximationModel(ABC):
+    """
+    Function approximation model.
+    """
 
     @classmethod
     def parse_arguments(
@@ -50,6 +55,13 @@ class FunctionApproximationModel(ABC):
             y: np.ndarray,
             weight: Optional[float]
     ):
+        """
+        Fit the model to a matrix of features and a vector of returns.
+
+        :param X: Features.
+        :param y: Returns.
+        :param weight: Weight.
+        """
         pass
 
     @abstractmethod
@@ -57,6 +69,12 @@ class FunctionApproximationModel(ABC):
             self,
             X: np.ndarray,
     ) -> np.ndarray:
+        """
+        Evaluate the model at a matrix of observations.
+
+        :param X: Observations.
+        :return: Vector of evaluations.
+        """
         pass
 
     @abstractmethod
@@ -64,6 +82,12 @@ class FunctionApproximationModel(ABC):
             self,
             other
     ) -> bool:
+        """
+        Check whether the model equals another.
+
+        :param other: Other model.
+        :return: True if equal and False otherwise.
+        """
         pass
 
     @abstractmethod
@@ -71,10 +95,20 @@ class FunctionApproximationModel(ABC):
             self,
             other
     ) -> bool:
+        """
+        Check whether the model does not equal another.
+
+        :param other: Other model.
+        :return: True if not equal and False otherwise.
+        """
         pass
 
 
+@rl_text(chapter=9, page=197)
 class FeatureExtractor(ABC):
+    """
+    Feature extractor.
+    """
 
     @abstractmethod
     def extract(
@@ -82,16 +116,33 @@ class FeatureExtractor(ABC):
             state: MdpState,
             action: Action
     ) -> pd.DataFrame:
+        """
+        Extract features from a state and action.
+
+        :param state: State.
+        :param action: Action.
+        :return: DataFrame of features.
+        """
         pass
 
 
 class StateActionIdentityFeatureExtractor(FeatureExtractor):
+    """
+    Simple state-action identity extractor.
+    """
 
     def extract(
             self,
             state: MdpState,
             action: Action
     ) -> pd.DataFrame:
+        """
+        Extract the discrete state and action identifiers.
+
+        :param state: State.
+        :param action: Action.
+        :return: DataFrame.
+        """
 
         return pd.DataFrame([
             state.i,

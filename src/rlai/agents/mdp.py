@@ -7,11 +7,13 @@ from numpy.random import RandomState
 
 from rlai.actions import Action
 from rlai.agents import Agent
+from rlai.meta import rl_text
 from rlai.policies import Policy
 from rlai.states.mdp import MdpState
 from rlai.utils import sample_list_item
 
 
+@rl_text(chapter='Agents', page=1)
 class MdpAgent(Agent, ABC):
     """
     MDP agent. Adds the concepts of state, reward discounting, and policy-based action to the base agent.
@@ -68,9 +70,10 @@ class MdpAgent(Agent, ABC):
         self.gamma = gamma
 
 
+@rl_text(chapter='Agents', page=1)
 class StochasticMdpAgent(MdpAgent):
     """
-    Stochastic MDP agent. Adds random selection of action based on probabilities specified in the agent's policy.
+    Stochastic MDP agent. Adds random selection of actions based on probabilities specified in the agent's policy.
     """
 
     @classmethod
@@ -152,6 +155,7 @@ class StochasticMdpAgent(MdpAgent):
 
         :param name: Name of the agent.
         :param random_state: Random state.
+        :param pi: Policy.
         :param gamma: Discount.
         """
 

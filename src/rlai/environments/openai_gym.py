@@ -18,6 +18,7 @@ from rlai.states import State
 from rlai.states.mdp import MdpState
 
 
+@rl_text(chapter='States', page=1)
 class GymState(MdpState):
     """
     State of a Gym environment.

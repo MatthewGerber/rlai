@@ -1,13 +1,18 @@
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union, Iterator
 
 import numpy as np
 
 from rlai.actions import Action
+from rlai.meta import rl_text
 from rlai.policies import Policy
 from rlai.states.mdp import MdpState
 
 
+@rl_text(chapter=3, page=58)
 class TabularPolicy(Policy):
+    """
+    Policy for use with tabular methods.
+    """
 
     def get_state_i(
             self,
@@ -41,12 +46,6 @@ class TabularPolicy(Policy):
 
         return self.state_id_str_int[state_descriptor]
 
-    def update(
-            self,
-            state_action_prob: Dict[MdpState, Dict[Action, float]]
-    ):
-        self.state_action_prob.update(state_action_prob)
-
     def __init__(
             self,
             continuous_state_discretization_resolution: Optional[float],
@@ -67,6 +66,7 @@ class TabularPolicy(Policy):
             SS = []
 
         self.continuous_state_discretization_resolution = continuous_state_discretization_resolution
+
         self.state_action_prob: Dict[MdpState, Dict[Action, float]] = {
             s: {
                 a: 1 / len(s.AA)
@@ -80,13 +80,37 @@ class TabularPolicy(Policy):
     def __len__(
             self
     ) -> int:
+        """
+        Get the number of states in the policy.
+
+        :return: Number of states.
+        """
 
         return len(self.state_action_prob)
+
+    def __contains__(
+            self,
+            state: MdpState
+    ) -> bool:
+        """
+        Check whether the policy is defined for a state.
+
+        :param state: State.
+        :return: True if policy is defined for state and False otherwise.
+        """
+
+        return state in self.state_action_prob
 
     def __getitem__(
             self,
             state: MdpState
     ) -> Dict[Action, float]:
+        """
+        Get action-probability dictionary for a state.
+
+        :param state: State.
+        :return: Dictionary of action-probability items.
+        """
 
         # if the policy is not defined for the state, then update the policy to be uniform across feasible actions.
         if state not in self.state_action_prob:
@@ -99,13 +123,24 @@ class TabularPolicy(Policy):
 
     def __iter__(
             self
-    ):
+    ) -> Iterator:
+        """
+        Get an iterator over the policies states and their action-probability dictionaries.
+        :return: Iterator.
+        """
+
         return self.state_action_prob.__iter__()
 
     def __eq__(
             self,
             other
     ) -> bool:
+        """
+        Check whether the current policy equals another.
+
+        :param other: Other policy.
+        :return: True if equal and False otherwise.
+        """
 
         other: TabularPolicy
 
@@ -115,5 +150,11 @@ class TabularPolicy(Policy):
             self,
             other
     ) -> bool:
+        """
+        Check whether the current policy does not equal another.
+
+        :param other: Other policy.
+        :return: True if not equal and False otherwise.
+        """
 
         return not (self == other)

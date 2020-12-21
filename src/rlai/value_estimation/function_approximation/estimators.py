@@ -46,6 +46,9 @@ class ApproximateValueEstimator(ValueEstimator):
 
 @rl_text(chapter='Value Estimation', page=195)
 class ApproximateActionValueEstimator(ActionValueEstimator):
+    """
+    Approximate action-value estimator.
+    """
 
     def __init__(
             self,
@@ -81,6 +84,9 @@ class ApproximateActionValueEstimator(ActionValueEstimator):
 
 @rl_text(chapter='Value Estimation', page=195)
 class ApproximateStateActionValueEstimator(StateActionValueEstimator):
+    """
+    Approximate state-action value estimator.
+    """
 
     @classmethod
     def parse_arguments(

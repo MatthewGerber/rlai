@@ -4,6 +4,7 @@ from rlai.agents.mdp import MdpAgent
 from rlai.environments.mdp import ModelBasedMdpEnvironment
 from rlai.gpi.improvement import improve_policy_with_q_pi
 from rlai.meta import rl_text
+from rlai.policies.tabular import TabularPolicy
 from rlai.states.mdp import MdpState
 
 
@@ -28,6 +29,9 @@ def improve_policy_with_v_pi(
     :param v_pi: State-value estimates for the agent's policy.
     :return: Number of states in which the policy was updated.
     """
+
+    # noinspection PyTypeHints
+    agent.pi: TabularPolicy
 
     # calculate state-action values (q) for the agent's policy
     q_S_A = {

@@ -1,9 +1,14 @@
 from typing import Optional, List
 
 from rlai.actions import Action
+from rlai.meta import rl_text
 
 
+@rl_text(chapter='States', page=1)
 class State:
+    """
+    State.
+    """
 
     def is_feasible(
             self,

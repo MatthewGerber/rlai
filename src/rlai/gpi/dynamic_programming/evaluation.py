@@ -7,6 +7,7 @@ from rlai.actions import Action
 from rlai.agents.mdp import MdpAgent
 from rlai.environments.mdp import ModelBasedMdpEnvironment
 from rlai.meta import rl_text
+from rlai.policies.tabular import TabularPolicy
 from rlai.states.mdp import MdpState
 
 
@@ -34,6 +35,9 @@ def evaluate_v_pi(
     :return: 2-tuple of (1) dictionary of MDP states and their estimated values under the agent's policy, and (2) final
     value of delta.
     """
+
+    # noinspection PyTypeHints
+    agent.pi: TabularPolicy
 
     theta, num_iterations = check_termination_criteria(
         theta=theta,
@@ -117,6 +121,9 @@ def evaluate_q_pi(
     :return: 2-tuple of (1) dictionary of MDP states, actions, and their estimated values under the agent's policy, and
     (2) final value of delta.
     """
+
+    # noinspection PyTypeHints
+    agent.pi: TabularPolicy
 
     theta, num_iterations = check_termination_criteria(
         theta=theta,

@@ -2,6 +2,9 @@ from typing import Optional
 
 
 class Reward:
+    """
+    Reward.
+    """
 
     def __init__(
             self,

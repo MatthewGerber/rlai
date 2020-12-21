@@ -73,8 +73,8 @@ def improve_policy_with_q_pi(
         for s in policy_update
     )
 
-    # execute update on policy
-    agent.pi.update(policy_update)
+    # execute update on tabular policy
+    agent.pi.state_action_prob.update(policy_update)
 
     # check that the action probabilities in each state sum to 1.0
     if not np.allclose(
