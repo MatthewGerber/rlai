@@ -1,7 +1,9 @@
 from argparse import Namespace, ArgumentParser
-from typing import Optional, Iterable, List, Tuple, Iterator
+from typing import Optional, List, Tuple, Iterator, Set
 
-from patsy.highlevel import dmatrices
+import numpy as np
+from patsy.design_info import DesignInfo
+from patsy.highlevel import dmatrix
 
 from rlai.actions import Action
 from rlai.agents.mdp import MdpAgent
@@ -11,7 +13,8 @@ from rlai.policies.function_approximation import FunctionApproximationPolicy
 from rlai.states.mdp import MdpState
 from rlai.utils import load_class
 from rlai.value_estimation import ValueEstimator, ActionValueEstimator, StateActionValueEstimator
-from rlai.value_estimation.function_approximation.models import FunctionApproximationModel, FeatureExtractor
+from rlai.value_estimation.function_approximation.statistical_learning import FunctionApproximationModel
+from rlai.value_estimation.function_approximation.statistical_learning.feature_extraction import FeatureExtractor
 
 
 @rl_text(chapter='Value Estimation', page=195)
@@ -25,13 +28,25 @@ class ApproximateValueEstimator(ValueEstimator):
             value: float,
             weight: Optional[float] = None
     ):
+        """
+        Update the value estimate.
+
+        :param value: New value.
+        :param weight: Weight.
+        """
+
         self.estimator.fit(self.state, self.action, value, weight)
 
     def get_value(
             self
     ) -> float:
+        """
+        Get current estimated value.
 
-        return self.estimator.evaluate(self.state, self.action)
+        :return: Value.
+        """
+
+        return self.estimator.evaluate(self.state, [self.action])[0]
 
     def __init__(
             self,
@@ -39,6 +54,14 @@ class ApproximateValueEstimator(ValueEstimator):
             state: MdpState,
             action: Action
     ):
+        """
+        Initialize the estimator.
+
+        :param estimator: State-action value estimator.
+        :param state: State.
+        :param action: Action.
+        """
+
         self.estimator: ApproximateStateActionValueEstimator = estimator
         self.state = state
         self.action = action
@@ -55,6 +78,13 @@ class ApproximateActionValueEstimator(ActionValueEstimator):
             estimator,
             state: MdpState
     ):
+        """
+        Initialize the estimator.
+
+        :param estimator: State-action value estimator.
+        :param state: State.
+        """
+
         self.estimator: ApproximateStateActionValueEstimator = estimator
         self.state = state
 
@@ -62,24 +92,49 @@ class ApproximateActionValueEstimator(ActionValueEstimator):
             self,
             action: Action
     ) -> ApproximateValueEstimator:
+        """
+        Get value estimator for an action.
+
+        :param action: Action.
+        :return: Value estimator.
+        """
 
         return ApproximateValueEstimator(self.estimator, self.state, action)
 
     def __len__(
             self
     ) -> int:
+        """
+        Get number of actions defined by the estimator.
+
+        :return: Number of actions.
+        """
 
         return len(self.state.AA)
 
     def __iter__(
             self
     ) -> Iterator[Action]:
+        """
+        Get iterator over actions.
 
-        return self.state.AA
+        :return: Iterator.
+        """
 
-    def __contains__(self, action: Action) -> bool:
+        return iter(self.state.AA)
 
-        return self.state.is_feasible(action)
+    def __contains__(
+            self,
+            action: Action
+    ) -> bool:
+        """
+        Check whether action is defined.
+
+        :param action: Action.
+        :return: True if defined and False otherwise.
+        """
+
+        return action in self.state.AA_set
 
 
 @rl_text(chapter='Value Estimation', page=195)
@@ -110,13 +165,15 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
     def init_from_arguments(
             cls,
             args: List[str],
-            environment: MdpEnvironment
+            environment: MdpEnvironment,
+            epsilon: Optional[float]
     ) -> Tuple[StateActionValueEstimator, List[str]]:
         """
         Initialize a state-action value estimator from arguments.
 
         :param args: Arguments.
         :param environment: Environment.
+        :param epsilon: Epsilon.
         :return: 2-tuple of a state-action value estimator and a list of unparsed arguments.
         """
 
@@ -132,6 +189,7 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
 
         estimator = ApproximateStateActionValueEstimator(
             environment=environment,
+            epsilon=epsilon,
             model=model,
             feature_extractor=fex,
             **vars(parsed_args)
@@ -142,76 +200,141 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
     def get_initial_policy(
             self
     ) -> FunctionApproximationPolicy:
+        """
+        Get the initial policy defined by the estimator.
 
-        return FunctionApproximationPolicy()
+        :return: Policy.
+        """
 
-    def initialize(
-            self,
-            state: MdpState,
-            a: Action,
-            alpha: Optional[float],
-            weighted: bool
-    ):
-        pass
+        return FunctionApproximationPolicy(self)
 
     def update_policy(
             self,
             agent: MdpAgent,
-            states: Optional[Iterable[MdpState]],
+            states: Optional[Set[MdpState]],
             epsilon: float
     ) -> int:
-        pass
+        """
+        Update an agent's policy using the current state-action value estimates.
+
+        :param agent: Agent whose policy should be updated.
+        :param states: States to update, or None for all states.
+        :param epsilon: Epsilon.
+        :return: Number of states updated.
+        """
+
+        # nothing to do here, as we've already updated the function approximation model.
+        return -1 if states is None else len(states)
 
     def fit(
             self,
             state: MdpState,
-            a: Action,
+            action: Action,
             value: float,
             weight: Optional[float]
     ):
-        df = self.feature_extractor.extract(state, a)
-        df['y'] = value
+        """
+        Update the estimator's function approximation model.
 
-        X, y = dmatrices(self.formula, df)
+        :param state: State.
+        :param action: Action.
+        :param value: Value.
+        :param weight: Weight.
+        """
+
+        df = self.feature_extractor.extract(state, [action])
+
+        if self.design_info is None:
+            X = dmatrix(self.formula, df)
+            self.design_info = X.design_info
+        else:
+            X = dmatrix(self.design_info, df)
+
+        y = np.array([value])
 
         self.model.fit(X, y, weight)
 
     def evaluate(
             self,
             state: MdpState,
-            action: Action
-    ) -> float:
-        pass
+            actions: List[Action]
+    ) -> np.ndarray:
+        """
+        Evaluate the estimator's function approximation model.
+
+        :param state: State.
+        :param actions: Actions to evaluate.
+        :return: Numpy array of evaluation results (values).
+        """
+
+        df = self.feature_extractor.extract(state, actions)
+        X = dmatrix(self.formula, df)
+
+        return self.model.evaluate(X)
 
     def __init__(
             self,
             environment: MdpEnvironment,
+            epsilon: Optional[float],
             model: FunctionApproximationModel,
             feature_extractor: FeatureExtractor,
             formula: str
     ):
+        """
+        Initialize the estimator.
+
+        :param environment: Environment.
+        :param epsilon: Epsilon.
+        :param model: Model.
+        :param feature_extractor: Feature extractor.
+        :param formula: Model formula.
+        """
+
+        if epsilon is None:
+            epsilon = 0.0
+
         self.environment = environment
+        self.epsilon = epsilon
         self.model = model
         self.feature_extractor = feature_extractor
         self.formula = formula
+        self.design_info: Optional[DesignInfo] = None
 
     def __getitem__(
             self,
             state: MdpState
     ) -> ApproximateActionValueEstimator:
+        """
+        Get the action-value estimator for a state.
+
+        :param state: State.
+        :return: Action-value estimator.
+        """
 
         return ApproximateActionValueEstimator(self, state)
 
     def __len__(
             self
     ) -> int:
+        """
+        Get number of states defined by the estimator.
 
+        :return: Number of states.
+        """
+
+        # a bit of a hack, as we don't actually track the number of states.
         return 1
 
     def __contains__(
             self,
             state: MdpState
     ) -> bool:
+        """
+        Check whether a state is defined by the estimator.
+
+        :param state: State.
+        :return: True if defined and False otherise.
+        """
 
         return True
 
@@ -219,6 +342,12 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
             self,
             other
     ) -> bool:
+        """
+        Check whether the estimator equals another.
+
+        :param other: Other estimator.
+        :return: True if equal and False otherwise.
+        """
 
         other: ApproximateStateActionValueEstimator
 
@@ -228,5 +357,11 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
             self,
             other
     ) -> bool:
+        """
+        Check whether the estimator does not equal another.
+
+        :param other: Other estimator.
+        :return: True if not equal and False otherwise.
+        """
 
         return not (self == other)

@@ -1,6 +1,4 @@
-from typing import Dict, Union
-
-import numpy as np
+from typing import Dict
 
 from rlai.actions import Action
 from rlai.meta import rl_text
@@ -14,25 +12,17 @@ class FunctionApproximationPolicy(Policy):
     Policy for use with function approximation methods.
     """
 
-    def get_state_i(
-            self,
-            state_descriptor: Union[str, np.ndarray]
-    ) -> int:
-        """
-        Get the integer identifier for a state. The returned value is guaranteed to be the same for the same state,
-        both throughout the life of the current agent as well as after the current agent has been pickled for later
-        use (e.g., in checkpoint-based resumption).
-
-        :param state_descriptor: State descriptor, either a string (for discrete states) or an array representing a
-        position within an n-dimensional continuous state space.
-        :return: Integer identifier.
-        """
-        pass
-
     def __init__(
-            self
+            self,
+            estimator
     ):
-        pass
+        """
+        Initialize the policy.
+
+        :param estimator: State-action value estimator.
+        """
+
+        self.estimator = estimator
 
     def __contains__(
             self,
@@ -57,4 +47,13 @@ class FunctionApproximationPolicy(Policy):
         :param state: State.
         :return: Dictionary of action-probability items.
         """
-        pass
+
+        values = self.estimator.evaluate(state, state.AA)
+        max_value = max(values)
+        num_maximizers = sum(value == max_value for value in values)
+        action_prob = {
+            action: (((1 - self.estimator.epsilon) / num_maximizers) if value == max_value else 0.0) + self.estimator.epsilon / len(values)
+            for action, value in zip(state.AA, values)
+        }
+
+        return action_prob

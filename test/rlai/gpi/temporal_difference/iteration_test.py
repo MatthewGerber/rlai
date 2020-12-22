@@ -9,8 +9,8 @@ from rlai.gpi.temporal_difference.evaluation import Mode
 from rlai.gpi.temporal_difference.iteration import iterate_value_q_pi
 from rlai.planning.environment_models import StochasticEnvironmentModel
 from rlai.value_estimation.function_approximation.estimators import ApproximateStateActionValueEstimator
-from rlai.value_estimation.function_approximation.models import StateActionIdentityFeatureExtractor
-from rlai.value_estimation.function_approximation.models.sklearn import SKLearnSGD
+from rlai.value_estimation.function_approximation.statistical_learning.feature_extraction import StateActionIdentityFeatureExtractor
+from rlai.value_estimation.function_approximation.statistical_learning.sklearn import SKLearnSGD
 from rlai.value_estimation.tabular import TabularStateActionValueEstimator
 from test.rlai.utils import tabular_estimator_legacy_eq, tabular_pi_legacy_eq
 
@@ -185,11 +185,14 @@ def test_q_learning_iterate_value_q_pi_function_approximation():
 
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state)
 
+    epsilon = 0.05
+
     q_S_A = ApproximateStateActionValueEstimator(
         mdp_environment,
+        epsilon,
         SKLearnSGD(),
         StateActionIdentityFeatureExtractor(),
-        'y ~ s:a'
+        f'C(s, levels={[s.i for s in mdp_environment.SS]}):C(a, levels={[a.i for a in mdp_environment.SS[0].AA]})'
     )
 
     mdp_agent = StochasticMdpAgent(
@@ -207,7 +210,7 @@ def test_q_learning_iterate_value_q_pi_function_approximation():
         alpha=0.1,
         mode=Mode.Q_LEARNING,
         n_steps=1,
-        epsilon=0.05,
+        epsilon=epsilon,
         planning_environment=None,
         make_final_policy_greedy=False,
         q_S_A=q_S_A

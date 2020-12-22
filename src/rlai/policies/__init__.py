@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Union
+from typing import Dict, Union, Optional
 
 import numpy as np
 
@@ -14,11 +14,10 @@ class Policy(ABC):
     Base policy class.
     """
 
-    @abstractmethod
     def get_state_i(
             self,
             state_descriptor: Union[str, np.ndarray]
-    ) -> int:
+    ) -> Optional[int]:
         """
         Get the integer identifier for a state. The returned value is guaranteed to be the same for the same state,
         both throughout the life of the current agent as well as after the current agent has been pickled for later
@@ -28,7 +27,8 @@ class Policy(ABC):
         position within an n-dimensional continuous state space.
         :return: Integer identifier.
         """
-        pass
+
+        return None
 
     @abstractmethod
     def __contains__(

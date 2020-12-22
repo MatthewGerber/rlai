@@ -17,7 +17,7 @@ class TabularPolicy(Policy):
     def get_state_i(
             self,
             state_descriptor: Union[str, np.ndarray]
-    ) -> int:
+    ) -> Optional[int]:
         """
         Get the integer identifier for a state. The returned value is guaranteed to be the same for the same state,
         both throughout the life of the current agent as well as after the current agent has been pickled for later
@@ -129,7 +129,7 @@ class TabularPolicy(Policy):
         :return: Iterator.
         """
 
-        return self.state_action_prob.__iter__()
+        return iter(self.state_action_prob)
 
     def __eq__(
             self,

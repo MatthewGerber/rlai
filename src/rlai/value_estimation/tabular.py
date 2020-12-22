@@ -167,7 +167,7 @@ class TabularActionValueEstimator(ActionValueEstimator):
         :return: Iterator.
         """
 
-        return self.q_A.__iter__()
+        return iter(self.q_A)
 
     def __eq__(
             self,
@@ -234,13 +234,15 @@ class TabularStateActionValueEstimator(StateActionValueEstimator):
     def init_from_arguments(
             cls,
             args: List[str],
-            environment: MdpEnvironment
+            environment: MdpEnvironment,
+            epsilon: float
     ) -> Tuple[StateActionValueEstimator, List[str]]:
         """
         Initialize a state-action value estimator from arguments.
 
         :param args: Arguments.
         :param environment: Environment.
+        :param epsilon: Epsilon.
         :return: 2-tuple of a state-action value estimator and a list of unparsed arguments.
         """
 
@@ -413,7 +415,7 @@ class TabularStateActionValueEstimator(StateActionValueEstimator):
         :return: State-action items.
         """
 
-        return self.q_S_A.__iter__()
+        return iter(self.q_S_A)
 
     def __eq__(
             self,

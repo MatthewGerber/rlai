@@ -137,13 +137,15 @@ class StateActionValueEstimator(ABC):
     def init_from_arguments(
             cls,
             args: List[str],
-            environment: MdpEnvironment
+            environment: MdpEnvironment,
+            epsilon: float
     ) -> Tuple[Any, List[str]]:
         """
         Initialize a state-action value estimator from arguments.
 
         :param args: Arguments.
         :param environment: Environment.
+        :param epsilon: Epsilon.
         :return: 2-tuple of a state-action value estimator and a list of unparsed arguments.
         """
         pass
@@ -159,7 +161,6 @@ class StateActionValueEstimator(ABC):
         """
         pass
 
-    @abstractmethod
     def initialize(
             self,
             state: MdpState,
