@@ -206,7 +206,7 @@ def test_q_learning_iterate_value_q_pi_function_approximation():
         agent=mdp_agent,
         environment=mdp_environment,
         num_improvements=10,
-        num_episodes_per_improvement=100,
+        num_episodes_per_improvement=10,
         alpha=0.1,
         mode=Mode.Q_LEARNING,
         n_steps=1,

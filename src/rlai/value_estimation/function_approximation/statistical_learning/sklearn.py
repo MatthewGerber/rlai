@@ -86,6 +86,9 @@ class SKLearnSGD(FunctionApproximationModel):
 
         try:
             values = self.model.predict(X)
+
+        # the following exception will be thrown if the model has not yet been fitted. catch and return uniformly valued
+        # outcomes.
         except NotFittedError:
             values = np.repeat(0.0, X.shape[0])
 

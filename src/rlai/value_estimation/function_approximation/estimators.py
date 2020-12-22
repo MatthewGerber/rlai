@@ -223,7 +223,7 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         :return: Number of states updated.
         """
 
-        # nothing to do here, as we've already updated the function approximation model.
+        # nothing to do here, as we've already updated the function approximation model through calls to fit.
         return -1 if states is None else len(states)
 
     def fit(
@@ -242,14 +242,7 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         :param weight: Weight.
         """
 
-        df = self.feature_extractor.extract(state, [action])
-
-        if self.design_info is None:
-            X = dmatrix(self.formula, df)
-            self.design_info = X.design_info
-        else:
-            X = dmatrix(self.design_info, df)
-
+        X = self.get_X(state, [action])
         y = np.array([value])
 
         self.model.fit(X, y, weight)
@@ -267,10 +260,35 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         :return: Numpy array of evaluation results (values).
         """
 
-        df = self.feature_extractor.extract(state, actions)
-        X = dmatrix(self.formula, df)
+        X = self.get_X(state, actions)
 
         return self.model.evaluate(X)
+
+    def get_X(
+            self,
+            state: MdpState,
+            actions: List[Action]
+    ) -> np.ndarray:
+        """
+        Get feature matrix for a state and list of actions.
+
+        :param state: State.
+        :param actions: Actions.
+        :return: Feature matrix (#obs, #features).
+        """
+
+        df = self.feature_extractor.extract(state, actions)
+
+        # submit string formula if this is the first call and we don't have design info
+        if self.design_info is None:
+            X = dmatrix(self.formula, df)
+            self.design_info = X.design_info
+
+        # reuse the design info for subsequent calls
+        else:
+            X = dmatrix(self.design_info, df)
+
+        return X
 
     def __init__(
             self,
@@ -287,7 +305,18 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         :param epsilon: Epsilon.
         :param model: Model.
         :param feature_extractor: Feature extractor.
-        :param formula: Model formula.
+        :param formula: Model formula. Note that this is only the right-hand side of the model. If you want to implement
+        a model like "r ~ x + y + z" (i.e., to model reward as a linear function of features x, y, and z), then you
+        should pass "x + y + z" for this argument. See the Patsy documentation for full details of the formula language.
+        Also note that statistical learning models used in reinforcement learning generally need to operate "online",
+        learning the reward function incrementally at each step. An example of such a model would be
+        `rlai.value_estimation.function_approximation.statistical_learning.sklearn.SKLearnSGD`. Online learning has
+        implications for the use and coding of categorical variables in the model formula. In particular, the full
+        ranges of state and action levels must be specified up front. See
+        `test.rlai.gpi.temporal_difference.iteration_test.test_q_learning_iterate_value_q_pi_function_approximation` for
+        an example of how this is done. If it is not convenient or possible to specify all state and action levels up
+        front, then avoid using categorical variables in the model formula. Lastly, note that the variables referenced
+        by the model formula must be extracted with identical names by the feature extractor.
         """
 
         if epsilon is None:
@@ -298,6 +327,7 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         self.model = model
         self.feature_extractor = feature_extractor
         self.formula = formula
+
         self.design_info: Optional[DesignInfo] = None
 
     def __getitem__(
