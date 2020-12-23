@@ -3,6 +3,9 @@ import pickle
 import shlex
 import tempfile
 
+import numpy as np
+
+from rlai.policies.tabular import TabularPolicy
 from rlai.runners.trainer import run
 
 
@@ -48,7 +51,10 @@ def test_run():
         checkpoint, agent = run_checkpoint_agent[run_args]
         checkpoint_fixture, agent_fixture = run_fixture[run_args_fixture]
 
-        assert checkpoint['q_S_A'] == checkpoint_fixture['q_S_A']
-        assert agent.pi == agent_fixture.pi
+        if isinstance(agent.pi, TabularPolicy):
+            assert checkpoint['q_S_A'] == checkpoint_fixture['q_S_A']
+            assert agent.pi == agent_fixture.pi
+        else:
+            assert np.allclose(agent.pi.estimator.model.model.coef_, agent_fixture.pi.estimator.model.model.coef_)
 
         print('passed.')
