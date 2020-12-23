@@ -8,6 +8,7 @@ from rlai.agents.mdp import StochasticMdpAgent
 from rlai.environments.mdp import GamblersProblem, PrioritizedSweepingMdpPlanningEnvironment
 from rlai.gpi.dynamic_programming.iteration import iterate_value_v_pi
 from rlai.planning.environment_models import StochasticEnvironmentModel
+from rlai.policies.tabular import TabularPolicy
 from rlai.states.mdp import MdpState
 
 
@@ -25,11 +26,9 @@ def test_gamblers_problem():
     mdp_agent_v_pi_value_iteration = StochasticMdpAgent(
         'test',
         random_state,
-        None,
+        TabularPolicy(None, mdp_environment.SS),
         1
     )
-
-    mdp_agent_v_pi_value_iteration.initialize_equiprobable_policy(mdp_environment.SS)
 
     v_pi = iterate_value_v_pi(
         mdp_agent_v_pi_value_iteration,

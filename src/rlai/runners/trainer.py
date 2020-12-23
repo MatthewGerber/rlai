@@ -143,6 +143,12 @@ def run(
     )
 
     train_function_arg_parser.add_argument(
+        '--state-action-value-estimator',
+        type=str,
+        help='Fully-qualified type name of state-action value estimator to use.'
+    )
+
+    train_function_arg_parser.add_argument(
         '--new-checkpoint-path',
         type=str,
         help='New checkpoint path.'
@@ -172,11 +178,39 @@ def run(
 
     agent = None
 
+    if parsed_args.environment is not None:
+
+        environment_class = load_class(parsed_args.environment)
+        train_function_args['environment'], unparsed_args = environment_class.init_from_arguments(
+            args=unparsed_args,
+            random_state=random_state
+        )
+
+        estimator_class = load_class(parsed_train_function_args.state_action_value_estimator)
+        train_function_args['q_S_A'], unparsed_args = estimator_class.init_from_arguments(
+            unparsed_args,
+            environment=train_function_args['environment'],
+            epsilon=train_function_args['epsilon']
+        )
+
+    if parsed_args.planning_environment is not None:
+
+        planning_environment_class = load_class(parsed_args.planning_environment)
+        train_function_args['planning_environment'], unparsed_args = planning_environment_class.init_from_arguments(
+            args=unparsed_args,
+            random_state=random_state
+        )
+
+    else:
+        train_function_args['planning_environment'] = None
+
     if parsed_args.agent is not None:
+
         agent_class = load_class(parsed_args.agent)
         agents, unparsed_args = agent_class.init_from_arguments(
             args=unparsed_args,
-            random_state=random_state
+            random_state=random_state,
+            pi=train_function_args['q_S_A'].get_initial_policy()
         )
 
         if len(agents) != 1:
@@ -184,22 +218,6 @@ def run(
 
         agent = agents[0]
         train_function_args['agent'] = agent
-
-    if parsed_args.environment is not None:
-        environment_class = load_class(parsed_args.environment)
-        train_function_args['environment'], unparsed_args = environment_class.init_from_arguments(
-            args=unparsed_args,
-            random_state=random_state
-        )
-
-    if parsed_args.planning_environment is not None:
-        planning_environment_class = load_class(parsed_args.planning_environment)
-        train_function_args['planning_environment'], unparsed_args = planning_environment_class.init_from_arguments(
-            args=unparsed_args,
-            random_state=random_state
-        )
-    else:
-        train_function_args['planning_environment'] = None
 
     if len(unparsed_args) > 0:
         raise ValueError(f'Unparsed arguments remain:  {unparsed_args}')

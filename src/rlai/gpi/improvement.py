@@ -5,6 +5,7 @@ import numpy as np
 from rlai.actions import Action
 from rlai.agents.mdp import MdpAgent
 from rlai.meta import rl_text
+from rlai.policies.tabular import TabularPolicy
 from rlai.states.mdp import MdpState
 
 
@@ -25,6 +26,9 @@ def improve_policy_with_q_pi(
     be >= 0 if provided.
     :return: Number of states in which the policy was updated.
     """
+
+    # noinspection PyTypeHints
+    agent.pi: TabularPolicy
 
     if epsilon is None:
         epsilon = 0.0
@@ -69,8 +73,8 @@ def improve_policy_with_q_pi(
         for s in policy_update
     )
 
-    # execute update on policy
-    agent.pi.update(policy_update)
+    # execute update on tabular policy
+    agent.pi.state_action_prob.update(policy_update)
 
     # check that the action probabilities in each state sum to 1.0
     if not np.allclose(

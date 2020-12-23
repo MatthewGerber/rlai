@@ -1,7 +1,7 @@
 # Training and Running Agents
 ### [rlai.runners.agent_in_environment.run](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/runners/agent_in_environment.py#L17)
 ```
-Run a trained agent in an environment.
+Run an agent within an environment.
 
     :param args: Arguments.
 ```

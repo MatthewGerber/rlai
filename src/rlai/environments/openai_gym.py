@@ -18,6 +18,7 @@ from rlai.states import State
 from rlai.states.mdp import MdpState
 
 
+@rl_text(chapter='States', page=1)
 class GymState(MdpState):
     """
     State of a Gym environment.
@@ -42,7 +43,7 @@ class GymState(MdpState):
         environment: Gym
 
         super().__init__(
-            i=agent.get_state_i(observation),
+            i=agent.pi.get_state_i(observation),
             AA=environment.actions,
             terminal=terminal
         )

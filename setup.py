@@ -16,7 +16,10 @@ INSTALL_REQUIREMENTS = [
     'more-itertools==8.6.0',
     'attrs==20.3.0',
     'pyparsing==2.4.7',
-    'future==0.18.2'
+    'future==0.18.2',
+    'scikit-learn==0.23.2',
+    'pandas==1.1.5',
+    'patsy==0.5.1'
 ]
 
 TEST_REQUIREMENTS = [

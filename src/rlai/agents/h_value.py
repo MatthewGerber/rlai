@@ -7,6 +7,7 @@ from numpy.random import RandomState
 from rlai.actions import Action
 from rlai.agents import Agent
 from rlai.meta import rl_text
+from rlai.policies import Policy
 from rlai.states import State
 from rlai.utils import IncrementalSampleAverager, sample_list_item
 
@@ -61,13 +62,15 @@ class PreferenceGradient(Agent):
     def init_from_arguments(
             cls,
             args: List[str],
-            random_state: RandomState
+            random_state: RandomState,
+            pi: Optional[Policy]
     ) -> Tuple[List[Agent], List[str]]:
         """
         Initialize a list of agents from arguments.
 
         :param args: Arguments.
         :param random_state: Random state.
+        :param pi: Policy.
         :return: 2-tuple of a list of agents and a list of unparsed arguments.
         """
 

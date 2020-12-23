@@ -47,13 +47,13 @@ def run(
     parser.add_argument(
         '--environment',
         type=str,
-        help='Fully-qualified class name of environment.'
+        help='Fully-qualified type name of environment.'
     )
 
     parser.add_argument(
         '--agent',
         type=str,
-        help='Either (1) the fully-qualified class name of agent, or (2) a path to a pickled agent.'
+        help='Either (1) the fully-qualified type name of agent, or (2) a path to a pickled agent.'
     )
 
     parser.add_argument(
@@ -87,12 +87,14 @@ def run(
         with open(os.path.expanduser(parsed_args.agent), 'rb') as f:
             agents = [pickle.load(f)]
 
-    # otherwise, parse arguments for agent
+    # otherwise, parse arguments for agent (there can't be a policy in this case, as policies only come from prior
+    # training/pickling).
     else:
         agent_class = load_class(parsed_args.agent)
         agents, unparsed_args = agent_class.init_from_arguments(
             args=unparsed_args,
-            random_state=random_state
+            random_state=random_state,
+            pi=None
         )
 
     # no unparsed arguments should remain

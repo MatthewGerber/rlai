@@ -2,8 +2,13 @@ from numpy.random import RandomState
 
 from rlai.agents.mdp import StochasticMdpAgent
 from rlai.environments.mdp import Gridworld
-from rlai.gpi.dynamic_programming.iteration import iterate_policy_v_pi, iterate_policy_q_pi, iterate_value_v_pi, \
+from rlai.gpi.dynamic_programming.iteration import (
+    iterate_policy_v_pi,
+    iterate_policy_q_pi,
+    iterate_value_v_pi,
     iterate_value_q_pi
+)
+from rlai.policies.tabular import TabularPolicy
 
 
 def test_policy_iteration():
@@ -16,11 +21,9 @@ def test_policy_iteration():
     mdp_agent_v_pi = StochasticMdpAgent(
         'test',
         random_state,
-        None,
+        TabularPolicy(None, mdp_environment.SS),
         1
     )
-
-    mdp_agent_v_pi.initialize_equiprobable_policy(mdp_environment.SS)
 
     iterate_policy_v_pi(
         mdp_agent_v_pi,
@@ -33,11 +36,9 @@ def test_policy_iteration():
     mdp_agent_q_pi = StochasticMdpAgent(
         'test',
         random_state,
-        None,
+        TabularPolicy(None, mdp_environment.SS),
         1
     )
-
-    mdp_agent_q_pi.initialize_equiprobable_policy(mdp_environment.SS)
 
     iterate_policy_q_pi(
         mdp_agent_q_pi,
@@ -60,11 +61,9 @@ def test_value_iteration():
     mdp_agent_v_pi_policy_iteration = StochasticMdpAgent(
         'test',
         random_state,
-        None,
+        TabularPolicy(None, mdp_environment.SS),
         1
     )
-
-    mdp_agent_v_pi_policy_iteration.initialize_equiprobable_policy(mdp_environment.SS)
 
     iterate_policy_v_pi(
         mdp_agent_v_pi_policy_iteration,
@@ -77,11 +76,9 @@ def test_value_iteration():
     mdp_agent_v_pi_value_iteration = StochasticMdpAgent(
         'test',
         random_state,
-        None,
+        TabularPolicy(None, mdp_environment.SS),
         1
     )
-
-    mdp_agent_v_pi_value_iteration.initialize_equiprobable_policy(mdp_environment.SS)
 
     iterate_value_v_pi(
         mdp_agent_v_pi_value_iteration,
@@ -97,11 +94,9 @@ def test_value_iteration():
     mdp_agent_q_pi_value_iteration = StochasticMdpAgent(
         'test',
         random_state,
-        None,
+        TabularPolicy(None, mdp_environment.SS),
         1
     )
-
-    mdp_agent_q_pi_value_iteration.initialize_equiprobable_policy(mdp_environment.SS)
 
     iterate_value_q_pi(
         mdp_agent_q_pi_value_iteration,

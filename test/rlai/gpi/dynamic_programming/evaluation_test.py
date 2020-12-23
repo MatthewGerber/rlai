@@ -7,6 +7,7 @@ from numpy.random import RandomState
 from rlai.agents.mdp import StochasticMdpAgent
 from rlai.environments.mdp import Gridworld
 from rlai.gpi.dynamic_programming.evaluation import evaluate_v_pi, evaluate_q_pi
+from rlai.policies.tabular import TabularPolicy
 
 
 def test_evaluate_v_pi():
@@ -18,11 +19,9 @@ def test_evaluate_v_pi():
     mdp_agent = StochasticMdpAgent(
         'test',
         random_state,
-        None,
+        TabularPolicy(None, mdp_environment.SS),
         1
     )
-
-    mdp_agent.initialize_equiprobable_policy(mdp_environment.SS)
 
     v_pi, _ = evaluate_v_pi(
         agent=mdp_agent,
@@ -63,11 +62,9 @@ def test_evaluate_q_pi():
     mdp_agent = StochasticMdpAgent(
         'test',
         random_state,
-        None,
+        TabularPolicy(None, mdp_environment.SS),
         1
     )
-
-    mdp_agent.initialize_equiprobable_policy(mdp_environment.SS)
 
     q_pi, _ = evaluate_q_pi(
         agent=mdp_agent,
