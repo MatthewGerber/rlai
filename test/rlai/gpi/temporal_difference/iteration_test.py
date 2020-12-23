@@ -1,6 +1,7 @@
 import os
 import pickle
 
+import numpy as np
 from numpy.random import RandomState
 
 from rlai.agents.mdp import StochasticMdpAgent
@@ -9,7 +10,9 @@ from rlai.gpi.temporal_difference.evaluation import Mode
 from rlai.gpi.temporal_difference.iteration import iterate_value_q_pi
 from rlai.planning.environment_models import StochasticEnvironmentModel
 from rlai.value_estimation.function_approximation.estimators import ApproximateStateActionValueEstimator
-from rlai.value_estimation.function_approximation.statistical_learning.feature_extraction import StateActionIdentityFeatureExtractor
+from rlai.value_estimation.function_approximation.statistical_learning.feature_extraction import (
+    StateActionIdentityFeatureExtractor
+)
 from rlai.value_estimation.function_approximation.statistical_learning.sklearn import SKLearnSGD
 from rlai.value_estimation.tabular import TabularStateActionValueEstimator
 from test.rlai.utils import tabular_estimator_legacy_eq, tabular_pi_legacy_eq
@@ -223,7 +226,7 @@ def test_q_learning_iterate_value_q_pi_function_approximation():
     with open(f'{os.path.dirname(__file__)}/fixtures/test_q_learning_iterate_value_q_pi_function_approximation.pickle', 'rb') as file:
         pi_fixture, q_S_A_fixture = pickle.load(file)
 
-    assert mdp_agent.pi == pi_fixture
+    assert np.allclose(mdp_agent.pi.estimator.model.model.coef_, pi_fixture.estimator.model.model.coef_)
 
 
 def test_expected_sarsa_iterate_value_q_pi():
