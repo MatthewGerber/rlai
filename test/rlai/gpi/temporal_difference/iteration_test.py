@@ -205,8 +205,8 @@ def test_q_learning_iterate_value_q_pi_function_approximation():
     iterate_value_q_pi(
         agent=mdp_agent,
         environment=mdp_environment,
-        num_improvements=10,
-        num_episodes_per_improvement=10,
+        num_improvements=5,
+        num_episodes_per_improvement=5,
         alpha=0.1,
         mode=Mode.Q_LEARNING,
         n_steps=1,
@@ -223,7 +223,7 @@ def test_q_learning_iterate_value_q_pi_function_approximation():
     with open(f'{os.path.dirname(__file__)}/fixtures/test_q_learning_iterate_value_q_pi_function_approximation.pickle', 'rb') as file:
         pi_fixture, q_S_A_fixture = pickle.load(file)
 
-    assert mdp_agent.pi == pi_fixture and q_S_A, q_S_A_fixture
+    assert mdp_agent.pi == pi_fixture
 
 
 def test_expected_sarsa_iterate_value_q_pi():

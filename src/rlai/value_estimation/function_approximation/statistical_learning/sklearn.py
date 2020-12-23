@@ -117,7 +117,7 @@ class SKLearnSGD(FunctionApproximationModel):
         :return: True if equal and False otherwise.
         """
 
-        raise ValueError('Not implemented')
+        return np.array_equal(self.model.coef_, other.model.coef_)
 
     def __ne__(
             self,
@@ -130,4 +130,4 @@ class SKLearnSGD(FunctionApproximationModel):
         :return: True if not equal and False otherwise.
         """
 
-        raise ValueError('Not implemented')
+        return not (self == other)

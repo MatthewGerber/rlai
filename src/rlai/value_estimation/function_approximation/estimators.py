@@ -2,7 +2,6 @@ from argparse import Namespace, ArgumentParser
 from typing import Optional, List, Tuple, Iterator, Set
 
 import numpy as np
-from patsy.design_info import DesignInfo
 from patsy.highlevel import dmatrix
 
 from rlai.actions import Action
@@ -157,7 +156,23 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
 
         parser = ArgumentParser(allow_abbrev=False)
 
-        # future arguments for this base class can be added here...
+        parser.add_argument(
+            '--function-approximation-model',
+            type=str,
+            help='Fully-qualified type name of function approximation model.'
+        )
+
+        parser.add_argument(
+            '--feature-extractor',
+            type=str,
+            help='Fully-qualified type name of feature extractor.'
+        )
+
+        parser.add_argument(
+            '--formula',
+            type=str,
+            help='Right-hand side of the Patsy-style formula to use when modeling the state-action value relationships.'
+        )
 
         return parser.parse_known_args(args)
 
@@ -253,7 +268,7 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
             actions: List[Action]
     ) -> np.ndarray:
         """
-        Evaluate the estimator's function approximation model.
+        Evaluate the estimator's function approximation model at a state for a list of actions.
 
         :param state: State.
         :param actions: Actions to evaluate.
@@ -278,15 +293,7 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         """
 
         df = self.feature_extractor.extract(state, actions)
-
-        # submit string formula if this is the first call and we don't have design info
-        if self.design_info is None:
-            X = dmatrix(self.formula, df)
-            self.design_info = X.design_info
-
-        # reuse the design info for subsequent calls
-        else:
-            X = dmatrix(self.design_info, df)
+        X = dmatrix(self.formula, df)
 
         return X
 
@@ -327,8 +334,6 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         self.model = model
         self.feature_extractor = feature_extractor
         self.formula = formula
-
-        self.design_info: Optional[DesignInfo] = None
 
     def __getitem__(
             self,

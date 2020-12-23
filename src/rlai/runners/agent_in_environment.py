@@ -47,13 +47,13 @@ def run(
     parser.add_argument(
         '--environment',
         type=str,
-        help='Fully-qualified class name of environment.'
+        help='Fully-qualified type name of environment.'
     )
 
     parser.add_argument(
         '--agent',
         type=str,
-        help='Either (1) the fully-qualified class name of agent, or (2) a path to a pickled agent.'
+        help='Either (1) the fully-qualified type name of agent, or (2) a path to a pickled agent.'
     )
 
     parser.add_argument(
