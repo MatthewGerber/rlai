@@ -2,6 +2,7 @@ from argparse import Namespace, ArgumentParser
 from typing import Optional, List, Tuple, Iterator, Set
 
 import numpy as np
+import pandas as pd
 from patsy.highlevel import dmatrix
 
 from rlai.actions import Action
@@ -171,7 +172,7 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         parser.add_argument(
             '--formula',
             type=str,
-            help='Right-hand side of the Patsy-style formula to use when modeling the state-action value relationships.'
+            help='Right-hand side of the Patsy-style formula to use when modeling the state-action value relationships. Ignore to directly use the output of the feature extractor. Note that the use of Patsy formulas will dramatically slow learning performance, since it is called at each time step.'
         )
 
         return parser.parse_known_args(args)
@@ -199,7 +200,7 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         del parsed_args.function_approximation_model
 
         feature_extractor_class = load_class(parsed_args.feature_extractor)
-        fex, unparsed_args = feature_extractor_class.init_from_arguments(unparsed_args)
+        fex, unparsed_args = feature_extractor_class.init_from_arguments(unparsed_args, environment)
         del parsed_args.feature_extractor
 
         estimator = ApproximateStateActionValueEstimator(
@@ -238,7 +239,11 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         :return: Number of states updated.
         """
 
-        # nothing to do here, as we've already updated the function approximation model through calls to fit.
+        # nothing to do here, as we've already updated the function approximation model through calls to fit. just
+        # update the value of epsilon (e.g., in case it's being made greedy) and return.
+
+        self.epsilon = epsilon
+
         return -1 if states is None else len(states)
 
     def fit(
@@ -292,8 +297,22 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         :return: Feature matrix (#obs, #features).
         """
 
-        df = self.feature_extractor.extract(state, actions)
-        X = dmatrix(self.formula, df)
+        X = self.feature_extractor.extract(state, actions)
+
+        # if no formula, then use result directly.
+        if self.formula is None:
+            if isinstance(X, pd.DataFrame):
+                X = X.to_numpy()
+            elif not isinstance(X, np.ndarray):
+                raise ValueError('Expected feature extractor to return a numpy.ndarray if not a pandas.DataFrame')
+
+        # use formula with dataframe only
+        elif isinstance(X, pd.DataFrame):
+            X = dmatrix(self.formula, X)
+
+        # invalid otherwise
+        else:
+            raise ValueError(f'Invalid combination of formula {self.formula} and feature extractor result {type(X)}')
 
         return X
 
@@ -303,7 +322,7 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
             epsilon: Optional[float],
             model: FunctionApproximationModel,
             feature_extractor: FeatureExtractor,
-            formula: str
+            formula: Optional[str]
     ):
         """
         Initialize the estimator.
@@ -312,18 +331,21 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         :param epsilon: Epsilon.
         :param model: Model.
         :param feature_extractor: Feature extractor.
-        :param formula: Model formula. Note that this is only the right-hand side of the model. If you want to implement
-        a model like "r ~ x + y + z" (i.e., to model reward as a linear function of features x, y, and z), then you
-        should pass "x + y + z" for this argument. See the Patsy documentation for full details of the formula language.
-        Also note that statistical learning models used in reinforcement learning generally need to operate "online",
-        learning the reward function incrementally at each step. An example of such a model would be
+        :param formula: Model formula. This is only the right-hand side of the model. If you want to implement a model
+        like "r ~ x + y + z" (i.e., to model reward as a linear function of features x, y, and z), then you should pass
+        "x + y + z" for this argument. See the Patsy documentation for full details of the formula language. Statistical
+        learning models used in reinforcement learning generally need to operate "online", learning the reward function
+        incrementally at each step. An example of such a model would be
         `rlai.value_estimation.function_approximation.statistical_learning.sklearn.SKLearnSGD`. Online learning has
         implications for the use and coding of categorical variables in the model formula. In particular, the full
         ranges of state and action levels must be specified up front. See
         `test.rlai.gpi.temporal_difference.iteration_test.test_q_learning_iterate_value_q_pi_function_approximation` for
         an example of how this is done. If it is not convenient or possible to specify all state and action levels up
-        front, then avoid using categorical variables in the model formula. Lastly, note that the variables referenced
-        by the model formula must be extracted with identical names by the feature extractor.
+        front, then avoid using categorical variables in the model formula. The variables referenced by the model
+        formula must be extracted with identical names by the feature extractor. Althrough model formulae are convenient
+        they are also inefficiently processed in the online fashion described above. Patsy introduces significant
+        overhead with each call to the formula parser. A faster alternative is to avoid formula specification (pass
+        None here) and return the feature matrix directly from the feature extractor as a numpy.ndarray.
         """
 
         if epsilon is None:

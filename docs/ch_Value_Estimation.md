@@ -23,15 +23,15 @@ Tabular state-action value estimator.
 ```
 Tabular value estimator.
 ```
-### [rlai.value_estimation.function_approximation.estimators.ApproximateActionValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/value_estimation/function_approximation/estimators.py#L70)
+### [rlai.value_estimation.function_approximation.estimators.ApproximateActionValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/value_estimation/function_approximation/estimators.py#L71)
 ```
 Approximate action-value estimator.
 ```
-### [rlai.value_estimation.function_approximation.estimators.ApproximateStateActionValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/value_estimation/function_approximation/estimators.py#L140)
+### [rlai.value_estimation.function_approximation.estimators.ApproximateStateActionValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/value_estimation/function_approximation/estimators.py#L141)
 ```
 Approximate state-action value estimator.
 ```
-### [rlai.value_estimation.function_approximation.estimators.ApproximateValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/value_estimation/function_approximation/estimators.py#L20)
+### [rlai.value_estimation.function_approximation.estimators.ApproximateValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/value_estimation/function_approximation/estimators.py#L21)
 ```
 Approximate value estimator.
 ```

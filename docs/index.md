@@ -35,6 +35,7 @@ text.
 # General Topics
 ### [Agents](ch_Agents.md)
 ### [Environments](ch_Environments.md)
+### [Feature Extractors](ch_Feature_Extractors.md)
 ### [States](ch_States.md)
 ### [Training and Running Agents](ch_Training_and_Running_Agents.md)
 ### [Value Estimation](ch_Value_Estimation.md)
