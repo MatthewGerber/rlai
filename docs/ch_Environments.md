@@ -1,5 +1,5 @@
 # Environments
-### [rlai.environments.mancala.Mancala](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/mancala.py#L123)
+### [rlai.environments.mancala.Mancala](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/mancala.py#L124)
 ```
 Environment for the mancala game. This is a simple game with many rule variations, and it provides a greater
     challenge in terms of implementation and state-space size than the gridworld. I have implemented a fairly common

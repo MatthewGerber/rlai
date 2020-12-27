@@ -3,7 +3,7 @@
 ```
 Base class for all agents.
 ```
-### [rlai.agents.Human](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/agents.py#L174)
+### [rlai.agents.Human](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/agents.py#L173)
 ```
 An interactive, human-driven agent that prompts for actions at each time step.
 ```
