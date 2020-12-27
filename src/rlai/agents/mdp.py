@@ -33,7 +33,7 @@ class MdpAgent(Agent, ABC):
 
         parsed_args, unparsed_args = super().parse_arguments(args)
 
-        parser = ArgumentParser(allow_abbrev=False)
+        parser = ArgumentParser('MDP agent', allow_abbrev=False, add_help=False)
 
         parser.add_argument(
             '--gamma',
@@ -41,7 +41,16 @@ class MdpAgent(Agent, ABC):
             help='Discount factor.'
         )
 
+        parser.add_argument(
+            '--help',
+            action='store_true',
+            help='Print usage and argument descriptions.'
+        )
+
         parsed_args, unparsed_args = parser.parse_known_args(unparsed_args, parsed_args)
+
+        if parsed_args.help:
+            parser.print_help()
 
         return parsed_args, unparsed_args
 

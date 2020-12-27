@@ -1,4 +1,5 @@
 import importlib
+from argparse import Namespace, ArgumentParser
 from importlib import import_module
 from typing import List, Any, Optional, Callable
 
@@ -192,3 +193,23 @@ def load_class(
     class_ref = getattr(module_ref, fully_qualified_class_name)
 
     return class_ref
+
+
+def display_help(
+        parsed_args: Namespace,
+        parser: ArgumentParser,
+        unparsed_args: List[str]
+):
+    """
+    Display help for an argument parser, based on the value of the `help` argument.
+
+    :param parsed_args: Parsed arguments, which must defined `help`.
+    :param parser: Argument parser.
+    :param unparsed_args: Unparsed arguments. If `help` is True, then a "--help" argument will be added back into this
+    list, so that subsequent argument parsers will also receive it.
+    """
+
+    if parsed_args.help:
+        print()
+        parser.print_help()
+        unparsed_args.append('--help')

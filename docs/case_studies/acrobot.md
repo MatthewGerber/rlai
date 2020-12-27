@@ -9,7 +9,7 @@ example of running a random (untrained) agent in this environment. The episode t
 
 Train a control agent for the acrobot environment with the following command.
 ```
-rlai_train --train --agent "rlai.agents.mdp.StochasticMdpAgent" --continuous-state-discretization-resolution 0.5 --gamma 0.9 --environment "rlai.environments.openai_gym.Gym" --gym-id "Acrobot-v1" --render-every-nth-episode 1000 --video-directory "~/Desktop/acrobat_videos" --train-function "rlai.gpi.temporal_difference.iteration.iterate_value_q_pi" --mode "Q_LEARNING" --num-improvements 10000 --num-episodes-per-improvement 10 --epsilon 0.05 --make-final-policy-greedy True --num-improvements-per-plot 100 --num-improvements-per-checkpoint 1000 --checkpoint-path "~/Desktop/acrobat_checkpoint.pickle" --save-agent-path "~/Desktop/acrobat_agent.pickle"
+rlai-train --train --agent "rlai.agents.mdp.StochasticMdpAgent" --continuous-state-discretization-resolution 0.5 --gamma 0.9 --environment "rlai.environments.openai_gym.Gym" --gym-id "Acrobot-v1" --render-every-nth-episode 1000 --video-directory "~/Desktop/acrobat_videos" --train-function "rlai.gpi.temporal_difference.iteration.iterate_value_q_pi" --mode "Q_LEARNING" --num-improvements 10000 --num-episodes-per-improvement 10 --epsilon 0.05 --make-final-policy-greedy True --num-improvements-per-plot 100 --num-improvements-per-checkpoint 1000 --checkpoint-path "~/Desktop/acrobat_checkpoint.pickle" --save-agent-path "~/Desktop/acrobat_agent.pickle"
 ```
 
 Arguments are explained below.

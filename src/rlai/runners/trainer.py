@@ -9,7 +9,7 @@ from numpy.random import RandomState
 
 from rlai.gpi.utils import resume_from_checkpoint
 from rlai.meta import rl_text
-from rlai.utils import import_function, load_class
+from rlai.utils import import_function, load_class, display_help
 
 
 @rl_text(chapter='Training and Running Agents', page=1)
@@ -23,7 +23,7 @@ def run(
     :returns: 2-tuple of the checkpoint path (if any) and the saved agent path.
     """
 
-    parser = ArgumentParser(description='Run the trainer.')
+    parser = ArgumentParser(description='Train an agent in an environment.', allow_abbrev=False, add_help=False)
 
     parser.add_argument(
         '--train',
@@ -67,112 +67,135 @@ def run(
         help='Path to store resulting agent to.'
     )
 
+    parser.add_argument(
+        '--help',
+        action='store_true',
+        help='Print usage and argument descriptions.'
+    )
+
     parsed_args, unparsed_args = parser.parse_known_args(args)
+    display_help(parsed_args, parser, unparsed_args)
 
     if parsed_args.save_agent_path is None:
-        raise ValueError('No --save-agent-path specified. Cannot save agent.')
+        warnings.warn('No --save-agent-path has been specified, so no agent will be saved after training.')
 
-    train_function_arg_parser = ArgumentParser('Training function argument parser')
+    # get training function and arguments
+    train_function = None
+    train_function_args = {}
+    estimator_class = None
+    if parsed_args.train_function is not None:
 
-    train_function_arg_parser.add_argument(
-        '--num-improvements',
-        type=int,
-        help='Number of improvements.'
-    )
+        train_function = import_function(parsed_args.train_function)
 
-    train_function_arg_parser.add_argument(
-        '--num-episodes-per-improvement',
-        type=int,
-        help='Number of episodes per improvement.'
-    )
+        train_function_arg_parser = ArgumentParser(prog=parsed_args.train_function, allow_abbrev=False, add_help=False)
 
-    train_function_arg_parser.add_argument(
-        '--update-upon-every-visit',
-        type=str,
-        choices=['True', 'False'],
-        help='Whether or not to update values upon each visit to a state or state-action pair.'
-    )
+        train_function_arg_parser.add_argument(
+            '--num-improvements',
+            type=int,
+            help='Number of improvements.'
+        )
 
-    train_function_arg_parser.add_argument(
-        '--alpha',
-        type=float,
-        help='Step size.'
-    )
+        train_function_arg_parser.add_argument(
+            '--num-episodes-per-improvement',
+            type=int,
+            help='Number of episodes per improvement.'
+        )
 
-    train_function_arg_parser.add_argument(
-        '--epsilon',
-        type=float,
-        help='Total probability mass to allocate across all policy actions.'
-    )
+        train_function_arg_parser.add_argument(
+            '--update-upon-every-visit',
+            type=str,
+            choices=['True', 'False'],
+            help='Whether or not to update values upon each visit to a state or state-action pair.'
+        )
 
-    train_function_arg_parser.add_argument(
-        '--make-final-policy-greedy',
-        type=str,
-        choices=['True', 'False'],
-        help='Whether or not to make the final policy greedy after training is complete.'
-    )
+        train_function_arg_parser.add_argument(
+            '--alpha',
+            type=float,
+            help='Step size.'
+        )
 
-    train_function_arg_parser.add_argument(
-        '--num-improvements-per-plot',
-        type=int,
-        help='Number of improvements per plot.'
-    )
+        train_function_arg_parser.add_argument(
+            '--epsilon',
+            type=float,
+            help='Total probability mass to allocate across all policy actions.'
+        )
 
-    train_function_arg_parser.add_argument(
-        '--num-improvements-per-checkpoint',
-        type=int,
-        help='Number of improvements per checkpoint.'
-    )
+        train_function_arg_parser.add_argument(
+            '--make-final-policy-greedy',
+            type=str,
+            choices=['True', 'False'],
+            help='Whether or not to make the final policy greedy after training is complete.'
+        )
 
-    train_function_arg_parser.add_argument(
-        '--checkpoint-path',
-        type=str,
-        help='Path to checkpoint file.'
-    )
+        train_function_arg_parser.add_argument(
+            '--num-improvements-per-plot',
+            type=int,
+            help='Number of improvements per plot.'
+        )
 
-    train_function_arg_parser.add_argument(
-        '--mode',
-        type=str,
-        help='Temporal difference evaluation mode (SARSA, Q_LEARNING, EXPECTED_SARSA).'
-    )
+        train_function_arg_parser.add_argument(
+            '--num-improvements-per-checkpoint',
+            type=int,
+            help='Number of improvements per checkpoint.'
+        )
 
-    train_function_arg_parser.add_argument(
-        '--n-steps',
-        type=int,
-        help='N-step update value.'
-    )
+        train_function_arg_parser.add_argument(
+            '--checkpoint-path',
+            type=str,
+            help='Path to checkpoint file.'
+        )
 
-    train_function_arg_parser.add_argument(
-        '--state-action-value-estimator',
-        type=str,
-        help='Fully-qualified type name of state-action value estimator to use.'
-    )
+        train_function_arg_parser.add_argument(
+            '--mode',
+            type=str,
+            help='Temporal difference evaluation mode (SARSA, Q_LEARNING, EXPECTED_SARSA).'
+        )
 
-    train_function_arg_parser.add_argument(
-        '--new-checkpoint-path',
-        type=str,
-        help='New checkpoint path.'
-    )
+        train_function_arg_parser.add_argument(
+            '--n-steps',
+            type=int,
+            help='N-step update value.'
+        )
 
-    parsed_train_function_args, unparsed_args = train_function_arg_parser.parse_known_args(unparsed_args)
+        train_function_arg_parser.add_argument(
+            '--state-action-value-estimator',
+            type=str,
+            help='Fully-qualified type name of state-action value estimator to use.'
+        )
 
-    # convert boolean strings to bools
-    if parsed_train_function_args.update_upon_every_visit is not None:
-        parsed_train_function_args.update_upon_every_visit = parsed_train_function_args.update_upon_every_visit == 'True'
+        train_function_arg_parser.add_argument(
+            '--new-checkpoint-path',
+            type=str,
+            help='New checkpoint path.'
+        )
 
-    if parsed_train_function_args.make_final_policy_greedy is not None:
-        parsed_train_function_args.make_final_policy_greedy = parsed_train_function_args.make_final_policy_greedy == 'True'
+        train_function_arg_parser.add_argument(
+            '--help',
+            action='store_true',
+            help='Print usage and argument descriptions.'
+        )
 
-    train_function = import_function(parsed_args.train_function)
+        parsed_train_function_args, unparsed_args = train_function_arg_parser.parse_known_args(unparsed_args)
+        display_help(parsed_args, train_function_arg_parser, unparsed_args)
 
-    # filter parsed arguments to those accepted by the training function that will be called
-    # noinspection PyUnresolvedReferences
-    train_function_arg_names = train_function.__code__.co_varnames
-    train_function_args = {
-        arg: v
-        for arg, v in vars(parsed_train_function_args).items()
-        if arg in train_function_arg_names
-    }
+        # convert boolean strings to bools
+        if parsed_train_function_args.update_upon_every_visit is not None:
+            parsed_train_function_args.update_upon_every_visit = parsed_train_function_args.update_upon_every_visit == 'True'
+
+        if parsed_train_function_args.make_final_policy_greedy is not None:
+            parsed_train_function_args.make_final_policy_greedy = parsed_train_function_args.make_final_policy_greedy == 'True'
+
+        if parsed_train_function_args.state_action_value_estimator is not None:
+            estimator_class = load_class(parsed_train_function_args.state_action_value_estimator)
+
+        # filter parsed arguments to those accepted by the training function
+        # noinspection PyUnresolvedReferences
+        train_function_arg_names = train_function.__code__.co_varnames
+        train_function_args = {
+            arg: v
+            for arg, v in vars(parsed_train_function_args).items()
+            if arg in train_function_arg_names
+        }
 
     random_state = RandomState(12345)
 
@@ -186,12 +209,12 @@ def run(
             random_state=random_state
         )
 
-        estimator_class = load_class(parsed_train_function_args.state_action_value_estimator)
-        train_function_args['q_S_A'], unparsed_args = estimator_class.init_from_arguments(
-            unparsed_args,
-            environment=train_function_args['environment'],
-            epsilon=train_function_args['epsilon']
-        )
+        if estimator_class is not None:
+            train_function_args['q_S_A'], unparsed_args = estimator_class.init_from_arguments(
+                unparsed_args,
+                environment=train_function_args['environment'],
+                epsilon=train_function_args['epsilon']
+            )
 
     if parsed_args.planning_environment is not None:
 
@@ -210,7 +233,7 @@ def run(
         agents, unparsed_args = agent_class.init_from_arguments(
             args=unparsed_args,
             random_state=random_state,
-            pi=train_function_args['q_S_A'].get_initial_policy()
+            pi=None if train_function_args.get('q_S_A') is None else train_function_args['q_S_A'].get_initial_policy()
         )
 
         if len(agents) != 1:
@@ -238,6 +261,8 @@ def run(
 
     if agent is None:
         warnings.warn('No agent resulting at end of training. Nothing to save.')
+    elif parsed_args.save_agent_path is None:
+        warnings.warn('No --save-agent-path specified. Not saving agent.')
     else:
         with open(os.path.expanduser(parsed_args.save_agent_path), 'wb') as f:
             pickle.dump(agent, f)

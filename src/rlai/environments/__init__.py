@@ -12,18 +12,16 @@ from rlai.states import State
 class Environment(ABC):
 
     @classmethod
-    def parse_arguments(
+    def get_arg_parser(
             cls,
-            args
-    ) -> Tuple[Namespace, List[str]]:
+    ) -> ArgumentParser:
         """
-        Parse arguments.
+        Get argument parser.
 
-        :param args: Arguments.
-        :return: 2-tuple of parsed and unparsed arguments.
+        :return: Argument parser.
         """
 
-        parser = ArgumentParser(allow_abbrev=False)
+        parser = ArgumentParser(allow_abbrev=False, add_help=False)
 
         parser.add_argument(
             '--T',
@@ -31,7 +29,7 @@ class Environment(ABC):
             help='Maximum number of time steps to run.'
         )
 
-        return parser.parse_known_args(args)
+        return parser
 
     @classmethod
     @abstractmethod
