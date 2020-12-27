@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from argparse import Namespace, ArgumentParser
 from itertools import product
-from typing import List, Union, Tuple
+from typing import List, Union, Tuple, Any
 
 import numpy as np
 import pandas as pd
@@ -18,6 +18,42 @@ class FeatureExtractor(ABC):
     """
     Feature extractor.
     """
+
+    @classmethod
+    def parse_arguments(
+            cls,
+            args
+    ) -> Tuple[Namespace, List[str]]:
+        """
+        Parse arguments.
+
+        :param args: Arguments.
+        :return: 2-tuple of parsed and unparsed arguments.
+        """
+
+        parser = ArgumentParser(allow_abbrev=False)
+
+        # future arguments to be added here...
+
+        parsed_args, unparsed_args = parser.parse_known_args(args)
+
+        return parsed_args, unparsed_args
+
+    @classmethod
+    @abstractmethod
+    def init_from_arguments(
+            cls,
+            args: List[str],
+            environment: MdpEnvironment
+    ) -> Tuple[Any, List[str]]:
+        """
+        Initialize a feature extractor from arguments.
+
+        :param args: Arguments.
+        :param environment: Environment.
+        :return: 2-tuple of a feature extractor and a list of unparsed arguments.
+        """
+        pass
 
     @abstractmethod
     def extract(
@@ -56,6 +92,28 @@ class StateActionInteractionFeatureExtractor(FeatureExtractor, ABC):
     first form the cartesian product of (a) the one-hot action vector and (b) the state features. Each pair in this
     product is then multiplied to arrive at the full vector expression of the state-action pair.
     """
+
+    @classmethod
+    def parse_arguments(
+            cls,
+            args
+    ) -> Tuple[Namespace, List[str]]:
+        """
+        Parse arguments.
+
+        :param args: Arguments.
+        :return: 2-tuple of parsed and unparsed arguments.
+        """
+
+        parsed_args, unparsed_args = super().parse_arguments(args)
+
+        parser = ArgumentParser(allow_abbrev=False)
+
+        # future arguments to be added here...
+
+        parsed_args, unparsed_args = parser.parse_known_args(unparsed_args, parsed_args)
+
+        return parsed_args, unparsed_args
 
     def interact(
             self,
@@ -133,11 +191,13 @@ class StateActionIdentityFeatureExtractor(FeatureExtractor):
         :return: 2-tuple of parsed and unparsed arguments.
         """
 
+        parsed_args, unparsed_args = super().parse_arguments(args)
+
         parser = ArgumentParser(allow_abbrev=False)
 
         # future arguments to be added here...
 
-        parsed_args, unparsed_args = parser.parse_known_args(args)
+        parsed_args, unparsed_args = parser.parse_known_args(unparsed_args, parsed_args)
 
         return parsed_args, unparsed_args
 

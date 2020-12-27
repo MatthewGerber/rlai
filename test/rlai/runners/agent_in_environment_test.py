@@ -1,14 +1,25 @@
 import os
 import pickle
+import shlex
+import tempfile
 from typing import Dict, List
 
 from numpy.testing import assert_array_equal
+from numpy.random import RandomState
 
+from rlai.agents.mdp import StochasticMdpAgent
+from rlai.policies.tabular import TabularPolicy
 from rlai.runners.agent_in_environment import run
 from rlai.runners.monitor import Monitor
 
 
 def test_run():
+
+    # create dummy mdp agent for runner
+    stochastic_mdp_agent = StochasticMdpAgent('foo', RandomState(12345), TabularPolicy(None, None), 1.0)
+    agent_path = tempfile.NamedTemporaryFile(delete=False).name
+    with open(agent_path, 'wb') as f:
+        pickle.dump(stochastic_mdp_agent, f)
 
     run_args_list = [
         '--random-seed 12345 --T 100 --n-runs 200 --environment rlai.environments.bandit.KArmedBandit --k 10 --agent rlai.agents.q_value.EpsilonGreedy --epsilon 0.2 0.0',
@@ -18,13 +29,15 @@ def test_run():
         '--random-seed 12345 --T 100 --n-runs 200 --environment rlai.environments.bandit.KArmedBandit --k 10 --agent rlai.agents.q_value.EpsilonGreedy --epsilon 0.0 --initial-q-value 5 --alpha 0.1',
         '--random-seed 12345 --T 100 --n-runs 200 --environment rlai.environments.bandit.KArmedBandit --k 10 --agent rlai.agents.q_value.UpperConfidenceBound --c 0 1',
         '--random-seed 12345 --T 100 --n-runs 200 --environment rlai.environments.bandit.KArmedBandit --k 10 --q-star-mean 4 --agent rlai.agents.h_value.PreferenceGradient --step-size-alpha 0.1 --use-reward-baseline',
-        '--random-seed 12345 --T 100 --n-runs 200 --environment rlai.environments.bandit.KArmedBandit --k 10 --q-star-mean 4 --agent rlai.agents.h_value.PreferenceGradient --step-size-alpha 0.1'
+        '--random-seed 12345 --T 100 --n-runs 200 --environment rlai.environments.bandit.KArmedBandit --k 10 --q-star-mean 4 --agent rlai.agents.h_value.PreferenceGradient --step-size-alpha 0.1',
+        f'--random-seed 12345 --T 100 --n-runs 200 --environment rlai.environments.mancala.Mancala --initial-count 4 --agent {agent_path}',
+        f'--random-seed 12345 --T 100 --n-runs 200 --environment rlai.environments.mdp.GamblersProblem --p-h 0.4 --agent {agent_path}'
     ]
 
     run_monitor: Dict[str, List[Monitor]] = dict()
 
     for run_args in run_args_list:
-        run_monitor[run_args] = run(run_args.split())
+        run_monitor[run_args] = run(shlex.split(run_args))
 
     # uncomment the following line and run test to update fixture
     # with open(f'{os.path.dirname(__file__)}/fixtures/agent_in_environment_test.pickle', 'wb') as file:

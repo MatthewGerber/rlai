@@ -125,7 +125,6 @@ class Agent(ABC):
         """
         pass
 
-    @abstractmethod
     def reward(
             self,
             r: float
@@ -225,11 +224,6 @@ class Human(Agent):
                 pass
 
         return action
-
-    def reward(
-            self,
-            r: float):
-        pass
 
     def __init__(
             self

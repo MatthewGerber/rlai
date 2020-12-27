@@ -1,0 +1,11 @@
+from numpy.random import RandomState
+
+from rlai.environments.bandit import Arm
+
+
+def test_arm():
+
+    random = RandomState()
+    arm = Arm(1, 0.0, 1.0, random)
+
+    assert str(arm) == 'Mean:  0.0, Variance:  1.0'

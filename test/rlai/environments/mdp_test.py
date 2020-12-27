@@ -1,14 +1,17 @@
 import os
 import pickle
 
+import pytest
 from numpy.random import RandomState
 
 from rlai.actions import Action
 from rlai.agents.mdp import StochasticMdpAgent
-from rlai.environments.mdp import GamblersProblem, PrioritizedSweepingMdpPlanningEnvironment
+from rlai.environments.mdp import GamblersProblem, PrioritizedSweepingMdpPlanningEnvironment, Gridworld
 from rlai.gpi.dynamic_programming.iteration import iterate_value_v_pi
 from rlai.planning.environment_models import StochasticEnvironmentModel
 from rlai.policies.tabular import TabularPolicy
+from rlai.rewards import Reward
+from rlai.runners.monitor import Monitor
 from rlai.states.mdp import MdpState
 
 
@@ -71,3 +74,46 @@ def test_prioritized_planning_environment():
     assert s.i == 1 and a.i == 1
     s, a = planning_environment.get_state_action_with_highest_priority()
     assert s is None and a is None
+
+
+def test_run():
+
+    random_state = RandomState(12345)
+
+    mdp_environment: GamblersProblem = GamblersProblem(
+        'gamblers problem',
+        random_state=random_state,
+        T=None,
+        p_h=0.4
+    )
+
+    agent = StochasticMdpAgent(
+        'test',
+        random_state,
+        TabularPolicy(None, mdp_environment.SS),
+        1
+    )
+
+    monitor = Monitor()
+    state = mdp_environment.reset_for_new_run(agent)
+    agent.reset_for_new_run(state)
+    mdp_environment.run(agent, monitor)
+
+    # uncomment the following line and run test to update fixture
+    # with open(f'{os.path.dirname(__file__)}/fixtures/test_run.pickle', 'wb') as file:
+    #     pickle.dump(monitor, file)
+
+    with open(f'{os.path.dirname(__file__)}/fixtures/test_run.pickle', 'rb') as file:
+        fixture = pickle.load(file)
+
+    assert monitor.t_average_reward == fixture.t_average_reward
+
+
+def test_check_marginal_probabilities():
+
+    random = RandomState()
+    gridworld = Gridworld.example_4_1(random)
+    gridworld.p_S_prime_R_given_S_A[gridworld.SS[0]][gridworld.a_left][gridworld.SS[0]][Reward(1, -1)] = 1.0
+
+    with pytest.raises(ValueError, match='Expected next-state/next-reward marginal probability of 1.0, but got 2.0'):
+        gridworld.check_marginal_probabilities()

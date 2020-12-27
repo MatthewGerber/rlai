@@ -4,8 +4,9 @@ import tempfile
 
 from numpy.random import RandomState
 
+from rlai.agents import Human
 from rlai.agents.mdp import StochasticMdpAgent
-from rlai.environments.mancala import Mancala
+from rlai.environments.mancala import Mancala, Pit
 from rlai.gpi.monte_carlo.iteration import iterate_value_q_pi
 from rlai.gpi.utils import resume_from_checkpoint
 from rlai.policies.tabular import TabularPolicy
@@ -104,3 +105,20 @@ def test_learn():
     )
 
     assert no_checkpoint_p1.pi == resumed_p1.pi
+
+
+def test_pit():
+
+    pit = Pit(True, 5, True)
+    pit.i = 0
+
+    assert str(pit) == '0:  Player 1, 5*'
+
+
+def test_human_player_mutator():
+
+    random = RandomState()
+    mancala = Mancala(random, None, 5, StochasticMdpAgent('foo', random, TabularPolicy(None, []), 1.0))
+    Mancala.human_player_mutator(mancala)
+
+    assert isinstance(mancala.player_2, Human)

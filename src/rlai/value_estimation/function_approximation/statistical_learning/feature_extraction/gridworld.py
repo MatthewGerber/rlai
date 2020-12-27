@@ -1,4 +1,5 @@
-from typing import List, Union
+from argparse import Namespace, ArgumentParser
+from typing import List, Union, Tuple
 
 import numpy as np
 import pandas as pd
@@ -19,6 +20,50 @@ class GridworldFeatureExtractor(StateActionInteractionFeatureExtractor):
     directly extracts the fully interacted state-action feature matrix. It returns numpy.ndarray feature matrices, which
     are not compatible with the Patsy formula-based interface.
     """
+
+    @classmethod
+    def parse_arguments(
+            cls,
+            args
+    ) -> Tuple[Namespace, List[str]]:
+        """
+        Parse arguments.
+
+        :param args: Arguments.
+        :return: 2-tuple of parsed and unparsed arguments.
+        """
+
+        parsed_args, unparsed_args = super().parse_arguments(args)
+
+        parser = ArgumentParser(allow_abbrev=False)
+
+        # future arguments to be added here...
+
+        parsed_args, unparsed_args = parser.parse_known_args(unparsed_args, parsed_args)
+
+        return parsed_args, unparsed_args
+
+    @classmethod
+    def init_from_arguments(
+            cls,
+            args: List[str],
+            environment: Gridworld
+    ) -> Tuple[StateActionInteractionFeatureExtractor, List[str]]:
+        """
+        Initialize a feature extractor from arguments.
+
+        :param args: Arguments.
+        :param environment: Environment.
+        :return: 2-tuple of a feature extractor and a list of unparsed arguments.
+        """
+
+        parsed_args, unparsed_args = cls.parse_arguments(args)
+
+        fex = GridworldFeatureExtractor(
+            environment=environment
+        )
+
+        return fex, unparsed_args
 
     def extract(
             self,

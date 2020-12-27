@@ -129,20 +129,6 @@ class StochasticMdpAgent(MdpAgent):
             random_state=self.random_state
         )
 
-    def reward(
-            self,
-            r: float
-    ):
-        """
-        Reward the agent.
-
-        :param r: Reward.
-        """
-
-        super().reward(
-            r=r
-        )
-
     def __init__(
             self,
             name: str,
