@@ -6,7 +6,7 @@ from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import SGDRegressor
 
 from rlai.meta import rl_text
-from rlai.utils import parse_args
+from rlai.utils import parse_arguments
 from rlai.value_estimation.function_approximation.statistical_learning import FunctionApproximationModel
 
 
@@ -47,7 +47,7 @@ class SKLearnSGD(FunctionApproximationModel):
         :return: 2-tuple of a state-action value estimator and a list of unparsed arguments.
         """
 
-        parsed_args, unparsed_args = parse_args(cls, args)
+        parsed_args, unparsed_args = parse_arguments(cls, args)
 
         model = SKLearnSGD(
             **vars(parsed_args)

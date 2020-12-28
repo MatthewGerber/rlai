@@ -11,7 +11,7 @@ from rlai.environments.mdp import MdpEnvironment
 from rlai.meta import rl_text
 from rlai.policies.function_approximation import FunctionApproximationPolicy
 from rlai.states.mdp import MdpState
-from rlai.utils import load_class, parse_args
+from rlai.utils import load_class, parse_arguments
 from rlai.value_estimation import ValueEstimator, ActionValueEstimator, StateActionValueEstimator
 from rlai.value_estimation.function_approximation.statistical_learning import FunctionApproximationModel
 from rlai.value_estimation.function_approximation.statistical_learning.feature_extraction import FeatureExtractor
@@ -196,7 +196,7 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         :return: 2-tuple of a state-action value estimator and a list of unparsed arguments.
         """
 
-        parsed_args, unparsed_args = parse_args(cls, args)
+        parsed_args, unparsed_args = parse_arguments(cls, args)
 
         model_class = load_class(parsed_args.function_approximation_model)
         model, unparsed_args = model_class.init_from_arguments(unparsed_args)

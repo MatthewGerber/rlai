@@ -10,7 +10,7 @@ from rlai.agents import Agent
 from rlai.meta import rl_text
 from rlai.policies import Policy
 from rlai.states.mdp import MdpState
-from rlai.utils import sample_list_item, parse_args
+from rlai.utils import sample_list_item, parse_arguments
 
 
 @rl_text(chapter='Agents', page=1)
@@ -109,7 +109,7 @@ class StochasticMdpAgent(MdpAgent):
         :return: 2-tuple of a list of agents and a list of unparsed arguments.
         """
 
-        parsed_args, unparsed_args = parse_args(cls, args)
+        parsed_args, unparsed_args = parse_arguments(cls, args)
 
         agents = [
             StochasticMdpAgent(

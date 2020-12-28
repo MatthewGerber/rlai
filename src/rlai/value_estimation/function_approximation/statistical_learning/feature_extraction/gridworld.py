@@ -8,7 +8,7 @@ from rlai.actions import Action
 from rlai.environments.mdp import Gridworld
 from rlai.meta import rl_text
 from rlai.states.mdp import MdpState
-from rlai.utils import parse_args
+from rlai.utils import parse_arguments
 from rlai.value_estimation.function_approximation.statistical_learning.feature_extraction import (
     StateActionInteractionFeatureExtractor
 )
@@ -55,7 +55,7 @@ class GridworldFeatureExtractor(StateActionInteractionFeatureExtractor):
         :return: 2-tuple of a feature extractor and a list of unparsed arguments.
         """
 
-        parsed_args, unparsed_args = parse_args(cls, args)
+        parsed_args, unparsed_args = parse_arguments(cls, args)
 
         fex = GridworldFeatureExtractor(
             environment=environment

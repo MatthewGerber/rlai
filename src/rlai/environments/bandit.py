@@ -10,7 +10,7 @@ from rlai.environments import Environment
 from rlai.meta import rl_text
 from rlai.runners.monitor import Monitor
 from rlai.states import State
-from rlai.utils import parse_args
+from rlai.utils import parse_arguments
 
 ARM_QSTAR_BUFFER_SIZE = 1000
 
@@ -145,7 +145,7 @@ class KArmedBandit(Environment):
         :return: 2-tuple of an environment and a list of unparsed arguments.
         """
 
-        parsed_args, unparsed_args = parse_args(cls, args)
+        parsed_args, unparsed_args = parse_arguments(cls, args)
 
         bandit = KArmedBandit(
             random_state=random_state,

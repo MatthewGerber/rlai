@@ -18,7 +18,7 @@ from rlai.rewards import Reward
 from rlai.runners.monitor import Monitor
 from rlai.states import State
 from rlai.states.mdp import MdpState
-from rlai.utils import IncrementalSampleAverager, sample_list_item, parse_args, get_base_argument_parser
+from rlai.utils import IncrementalSampleAverager, sample_list_item, parse_arguments, get_base_argument_parser
 
 
 @rl_text(chapter=3, page=47)
@@ -364,7 +364,7 @@ class Gridworld(ModelBasedMdpEnvironment):
         :return: 2-tuple of an environment and a list of unparsed arguments.
         """
 
-        parsed_args, unparsed_args = parse_args(cls, args)
+        parsed_args, unparsed_args = parse_arguments(cls, args)
 
         gridworld = getattr(cls, parsed_args.id)(
             random_state=random_state
@@ -474,7 +474,7 @@ class GamblersProblem(ModelBasedMdpEnvironment):
         :return: 2-tuple of an environment and a list of unparsed arguments.
         """
 
-        parsed_args, unparsed_args = parse_args(cls, args)
+        parsed_args, unparsed_args = parse_arguments(cls, args)
 
         gamblers_problem = GamblersProblem(
             name=f"gambler's problem (p={parsed_args.p_h})",
@@ -687,7 +687,7 @@ class PrioritizedSweepingMdpPlanningEnvironment(MdpPlanningEnvironment):
         :return: 2-tuple of an environment and a list of unparsed arguments.
         """
 
-        parsed_args, unparsed_args = parse_args(cls, args)
+        parsed_args, unparsed_args = parse_arguments(cls, args)
 
         planning_environment = PrioritizedSweepingMdpPlanningEnvironment(
             name=f"prioritized planning (theta={parsed_args.priority_theta})",
@@ -873,7 +873,7 @@ class TrajectorySamplingMdpPlanningEnvironment(MdpPlanningEnvironment):
         :return: 2-tuple of an environment and a list of unparsed arguments.
         """
 
-        parsed_args, unparsed_args = parse_args(cls, args)
+        parsed_args, unparsed_args = parse_arguments(cls, args)
 
         planning_environment = TrajectorySamplingMdpPlanningEnvironment(
             name=f"trajectory planning",

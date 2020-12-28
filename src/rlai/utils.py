@@ -220,7 +220,7 @@ def get_base_argument_parser(
     return parser
 
 
-def parse_args(
+def parse_arguments(
         parser_or_cls,
         args: List[str]
 ) -> Tuple[Namespace, List[str]]:
@@ -229,7 +229,9 @@ def parse_args(
 
     :param parser_or_cls: Argument parser or a class that has a get_argument_parser function to get the parser.
     :param args: Arguments.
-    :return: 2-tuple of parsed arguments and unparsed arguments.
+    :return: 2-tuple of parsed arguments and unparsed arguments. The `help` argument will be deleted from the parsed
+    arguments. If `help` is True, then it will be added to the unparsed argument list so that subsequent argument
+    parsers will also receive it.
     """
 
     if isinstance(parser_or_cls, ArgumentParser):

@@ -13,7 +13,7 @@ from rlai.policies.tabular import TabularPolicy
 from rlai.rewards import Reward
 from rlai.states import State
 from rlai.states.mdp import MdpState
-from rlai.utils import parse_args
+from rlai.utils import parse_arguments
 
 
 @rl_text(chapter='States', page=1)
@@ -192,7 +192,7 @@ class Mancala(MdpEnvironment):
         :return: 2-tuple of an environment and a list of unparsed arguments.
         """
 
-        parsed_args, unparsed_args = parse_args(cls, args)
+        parsed_args, unparsed_args = parse_arguments(cls, args)
 
         mancala = Mancala(
             random_state=random_state,

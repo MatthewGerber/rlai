@@ -8,7 +8,7 @@ from rlai.gpi.improvement import improve_policy_with_q_pi
 from rlai.meta import rl_text
 from rlai.policies.tabular import TabularPolicy
 from rlai.states.mdp import MdpState
-from rlai.utils import IncrementalSampleAverager, parse_args
+from rlai.utils import IncrementalSampleAverager, parse_arguments
 from rlai.value_estimation import StateActionValueEstimator, ActionValueEstimator, ValueEstimator
 
 
@@ -245,7 +245,7 @@ class TabularStateActionValueEstimator(StateActionValueEstimator):
         :return: 2-tuple of a state-action value estimator and a list of unparsed arguments.
         """
 
-        parsed_args, unparsed_args = parse_args(cls, args)
+        parsed_args, unparsed_args = parse_arguments(cls, args)
 
         estimator = TabularStateActionValueEstimator(
             environment=environment,

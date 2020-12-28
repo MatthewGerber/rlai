@@ -9,7 +9,7 @@ from rlai.agents import Agent
 from rlai.meta import rl_text
 from rlai.policies import Policy
 from rlai.states import State
-from rlai.utils import IncrementalSampleAverager, sample_list_item, parse_args
+from rlai.utils import IncrementalSampleAverager, sample_list_item, parse_arguments
 
 
 @rl_text(chapter=2, page=37)
@@ -73,7 +73,7 @@ class PreferenceGradient(Agent):
         :return: 2-tuple of a list of agents and a list of unparsed arguments.
         """
 
-        parsed_args, unparsed_args = parse_args(cls, args)
+        parsed_args, unparsed_args = parse_arguments(cls, args)
 
         # initialize agents
         agents = [
