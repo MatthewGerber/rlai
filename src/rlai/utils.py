@@ -1,7 +1,7 @@
 import importlib
 from argparse import Namespace, ArgumentParser
 from importlib import import_module
-from typing import List, Any, Optional, Callable
+from typing import List, Any, Optional, Callable, Tuple
 
 import numpy as np
 from numpy.random import RandomState
@@ -195,21 +195,55 @@ def load_class(
     return class_ref
 
 
-def display_help(
-        parsed_args: Namespace,
-        parser: ArgumentParser,
-        unparsed_args: List[str]
-):
+def get_base_argument_parser(
+        **kwargs
+) -> ArgumentParser:
     """
-    Display help for an argument parser, based on the value of the `help` argument.
+    Get base argument parser.
 
-    :param parsed_args: Parsed arguments, which must defined `help`.
-    :param parser: Argument parser.
-    :param unparsed_args: Unparsed arguments. If `help` is True, then a "--help" argument will be added back into this
-    list, so that subsequent argument parsers will also receive it.
+    :param kwargs: Keyword arguments to pass to the ArgumentParser constructor.
+    :return: Argument parser.
     """
+
+    parser = ArgumentParser(
+        allow_abbrev=False,
+        add_help=False,
+        **kwargs
+    )
+
+    parser.add_argument(
+        '--help',
+        action='store_true',
+        help='Print usage and argument descriptions.'
+    )
+
+    return parser
+
+
+def parse_args(
+        parser_or_cls,
+        args: List[str]
+) -> Tuple[Namespace, List[str]]:
+    """
+    Parse arguments and display help if specified.
+
+    :param parser_or_cls: Argument parser or a class that has a get_argument_parser function to get the parser.
+    :param args: Arguments.
+    :return: 2-tuple of parsed arguments and unparsed arguments.
+    """
+
+    if isinstance(parser_or_cls, ArgumentParser):
+        parser = parser_or_cls
+    else:
+        parser = parser_or_cls.get_argument_parser()
+
+    parsed_args, unparsed_args = parser.parse_known_args(args)
 
     if parsed_args.help:
-        print()
         parser.print_help()
+        print()
         unparsed_args.append('--help')
+
+    del parsed_args.help
+
+    return parsed_args, unparsed_args

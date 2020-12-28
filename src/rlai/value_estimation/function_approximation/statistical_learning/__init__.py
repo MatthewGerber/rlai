@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from argparse import Namespace, ArgumentParser
+from argparse import ArgumentParser
 from typing import Tuple, List, Any, Optional
 
 import numpy as np
@@ -14,22 +14,27 @@ class FunctionApproximationModel(ABC):
     """
 
     @classmethod
-    def parse_arguments(
-            cls,
-            args
-    ) -> Tuple[Namespace, List[str]]:
+    def get_argument_parser(
+            cls
+    ) -> ArgumentParser:
         """
-        Parse arguments.
+        Get argument parser.
 
-        :param args: Arguments.
-        :return: 2-tuple of parsed and unparsed arguments.
+        :return: Argument parser.
         """
 
-        parser = ArgumentParser(allow_abbrev=False)
+        parser = ArgumentParser(
+            allow_abbrev=False,
+            add_help=False
+        )
 
-        # future arguments for this base class can be added here...
+        parser.add_argument(
+            '--help',
+            action='store_true',
+            help='Print usage and argument descriptions.'
+        )
 
-        return parser.parse_known_args(args)
+        return parser
 
     @classmethod
     @abstractmethod

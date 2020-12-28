@@ -1,5 +1,5 @@
 # Feature Extractors
-### [rlai.value_estimation.function_approximation.statistical_learning.feature_extraction.StateActionIdentityFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/value_estimation/function_approximation/statistical_learning/feature_extraction.py#L169)
+### [rlai.value_estimation.function_approximation.statistical_learning.feature_extraction.StateActionIdentityFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/value_estimation/function_approximation/statistical_learning/feature_extraction.py#L158)
 ```
 Simple state/action identifier extractor. Generates features named "s" and "a" for each observation. The
     interpretation of the feature values (i.e., state and action identifiers) depends on the environment. The values
@@ -11,7 +11,7 @@ Simple state/action identifier extractor. Generates features named "s" and "a" f
     `rlai.value_estimation.function_approximation.statistical_learning.feature_extraction.gridworld.GridworldFeatureExtractor`
     for an example.
 ```
-### [rlai.value_estimation.function_approximation.statistical_learning.feature_extraction.StateActionInteractionFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/value_estimation/function_approximation/statistical_learning/feature_extraction.py#L87)
+### [rlai.value_estimation.function_approximation.statistical_learning.feature_extraction.StateActionInteractionFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/value_estimation/function_approximation/statistical_learning/feature_extraction.py#L80)
 ```
 A feature extractor that extracts features comprising the interaction (in a statistical modeling sense) of
     state features with categorical actions. Categorical actions are coded as one-hot vectors with length equal to the
@@ -19,7 +19,7 @@ A feature extractor that extracts features comprising the interaction (in a stat
     first form the cartesian product of (a) the one-hot action vector and (b) the state features. Each pair in this
     product is then multiplied to arrive at the full vector expression of the state-action pair.
 ```
-### [rlai.value_estimation.function_approximation.statistical_learning.feature_extraction.gridworld.GridworldFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/value_estimation/function_approximation/statistical_learning/feature_extraction/gridworld.py#L17)
+### [rlai.value_estimation.function_approximation.statistical_learning.feature_extraction.gridworld.GridworldFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/value_estimation/function_approximation/statistical_learning/feature_extraction/gridworld.py#L18)
 ```
 A feature extractor for the gridworld. This extractor, being based on the `StateActionInteractionFeatureExtractor`,
     directly extracts the fully interacted state-action feature matrix. It returns numpy.ndarray feature matrices, which

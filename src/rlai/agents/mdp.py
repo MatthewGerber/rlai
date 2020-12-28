@@ -1,5 +1,5 @@
 from abc import ABC
-from argparse import Namespace, ArgumentParser
+from argparse import ArgumentParser
 from typing import List, Tuple, Optional
 
 import numpy as np
@@ -10,7 +10,7 @@ from rlai.agents import Agent
 from rlai.meta import rl_text
 from rlai.policies import Policy
 from rlai.states.mdp import MdpState
-from rlai.utils import sample_list_item
+from rlai.utils import sample_list_item, parse_args
 
 
 @rl_text(chapter='Agents', page=1)
@@ -20,20 +20,20 @@ class MdpAgent(Agent, ABC):
     """
 
     @classmethod
-    def parse_arguments(
-            cls,
-            args
-    ) -> Tuple[Namespace, List[str]]:
+    def get_argument_parser(
+            cls
+    ) -> ArgumentParser:
         """
-        Parse arguments.
+        Get argument parser.
 
-        :param args: Arguments.
-        :return: 2-tuple of parsed and unparsed arguments.
+        :return: Argument parser.
         """
 
-        parsed_args, unparsed_args = super().parse_arguments(args)
-
-        parser = ArgumentParser('MDP agent', allow_abbrev=False, add_help=False)
+        parser = ArgumentParser(
+            parents=[super().get_argument_parser()],
+            allow_abbrev=False,
+            add_help=False
+        )
 
         parser.add_argument(
             '--gamma',
@@ -41,18 +41,7 @@ class MdpAgent(Agent, ABC):
             help='Discount factor.'
         )
 
-        parser.add_argument(
-            '--help',
-            action='store_true',
-            help='Print usage and argument descriptions.'
-        )
-
-        parsed_args, unparsed_args = parser.parse_known_args(unparsed_args, parsed_args)
-
-        if parsed_args.help:
-            parser.print_help()
-
-        return parsed_args, unparsed_args
+        return parser
 
     def __init__(
             self,
@@ -86,6 +75,25 @@ class StochasticMdpAgent(MdpAgent):
     """
 
     @classmethod
+    def get_argument_parser(
+            cls
+    ) -> ArgumentParser:
+        """
+        Get argument parser.
+
+        :return: Argument parser.
+        """
+
+        parser = ArgumentParser(
+            prog=f'{cls.__module__}.{cls.__name__}',
+            parents=[super().get_argument_parser()],
+            allow_abbrev=False,
+            add_help=False
+        )
+
+        return parser
+
+    @classmethod
     def init_from_arguments(
             cls,
             args: List[str],
@@ -101,7 +109,7 @@ class StochasticMdpAgent(MdpAgent):
         :return: 2-tuple of a list of agents and a list of unparsed arguments.
         """
 
-        parsed_args, unparsed_args = cls.parse_arguments(args)
+        parsed_args, unparsed_args = parse_args(cls, args)
 
         agents = [
             StochasticMdpAgent(

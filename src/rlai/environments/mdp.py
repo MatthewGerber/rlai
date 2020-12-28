@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from argparse import Namespace, ArgumentParser
+from argparse import ArgumentParser
 from copy import copy
 from functools import partial
 from queue import PriorityQueue
@@ -18,7 +18,7 @@ from rlai.rewards import Reward
 from rlai.runners.monitor import Monitor
 from rlai.states import State
 from rlai.states.mdp import MdpState
-from rlai.utils import IncrementalSampleAverager, sample_list_item
+from rlai.utils import IncrementalSampleAverager, sample_list_item, parse_args, get_base_argument_parser
 
 
 @rl_text(chapter=3, page=47)
@@ -325,20 +325,21 @@ class Gridworld(ModelBasedMdpEnvironment):
         return g
 
     @classmethod
-    def parse_arguments(
-            cls,
-            args
-    ) -> Tuple[Namespace, List[str]]:
+    def get_argument_parser(
+            cls
+    ) -> ArgumentParser:
         """
-        Parse arguments.
+        Get argument parser.
 
-        :param args: Arguments.
-        :return: 2-tuple of parsed and unparsed arguments.
+        :return: Argument parser.
         """
 
-        parsed_args, unparsed_args = super().parse_arguments(args)
-
-        parser = ArgumentParser(allow_abbrev=False)
+        parser = ArgumentParser(
+            prog=f'{cls.__module__}.{cls.__name__}',
+            parents=[super().get_argument_parser()],
+            allow_abbrev=False,
+            add_help=False
+        )
 
         parser.add_argument(
             '--id',
@@ -347,9 +348,7 @@ class Gridworld(ModelBasedMdpEnvironment):
             help='Gridworld identifier.'
         )
 
-        parsed_args, unparsed_args = parser.parse_known_args(unparsed_args, parsed_args)
-
-        return parsed_args, unparsed_args
+        return parser
 
     @classmethod
     def init_from_arguments(
@@ -365,7 +364,7 @@ class Gridworld(ModelBasedMdpEnvironment):
         :return: 2-tuple of an environment and a list of unparsed arguments.
         """
 
-        parsed_args, unparsed_args = cls.parse_arguments(args)
+        parsed_args, unparsed_args = parse_args(cls, args)
 
         gridworld = getattr(cls, parsed_args.id)(
             random_state=random_state
@@ -436,20 +435,21 @@ class GamblersProblem(ModelBasedMdpEnvironment):
     """
 
     @classmethod
-    def parse_arguments(
-            cls,
-            args
-    ) -> Tuple[Namespace, List[str]]:
+    def get_argument_parser(
+            cls
+    ) -> ArgumentParser:
         """
-        Parse arguments.
+        Get argument parser.
 
-        :param args: Arguments.
-        :return: 2-tuple of parsed and unparsed arguments.
+        :return: Argument parser.
         """
 
-        parsed_args, unparsed_args = super().parse_arguments(args)
-
-        parser = ArgumentParser(allow_abbrev=False)
+        parser = ArgumentParser(
+            prog=f'{cls.__module__}.{cls.__name__}',
+            parents=[super().get_argument_parser()],
+            allow_abbrev=False,
+            add_help=False
+        )
 
         parser.add_argument(
             '--p-h',
@@ -458,9 +458,7 @@ class GamblersProblem(ModelBasedMdpEnvironment):
             help='Probability of coin toss coming up heads.'
         )
 
-        parsed_args, unparsed_args = parser.parse_known_args(unparsed_args, parsed_args)
-
-        return parsed_args, unparsed_args
+        return parser
 
     @classmethod
     def init_from_arguments(
@@ -476,7 +474,7 @@ class GamblersProblem(ModelBasedMdpEnvironment):
         :return: 2-tuple of an environment and a list of unparsed arguments.
         """
 
-        parsed_args, unparsed_args = cls.parse_arguments(args)
+        parsed_args, unparsed_args = parse_args(cls, args)
 
         gamblers_problem = GamblersProblem(
             name=f"gambler's problem (p={parsed_args.p_h})",
@@ -571,21 +569,19 @@ class MdpPlanningEnvironment(MdpEnvironment, ABC):
     """
 
     @classmethod
-    def parse_arguments(
-            cls,
-            args
-    ) -> Tuple[Namespace, List[str]]:
+    def get_argument_parser(
+            cls
+    ) -> ArgumentParser:
         """
-        Parse arguments.
+        Get argument parser.
 
-        :param args: Arguments.
-        :return: 2-tuple of parsed and unparsed arguments.
+        :return: Argument parser.
         """
 
-        # don't call super's argument parser, so that we do not pick up the --T argument intended for the actual
+        # don't use super's argument parser, so that we do not pick up the --T argument intended for the actual
         # environment. we're going to use --T-planning instead (see below).
 
-        parser = ArgumentParser(allow_abbrev=False)
+        parser = get_base_argument_parser()
 
         parser.add_argument(
             '--T-planning',
@@ -599,9 +595,7 @@ class MdpPlanningEnvironment(MdpEnvironment, ABC):
             help='Number of planning improvements to make for each direct improvement.'
         )
 
-        parsed_args, unparsed_args = parser.parse_known_args(args)
-
-        return parsed_args, unparsed_args
+        return parser
 
     def reset_for_new_run(
             self,
@@ -655,20 +649,21 @@ class PrioritizedSweepingMdpPlanningEnvironment(MdpPlanningEnvironment):
     """
 
     @classmethod
-    def parse_arguments(
-            cls,
-            args
-    ) -> Tuple[Namespace, List[str]]:
+    def get_argument_parser(
+            cls
+    ) -> ArgumentParser:
         """
-        Parse arguments.
+        Get argument parser.
 
-        :param args: Arguments.
-        :return: 2-tuple of parsed and unparsed arguments.
+        :return: Argument parser.
         """
 
-        parsed_args, unparsed_args = super().parse_arguments(args)
-
-        parser = ArgumentParser(allow_abbrev=False)
+        parser = ArgumentParser(
+            prog=f'{cls.__module__}.{cls.__name__}',
+            parents=[super().get_argument_parser()],
+            allow_abbrev=False,
+            add_help=False
+        )
 
         parser.add_argument(
             '--priority-theta',
@@ -676,9 +671,7 @@ class PrioritizedSweepingMdpPlanningEnvironment(MdpPlanningEnvironment):
             help='Threshold on priority values, below which state-action pairs are added to the priority queue.'
         )
 
-        parsed_args, unparsed_args = parser.parse_known_args(unparsed_args, parsed_args)
-
-        return parsed_args, unparsed_args
+        return parser
 
     @classmethod
     def init_from_arguments(
@@ -694,7 +687,7 @@ class PrioritizedSweepingMdpPlanningEnvironment(MdpPlanningEnvironment):
         :return: 2-tuple of an environment and a list of unparsed arguments.
         """
 
-        parsed_args, unparsed_args = cls.parse_arguments(args)
+        parsed_args, unparsed_args = parse_args(cls, args)
 
         planning_environment = PrioritizedSweepingMdpPlanningEnvironment(
             name=f"prioritized planning (theta={parsed_args.priority_theta})",
@@ -848,6 +841,25 @@ class TrajectorySamplingMdpPlanningEnvironment(MdpPlanningEnvironment):
     """
 
     @classmethod
+    def get_argument_parser(
+            cls
+    ) -> ArgumentParser:
+        """
+        Get argument parser.
+
+        :return: Argument parser.
+        """
+
+        parser = ArgumentParser(
+            prog=f'{cls.__module__}.{cls.__name__}',
+            parents=[super().get_argument_parser()],
+            allow_abbrev=False,
+            add_help=False
+        )
+
+        return parser
+
+    @classmethod
     def init_from_arguments(
             cls,
             args: List[str],
@@ -861,7 +873,7 @@ class TrajectorySamplingMdpPlanningEnvironment(MdpPlanningEnvironment):
         :return: 2-tuple of an environment and a list of unparsed arguments.
         """
 
-        parsed_args, unparsed_args = cls.parse_arguments(args)
+        parsed_args, unparsed_args = parse_args(cls, args)
 
         planning_environment = TrajectorySamplingMdpPlanningEnvironment(
             name=f"trajectory planning",

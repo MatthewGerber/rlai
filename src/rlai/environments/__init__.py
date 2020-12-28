@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from argparse import Namespace, ArgumentParser
+from argparse import ArgumentParser
 from typing import Tuple, List, Any, final, Optional
 
 from numpy.random import RandomState
@@ -7,12 +7,13 @@ from numpy.random import RandomState
 from rlai.agents import Agent
 from rlai.runners.monitor import Monitor
 from rlai.states import State
+from rlai.utils import get_base_argument_parser
 
 
 class Environment(ABC):
 
     @classmethod
-    def get_arg_parser(
+    def get_argument_parser(
             cls,
     ) -> ArgumentParser:
         """
@@ -21,7 +22,7 @@ class Environment(ABC):
         :return: Argument parser.
         """
 
-        parser = ArgumentParser(allow_abbrev=False, add_help=False)
+        parser = get_base_argument_parser()
 
         parser.add_argument(
             '--T',

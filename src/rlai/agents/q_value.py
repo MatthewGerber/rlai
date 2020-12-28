@@ -1,7 +1,7 @@
 import math
 import sys
 from abc import ABC
-from argparse import Namespace, ArgumentParser
+from argparse import ArgumentParser
 from typing import List, Dict, Tuple, Optional
 
 from numpy.random import RandomState
@@ -11,7 +11,7 @@ from rlai.agents import Agent
 from rlai.meta import rl_text
 from rlai.policies import Policy
 from rlai.states import State
-from rlai.utils import IncrementalSampleAverager
+from rlai.utils import IncrementalSampleAverager, parse_args
 
 
 @rl_text(chapter=2, page=27)
@@ -21,20 +21,20 @@ class QValue(Agent, ABC):
     """
 
     @classmethod
-    def parse_arguments(
-            cls,
-            args
-    ) -> Tuple[Namespace, List[str]]:
+    def get_argument_parser(
+            cls
+    ) -> ArgumentParser:
         """
-        Parse arguments.
+        Get argument parser.
 
-        :param args: Arguments.
-        :return: 2-tuple of parsed and unparsed arguments.
+        :return: Argument parser.
         """
 
-        parsed_args, unparsed_args = super().parse_arguments(args)
-
-        parser = ArgumentParser(allow_abbrev=False)
+        parser = ArgumentParser(
+            parents=[super().get_argument_parser()],
+            allow_abbrev=False,
+            add_help=False
+        )
 
         parser.add_argument(
             '--initial-q-value',
@@ -50,7 +50,7 @@ class QValue(Agent, ABC):
             help='Constant step size for Q-value update. If provided, the Q-value sample average becomes a recency-weighted average (good for nonstationary environments). If `None` is passed, then the unweighted sample average will be used (good for stationary environments).'
         )
 
-        return parser.parse_known_args(unparsed_args, parsed_args)
+        return parser
 
     def reset_for_new_run(
             self,
@@ -125,20 +125,21 @@ class EpsilonGreedy(QValue):
     """
 
     @classmethod
-    def parse_arguments(
-            cls,
-            args
-    ) -> Tuple[Namespace, List[str]]:
+    def get_argument_parser(
+            cls
+    ) -> ArgumentParser:
         """
-        Parse arguments.
+        Get argument parser.
 
-        :param args: Arguments.
-        :return: 2-tuple of parsed and unparsed arguments.
+        :return: Argument parser.
         """
 
-        parsed_args, unparsed_args = super().parse_arguments(args)
-
-        parser = ArgumentParser(allow_abbrev=False)
+        parser = ArgumentParser(
+            prog=f'{cls.__module__}.{cls.__name__}',
+            parents=[super().get_argument_parser()],
+            allow_abbrev=False,
+            add_help=False
+        )
 
         parser.add_argument(
             '--epsilon',
@@ -154,9 +155,7 @@ class EpsilonGreedy(QValue):
             help='Percentage reduction of epsilon from its initial value. This is applied at each time step when the agent explores. For example, pass 0 for no reduction and 0.01 for a 1-percent reduction at each exploration step.'
         )
 
-        parsed_args, unparsed_args = parser.parse_known_args(unparsed_args, parsed_args)
-
-        return parsed_args, unparsed_args
+        return parser
 
     @classmethod
     def init_from_arguments(
@@ -174,7 +173,7 @@ class EpsilonGreedy(QValue):
         :return: 2-tuple of a list of agents and a list of unparsed arguments.
         """
 
-        parsed_args, unparsed_args = cls.parse_arguments(args)
+        parsed_args, unparsed_args = parse_args(cls, args)
 
         # grab and delete epsilons from parsed arguments
         epsilons = parsed_args.epsilon
@@ -284,20 +283,21 @@ class UpperConfidenceBound(QValue):
     """
 
     @classmethod
-    def parse_arguments(
-            cls,
-            args
-    ) -> Tuple[Namespace, List[str]]:
+    def get_argument_parser(
+            cls
+    ) -> ArgumentParser:
         """
-        Parse arguments.
+        Get argument parser.
 
-        :param args: Arguments.
-        :return: 2-tuple of parsed and unparsed arguments.
+        :return: Argument parser.
         """
 
-        parsed_args, unparsed_args = super().parse_arguments(args)
-
-        parser = ArgumentParser(allow_abbrev=False)
+        parser = ArgumentParser(
+            prog=f'{cls.__module__}.{cls.__name__}',
+            parents=[super().get_argument_parser()],
+            allow_abbrev=False,
+            add_help=False
+        )
 
         parser.add_argument(
             '--c',
@@ -306,9 +306,7 @@ class UpperConfidenceBound(QValue):
             help='Space-separated list of confidence levels (higher gives more exploration).'
         )
 
-        parsed_args, unparsed_args = parser.parse_known_args(unparsed_args, parsed_args)
-
-        return parsed_args, unparsed_args
+        return parser
 
     @classmethod
     def init_from_arguments(
@@ -326,7 +324,7 @@ class UpperConfidenceBound(QValue):
         :return: 2-tuple of a list of agents and a list of unparsed arguments.
         """
 
-        parsed_args, unparsed_args = cls.parse_arguments(args)
+        parsed_args, unparsed_args = parse_args(cls, args)
 
         # grab and delete c values from parsed arguments
         c_values = parsed_args.c

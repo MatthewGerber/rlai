@@ -16,7 +16,7 @@ from rlai.meta import rl_text
 from rlai.rewards import Reward
 from rlai.states import State
 from rlai.states.mdp import MdpState
-from rlai.utils import display_help
+from rlai.utils import parse_args
 
 
 @rl_text(chapter='States', page=1)
@@ -57,7 +57,7 @@ class Gym(MdpEnvironment):
     """
 
     @classmethod
-    def get_arg_parser(
+    def get_argument_parser(
             cls,
     ) -> ArgumentParser:
         """
@@ -66,7 +66,12 @@ class Gym(MdpEnvironment):
         :return: Argument parser.
         """
 
-        parser = ArgumentParser(prog='rlai.environments.openai_gym.Gym', parents=[super().get_arg_parser()], allow_abbrev=False, add_help=False)
+        parser = ArgumentParser(
+            prog=f'{cls.__module__}.{cls.__name__}',
+            parents=[super().get_argument_parser()],
+            allow_abbrev=False,
+            add_help=False
+        )
 
         parser.add_argument(
             '--gym-id',
@@ -92,12 +97,6 @@ class Gym(MdpEnvironment):
             help='Local directory in which to save rendered videos. Must be an empty directory. Ignore to only display videos.'
         )
 
-        parser.add_argument(
-            '--help',
-            action='store_true',
-            help='Print usage and argument descriptions.'
-        )
-
         return parser
 
     @classmethod
@@ -114,9 +113,7 @@ class Gym(MdpEnvironment):
         :return: 2-tuple of an environment and a list of unparsed arguments.
         """
 
-        parser = cls.get_arg_parser()
-        parsed_args, unparsed_args = parser.parse_known_args(args)
-        display_help(parsed_args, parser, unparsed_args)
+        parsed_args, unparsed_args = parse_args(cls, args)
 
         gym_env = Gym(
             random_state=random_state,

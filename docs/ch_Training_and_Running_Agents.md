@@ -5,7 +5,13 @@ Run an agent within an environment.
 
     :param args: Arguments.
 ```
-### [rlai.runners.trainer.run](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/runners/trainer.py#L15)
+### [rlai.runners.top_level.run](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/runners/top_level.py#L9)
+```
+Run RLAI.
+
+    :param args: Arguments.
+```
+### [rlai.runners.trainer.run](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/runners/trainer.py#L14)
 ```
 Train an agent in an environment.
 

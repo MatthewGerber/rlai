@@ -1,4 +1,4 @@
-from argparse import Namespace, ArgumentParser
+from argparse import ArgumentParser
 from typing import List, Tuple, Optional
 
 import numpy as np
@@ -9,7 +9,7 @@ from rlai.agents import Agent
 from rlai.meta import rl_text
 from rlai.policies import Policy
 from rlai.states import State
-from rlai.utils import IncrementalSampleAverager, sample_list_item
+from rlai.utils import IncrementalSampleAverager, sample_list_item, parse_args
 
 
 @rl_text(chapter=2, page=37)
@@ -19,20 +19,21 @@ class PreferenceGradient(Agent):
     """
 
     @classmethod
-    def parse_arguments(
-            cls,
-            args
-    ) -> Tuple[Namespace, List[str]]:
+    def get_argument_parser(
+            cls
+    ) -> ArgumentParser:
         """
-        Parse arguments.
+        Get argument parser.
 
-        :param args: Arguments.
-        :return: 2-tuple of parsed and unparsed arguments.
+        :return: Argument parser.
         """
 
-        parsed_args, unparsed_args = super().parse_arguments(args)
-
-        parser = ArgumentParser(allow_abbrev=False)
+        parser = ArgumentParser(
+            prog=f'{cls.__module__}.{cls.__name__}',
+            parents=[super().get_argument_parser()],
+            allow_abbrev=False,
+            add_help=False
+        )
 
         parser.add_argument(
             '--step-size-alpha',
@@ -54,9 +55,7 @@ class PreferenceGradient(Agent):
             help='Whether or not to use a reward baseline when updating action preferences.'
         )
 
-        parsed_args, unparsed_args = parser.parse_known_args(unparsed_args, parsed_args)
-
-        return parsed_args, unparsed_args
+        return parser
 
     @classmethod
     def init_from_arguments(
@@ -74,7 +73,7 @@ class PreferenceGradient(Agent):
         :return: 2-tuple of a list of agents and a list of unparsed arguments.
         """
 
-        parsed_args, unparsed_args = cls.parse_arguments(args)
+        parsed_args, unparsed_args = parse_args(cls, args)
 
         # initialize agents
         agents = [

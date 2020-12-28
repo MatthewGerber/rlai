@@ -1,4 +1,4 @@
-from argparse import ArgumentParser, Namespace
+from argparse import ArgumentParser
 from typing import Tuple, List, Optional
 
 import numpy as np
@@ -6,6 +6,7 @@ from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import SGDRegressor
 
 from rlai.meta import rl_text
+from rlai.utils import parse_args
 from rlai.value_estimation.function_approximation.statistical_learning import FunctionApproximationModel
 
 
@@ -16,26 +17,23 @@ class SKLearnSGD(FunctionApproximationModel):
     """
 
     @classmethod
-    def parse_arguments(
-            cls,
-            args
-    ) -> Tuple[Namespace, List[str]]:
+    def get_argument_parser(
+            cls
+    ) -> ArgumentParser:
         """
-        Parse arguments.
+        Get argument parser.
 
-        :param args: Arguments.
-        :return: 2-tuple of parsed and unparsed arguments.
+        :return: Argument parser.
         """
 
-        parsed_args, unparsed_args = super().parse_arguments(args)
+        parser = ArgumentParser(
+            prog=f'{cls.__module__}.{cls.__name__}',
+            parents=[super().get_argument_parser()],
+            allow_abbrev=False,
+            add_help=False
+        )
 
-        parser = ArgumentParser(allow_abbrev=False)
-
-        # future arguments to be added here...
-
-        parsed_args, unparsed_args = parser.parse_known_args(unparsed_args, parsed_args)
-
-        return parsed_args, unparsed_args
+        return parser
 
     @classmethod
     def init_from_arguments(
@@ -49,7 +47,7 @@ class SKLearnSGD(FunctionApproximationModel):
         :return: 2-tuple of a state-action value estimator and a list of unparsed arguments.
         """
 
-        parsed_args, unparsed_args = cls.parse_arguments(args)
+        parsed_args, unparsed_args = parse_args(cls, args)
 
         model = SKLearnSGD(
             **vars(parsed_args)

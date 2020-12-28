@@ -2,14 +2,13 @@ import os
 import pickle
 import sys
 import warnings
-from argparse import ArgumentParser
 from typing import List, Tuple, Optional
 
 from numpy.random import RandomState
 
 from rlai.gpi.utils import resume_from_checkpoint
 from rlai.meta import rl_text
-from rlai.utils import import_function, load_class, display_help
+from rlai.utils import import_function, load_class, get_base_argument_parser, parse_args
 
 
 @rl_text(chapter='Training and Running Agents', page=1)
@@ -23,12 +22,9 @@ def run(
     :returns: 2-tuple of the checkpoint path (if any) and the saved agent path.
     """
 
-    parser = ArgumentParser(description='Train an agent in an environment.', allow_abbrev=False, add_help=False)
-
-    parser.add_argument(
-        '--train',
-        action='store_true',
-        help='Train an agent in an environment.'
+    parser = get_base_argument_parser(
+        prog='rlai train',
+        description='Train an agent in an environment.'
     )
 
     parser.add_argument(
@@ -67,17 +63,7 @@ def run(
         help='Path to store resulting agent to.'
     )
 
-    parser.add_argument(
-        '--help',
-        action='store_true',
-        help='Print usage and argument descriptions.'
-    )
-
-    parsed_args, unparsed_args = parser.parse_known_args(args)
-    display_help(parsed_args, parser, unparsed_args)
-
-    if parsed_args.save_agent_path is None:
-        warnings.warn('No --save-agent-path has been specified, so no agent will be saved after training.')
+    parsed_args, unparsed_args = parse_args(parser, args)
 
     # get training function and arguments
     train_function = None
@@ -87,7 +73,7 @@ def run(
 
         train_function = import_function(parsed_args.train_function)
 
-        train_function_arg_parser = ArgumentParser(prog=parsed_args.train_function, allow_abbrev=False, add_help=False)
+        train_function_arg_parser = get_base_argument_parser(prog=parsed_args.train_function)
 
         train_function_arg_parser.add_argument(
             '--num-improvements',
@@ -169,14 +155,7 @@ def run(
             help='New checkpoint path.'
         )
 
-        train_function_arg_parser.add_argument(
-            '--help',
-            action='store_true',
-            help='Print usage and argument descriptions.'
-        )
-
-        parsed_train_function_args, unparsed_args = train_function_arg_parser.parse_known_args(unparsed_args)
-        display_help(parsed_args, train_function_arg_parser, unparsed_args)
+        parsed_train_function_args, unparsed_args = parse_args(train_function_arg_parser, unparsed_args)
 
         # convert boolean strings to bools
         if parsed_train_function_args.update_upon_every_visit is not None:
@@ -242,37 +221,56 @@ def run(
         agent = agents[0]
         train_function_args['agent'] = agent
 
+    if '--help' in unparsed_args:
+        unparsed_args.remove('--help')
+
     if len(unparsed_args) > 0:
         raise ValueError(f'Unparsed arguments remain:  {unparsed_args}')
 
-    if parsed_args.train:
-        train_function(
-            **train_function_args
-        )
-    elif parsed_args.resume_train:
-        agent = resume_from_checkpoint(
-            resume_function=train_function,
-            **train_function_args
-        )
+    if train_function is None:
+        warnings.warn('No training function specified. Cannot train.')
     else:
-        raise ValueError('Unknown trainer action.')
 
-    print('Training complete.')
+        # warn user now, as training could take a long time and it'll be wasted effort if the agent is not saved.
+        if parsed_args.save_agent_path is None:
+            warnings.warn('No --save-agent-path has been specified, so no agent will be saved after training.')
 
-    if agent is None:
-        warnings.warn('No agent resulting at end of training. Nothing to save.')
-    elif parsed_args.save_agent_path is None:
-        warnings.warn('No --save-agent-path specified. Not saving agent.')
+        # resumption will return agent
+        if parsed_args.resume_train:
+
+            agent = resume_from_checkpoint(
+                resume_function=train_function,
+                **train_function_args
+            )
+
+        # fresh training initializes agent above
+        else:
+
+            train_function(
+                **train_function_args
+            )
+
+        print('Training complete.')
+
+        # try to save agent
+        if agent is None:
+            warnings.warn('No agent resulting at end of training. Nothing to save.')
+        elif parsed_args.save_agent_path is None:
+            warnings.warn('No --save-agent-path specified. Not saving agent.')
+        else:
+            with open(os.path.expanduser(parsed_args.save_agent_path), 'wb') as f:
+                pickle.dump(agent, f)
+
+            print(f'Saved agent to {parsed_args.save_agent_path}')
+
+    if 'new_checkpoint_path' in train_function_args:
+        checkpoint_path = train_function_args['new_checkpoint_path']
+    elif 'checkpoint_path' in train_function_args:
+        checkpoint_path = train_function_args['checkpoint_path']
     else:
-        with open(os.path.expanduser(parsed_args.save_agent_path), 'wb') as f:
-            pickle.dump(agent, f)
+        checkpoint_path = None
 
-        print(f'Saved agent to {parsed_args.save_agent_path}')
-
-    return (
-        train_function_args['new_checkpoint_path'] if 'new_checkpoint_path' in train_function_args else train_function_args['checkpoint_path'],
-        parsed_args.save_agent_path
-    )
+    return checkpoint_path, parsed_args.save_agent_path
 
 
 if __name__ == '__main__':
