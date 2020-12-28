@@ -1,6 +1,7 @@
 import importlib
+from argparse import Namespace, ArgumentParser
 from importlib import import_module
-from typing import List, Any, Optional, Callable
+from typing import List, Any, Optional, Callable, Tuple
 
 import numpy as np
 from numpy.random import RandomState
@@ -192,3 +193,59 @@ def load_class(
     class_ref = getattr(module_ref, fully_qualified_class_name)
 
     return class_ref
+
+
+def get_base_argument_parser(
+        **kwargs
+) -> ArgumentParser:
+    """
+    Get base argument parser.
+
+    :param kwargs: Keyword arguments to pass to the ArgumentParser constructor.
+    :return: Argument parser.
+    """
+
+    parser = ArgumentParser(
+        allow_abbrev=False,
+        add_help=False,
+        **kwargs
+    )
+
+    parser.add_argument(
+        '--help',
+        action='store_true',
+        help='Print usage and argument descriptions.'
+    )
+
+    return parser
+
+
+def parse_arguments(
+        parser_or_cls,
+        args: List[str]
+) -> Tuple[Namespace, List[str]]:
+    """
+    Parse arguments and display help if specified.
+
+    :param parser_or_cls: Argument parser or a class that has a get_argument_parser function to get the parser.
+    :param args: Arguments.
+    :return: 2-tuple of parsed arguments and unparsed arguments. The `help` argument will be deleted from the parsed
+    arguments. If `help` is True, then it will be added to the unparsed argument list so that subsequent argument
+    parsers will also receive it.
+    """
+
+    if isinstance(parser_or_cls, ArgumentParser):
+        parser = parser_or_cls
+    else:
+        parser = parser_or_cls.get_argument_parser()
+
+    parsed_args, unparsed_args = parser.parse_known_args(args)
+
+    if parsed_args.help:
+        parser.print_help()
+        print()
+        unparsed_args.append('--help')
+
+    del parsed_args.help
+
+    return parsed_args, unparsed_args

@@ -10,11 +10,11 @@ terminate.
 
 Train a control agent for the mountain car environment with the following command.
 ```
-rlai_train --train --agent "rlai.agents.mdp.StochasticMdpAgent" --continuous-state-discretization-resolution 0.005 --gamma 0.95 --environment "rlai.environments.openai_gym.Gym" --gym-id "MountainCar-v0" --render-every-nth-episode 1000 --video-directory "~/Desktop/mountaincar_videos" --train-function "rlai.gpi.temporal_difference.iteration.iterate_value_q_pi" --mode "Q_LEARNING" --num-improvements 10000 --num-episodes-per-improvement 1 --epsilon 0.01 --make-final-policy-greedy True --num-improvements-per-plot 100 --num-improvements-per-checkpoint 100 --checkpoint-path "~/Desktop/mountaincar_checkpoint.pickle" --save-agent-path "~/Desktop/mountaincar_agent.pickle"
+rlai train --agent "rlai.agents.mdp.StochasticMdpAgent" --continuous-state-discretization-resolution 0.005 --gamma 0.95 --environment "rlai.environments.openai_gym.Gym" --gym-id "MountainCar-v0" --render-every-nth-episode 1000 --video-directory "~/Desktop/mountaincar_videos" --train-function "rlai.gpi.temporal_difference.iteration.iterate_value_q_pi" --mode "Q_LEARNING" --num-improvements 10000 --num-episodes-per-improvement 1 --epsilon 0.01 --make-final-policy-greedy True --num-improvements-per-plot 100 --num-improvements-per-checkpoint 100 --checkpoint-path "~/Desktop/mountaincar_checkpoint.pickle" --save-agent-path "~/Desktop/mountaincar_agent.pickle"
 ```
 
 Arguments are explained below.
-* `--train`:  Train the agent.
+* `train`:  Train the agent.
 * `--agent "rlai.agents.mdp.StochasticMdpAgent"`:  Standard stochastic MDP agent. 
 * `--continuous-state-discretization-resolution 0.005`:  Discretize the continuous state space into discrete intervals 
   with resolution 0.005. The methods used here are for discrete-state problems, so some type of discretization of the 

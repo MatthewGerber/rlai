@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
-from argparse import Namespace, ArgumentParser
-from typing import Tuple, List, final, Optional, Dict
+from argparse import ArgumentParser
+from typing import List, final, Optional, Dict
 
 from numpy.random import RandomState
 
@@ -9,6 +9,7 @@ from rlai.meta import rl_text
 from rlai.policies import Policy
 from rlai.states import State
 from rlai.states.mdp import MdpState
+from rlai.utils import get_base_argument_parser
 
 
 @rl_text(chapter='Agents', page=1)
@@ -18,20 +19,16 @@ class Agent(ABC):
     """
 
     @classmethod
-    def parse_arguments(
-            cls,
-            args
-    ) -> Tuple[Namespace, List[str]]:
+    def get_argument_parser(
+            cls
+    ) -> ArgumentParser:
         """
-        Parse arguments.
+        Get argument parser.
 
-        :param args: Arguments.
-        :return: 2-tuple of parsed and unparsed arguments.
+        :return: Argument parser.
         """
 
-        parser = ArgumentParser(allow_abbrev=False)
-
-        return parser.parse_known_args(args)
+        return get_base_argument_parser()
 
     @classmethod
     @abstractmethod

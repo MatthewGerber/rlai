@@ -93,7 +93,7 @@ Run dynamic programming value iteration on an agent using state-value estimates.
     :param update_in_place: See `evaluate_v_pi`.
     :return: Final state-value estimates.
 ```
-### [rlai.environments.mdp.GamblersProblem](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/mdp.py#L433)
+### [rlai.environments.mdp.GamblersProblem](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/mdp.py#L432)
 ```
 Gambler's problem MDP environment.
 ```

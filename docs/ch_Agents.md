@@ -1,9 +1,9 @@
 # Agents
-### [rlai.agents.Agent](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/agents.py#L15)
+### [rlai.agents.Agent](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/agents.py#L16)
 ```
 Base class for all agents.
 ```
-### [rlai.agents.Human](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/agents.py#L173)
+### [rlai.agents.Human](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/agents.py#L170)
 ```
 An interactive, human-driven agent that prompts for actions at each time step.
 ```
@@ -11,7 +11,7 @@ An interactive, human-driven agent that prompts for actions at each time step.
 ```
 MDP agent. Adds the concepts of state, reward discounting, and policy-based action to the base agent.
 ```
-### [rlai.agents.mdp.StochasticMdpAgent](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/agents/mdp.py#L74)
+### [rlai.agents.mdp.StochasticMdpAgent](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/agents/mdp.py#L72)
 ```
 Stochastic MDP agent. Adds random selection of actions based on probabilities specified in the agent's policy.
 ```

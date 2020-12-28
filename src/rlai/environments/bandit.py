@@ -1,4 +1,4 @@
-from argparse import Namespace, ArgumentParser
+from argparse import ArgumentParser
 from typing import List, Optional, Tuple
 
 import numpy as np
@@ -10,6 +10,7 @@ from rlai.environments import Environment
 from rlai.meta import rl_text
 from rlai.runners.monitor import Monitor
 from rlai.states import State
+from rlai.utils import parse_arguments
 
 ARM_QSTAR_BUFFER_SIZE = 1000
 
@@ -77,20 +78,21 @@ class KArmedBandit(Environment):
     """
 
     @classmethod
-    def parse_arguments(
-            cls,
-            args
-    ) -> Tuple[Namespace, List[str]]:
+    def get_argument_parser(
+            cls
+    ) -> ArgumentParser:
         """
-        Parse arguments.
+        Get argument parser.
 
-        :param args: Arguments.
-        :return: 2-tuple of parsed and unparsed arguments.
+        :return: Argument parser.
         """
 
-        parsed_args, unparsed_args = super().parse_arguments(args)
-
-        parser = ArgumentParser(allow_abbrev=False)
+        parser = ArgumentParser(
+            prog=f'{cls.__module__}.{cls.__name__}',
+            parents=[super().get_argument_parser()],
+            allow_abbrev=False,
+            add_help=False
+        )
 
         parser.add_argument(
             '--k',
@@ -127,7 +129,7 @@ class KArmedBandit(Environment):
             help='Variance of rewards.'
         )
 
-        return parser.parse_known_args(unparsed_args, parsed_args)
+        return parser
 
     @classmethod
     def init_from_arguments(
@@ -143,7 +145,7 @@ class KArmedBandit(Environment):
         :return: 2-tuple of an environment and a list of unparsed arguments.
         """
 
-        parsed_args, unparsed_args = cls.parse_arguments(args)
+        parsed_args, unparsed_args = parse_arguments(cls, args)
 
         bandit = KArmedBandit(
             random_state=random_state,

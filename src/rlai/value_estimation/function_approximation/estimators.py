@@ -1,4 +1,4 @@
-from argparse import Namespace, ArgumentParser
+from argparse import ArgumentParser
 from typing import Optional, List, Tuple, Iterator, Set
 
 import numpy as np
@@ -11,7 +11,7 @@ from rlai.environments.mdp import MdpEnvironment
 from rlai.meta import rl_text
 from rlai.policies.function_approximation import FunctionApproximationPolicy
 from rlai.states.mdp import MdpState
-from rlai.utils import load_class
+from rlai.utils import load_class, parse_arguments
 from rlai.value_estimation import ValueEstimator, ActionValueEstimator, StateActionValueEstimator
 from rlai.value_estimation.function_approximation.statistical_learning import FunctionApproximationModel
 from rlai.value_estimation.function_approximation.statistical_learning.feature_extraction import FeatureExtractor
@@ -144,18 +144,21 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
     """
 
     @classmethod
-    def parse_arguments(
-            cls,
-            args
-    ) -> Tuple[Namespace, List[str]]:
+    def get_argument_parser(
+            cls
+    ) -> ArgumentParser:
         """
-        Parse arguments.
+        Get argument parser.
 
-        :param args: Arguments.
-        :return: 2-tuple of parsed and unparsed arguments.
+        :return: Argument parser.
         """
 
-        parser = ArgumentParser(allow_abbrev=False)
+        parser = ArgumentParser(
+            prog=f'{cls.__module__}.{cls.__name__}',
+            parents=[super().get_argument_parser()],
+            allow_abbrev=False,
+            add_help=False
+        )
 
         parser.add_argument(
             '--function-approximation-model',
@@ -175,7 +178,7 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
             help='Right-hand side of the Patsy-style formula to use when modeling the state-action value relationships. Ignore to directly use the output of the feature extractor. Note that the use of Patsy formulas will dramatically slow learning performance, since it is called at each time step.'
         )
 
-        return parser.parse_known_args(args)
+        return parser
 
     @classmethod
     def init_from_arguments(
@@ -193,7 +196,7 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         :return: 2-tuple of a state-action value estimator and a list of unparsed arguments.
         """
 
-        parsed_args, unparsed_args = cls.parse_arguments(args)
+        parsed_args, unparsed_args = parse_arguments(cls, args)
 
         model_class = load_class(parsed_args.function_approximation_model)
         model, unparsed_args = model_class.init_from_arguments(unparsed_args)

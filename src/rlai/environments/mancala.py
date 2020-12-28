@@ -1,4 +1,4 @@
-from argparse import ArgumentParser, Namespace
+from argparse import ArgumentParser
 from typing import Tuple, List, Optional
 
 from numpy.random import RandomState
@@ -13,6 +13,7 @@ from rlai.policies.tabular import TabularPolicy
 from rlai.rewards import Reward
 from rlai.states import State
 from rlai.states.mdp import MdpState
+from rlai.utils import parse_arguments
 
 
 @rl_text(chapter='States', page=1)
@@ -153,20 +154,21 @@ class Mancala(MdpEnvironment):
         environment.player_2 = Human()
 
     @classmethod
-    def parse_arguments(
-            cls,
-            args
-    ) -> Tuple[Namespace, List[str]]:
+    def get_argument_parser(
+            cls
+    ) -> ArgumentParser:
         """
-        Parse arguments.
+        Get argument parser.
 
-        :param args: Arguments.
-        :return: 2-tuple of parsed and unparsed arguments.
+        :return: Argument parser.
         """
 
-        parsed_args, unparsed_args = super().parse_arguments(args)
-
-        parser = ArgumentParser(allow_abbrev=False)
+        parser = ArgumentParser(
+            prog=f'{cls.__module__}.{cls.__name__}',
+            parents=[super().get_argument_parser()],
+            allow_abbrev=False,
+            add_help=False
+        )
 
         parser.add_argument(
             '--initial-count',
@@ -174,9 +176,7 @@ class Mancala(MdpEnvironment):
             help='Initial seed count in each pit.'
         )
 
-        parsed_args, unparsed_args = parser.parse_known_args(unparsed_args, parsed_args)
-
-        return parsed_args, unparsed_args
+        return parser
 
     @classmethod
     def init_from_arguments(
@@ -192,7 +192,7 @@ class Mancala(MdpEnvironment):
         :return: 2-tuple of an environment and a list of unparsed arguments.
         """
 
-        parsed_args, unparsed_args = cls.parse_arguments(args)
+        parsed_args, unparsed_args = parse_arguments(cls, args)
 
         mancala = Mancala(
             random_state=random_state,

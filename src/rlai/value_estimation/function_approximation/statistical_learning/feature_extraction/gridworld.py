@@ -1,4 +1,4 @@
-from argparse import Namespace, ArgumentParser
+from argparse import ArgumentParser
 from typing import List, Union, Tuple
 
 import numpy as np
@@ -8,6 +8,7 @@ from rlai.actions import Action
 from rlai.environments.mdp import Gridworld
 from rlai.meta import rl_text
 from rlai.states.mdp import MdpState
+from rlai.utils import parse_arguments
 from rlai.value_estimation.function_approximation.statistical_learning.feature_extraction import (
     StateActionInteractionFeatureExtractor
 )
@@ -22,26 +23,23 @@ class GridworldFeatureExtractor(StateActionInteractionFeatureExtractor):
     """
 
     @classmethod
-    def parse_arguments(
-            cls,
-            args
-    ) -> Tuple[Namespace, List[str]]:
+    def get_argument_parser(
+            cls
+    ) -> ArgumentParser:
         """
-        Parse arguments.
+        Get argument parser.
 
-        :param args: Arguments.
-        :return: 2-tuple of parsed and unparsed arguments.
+        :return: Argument parser.
         """
 
-        parsed_args, unparsed_args = super().parse_arguments(args)
+        parser = ArgumentParser(
+            prog=f'{cls.__module__}.{cls.__name__}',
+            parents=[super().get_argument_parser()],
+            allow_abbrev=False,
+            add_help=False
+        )
 
-        parser = ArgumentParser(allow_abbrev=False)
-
-        # future arguments to be added here...
-
-        parsed_args, unparsed_args = parser.parse_known_args(unparsed_args, parsed_args)
-
-        return parsed_args, unparsed_args
+        return parser
 
     @classmethod
     def init_from_arguments(
@@ -57,7 +55,7 @@ class GridworldFeatureExtractor(StateActionInteractionFeatureExtractor):
         :return: 2-tuple of a feature extractor and a list of unparsed arguments.
         """
 
-        parsed_args, unparsed_args = cls.parse_arguments(args)
+        parsed_args, unparsed_args = parse_arguments(cls, args)
 
         fex = GridworldFeatureExtractor(
             environment=environment

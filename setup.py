@@ -66,7 +66,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'rlai_train=rlai.runners.trainer:run'
+            'rlai=rlai.runners.top_level:run'
         ]
     }
 )

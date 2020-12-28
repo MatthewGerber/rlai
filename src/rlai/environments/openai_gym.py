@@ -1,8 +1,8 @@
 import math
 import os
-from argparse import ArgumentParser, Namespace
+from argparse import ArgumentParser
 from itertools import product
-from typing import List, Tuple, Any, Optional
+from typing import List, Tuple, Optional
 
 import gym
 import numpy as np
@@ -16,6 +16,7 @@ from rlai.meta import rl_text
 from rlai.rewards import Reward
 from rlai.states import State
 from rlai.states.mdp import MdpState
+from rlai.utils import parse_arguments
 
 
 @rl_text(chapter='States', page=1)
@@ -56,20 +57,21 @@ class Gym(MdpEnvironment):
     """
 
     @classmethod
-    def parse_arguments(
+    def get_argument_parser(
             cls,
-            args
-    ) -> Tuple[Namespace, List[str]]:
+    ) -> ArgumentParser:
         """
         Parse arguments.
 
-        :param args: Arguments.
-        :return: 2-tuple of parsed and unparsed arguments.
+        :return: Argument parser.
         """
 
-        parsed_args, unparsed_args = super().parse_arguments(args)
-
-        parser = ArgumentParser(allow_abbrev=False)
+        parser = ArgumentParser(
+            prog=f'{cls.__module__}.{cls.__name__}',
+            parents=[super().get_argument_parser()],
+            allow_abbrev=False,
+            add_help=False
+        )
 
         parser.add_argument(
             '--gym-id',
@@ -95,16 +97,14 @@ class Gym(MdpEnvironment):
             help='Local directory in which to save rendered videos. Must be an empty directory. Ignore to only display videos.'
         )
 
-        parsed_args, unparsed_args = parser.parse_known_args(unparsed_args, parsed_args)
-
-        return parsed_args, unparsed_args
+        return parser
 
     @classmethod
     def init_from_arguments(
             cls,
             args: List[str],
             random_state: RandomState
-    ) -> Tuple[Any, List[str]]:
+    ) -> Tuple[MdpEnvironment, List[str]]:
         """
         Initialize an environment from arguments.
 
@@ -113,7 +113,7 @@ class Gym(MdpEnvironment):
         :return: 2-tuple of an environment and a list of unparsed arguments.
         """
 
-        parsed_args, unparsed_args = cls.parse_arguments(args)
+        parsed_args, unparsed_args = parse_arguments(cls, args)
 
         gym_env = Gym(
             random_state=random_state,

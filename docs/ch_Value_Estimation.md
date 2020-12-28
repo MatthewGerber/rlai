@@ -1,13 +1,13 @@
 # Value Estimation
-### [rlai.value_estimation.ActionValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/value_estimation.py#L57)
+### [rlai.value_estimation.ActionValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/value_estimation.py#L58)
 ```
 Action value estimator.
 ```
-### [rlai.value_estimation.StateActionValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/value_estimation.py#L112)
+### [rlai.value_estimation.StateActionValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/value_estimation.py#L113)
 ```
 State-action value estimator.
 ```
-### [rlai.value_estimation.ValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/value_estimation.py#L14)
+### [rlai.value_estimation.ValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/value_estimation.py#L15)
 ```
 Value estimator.
 ```

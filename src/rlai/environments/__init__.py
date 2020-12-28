@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from argparse import Namespace, ArgumentParser
+from argparse import ArgumentParser
 from typing import Tuple, List, Any, final, Optional
 
 from numpy.random import RandomState
@@ -7,23 +7,22 @@ from numpy.random import RandomState
 from rlai.agents import Agent
 from rlai.runners.monitor import Monitor
 from rlai.states import State
+from rlai.utils import get_base_argument_parser
 
 
 class Environment(ABC):
 
     @classmethod
-    def parse_arguments(
+    def get_argument_parser(
             cls,
-            args
-    ) -> Tuple[Namespace, List[str]]:
+    ) -> ArgumentParser:
         """
-        Parse arguments.
+        Get argument parser.
 
-        :param args: Arguments.
-        :return: 2-tuple of parsed and unparsed arguments.
+        :return: Argument parser.
         """
 
-        parser = ArgumentParser(allow_abbrev=False)
+        parser = get_base_argument_parser()
 
         parser.add_argument(
             '--T',
@@ -31,7 +30,7 @@ class Environment(ABC):
             help='Maximum number of time steps to run.'
         )
 
-        return parser.parse_known_args(args)
+        return parser
 
     @classmethod
     @abstractmethod

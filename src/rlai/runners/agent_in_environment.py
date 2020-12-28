@@ -24,7 +24,10 @@ def run(
     :param args: Arguments.
     """
 
-    parser = ArgumentParser(description='Run an agent within an environment. This does not support learning GPI-style (e.g., monte carlo or temporal difference) learning. See trainer.py for such methods.', allow_abbrev=False)
+    parser = ArgumentParser(
+        description='Run an agent within an environment. This does not support learning GPI-style (e.g., monte carlo or temporal difference) learning. See trainer.py for such methods.',
+        allow_abbrev=False
+    )
 
     parser.add_argument(
         '--n-runs',

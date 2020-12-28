@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from argparse import Namespace, ArgumentParser
+from argparse import ArgumentParser
 from typing import Optional, Iterable, Tuple, List, Any, Iterator
 
 from rlai.actions import Action
@@ -8,6 +8,7 @@ from rlai.environments.mdp import MdpEnvironment
 from rlai.meta import rl_text
 from rlai.policies import Policy
 from rlai.states.mdp import MdpState
+from rlai.utils import get_base_argument_parser
 
 
 @rl_text(chapter='Value Estimation', page=23)
@@ -115,22 +116,16 @@ class StateActionValueEstimator(ABC):
     """
 
     @classmethod
-    def parse_arguments(
-            cls,
-            args
-    ) -> Tuple[Namespace, List[str]]:
+    def get_argument_parser(
+            cls
+    ) -> ArgumentParser:
         """
-        Parse arguments.
+        Get argument parser.
 
-        :param args: Arguments.
-        :return: 2-tuple of parsed and unparsed arguments.
+        :return: Argument parser.
         """
 
-        parser = ArgumentParser(allow_abbrev=False)
-
-        # future arguments for this base class can be added here...
-
-        return parser.parse_known_args(args)
+        return get_base_argument_parser()
 
     @classmethod
     @abstractmethod

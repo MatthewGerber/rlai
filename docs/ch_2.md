@@ -1,5 +1,5 @@
 # Chapter 2:  Multi-armed Bandits
-### [rlai.environments.bandit.Arm](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/bandit.py#L18)
+### [rlai.environments.bandit.Arm](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/bandit.py#L19)
 ```
 Bandit arm.
 ```
@@ -11,16 +11,16 @@ Nonassociative, epsilon-greedy agent.
 ```
 Nonassociative, q-value agent.
 ```
-### [rlai.environments.bandit.KArmedBandit](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/bandit.py#L74)
+### [rlai.environments.bandit.KArmedBandit](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/bandit.py#L75)
 ```
 K-armed bandit.
 ```
-### [rlai.utils.IncrementalSampleAverager](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/utils.py#L12)
+### [rlai.utils.IncrementalSampleAverager](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/utils.py#L13)
 ```
 An incremental, constant-time and -memory sample averager. Supports both decreasing (i.e., unweighted sample
     average) and constant (i.e., exponential recency-weighted average, pp. 32-33) step sizes.
 ```
-### [rlai.agents.q_value.UpperConfidenceBound](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/agents/q_value.py#L281)
+### [rlai.agents.q_value.UpperConfidenceBound](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/agents/q_value.py#L280)
 ```
 Nonassociatve, upper-confidence-bound agent.
 ```
