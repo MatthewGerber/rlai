@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Epsilon-greedy, nonstationary bandit" type="PythonConfigurationType" factoryName="Python" folderName="Chapter 2">
+  <configuration default="false" name="Epsilon-greedy, nonstationary bandit" type="PythonConfigurationType" factoryName="Python" folderName="Book Figures">
     <module name="rl" />
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />

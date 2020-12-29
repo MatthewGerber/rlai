@@ -5,7 +5,7 @@ Run an agent within an environment.
 
     :param args: Arguments.
 ```
-### [rlai.runners.top_level.run](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/runners/top_level.py#L9)
+### [rlai.runners.top_level.run](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/runners/top_level.py#L10)
 ```
 Run RLAI.
 
