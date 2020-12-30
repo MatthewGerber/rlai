@@ -312,6 +312,12 @@ def update_q_S_A(
         if isinstance(planning_environment, PrioritizedSweepingMdpPlanningEnvironment):
             planning_environment.add_state_action_priority(update_state, update_a, -abs(error))
 
-        # note the evaluated state and remove from our n-step structure
-        evaluated_states.add(update_state)
+        # note the evaluated state if it has an index. states will only have indices if they are enumerated up front, or
+        # if they are created dynamically in a tabular setting (either discrete or discretized continuous), where we
+        # keep track of their identifiers. if they are created dynamically in a function approximation setting then we
+        # will not keep trakc of their identifiers (the essential point of doing function approximation to begin with).
+        if update_state.i is not None:
+            evaluated_states.add(update_state)
+
+        # remove the time step from our n-step structure
         del t_state_a_g[update_t]

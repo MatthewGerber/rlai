@@ -49,6 +49,8 @@ class GymState(MdpState):
             terminal=terminal
         )
 
+        self.observation = observation
+
 
 @rl_text(chapter='Environments', page=1)
 class Gym(MdpEnvironment):
