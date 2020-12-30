@@ -13,8 +13,8 @@ from rlai.policies.function_approximation import FunctionApproximationPolicy
 from rlai.states.mdp import MdpState
 from rlai.utils import load_class, parse_arguments
 from rlai.value_estimation import ValueEstimator, ActionValueEstimator, StateActionValueEstimator
-from rlai.value_estimation.function_approximation.statistical_learning import FunctionApproximationModel
-from rlai.value_estimation.function_approximation.statistical_learning.feature_extraction import FeatureExtractor
+from rlai.value_estimation.function_approximation.models import FunctionApproximationModel
+from rlai.value_estimation.function_approximation.models.feature_extraction import FeatureExtractor
 
 
 @rl_text(chapter='Value Estimation', page=195)

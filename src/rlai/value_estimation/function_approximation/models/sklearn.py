@@ -7,7 +7,7 @@ from sklearn.linear_model import SGDRegressor
 
 from rlai.meta import rl_text
 from rlai.utils import parse_arguments
-from rlai.value_estimation.function_approximation.statistical_learning import FunctionApproximationModel
+from rlai.value_estimation.function_approximation.models import FunctionApproximationModel
 
 
 @rl_text(chapter=9, page=200)

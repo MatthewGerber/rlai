@@ -4,7 +4,7 @@ import pickle
 from numpy.random import RandomState
 
 from rlai.agents.mdp import StochasticMdpAgent
-from rlai.environments.mdp import Gridworld
+from rlai.environments.gridworld import Gridworld
 from rlai.gpi.monte_carlo.iteration import iterate_value_q_pi
 from rlai.value_estimation.tabular import TabularStateActionValueEstimator
 from test.rlai.utils import tabular_estimator_legacy_eq, tabular_pi_legacy_eq

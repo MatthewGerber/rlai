@@ -5,17 +5,16 @@ import numpy as np
 from numpy.random import RandomState
 
 from rlai.agents.mdp import StochasticMdpAgent
-from rlai.environments.mdp import Gridworld, TrajectorySamplingMdpPlanningEnvironment
+from rlai.environments.mdp import TrajectorySamplingMdpPlanningEnvironment
+from rlai.environments.gridworld import Gridworld, GridworldFeatureExtractor
 from rlai.gpi.temporal_difference.evaluation import Mode
 from rlai.gpi.temporal_difference.iteration import iterate_value_q_pi
 from rlai.planning.environment_models import StochasticEnvironmentModel
 from rlai.value_estimation.function_approximation.estimators import ApproximateStateActionValueEstimator
-from rlai.value_estimation.function_approximation.statistical_learning.feature_extraction import (
+from rlai.value_estimation.function_approximation.models.feature_extraction import (
     StateActionIdentityFeatureExtractor
 )
-from rlai.value_estimation.function_approximation.statistical_learning.feature_extraction.gridworld import \
-    GridworldFeatureExtractor
-from rlai.value_estimation.function_approximation.statistical_learning.sklearn import SKLearnSGD
+from rlai.value_estimation.function_approximation.models.sklearn import SKLearnSGD
 from rlai.value_estimation.tabular import TabularStateActionValueEstimator
 from test.rlai.utils import tabular_estimator_legacy_eq, tabular_pi_legacy_eq
 

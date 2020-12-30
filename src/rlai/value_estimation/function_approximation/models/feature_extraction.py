@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from argparse import ArgumentParser
 from itertools import product
-from typing import List, Union, Tuple, Any
+from typing import List, Tuple, Any, Union
 
 import numpy as np
 import pandas as pd
@@ -11,7 +11,7 @@ from rlai.actions import Action
 from rlai.environments.mdp import MdpEnvironment
 from rlai.meta import rl_text
 from rlai.states.mdp import MdpState
-from rlai.utils import parse_arguments, get_base_argument_parser
+from rlai.utils import get_base_argument_parser, parse_arguments
 
 
 @rl_text(chapter=9, page=197)

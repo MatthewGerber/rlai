@@ -31,7 +31,7 @@ def test_run():
         '--random-seed 12345 --T 100 --n-runs 200 --environment rlai.environments.bandit.KArmedBandit --k 10 --q-star-mean 4 --agent rlai.agents.h_value.PreferenceGradient --step-size-alpha 0.1 --use-reward-baseline',
         '--random-seed 12345 --T 100 --n-runs 200 --environment rlai.environments.bandit.KArmedBandit --k 10 --q-star-mean 4 --agent rlai.agents.h_value.PreferenceGradient --step-size-alpha 0.1',
         f'--random-seed 12345 --T 100 --n-runs 200 --environment rlai.environments.mancala.Mancala --initial-count 4 --agent {agent_path}',
-        f'--random-seed 12345 --T 100 --n-runs 200 --environment rlai.environments.mdp.GamblersProblem --p-h 0.4 --agent {agent_path}'
+        f'--random-seed 12345 --T 100 --n-runs 200 --environment rlai.environments.gamblers_problem.GamblersProblem --p-h 0.4 --agent {agent_path}'
     ]
 
     run_monitor: Dict[str, List[Monitor]] = dict()

@@ -1,7 +1,7 @@
 from numpy.random import RandomState
 
 from rlai.agents.mdp import StochasticMdpAgent
-from rlai.environments.mdp import Gridworld
+from rlai.environments.gridworld import Gridworld
 from rlai.gpi.dynamic_programming.iteration import (
     iterate_policy_v_pi,
     iterate_policy_q_pi,
