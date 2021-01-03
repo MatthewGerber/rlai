@@ -162,6 +162,8 @@ def iterate_value_q_pi(
 
     print(f'Value iteration of q_pi terminated after {i} iteration(s).')
 
+    q_S_A.plot(final=True)
+
     if make_final_policy_greedy:
         q_S_A.update_policy(
             agent=agent,

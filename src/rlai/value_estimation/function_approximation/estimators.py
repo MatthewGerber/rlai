@@ -1,6 +1,8 @@
+import math
 from argparse import ArgumentParser
 from typing import Optional, List, Tuple, Iterator, Set
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from patsy.highlevel import dmatrix
@@ -14,7 +16,10 @@ from rlai.states.mdp import MdpState
 from rlai.utils import load_class, parse_arguments
 from rlai.value_estimation import ValueEstimator, ActionValueEstimator, StateActionValueEstimator
 from rlai.value_estimation.function_approximation.models import FunctionApproximationModel
-from rlai.value_estimation.function_approximation.models.feature_extraction import FeatureExtractor
+from rlai.value_estimation.function_approximation.models.feature_extraction import (
+    FeatureExtractor,
+    StateActionInteractionFeatureExtractor
+)
 
 
 @rl_text(chapter='Value Estimation', page=195)
@@ -178,6 +183,24 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
             help='Right-hand side of the Patsy-style formula to use when modeling the state-action value relationships. Ignore to directly use the output of the feature extractor. Note that the use of Patsy formulas will dramatically slow learning performance, since it is called at each time step.'
         )
 
+        parser.add_argument(
+            '--plot-model',
+            action='store_true',
+            help='Whether or not to plot the model (e.g., coefficients).'
+        )
+
+        parser.add_argument(
+            '--num-steps-between-plots',
+            type=int,
+            help='Number of time steps between state-action value model plots. Ignore to only plot at the end.'
+        )
+
+        parser.add_argument(
+            '--num-time-bins',
+            type=int,
+            help='Number of time bins. Ignore for no binning.'
+        )
+
         return parser
 
     @classmethod
@@ -319,13 +342,92 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
 
         return X
 
+    def plot(
+            self,
+            final: bool
+    ):
+        """
+        Plot the estimator.
+
+        :param final: Whether or not this is the final time plot will be called.
+        """
+
+        if self.plot_model:
+
+            if self.plot_time_step is None:
+                self.plot_time_step = 1
+            else:
+                self.plot_time_step += 1
+
+            model_summary = self.model.get_summary(self.feature_extractor)
+            model_summary['t'] = self.plot_time_step
+
+            if self.plot_df is None:
+                self.plot_df = model_summary
+            else:
+                self.plot_df = self.plot_df.append(model_summary, ignore_index=True)
+
+            if final or (self.num_steps_between_plots is not None and self.plot_time_step % self.num_steps_between_plots == 0):
+
+                # bin time
+                if self.num_time_bins is None:
+                    steps_per_bin = 1
+                    self.plot_df['bin'] = self.plot_df.t
+                else:
+                    steps_per_bin = math.ceil(self.plot_time_step / self.num_time_bins)
+                    self.plot_df['bin'] = [int(t / steps_per_bin) for t in self.plot_df.t]
+
+                if isinstance(self.feature_extractor, StateActionInteractionFeatureExtractor):
+
+                    # set up plots
+                    feature_names = self.feature_extractor.get_feature_names()
+                    n_rows = len(feature_names)
+                    action_names = [a.name for a in self.feature_extractor.actions]
+                    n_cols = len(action_names)
+                    fig, axs = plt.subplots(
+                        nrows=n_rows,
+                        ncols=n_cols,
+                        sharex='all',
+                        sharey='all',
+                        figsize=(3 * n_rows, 3 * n_cols)
+                    )
+
+                    # plot one row per feature, with actions as the columns
+                    for i, feature_name in enumerate(feature_names):
+                        feature_df = self.plot_df[self.plot_df.feature_name == feature_name]
+                        boxplot_axs = axs[i, :]
+                        feature_df.boxplot(column=action_names, by='bin', ax=boxplot_axs)
+                        boxplot_axs[0].set_ylabel(feature_name)
+
+                    # reset labels and titles
+                    for i, row in enumerate(axs):
+                        for ax in row:
+
+                            if i < axs.shape[0] - 1:
+                                ax.set_xlabel('')
+                            else:
+                                ax.set_xlabel('Time' if self.num_time_bins is None else f'Bin of {steps_per_bin} steps')
+
+                            if i > 0:
+                                ax.set_title('')
+
+                    fig.suptitle('Model coefficients (y-values) for each feature (row) and action (column)')
+                    plt.tight_layout()
+                    plt.show()
+
+                else:
+                    raise ValueError(f'Unknown feature extractor type:  {type(self.feature_extractor)}')
+
     def __init__(
             self,
             environment: MdpEnvironment,
             epsilon: Optional[float],
             model: FunctionApproximationModel,
             feature_extractor: FeatureExtractor,
-            formula: Optional[str]
+            formula: Optional[str],
+            plot_model: Optional[bool],
+            num_steps_between_plots: Optional[int],
+            num_time_bins: Optional[int]
     ):
         """
         Initialize the estimator.
@@ -349,6 +451,9 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         they are also inefficiently processed in the online fashion described above. Patsy introduces significant
         overhead with each call to the formula parser. A faster alternative is to avoid formula specification (pass
         None here) and return the feature matrix directly from the feature extractor as a numpy.ndarray.
+        :param plot_model: Whether or not to plot the model.
+        :param num_steps_between_plots: Number of time steps between plots.
+        :param num_time_bins: Number of time bins, or None for no binning.
         """
 
         if epsilon is None:
@@ -359,6 +464,12 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         self.model = model
         self.feature_extractor = feature_extractor
         self.formula = formula
+        self.plot_model = plot_model
+        self.num_steps_between_plots = num_steps_between_plots
+        self.num_time_bins = num_time_bins
+
+        self.plot_df = None
+        self.plot_time_step = None
 
     def __getitem__(
             self,

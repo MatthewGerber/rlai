@@ -358,6 +358,22 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
             state_features=state_features
         )
 
+    def get_feature_names(
+            self
+    ) -> List[str]:
+        """
+        Get names of extracted features.
+
+        :return: List of feature names.
+        """
+
+        return self.polynomial_features.get_feature_names([
+            'cartPosition',
+            'cartVelocity',
+            'poleAngle',
+            'poleAngularVelocity'
+        ])
+
     def __init__(
             self,
             environment: Gym

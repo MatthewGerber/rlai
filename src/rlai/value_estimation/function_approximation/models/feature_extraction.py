@@ -63,6 +63,17 @@ class FeatureExtractor(ABC):
         """
         pass
 
+    @abstractmethod
+    def get_feature_names(
+            self
+    ) -> List[str]:
+        """
+        Get names of extracted features.
+
+        :return: List of feature names.
+        """
+        pass
+
     def __init__(
             self,
             environment: MdpEnvironment
@@ -148,6 +159,8 @@ class StateActionInteractionFeatureExtractor(FeatureExtractor, ABC):
             environment=environment
         )
 
+        self.actions = actions
+
         # initialize the one-hot action encoder
         action_array = np.array([actions])
         self.action_encoder = OneHotEncoder(categories=action_array)
@@ -225,7 +238,17 @@ class StateActionIdentityFeatureExtractor(FeatureExtractor):
         return pd.DataFrame([
             (state.i, action.i)
             for action in actions
-        ], columns=['s', 'a'])
+        ], columns=self.get_feature_names())
+
+    def get_feature_names(
+            self
+    ) -> List[str]:
+        """
+        Get names of extracted features.
+
+        :return: List of feature names.
+        """
+        return ['s', 'a']
 
     def __init__(
             self,

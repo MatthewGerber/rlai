@@ -196,7 +196,10 @@ def test_q_learning_iterate_value_q_pi_function_approximation():
         epsilon,
         SKLearnSGD(),
         StateActionIdentityFeatureExtractor(mdp_environment),
-        f'C(s, levels={[s.i for s in mdp_environment.SS]}):C(a, levels={[a.i for a in mdp_environment.SS[0].AA]})'
+        f'C(s, levels={[s.i for s in mdp_environment.SS]}):C(a, levels={[a.i for a in mdp_environment.SS[0].AA]})',
+        False,
+        None,
+        None
     )
 
     mdp_agent = StochasticMdpAgent(
@@ -243,6 +246,9 @@ def test_q_learning_iterate_value_q_pi_function_approximation_no_formula():
         epsilon,
         SKLearnSGD(),
         GridworldFeatureExtractor(mdp_environment),
+        None,
+        False,
+        None,
         None
     )
 

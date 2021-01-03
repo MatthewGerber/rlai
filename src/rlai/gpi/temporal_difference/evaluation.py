@@ -321,3 +321,5 @@ def update_q_S_A(
 
         # remove the time step from our n-step structure
         del t_state_a_g[update_t]
+
+        q_S_A.plot(final=False)

@@ -2,12 +2,16 @@ from argparse import ArgumentParser
 from typing import Tuple, List, Optional
 
 import numpy as np
+import pandas as pd
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import SGDRegressor
 
 from rlai.meta import rl_text
 from rlai.utils import parse_arguments
-from rlai.value_estimation.function_approximation.models import FunctionApproximationModel
+from rlai.value_estimation.function_approximation.models import FunctionApproximationModel, FeatureExtractor
+from rlai.value_estimation.function_approximation.models.feature_extraction import (
+    StateActionInteractionFeatureExtractor
+)
 
 
 @rl_text(chapter=9, page=200)
@@ -93,6 +97,29 @@ class SKLearnSGD(FunctionApproximationModel):
             values = np.repeat(0.0, X.shape[0])
 
         return values
+
+    def get_summary(
+            self,
+            feature_extractor: FeatureExtractor
+    ) -> pd.DataFrame:
+        """
+        Get a pandas.DataFrame that summarizes the model (e.g., in terms of its coefficients).
+
+        :param feature_extractor: Feature extractor used to build the model.
+        :return: DataFrame.
+        """
+
+        if isinstance(feature_extractor, StateActionInteractionFeatureExtractor):
+            coefficients = pd.DataFrame(
+                data=self.model.coef_.reshape((-1, len(feature_extractor.actions)), order='F'),
+                columns=[a.name for a in feature_extractor.actions]
+            )
+
+            coefficients['feature_name'] = feature_extractor.get_feature_names()
+        else:
+            raise ValueError(f'Unknown feature extractor type:  {type(feature_extractor)}')
+
+        return coefficients
 
     def __init__(
             self,

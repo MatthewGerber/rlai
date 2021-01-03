@@ -3,8 +3,10 @@ from argparse import ArgumentParser
 from typing import Tuple, List, Any, Optional
 
 import numpy as np
+import pandas as pd
 
 from rlai.meta import rl_text
+from rlai.value_estimation.function_approximation.models.feature_extraction import FeatureExtractor
 
 
 @rl_text(chapter=9, page=197)
@@ -76,6 +78,19 @@ class FunctionApproximationModel(ABC):
 
         :param X: Observations.
         :return: Vector of evaluations.
+        """
+        pass
+
+    @abstractmethod
+    def get_summary(
+            self,
+            feature_extractor: FeatureExtractor
+    ) -> pd.DataFrame:
+        """
+        Get a pandas.DataFrame that summarizes the model (e.g., in terms of its coefficients).
+
+        :param feature_extractor: Feature extractor used to build the model.
+        :return: DataFrame.
         """
         pass
 

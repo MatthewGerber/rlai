@@ -269,6 +269,17 @@ class GridworldFeatureExtractor(StateActionInteractionFeatureExtractor):
             state_features=state_features
         )
 
+    def get_feature_names(
+            self
+    ) -> List[str]:
+        """
+        Get names of extracted features.
+
+        :return: List of feature names.
+        """
+
+        return ['from-top', 'from-bottom', 'from-left', 'from-right']
+
     def __init__(
             self,
             environment: Gridworld

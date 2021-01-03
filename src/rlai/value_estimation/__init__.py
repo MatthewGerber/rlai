@@ -191,6 +191,17 @@ class StateActionValueEstimator(ABC):
         """
         pass
 
+    def plot(
+            self,
+            final: bool
+    ):
+        """
+        Plot the estimator.
+
+        :param final: Whether or not this is the final time plot will be called.
+        """
+        pass
+
     @abstractmethod
     def __getitem__(
             self,
