@@ -397,7 +397,7 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
                         feature_df = self.plot_df[self.plot_df.feature_name == feature_name]
                         boxplot_axs = axs[i, :]
                         feature_df.boxplot(column=action_names, by='bin', ax=boxplot_axs)
-                        boxplot_axs[0].set_ylabel(feature_name)
+                        boxplot_axs[0].set_ylabel(f'w({feature_name})')
 
                     # reset labels and titles
                     for i, row in enumerate(axs):
@@ -411,7 +411,7 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
                             if i > 0:
                                 ax.set_title('')
 
-                    fig.suptitle('Model coefficients (y-values) for each feature (row) and action (column)')
+                    fig.suptitle('Boxplots of model coefficients (y-values) over time (x-values) for each feature (row) and action (column)')
                     plt.tight_layout()
                     plt.show()
 
