@@ -15,7 +15,7 @@ Model-based MDP environment. Adds the specification of a probability distributio
 ```
 Policy for use with tabular methods.
 ```
-### [rlai.environments.mdp.Gridworld](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/mdp.py#L259)
+### [rlai.environments.gridworld.Gridworld](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/gridworld.py#L21)
 ```
 Gridworld MDP environment.
 ```

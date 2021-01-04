@@ -11,10 +11,14 @@ examples covered; however, such implementations do not necessarily lead to reusa
 generally applicable beyond such examples. The approach taken here should be generally applicable well beyond the text.
 
 # Installation and Use
-The `rlai` code is distributed via [PyPI](https://pypi.org/project/rlai/) and can be installed with `pip install rlai`. 
-See the [example repository](https://github.com/MatthewGerber/rlai-dependency-example) for how a project can be 
-structured to consume the `rlai` package functionality within source code. Using `rlai` from the command line interface 
-(CLI) is demonstrated in the case studies below and is also explored in the [CLI guide](cli_guide.md).
+
+* Source code:  The `rlai` code is distributed via [PyPI](https://pypi.org/project/rlai/) and can be installed with 
+  `pip install rlai`. See the [example repository](https://github.com/MatthewGerber/rlai-dependency-example) for how a 
+  project can be structured to consume the `rlai` package functionality within source code.
+* Command-line interface:  Using `rlai` from the command-line interface (CLI) is demonstrated in the case studies below 
+  and is also explored in the [CLI guide](cli_guide.md).
+* Other topics of interest are listed below.
+  * [Diagnostic and interpretation tools](model_diagnostics_and_interpretation.md)
 
 # Case Studies
 The gridworld and other simple environments (e.g., gambler's problem) are used throughout the package to develop, 

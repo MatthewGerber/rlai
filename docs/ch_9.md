@@ -1,13 +1,13 @@
 # Chapter 9:  On-policy Prediction with Approximation
-### [rlai.value_estimation.function_approximation.statistical_learning.FunctionApproximationModel](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/value_estimation/function_approximation/statistical_learning.py#L11)
+### [rlai.value_estimation.function_approximation.models.FunctionApproximationModel](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/value_estimation/function_approximation/models.py#L13)
 ```
 Function approximation model.
 ```
-### [rlai.value_estimation.function_approximation.statistical_learning.feature_extraction.FeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/value_estimation/function_approximation/statistical_learning/feature_extraction.py#L18)
+### [rlai.value_estimation.function_approximation.models.feature_extraction.FeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/value_estimation/function_approximation/models/feature_extraction.py#L18)
 ```
 Feature extractor.
 ```
-### [rlai.value_estimation.function_approximation.statistical_learning.sklearn.SKLearnSGD](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/value_estimation/function_approximation/statistical_learning/sklearn.py#L14)
+### [rlai.value_estimation.function_approximation.models.sklearn.SKLearnSGD](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/value_estimation/function_approximation/models/sklearn.py#L18)
 ```
 Wrapper for the sklearn.linear_model.SGDRegressor implemented by scikit-learn.
 ```
