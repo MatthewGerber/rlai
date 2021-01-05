@@ -17,8 +17,12 @@ generally applicable beyond such examples. The approach taken here should be gen
   project can be structured to consume the `rlai` package functionality within source code.
 * Command-line interface:  Using `rlai` from the command-line interface (CLI) is demonstrated in the case studies below 
   and is also explored in the [CLI guide](cli_guide.md).
-* Other topics of interest are listed below.
-  * [Diagnostic and interpretation tools](model_diagnostics_and_interpretation.md)
+  
+# Features
+
+* Diagnostic and interpretation tools:  As the environment and agent increase in complexity (e.g., from small, 
+  discrete-space gridworlds to large, continuous-space control problems), the need for diagnostic and interpretation tools 
+  becomes apparent. Such tools can be found [here](model_diagnostics_and_interpretation.md).
 
 # Case Studies
 The gridworld and other simple environments (e.g., gambler's problem) are used throughout the package to develop, 
@@ -33,5 +37,5 @@ to train agents for and are instructive for understanding how agents are paramet
 
 # Figures
 A list of figures can be found [here](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/figures). Most of these 
-are reproductions of those shown in the text; however, even the reproductions typically provide detail not shown in the 
-text.
+are reproductions of those shown in the Sutton and Barto text; however, even the reproductions typically provide detail 
+not shown in the text.

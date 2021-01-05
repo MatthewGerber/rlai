@@ -389,7 +389,7 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
                         ncols=n_cols,
                         sharex='all',
                         sharey='all',
-                        figsize=(3 * n_rows, 3 * n_cols)
+                        figsize=(3 * n_cols, 3 * n_rows)
                     )
 
                     # plot one row per feature, with actions as the columns
@@ -411,7 +411,7 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
                             if i > 0:
                                 ax.set_title('')
 
-                    fig.suptitle('Boxplots of model coefficients (y-values) over time (x-values) for each feature (row) and action (column)')
+                    fig.suptitle('Model coefficients over time')
                     plt.tight_layout()
                     plt.show()
 

@@ -19,8 +19,9 @@ from rlai.rewards import Reward
 from rlai.states import State
 from rlai.states.mdp import MdpState
 from rlai.utils import parse_arguments
-from rlai.value_estimation.function_approximation.models.feature_extraction import \
+from rlai.value_estimation.function_approximation.models.feature_extraction import (
     StateActionInteractionFeatureExtractor
+)
 
 
 @rl_text(chapter='States', page=1)
@@ -351,6 +352,9 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
         :return: Feature matrix (#actions, #actions * #features)
         """
 
+        if state.observation.shape != (4,):
+            raise ValueError('Expected 4-dimensional observation vector.')
+
         state_features = self.polynomial_features.fit_transform(np.array([state.observation]))[0]
 
         return self.interact(
@@ -368,10 +372,10 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
         """
 
         return self.polynomial_features.get_feature_names([
-            'cartPosition',
-            'cartVelocity',
-            'poleAngle',
-            'poleAngularVelocity'
+            'ctPos',
+            'ctVel',
+            'plAng',
+            'plAngVel'
         ])
 
     def __init__(
@@ -387,16 +391,25 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
         if not isinstance(environment.gym_native.action_space, Discrete):
             raise ValueError('Expected a discrete action space, but did not get one.')
 
+        if environment.gym_native.action_space.n != 2:
+            raise ValueError('Expected two actions:  left and right')
+
         super().__init__(
             environment=environment,
             actions=[
-                Action(i)
-                for i in range(environment.gym_native.action_space.n)
+                Action(
+                    i=0,
+                    name='left'
+                ),
+                Action(
+                    i=1,
+                    name='right'
+                )
             ]
         )
 
         self.polynomial_features = PolynomialFeatures(
             degree=environment.gym_native.observation_space.shape[0],
             interaction_only=True,
-            include_bias=False
+            include_bias=True
         )
