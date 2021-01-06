@@ -3,6 +3,7 @@ from typing import Tuple, List, Optional
 
 import numpy as np
 import pandas as pd
+from numpy.random import RandomState
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import SGDRegressor
 
@@ -42,18 +43,21 @@ class SKLearnSGD(FunctionApproximationModel):
     @classmethod
     def init_from_arguments(
             cls,
-            args: List[str]
+            args: List[str],
+            random_state: RandomState
     ) -> Tuple[FunctionApproximationModel, List[str]]:
         """
         Initialize a model from arguments.
 
         :param args: Arguments.
+        :param random_state: Random state.
         :return: 2-tuple of a state-action value estimator and a list of unparsed arguments.
         """
 
         parsed_args, unparsed_args = parse_arguments(cls, args)
 
         model = SKLearnSGD(
+            random_state=random_state,
             **vars(parsed_args)
         )
 

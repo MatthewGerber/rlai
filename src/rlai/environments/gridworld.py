@@ -25,12 +25,15 @@ class Gridworld(ModelBasedMdpEnvironment):
 
     @staticmethod
     def example_4_1(
-            random_state: RandomState
+            random_state: RandomState,
+            T: Optional[int]
     ):
         """
         Construct the Gridworld for Example 4.1.
 
         :param random_state: Random state.
+        :param T: Maximum number of steps to run, or None for no limit.
+
         :return: Gridworld.
         """
 
@@ -47,7 +50,7 @@ class Gridworld(ModelBasedMdpEnvironment):
         g = Gridworld(
             name='Example 4.1',
             random_state=random_state,
-            T=None,
+            T=T,
             n_rows=4,
             n_columns=4,
             terminal_states=[(0, 0), (3, 3)],
@@ -128,8 +131,12 @@ class Gridworld(ModelBasedMdpEnvironment):
 
         parsed_args, unparsed_args = parse_arguments(cls, args)
 
-        gridworld = getattr(cls, parsed_args.id)(
-            random_state=random_state
+        gridworld_id = parsed_args.id
+        del parsed_args.id
+
+        gridworld = getattr(cls, gridworld_id)(
+            random_state=random_state,
+            **vars(parsed_args)
         )
 
         return gridworld, unparsed_args

@@ -5,6 +5,7 @@ from typing import Optional, List, Tuple, Iterator, Set
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from numpy.random import RandomState
 from patsy.highlevel import dmatrix
 
 from rlai.actions import Action
@@ -40,7 +41,7 @@ class ApproximateValueEstimator(ValueEstimator):
         :param weight: Weight.
         """
 
-        self.estimator.fit(self.state, self.action, value, weight)
+        self.estimator.add_sample(self.state, self.action, value, weight)
 
     def get_value(
             self
@@ -190,15 +191,15 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         )
 
         parser.add_argument(
-            '--num-steps-between-plots',
+            '--num-updates-between-plots',
             type=int,
-            help='Number of time steps between state-action value model plots. Ignore to only plot at the end.'
+            help='Number of updates between state-action value model plots. Ignore to only plot at the end.'
         )
 
         parser.add_argument(
-            '--num-time-bins',
+            '--num-update-bins',
             type=int,
-            help='Number of time bins. Ignore for no binning.'
+            help='Number of update bins used when plotting. Ignore for no binning.'
         )
 
         return parser
@@ -207,6 +208,7 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
     def init_from_arguments(
             cls,
             args: List[str],
+            random_state: RandomState,
             environment: MdpEnvironment,
             epsilon: Optional[float]
     ) -> Tuple[StateActionValueEstimator, List[str]]:
@@ -214,6 +216,7 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         Initialize a state-action value estimator from arguments.
 
         :param args: Arguments.
+        :param random_state: Random state.
         :param environment: Environment.
         :param epsilon: Epsilon.
         :return: 2-tuple of a state-action value estimator and a list of unparsed arguments.
@@ -222,7 +225,10 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         parsed_args, unparsed_args = parse_arguments(cls, args)
 
         model_class = load_class(parsed_args.function_approximation_model)
-        model, unparsed_args = model_class.init_from_arguments(unparsed_args)
+        model, unparsed_args = model_class.init_from_arguments(
+            unparsed_args,
+            random_state=random_state
+        )
         del parsed_args.function_approximation_model
 
         feature_extractor_class = load_class(parsed_args.feature_extractor)
@@ -257,7 +263,7 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
             epsilon: float
     ) -> int:
         """
-        Update an agent's policy using the current state-action value estimates.
+        Update an agent's policy using the current sample of experience collected through calls to `add_sample`.
 
         :param agent: Agent whose policy should be updated.
         :param states: States to update, or None for all states.
@@ -265,14 +271,23 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         :return: Number of states updated.
         """
 
-        # nothing to do here, as we've already updated the function approximation model through calls to fit. just
-        # update the value of epsilon (e.g., in case it's being made greedy) and return.
-
         self.epsilon = epsilon
+
+        # if we have data, then fit the model and reset the data.
+        if self.X is not None and self.y is not None:
+            self.model.fit(self.X, self.y, self.weights)
+            self.X = None
+            self.y = None
+            self.weights = None
+
+        if self.num_policy_updates is None:
+            self.num_policy_updates = 1
+        else:
+            self.num_policy_updates += 1
 
         return -1 if states is None else len(states)
 
-    def fit(
+    def add_sample(
             self,
             state: MdpState,
             action: Action,
@@ -280,7 +295,8 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
             weight: Optional[float]
     ):
         """
-        Update the estimator's function approximation model.
+        Add a sample of experience to the estimator. The collection of samples will be used to update the function
+        approximation model when `update_policy` is called.
 
         :param state: State.
         :param action: Action.
@@ -288,10 +304,23 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         :param weight: Weight.
         """
 
-        X = self.get_X(state, [action])
-        y = np.array([value])
+        sample_X = self.get_X(state, [action])
+        if self.X is None:
+            self.X = sample_X
+        else:
+            self.X = np.append(self.X, sample_X, axis=0)
 
-        self.model.fit(X, y, weight)
+        sample_y = np.array([value])
+        if self.y is None:
+            self.y = sample_y
+        else:
+            self.y = np.append(self.y, sample_y, axis=0)
+
+        if weight is not None:
+            if self.weights is None:
+                self.weights = np.array([weight])
+            else:
+                self.weights = np.append(self.weights, [weight], axis=0)
 
     def evaluate(
             self,
@@ -354,28 +383,29 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
 
         if self.plot_model:
 
-            if self.plot_time_step is None:
-                self.plot_time_step = 1
-            else:
-                self.plot_time_step += 1
-
             model_summary = self.model.get_summary(self.feature_extractor)
-            model_summary['t'] = self.plot_time_step
+
+            if 'n' in model_summary.columns:
+                raise ValueError('Feature extractor returned disallowed column:  n')
+
+            if 'bin' in model_summary.columns:
+                raise ValueError('Feature extractor returned disallowed column:  bin')
+
+            model_summary['n'] = self.num_policy_updates - 1
 
             if self.plot_df is None:
                 self.plot_df = model_summary
             else:
                 self.plot_df = self.plot_df.append(model_summary, ignore_index=True)
 
-            if final or (self.num_steps_between_plots is not None and self.plot_time_step % self.num_steps_between_plots == 0):
+            if final or (self.num_updates_between_plots is not None and self.num_policy_updates % self.num_updates_between_plots == 0):
 
-                # bin time
-                if self.num_time_bins is None:
-                    steps_per_bin = 1
-                    self.plot_df['bin'] = self.plot_df.t
+                if self.num_update_bins is None:
+                    updates_per_bin = 1
+                    self.plot_df['bin'] = self.plot_df.n
                 else:
-                    steps_per_bin = math.ceil(self.plot_time_step / self.num_time_bins)
-                    self.plot_df['bin'] = [int(t / steps_per_bin) for t in self.plot_df.t]
+                    updates_per_bin = math.ceil(self.num_policy_updates / self.num_update_bins)
+                    self.plot_df['bin'] = [int(n / updates_per_bin) for n in self.plot_df.n]
 
                 if isinstance(self.feature_extractor, StateActionInteractionFeatureExtractor):
 
@@ -406,12 +436,12 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
                             if i < axs.shape[0] - 1:
                                 ax.set_xlabel('')
                             else:
-                                ax.set_xlabel('Time' if self.num_time_bins is None else f'Bin of {steps_per_bin} steps')
+                                ax.set_xlabel('Iteration' if self.num_update_bins is None else f'Bin of {updates_per_bin} iterations')
 
                             if i > 0:
                                 ax.set_title('')
 
-                    fig.suptitle('Model coefficients over time')
+                    fig.suptitle('Model coefficients over iterations')
                     plt.tight_layout()
                     plt.show()
 
@@ -426,8 +456,8 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
             feature_extractor: FeatureExtractor,
             formula: Optional[str],
             plot_model: Optional[bool],
-            num_steps_between_plots: Optional[int],
-            num_time_bins: Optional[int]
+            num_updates_between_plots: Optional[int],
+            num_update_bins: Optional[int]
     ):
         """
         Initialize the estimator.
@@ -452,8 +482,8 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         overhead with each call to the formula parser. A faster alternative is to avoid formula specification (pass
         None here) and return the feature matrix directly from the feature extractor as a numpy.ndarray.
         :param plot_model: Whether or not to plot the model.
-        :param num_steps_between_plots: Number of time steps between plots.
-        :param num_time_bins: Number of time bins, or None for no binning.
+        :param num_updates_between_plots: Number of updates between plots.
+        :param num_update_bins: Number of update bins, or None for no binning.
         """
 
         if epsilon is None:
@@ -465,11 +495,14 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         self.feature_extractor = feature_extractor
         self.formula = formula
         self.plot_model = plot_model
-        self.num_steps_between_plots = num_steps_between_plots
-        self.num_time_bins = num_time_bins
+        self.num_updates_between_plots = num_updates_between_plots
+        self.num_update_bins = num_update_bins
 
-        self.plot_df = None
-        self.plot_time_step = None
+        self.X: np.ndarray = None
+        self.y: np.ndarray = None
+        self.weights: np.ndarray = None
+        self.num_policy_updates: Optional[int] = None
+        self.plot_df: Optional[pd.DataFrame] = None
 
     def __getitem__(
             self,

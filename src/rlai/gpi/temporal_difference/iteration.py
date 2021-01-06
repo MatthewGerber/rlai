@@ -89,6 +89,8 @@ def iterate_value_q_pi(
             epsilon=epsilon
         )
 
+        q_S_A.plot(final=False)
+
         iteration_average_reward.append(average_reward)
         iteration_total_states.append(len(q_S_A))
         iteration_num_states_updated.append(num_states_updated)

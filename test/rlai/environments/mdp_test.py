@@ -114,7 +114,7 @@ def test_run():
 def test_check_marginal_probabilities():
 
     random = RandomState()
-    gridworld = Gridworld.example_4_1(random)
+    gridworld = Gridworld.example_4_1(random, None)
     gridworld.p_S_prime_R_given_S_A[gridworld.SS[0]][gridworld.a_left][gridworld.SS[0]][Reward(1, -1)] = 1.0
 
     with pytest.raises(ValueError, match='Expected next-state/next-reward marginal probability of 1.0, but got 2.0'):

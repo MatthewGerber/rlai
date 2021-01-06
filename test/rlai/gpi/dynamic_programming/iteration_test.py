@@ -15,7 +15,7 @@ def test_policy_iteration():
 
     random_state = RandomState(12345)
 
-    mdp_environment: Gridworld = Gridworld.example_4_1(random_state)
+    mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
 
     # state-value policy iteration
     mdp_agent_v_pi = StochasticMdpAgent(
@@ -55,7 +55,7 @@ def test_value_iteration():
 
     random_state = RandomState(12345)
 
-    mdp_environment: Gridworld = Gridworld.example_4_1(random_state)
+    mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
 
     # run policy iteration on v_pi
     mdp_agent_v_pi_policy_iteration = StochasticMdpAgent(

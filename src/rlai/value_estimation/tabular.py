@@ -1,6 +1,8 @@
 from argparse import ArgumentParser
 from typing import Dict, Optional, Iterable, Iterator, List, Tuple
 
+from numpy.random import RandomState
+
 from rlai.actions import Action
 from rlai.agents.mdp import MdpAgent
 from rlai.environments.mdp import MdpEnvironment
@@ -233,6 +235,7 @@ class TabularStateActionValueEstimator(StateActionValueEstimator):
     def init_from_arguments(
             cls,
             args: List[str],
+            random_state: RandomState,
             environment: MdpEnvironment,
             epsilon: float
     ) -> Tuple[StateActionValueEstimator, List[str]]:
@@ -240,6 +243,7 @@ class TabularStateActionValueEstimator(StateActionValueEstimator):
         Initialize a state-action value estimator from arguments.
 
         :param args: Arguments.
+        :param random_state: Random state.
         :param environment: Environment.
         :param epsilon: Epsilon.
         :return: 2-tuple of a state-action value estimator and a list of unparsed arguments.

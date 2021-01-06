@@ -213,6 +213,7 @@ def run(
             estimator_class = load_class(parsed_train_function_args.q_S_A)
             train_function_args['q_S_A'], unparsed_args = estimator_class.init_from_arguments(
                 unparsed_args,
+                random_state=random_state,
                 environment=train_function_args['environment'],
                 epsilon=train_function_args['epsilon']
             )

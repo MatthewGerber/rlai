@@ -23,7 +23,7 @@ def test_sarsa_iterate_value_q_pi():
 
     random_state = RandomState(12345)
 
-    mdp_environment: Gridworld = Gridworld.example_4_1(random_state)
+    mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
 
     q_S_A = TabularStateActionValueEstimator(mdp_environment, None)
 
@@ -62,7 +62,7 @@ def test_sarsa_iterate_value_q_pi_make_greedy():
 
     random_state = RandomState(12345)
 
-    mdp_environment: Gridworld = Gridworld.example_4_1(random_state)
+    mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
 
     q_S_A = TabularStateActionValueEstimator(mdp_environment, None)
 
@@ -101,7 +101,7 @@ def test_sarsa_iterate_value_q_pi_with_trajectory_planning():
 
     random_state = RandomState(12345)
 
-    mdp_environment: Gridworld = Gridworld.example_4_1(random_state)
+    mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
 
     q_S_A = TabularStateActionValueEstimator(mdp_environment, None)
 
@@ -148,7 +148,7 @@ def test_q_learning_iterate_value_q_pi():
 
     random_state = RandomState(12345)
 
-    mdp_environment: Gridworld = Gridworld.example_4_1(random_state)
+    mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
 
     q_S_A = TabularStateActionValueEstimator(mdp_environment, None)
 
@@ -187,14 +187,14 @@ def test_q_learning_iterate_value_q_pi_function_approximation():
 
     random_state = RandomState(12345)
 
-    mdp_environment: Gridworld = Gridworld.example_4_1(random_state)
+    mdp_environment: Gridworld = Gridworld.example_4_1(random_state, 20)
 
     epsilon = 0.05
 
     q_S_A = ApproximateStateActionValueEstimator(
         mdp_environment,
         epsilon,
-        SKLearnSGD(),
+        SKLearnSGD(random_state=random_state),
         StateActionIdentityFeatureExtractor(mdp_environment),
         f'C(s, levels={[s.i for s in mdp_environment.SS]}):C(a, levels={[a.i for a in mdp_environment.SS[0].AA]})',
         False,
@@ -237,14 +237,14 @@ def test_q_learning_iterate_value_q_pi_function_approximation_no_formula():
 
     random_state = RandomState(12345)
 
-    mdp_environment: Gridworld = Gridworld.example_4_1(random_state)
+    mdp_environment: Gridworld = Gridworld.example_4_1(random_state, 20)
 
     epsilon = 0.05
 
     q_S_A = ApproximateStateActionValueEstimator(
         mdp_environment,
         epsilon,
-        SKLearnSGD(),
+        SKLearnSGD(random_state=random_state),
         GridworldFeatureExtractor(mdp_environment),
         None,
         False,
@@ -262,8 +262,8 @@ def test_q_learning_iterate_value_q_pi_function_approximation_no_formula():
     iterate_value_q_pi(
         agent=mdp_agent,
         environment=mdp_environment,
-        num_improvements=10,
-        num_episodes_per_improvement=100,
+        num_improvements=5,
+        num_episodes_per_improvement=20,
         alpha=0.1,
         mode=Mode.Q_LEARNING,
         n_steps=1,
@@ -288,7 +288,7 @@ def test_expected_sarsa_iterate_value_q_pi():
 
     random_state = RandomState(12345)
 
-    mdp_environment: Gridworld = Gridworld.example_4_1(random_state)
+    mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
 
     q_S_A = TabularStateActionValueEstimator(mdp_environment, None)
 
@@ -327,7 +327,7 @@ def test_n_step_q_learning_iterate_value_q_pi():
 
     random_state = RandomState(12345)
 
-    mdp_environment: Gridworld = Gridworld.example_4_1(random_state)
+    mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
 
     q_S_A = TabularStateActionValueEstimator(mdp_environment, None)
 

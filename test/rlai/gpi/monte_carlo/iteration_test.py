@@ -14,7 +14,7 @@ def test_iterate_value_q_pi():
 
     random_state = RandomState(12345)
 
-    mdp_environment: Gridworld = Gridworld.example_4_1(random_state)
+    mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
 
     q_S_A = TabularStateActionValueEstimator(mdp_environment, None)
 
@@ -50,7 +50,7 @@ def test_off_policy_monte_carlo():
 
     random_state = RandomState(12345)
 
-    mdp_environment: Gridworld = Gridworld.example_4_1(random_state)
+    mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
 
     q_S_A = TabularStateActionValueEstimator(mdp_environment, None)
 

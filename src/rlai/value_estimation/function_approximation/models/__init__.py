@@ -4,6 +4,7 @@ from typing import Tuple, List, Any, Optional
 
 import numpy as np
 import pandas as pd
+from numpy.random import RandomState
 
 from rlai.meta import rl_text
 from rlai.value_estimation.function_approximation.models.feature_extraction import FeatureExtractor
@@ -42,12 +43,14 @@ class FunctionApproximationModel(ABC):
     @abstractmethod
     def init_from_arguments(
             cls,
-            args: List[str]
+            args: List[str],
+            random_state: RandomState
     ) -> Tuple[Any, List[str]]:
         """
         Initialize a model from arguments.
 
         :param args: Arguments.
+        :param random_state: Random state.
         :return: 2-tuple of a state-action value estimator and a list of unparsed arguments.
         """
         pass
