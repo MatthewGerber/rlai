@@ -104,6 +104,12 @@ class Gym(MdpEnvironment):
             help='Local directory in which to save rendered videos. Must be an empty directory. Ignore to only display videos.'
         )
 
+        parser.add_argument(
+            '--force',
+            action='store_true',
+            help='Force the writing of videos into the video directory. Will overwrite/delete content in the directory.'
+        )
+
         return parser
 
     @classmethod
@@ -204,7 +210,8 @@ class Gym(MdpEnvironment):
             gym_id: str,
             continuous_action_discretization_resolution: Optional[float] = None,
             render_every_nth_episode: Optional[int] = None,
-            video_directory: Optional[str] = None
+            video_directory: Optional[str] = None,
+            force: bool = False
     ):
         """
         Initialize the environment.
@@ -217,6 +224,8 @@ class Gym(MdpEnvironment):
         discretization of the continuous-action dimensions.
         :param render_every_nth_episode: If passed, the environment will render an episode video per this value.
         :param video_directory: Directory in which to store rendered videos.
+        :param force: Whether or not to force the writing of videos into the video directory. This will overwrite/delete
+        content in the directory.
         """
 
         super().__init__(
@@ -251,7 +260,12 @@ class Gym(MdpEnvironment):
 
             # saved videos via wrapper
             else:
-                self.gym_native = gym.wrappers.Monitor(self.gym_native, directory=os.path.expanduser(video_directory), video_callable=lambda episode_id: episode_id % self.render_every_nth_episode == 0)
+                self.gym_native = gym.wrappers.Monitor(
+                    env=self.gym_native,
+                    directory=os.path.expanduser(video_directory),
+                    video_callable=lambda episode_id: episode_id % self.render_every_nth_episode == 0,
+                    force=force
+                )
 
         self.gym_native.seed(random_state.randint(1000))
 
@@ -411,5 +425,5 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
         self.polynomial_features = PolynomialFeatures(
             degree=environment.gym_native.observation_space.shape[0],
             interaction_only=True,
-            include_bias=True
+            include_bias=False
         )

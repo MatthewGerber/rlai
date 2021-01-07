@@ -6,6 +6,7 @@ import pandas as pd
 from numpy.random import RandomState
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import SGDRegressor
+from sklearn.preprocessing import StandardScaler
 
 from rlai.meta import rl_text
 from rlai.utils import parse_arguments
@@ -77,6 +78,10 @@ class SKLearnSGD(FunctionApproximationModel):
         :param weight: Weight.
         """
 
+        # update the feature scaler with the new data and then transform (scale)
+        self.feature_scaler.partial_fit(X)
+        X = self.feature_scaler.transform(X)
+
         self.model.partial_fit(X=X, y=y, sample_weight=weight)
 
     def evaluate(
@@ -114,12 +119,20 @@ class SKLearnSGD(FunctionApproximationModel):
         """
 
         if isinstance(feature_extractor, StateActionInteractionFeatureExtractor):
+
+            # get (#features, #actions) array of coefficients, with the intercept being the final row
+            num_actions = len(feature_extractor.actions)
+            coefficients = self.model.coef_.reshape((-1, num_actions), order='F')
+            coefficients = np.append(coefficients, [np.repeat(self.model.intercept_, num_actions)], axis=0)
+
+            # convert to dataframe with named columns
             coefficients = pd.DataFrame(
-                data=self.model.coef_.reshape((-1, len(feature_extractor.actions)), order='F'),
+                data=coefficients,
                 columns=[a.name for a in feature_extractor.actions]
             )
 
-            coefficients['feature_name'] = feature_extractor.get_feature_names()
+            coefficients['feature_name'] = feature_extractor.get_feature_names() + ['intercept']
+
         else:
             raise ValueError(f'Unknown feature extractor type:  {type(feature_extractor)}')
 
@@ -136,6 +149,7 @@ class SKLearnSGD(FunctionApproximationModel):
         """
 
         self.model = SGDRegressor(**kwargs)
+        self.feature_scaler = StandardScaler()
 
     def __eq__(
             self,
@@ -148,7 +162,7 @@ class SKLearnSGD(FunctionApproximationModel):
         :return: True if equal and False otherwise.
         """
 
-        return np.array_equal(self.model.coef_, other.model.coef_)
+        return np.array_equal(self.model.coef_, other.model.coef_) and self.model.intercept_ == other.model.intercept_
 
     def __ne__(
             self,

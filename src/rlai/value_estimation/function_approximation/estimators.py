@@ -256,37 +256,6 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
 
         return FunctionApproximationPolicy(self)
 
-    def update_policy(
-            self,
-            agent: MdpAgent,
-            states: Optional[Set[MdpState]],
-            epsilon: float
-    ) -> int:
-        """
-        Update an agent's policy using the current sample of experience collected through calls to `add_sample`.
-
-        :param agent: Agent whose policy should be updated.
-        :param states: States to update, or None for all states.
-        :param epsilon: Epsilon.
-        :return: Number of states updated.
-        """
-
-        self.epsilon = epsilon
-
-        # if we have data, then fit the model and reset the data.
-        if self.X is not None and self.y is not None:
-            self.model.fit(self.X, self.y, self.weights)
-            self.X = None
-            self.y = None
-            self.weights = None
-
-        if self.num_policy_updates is None:
-            self.num_policy_updates = 1
-        else:
-            self.num_policy_updates += 1
-
-        return -1 if states is None else len(states)
-
     def add_sample(
             self,
             state: MdpState,
@@ -321,6 +290,37 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
                 self.weights = np.array([weight])
             else:
                 self.weights = np.append(self.weights, [weight], axis=0)
+
+    def update_policy(
+            self,
+            agent: MdpAgent,
+            states: Optional[Set[MdpState]],
+            epsilon: float
+    ) -> int:
+        """
+        Update an agent's policy using the current sample of experience collected through calls to `add_sample`.
+
+        :param agent: Agent whose policy should be updated.
+        :param states: States to update, or None for all states.
+        :param epsilon: Epsilon.
+        :return: Number of states updated.
+        """
+
+        self.epsilon = epsilon
+
+        # if we have data, then fit the model and reset the data.
+        if self.X is not None and self.y is not None:
+            self.model.fit(self.X, self.y, self.weights)
+            self.X = None
+            self.y = None
+            self.weights = None
+
+        if self.num_policy_updates is None:
+            self.num_policy_updates = 1
+        else:
+            self.num_policy_updates += 1
+
+        return -1 if states is None else len(states)
 
     def evaluate(
             self,
