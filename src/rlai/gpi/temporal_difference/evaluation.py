@@ -139,7 +139,8 @@ def evaluate_q_pi(
                 discount = agent.gamma ** (curr_t - t)
                 t_state_a_g[t] = (state, a, g + discount * next_reward.r)
 
-            # get the next state's bootstrapped value and next action, based on the bootstrapping mode.
+            # get the next state's bootstrapped value and next action, based on the bootstrapping mode. note that the
+            # bootstrapped next state-action value is only used if we're performing n-step updates.
             next_state_q_s_a, next_a = get_bootstrapped_state_action_value(
                 state=next_state,
                 t=next_t,

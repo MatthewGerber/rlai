@@ -410,7 +410,7 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
                 if isinstance(self.feature_extractor, StateActionInteractionFeatureExtractor):
 
                     # set up plots
-                    feature_names = self.feature_extractor.get_feature_names()
+                    feature_names = self.plot_df.feature_name.unique().tolist()
                     n_rows = len(feature_names)
                     action_names = [a.name for a in self.feature_extractor.actions]
                     n_cols = len(action_names)
@@ -418,7 +418,7 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
                         nrows=n_rows,
                         ncols=n_cols,
                         sharex='all',
-                        sharey='all',
+                        sharey='row',
                         figsize=(3 * n_cols, 3 * n_rows)
                     )
 

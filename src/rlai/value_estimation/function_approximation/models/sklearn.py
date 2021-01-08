@@ -39,6 +39,27 @@ class SKLearnSGD(FunctionApproximationModel):
             add_help=False
         )
 
+        parser.add_argument(
+            '--sgd-alpha',
+            type=float,
+            default=0.0001,
+            help='Constant that multiplies the regularization term. The higher the value, the stronger the regularization.'
+        )
+
+        parser.add_argument(
+            '--learning-rate',
+            type=str,
+            default='invscaling',
+            help='Learning rate schedule.'
+        )
+
+        parser.add_argument(
+            '--eta0',
+            type=float,
+            default=0.01,
+            help='The initial learning rate for the ‘constant’, ‘invscaling’ or ‘adaptive’ schedules.'
+        )
+
         return parser
 
     @classmethod
@@ -56,6 +77,10 @@ class SKLearnSGD(FunctionApproximationModel):
         """
 
         parsed_args, unparsed_args = parse_arguments(cls, args)
+
+        # alpha conflicts with gpi function arguments
+        setattr(parsed_args, 'alpha', parsed_args.sgd_alpha)
+        del parsed_args.sgd_alpha
 
         model = SKLearnSGD(
             random_state=random_state,
@@ -120,10 +145,21 @@ class SKLearnSGD(FunctionApproximationModel):
 
         if isinstance(feature_extractor, StateActionInteractionFeatureExtractor):
 
-            # get (#features, #actions) array of coefficients, with the intercept being the final row
+            # get (#features, #actions) array of coefficients, along with feature names.
             num_actions = len(feature_extractor.actions)
             coefficients = self.model.coef_.reshape((-1, num_actions), order='F')
-            coefficients = np.append(coefficients, [np.repeat(self.model.intercept_, num_actions)], axis=0)
+            feature_names = feature_extractor.get_feature_names()
+
+            # add intercept if we fit one
+            if self.model.fit_intercept:
+                coefficients = np.append(coefficients, [np.repeat(self.model.intercept_, num_actions)], axis=0)
+                feature_names.append('intercept')
+
+            # check feature extractor names against model dimensions
+            num_feature_names = len(feature_names)
+            num_dims = coefficients.shape[0]
+            if num_feature_names != num_dims:
+                raise ValueError(f'Number of feature names ({num_feature_names}) does not match number of dimensions ({num_dims}).')
 
             # convert to dataframe with named columns
             coefficients = pd.DataFrame(
@@ -131,7 +167,7 @@ class SKLearnSGD(FunctionApproximationModel):
                 columns=[a.name for a in feature_extractor.actions]
             )
 
-            coefficients['feature_name'] = feature_extractor.get_feature_names() + ['intercept']
+            coefficients['feature_name'] = feature_names
 
         else:
             raise ValueError(f'Unknown feature extractor type:  {type(feature_extractor)}')
