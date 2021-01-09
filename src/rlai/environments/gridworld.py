@@ -249,17 +249,19 @@ class GridworldFeatureExtractor(StateActionInteractionFeatureExtractor):
     def extract(
             self,
             states: List[MdpState],
-            action_lists: List[List[Action]]
+            actions: List[Action],
+            for_fitting: bool
     ) -> Union[pd.DataFrame, np.ndarray]:
         """
-        Extract features for states and their associated actions.
+        Extract features for state-action pairs.
 
         :param states: States.
-        :param action_lists: Action lists, one list per state in `states`.
-        :return: State-feature matrix.
+        :param actions: Actions.
+        :param for_fitting: Whether the extracted features will be used for fitting (True) or prediction (False).
+        :return: State-feature pandas.DataFrame or numpy.ndarray.
         """
 
-        self.check_states_and_action_lists(states, action_lists)
+        self.check_state_and_action_lists(states, actions)
 
         num_rows = self.environment.grid.shape[0]
         num_cols = self.environment.grid.shape[1]
@@ -277,8 +279,8 @@ class GridworldFeatureExtractor(StateActionInteractionFeatureExtractor):
         ])
 
         return self.interact(
-            action_lists=action_lists,
-            state_features=state_features
+            state_features=state_features,
+            actions=actions
         )
 
     def get_feature_names(

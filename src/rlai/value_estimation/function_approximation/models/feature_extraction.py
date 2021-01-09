@@ -52,33 +52,35 @@ class FeatureExtractor(ABC):
     def extract(
             self,
             states: List[MdpState],
-            action_lists: List[List[Action]]
+            actions: List[Action],
+            for_fitting: bool
     ) -> Union[pd.DataFrame, np.ndarray]:
         """
-        Extract features for states and their associated actions.
+        Extract features for state-action pairs.
 
         :param states: States.
-        :param action_lists: Action lists, one list per state in `states`.
-        :return: State-feature matrix.
+        :param actions: Actions.
+        :param for_fitting: Whether the extracted features will be used for fitting (True) or prediction (False).
+        :return: State-feature pandas.DataFrame or numpy.ndarray.
         """
         pass
 
     @staticmethod
-    def check_states_and_action_lists(
+    def check_state_and_action_lists(
             states: List[MdpState],
-            action_lists: List[List[Action]]
+            actions: List[Action]
     ):
         """
-        Check lengths of the state and action list lists.
+        Check lengths of the state and action lists. Will raise exception if list lengths are not equal.
 
         :param states: States.
-        :param action_lists: Action lists.
+        :param actions: Actions.
         """
 
         num_states = len(states)
-        num_action_lists = len(action_lists)
-        if num_states != num_action_lists:
-            raise ValueError(f'Expected {num_states} action lists but got {num_action_lists}')
+        num_actions = len(actions)
+        if num_states != num_actions:
+            raise ValueError(f'Expected {num_states} actions but got {num_actions}')
 
     @abstractmethod
     def get_feature_names(
@@ -134,27 +136,28 @@ class StateActionInteractionFeatureExtractor(FeatureExtractor, ABC):
 
     def interact(
             self,
-            action_lists: List[List[Action]],
-            state_features: np.ndarray
+            state_features: np.ndarray,
+            actions: List[Action]
     ) -> np.ndarray:
         """
-        Interact one-hot action vectors with a state-feature matrix.
+        Interact a state-feature matrix with one-hot encoded action vectors.
 
-        :param action_lists: Action lists (one list per row of `state_features`.
         :param state_features: Feature matrix (#states, #features)
-        :return: Interacted feature matrix (#actions * #states, #actions * #features)
+        :param actions: Actions.
+        :return: State-action interacted feature matrix (#actions * #states, #actions * #features)
         """
 
-        num_action_lists = len(action_lists)
         num_states = state_features.shape[0]
-        if num_action_lists != num_states:
-            raise ValueError(f'Expected {num_states} action lists, but got {num_action_lists}')
+        num_actions = len(actions)
+        if num_states != num_actions:
+            raise ValueError(f'Expected {num_states} actions, but got {num_actions}')
 
-        # interact each one-hot encoded action with the features
+        encoded_actions = self.action_encoder.transform(np.array(actions).reshape(-1, 1)).toarray()
+
+        # interact each feature-vector with its associated one-hot encoded action vector
         interacted_state_features = np.array([
-            [a * d for a, d in product(encoded_action, state_features_row)]
-            for actions, state_features_row in zip(action_lists, state_features)
-            for encoded_action in self.action_encoder.transform(np.array(actions).reshape(-1, 1)).toarray()
+            [a * d for a, d in product(encoded_action, state_features_vector)]
+            for state_features_vector, encoded_action in zip(state_features, encoded_actions)
         ])
 
         return interacted_state_features
@@ -241,22 +244,23 @@ class StateActionIdentityFeatureExtractor(FeatureExtractor):
     def extract(
             self,
             states: List[MdpState],
-            action_lists: List[List[Action]]
+            actions: List[Action],
+            for_fitting: bool
     ) -> Union[pd.DataFrame, np.ndarray]:
         """
-        Extract features for states and their associated actions.
+        Extract features for state-action pairs.
 
         :param states: States.
-        :param action_lists: Action lists, one list per state in `states`.
-        :return: State-feature matrix.
+        :param actions: Actions.
+        :param for_fitting: Whether the extracted features will be used for fitting (True) or prediction (False).
+        :return: State-feature pandas.DataFrame or numpy.ndarray.
         """
 
-        self.check_states_and_action_lists(states, action_lists)
+        self.check_state_and_action_lists(states, actions)
 
         return pd.DataFrame([
             (state.i, action.i)
-            for state, action_list in zip(states, action_lists)
-            for action in action_list
+            for state, action in zip(states, actions)
         ], columns=self.get_feature_names())
 
     def get_feature_names(

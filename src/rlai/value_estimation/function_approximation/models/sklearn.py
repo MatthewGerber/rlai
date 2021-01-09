@@ -6,7 +6,6 @@ import pandas as pd
 from numpy.random import RandomState
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import SGDRegressor
-from sklearn.preprocessing import StandardScaler
 
 from rlai.meta import rl_text
 from rlai.utils import parse_arguments
@@ -43,21 +42,21 @@ class SKLearnSGD(FunctionApproximationModel):
             '--sgd-alpha',
             type=float,
             default=0.0001,
-            help='Constant that multiplies the regularization term. The higher the value, the stronger the regularization. Also used to compute the learning rate when set to learning_rate is set to ‘optimal’.'
+            help='Constant that multiplies the regularization term. The higher the value, the stronger the regularization. Also used to compute the learning rate when set to learning_rate is set to `optimal`.'
         )
 
         parser.add_argument(
             '--learning-rate',
             type=str,
             default='invscaling',
-            help='Learning rate schedule:  ‘constant‘, ‘optimal‘, ‘invscaling‘, or ‘adaptive‘.'
+            help='Learning rate schedule:  `constant`, `optimal`, `invscaling`, or `adaptive`.'
         )
 
         parser.add_argument(
             '--eta0',
             type=float,
             default=0.01,
-            help='The initial learning rate for the ‘constant’, ‘invscaling’ or ‘adaptive’ schedules.'
+            help='The initial learning rate for the `constant`, `invscaling` or `adaptive` schedules.'
         )
 
         parser.add_argument(
@@ -105,14 +104,10 @@ class SKLearnSGD(FunctionApproximationModel):
         """
         Fit the model to a matrix of features (one row per observations) and a vector of returns.
 
-        :param X: Feature matrix (#obs x #features)
-        :param y: Outcome vector (#obs).
+        :param X: Feature matrix (#obs, #features)
+        :param y: Outcome vector (#obs,).
         :param weight: Weight.
         """
-
-        # update the feature scaler with the new data and then transform (scale)
-        self.feature_scaler.partial_fit(X)
-        X = self.feature_scaler.transform(X)
 
         self.model.partial_fit(X=X, y=y, sample_weight=weight)
 
@@ -123,18 +118,16 @@ class SKLearnSGD(FunctionApproximationModel):
         """
         Evaluate the model at a matrix of features (one row per observation).
 
-        :param X: Feature matrix (#obs x #features).
-        :return: Vector of outcomes from the evaluation (#obs).
+        :param X: Feature matrix (#obs, #features).
+        :return: Vector of outcomes from the evaluation (#obs,).
         """
 
         try:
 
             # predict values using the currently fitted model
-            X = self.feature_scaler.transform(X)
             values = self.model.predict(X)
 
-        # the following exception will be thrown if the scaler or model has not yet been fitted. catch and return
-        # uniformly valued outcomes.
+        # the following exception will be thrown if the model has not yet been fitted. catch and return uniform values.
         except NotFittedError:
             values = np.repeat(0.0, X.shape[0])
 
@@ -193,7 +186,6 @@ class SKLearnSGD(FunctionApproximationModel):
         """
 
         self.model = SGDRegressor(**kwargs)
-        self.feature_scaler = StandardScaler()
 
     def __eq__(
             self,

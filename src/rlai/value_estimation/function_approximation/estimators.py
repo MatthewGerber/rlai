@@ -274,7 +274,7 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         """
 
         self.experience_states.append(state)
-        self.experience_actions.append([action])
+        self.experience_actions.append(action)
         self.experience_values.append(value)
 
         if weight is not None:
@@ -282,6 +282,8 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
                 self.weights = np.array([weight])
             else:
                 self.weights = np.append(self.weights, [weight], axis=0)
+
+        self.experience_pending = True
 
     def update_policy(
             self,
@@ -300,16 +302,17 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
 
         self.epsilon = epsilon
 
-        # if we have data, then fit the model and reset the data.
-        if len(self.experience_states) > 0 and len(self.experience_actions) > 0:
+        # if we have pending experience, then fit the model and reset the data.
+        if self.experience_pending:
 
-            X = self.get_X(self.experience_states, self.experience_actions)
+            X = self.get_X(self.experience_states, self.experience_actions, True)
             self.model.fit(X, self.experience_values, self.weights)
 
             self.experience_states.clear()
             self.experience_actions.clear()
             self.experience_values.clear()
             self.weights = None
+            self.experience_pending = False
 
         if self.num_policy_updates is None:
             self.num_policy_updates = 1
@@ -328,27 +331,30 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
 
         :param state: State.
         :param actions: Actions to evaluate.
-        :return: Numpy array of evaluation results (values).
+        :return: Numpy array of evaluation results (state-action values).
         """
 
-        X = self.get_X([state], [actions])
+        # replicate the state for each action to evaluate each state-action pair
+        X = self.get_X([state] * len(actions), actions, False)
 
         return self.model.evaluate(X)
 
     def get_X(
             self,
             states: List[MdpState],
-            action_lists: List[List[Action]]
+            actions: List[Action],
+            for_fitting: bool
     ) -> np.ndarray:
         """
-        Extract features for states and their associated actions.
+        Extract features for state-action pairs.
 
         :param states: States.
-        :param action_lists: Action lists, one list per state in `states`.
-        :return: State-feature matrix.
+        :param actions: Actions.
+        :param for_fitting: Whether the extracted features will be used for fitting (True) or prediction (False).
+        :return: State-feature numpy.ndarray.
         """
 
-        X = self.feature_extractor.extract(states, action_lists)
+        X = self.feature_extractor.extract(states, actions, for_fitting)
 
         # if no formula, then use result directly.
         if self.formula is None:
@@ -495,9 +501,10 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         self.num_update_bins = num_update_bins
 
         self.experience_states: List[MdpState] = []
-        self.experience_actions: List[List[Action]] = []
+        self.experience_actions: List[Action] = []
         self.experience_values: List[float] = []
         self.weights: np.ndarray = None
+        self.experience_pending: bool = False
         self.num_policy_updates: Optional[int] = None
         self.plot_df: Optional[pd.DataFrame] = None
 

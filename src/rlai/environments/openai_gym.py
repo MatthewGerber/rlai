@@ -9,7 +9,8 @@ import numpy as np
 import pandas as pd
 from gym.spaces import Discrete, Box
 from numpy.random import RandomState
-from sklearn.preprocessing import PolynomialFeatures
+from sklearn.exceptions import NotFittedError
+from sklearn.preprocessing import PolynomialFeatures, StandardScaler
 
 from rlai.actions import Action, DiscretizedAction
 from rlai.agents.mdp import MdpAgent
@@ -356,25 +357,43 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
     def extract(
             self,
             states: List[MdpState],
-            action_lists: List[List[Action]]
+            actions: List[Action],
+            for_fitting: bool
     ) -> Union[pd.DataFrame, np.ndarray]:
         """
-        Extract features for states and their associated actions.
+        Extract features for state-action pairs.
 
         :param states: States.
-        :param action_lists: Action lists, one list per state in `states`.
-        :return: State-feature matrix.
+        :param actions: Actions.
+        :param for_fitting: Whether the extracted features will be used for fitting (True) or prediction (False).
+        :return: State-feature pandas.DataFrame or numpy.ndarray.
         """
 
-        self.check_states_and_action_lists(states, action_lists)
+        self.check_state_and_action_lists(states, actions)
 
-        return self.interact(
-            action_lists=action_lists,
+        X = self.interact(
             state_features=self.polynomial_features.fit_transform(np.array([
                 state.observation
                 for state in states
-            ]))
+            ])),
+            actions=actions
         )
+
+        # only update the scaler if the features will be for fitting. if they will be for prediction, then we should use
+        # whatever scaling parameters were obtained for fitting, as that's what the model coefficients are set for.
+        if for_fitting:
+            self.feature_scaler.partial_fit(X)
+
+        # scale features
+        try:
+
+            X = self.feature_scaler.transform(X)
+
+        # the following exception will be thrown if the scaler has not yet been fitted. catch and ignore scaling.
+        except NotFittedError:
+            pass
+
+        return X
 
     def get_feature_names(
             self
@@ -427,3 +446,5 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
             interaction_only=True,
             include_bias=False
         )
+
+        self.feature_scaler = StandardScaler()
