@@ -6,7 +6,9 @@ in this environment. The episode terminates almost immediately as the agent lose
 
 {% include youtubePlayer.html id="rGnf9CFwD7M" %}
 
-## Training
+## Tabular State-Action Value Function
+
+### Training
 
 Train a control agent for the inverted pendulum environment with the following command.
 ```
@@ -49,10 +51,13 @@ right sub-figure shows the same reward y-axis but along a time x-axis. Based on 
 that the agent would have continued to improve its policy given more time; however, as shown below, the results are 
 quite satisfactory after 7 hours of wallclock training time.
 
-## Results
+### Results
 
 The video below shows the trained agent controlling the inverted pendulum. Note how the agent actively controls both the 
 vertical balance of the pendulum (ideally upright) and the cart's horizontal position along the track (ideally in the 
 middle). The episode ends after the maximum number of time steps is reached, rather than due to a control failure.
 
 {% include youtubePlayer.html id="bnQFT31_WfI" %}
+
+## Parametric State-Action Value Function
+

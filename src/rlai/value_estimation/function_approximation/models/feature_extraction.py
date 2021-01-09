@@ -51,17 +51,34 @@ class FeatureExtractor(ABC):
     @abstractmethod
     def extract(
             self,
-            state: MdpState,
-            actions: List[Action]
+            states: List[MdpState],
+            action_lists: List[List[Action]]
     ) -> Union[pd.DataFrame, np.ndarray]:
         """
-        Extract features from a state and actions.
+        Extract features for states and their associated actions.
 
-        :param state: State.
-        :param actions: Actions.
-        :return: DataFrame with one row per action and one column per feature.
+        :param states: States.
+        :param action_lists: Action lists, one list per state in `states`.
+        :return: State-feature matrix.
         """
         pass
+
+    @staticmethod
+    def check_states_and_action_lists(
+            states: List[MdpState],
+            action_lists: List[List[Action]]
+    ):
+        """
+        Check lengths of the state and action list lists.
+
+        :param states: States.
+        :param action_lists: Action lists.
+        """
+
+        num_states = len(states)
+        num_action_lists = len(action_lists)
+        if num_states != num_action_lists:
+            raise ValueError(f'Expected {num_states} action lists but got {num_action_lists}')
 
     @abstractmethod
     def get_feature_names(
@@ -117,31 +134,30 @@ class StateActionInteractionFeatureExtractor(FeatureExtractor, ABC):
 
     def interact(
             self,
-            actions: List[Action],
+            action_lists: List[List[Action]],
             state_features: np.ndarray
     ) -> np.ndarray:
         """
-        Interact one-hot action vectors with a feature matrix.
+        Interact one-hot action vectors with a state-feature matrix.
 
-        :param actions: Actions to interact.
-        :param state_features: Feature matrix (#features)
-        :return: Interacted feature matrix (#actions, #actions * #features)
+        :param action_lists: Action lists (one list per row of `state_features`.
+        :param state_features: Feature matrix (#states, #features)
+        :return: Interacted feature matrix (#actions * #states, #actions * #features)
         """
 
-        if len(state_features.shape) != 1:
-            raise ValueError('Expected a one-dimensional state-feature vector.')
+        num_action_lists = len(action_lists)
+        num_states = state_features.shape[0]
+        if num_action_lists != num_states:
+            raise ValueError(f'Expected {num_states} action lists, but got {num_action_lists}')
 
-        # one-hot encode the actions
-        action_array = np.array(actions).reshape(-1, 1)
-        encoded_actions = self.action_encoder.transform(action_array).toarray()
-
-        # interact each action with the features
-        state_features = np.array([
-            [a * d for a, d in product(encoded_action, state_features)]
-            for encoded_action in encoded_actions
+        # interact each one-hot encoded action with the features
+        interacted_state_features = np.array([
+            [a * d for a, d in product(encoded_action, state_features_row)]
+            for actions, state_features_row in zip(action_lists, state_features)
+            for encoded_action in self.action_encoder.transform(np.array(actions).reshape(-1, 1)).toarray()
         ])
 
-        return state_features
+        return interacted_state_features
 
     def __init__(
             self,
@@ -224,20 +240,23 @@ class StateActionIdentityFeatureExtractor(FeatureExtractor):
 
     def extract(
             self,
-            state: MdpState,
-            actions: List[Action]
+            states: List[MdpState],
+            action_lists: List[List[Action]]
     ) -> Union[pd.DataFrame, np.ndarray]:
         """
-        Extract discrete state and action identifiers.
+        Extract features for states and their associated actions.
 
-        :param state: State.
-        :param actions: Actions.
-        :return: DataFrame with one row per action and two columns (one for the state and one for the action).
+        :param states: States.
+        :param action_lists: Action lists, one list per state in `states`.
+        :return: State-feature matrix.
         """
+
+        self.check_states_and_action_lists(states, action_lists)
 
         return pd.DataFrame([
             (state.i, action.i)
-            for action in actions
+            for state, action_list in zip(states, action_lists)
+            for action in action_list
         ], columns=self.get_feature_names())
 
     def get_feature_names(

@@ -355,25 +355,25 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
 
     def extract(
             self,
-            state: GymState,
-            actions: List[Action]
+            states: List[MdpState],
+            action_lists: List[List[Action]]
     ) -> Union[pd.DataFrame, np.ndarray]:
         """
-        Extract features.
+        Extract features for states and their associated actions.
 
-        :param state: State.
-        :param actions: Actions.
-        :return: Feature matrix (#actions, #actions * #features)
+        :param states: States.
+        :param action_lists: Action lists, one list per state in `states`.
+        :return: State-feature matrix.
         """
 
-        if state.observation.shape != (4,):
-            raise ValueError('Expected 4-dimensional observation vector.')
-
-        state_features = self.polynomial_features.fit_transform(np.array([state.observation]))[0]
+        self.check_states_and_action_lists(states, action_lists)
 
         return self.interact(
-            actions=actions,
-            state_features=state_features
+            action_lists=action_lists,
+            state_features=self.polynomial_features.fit_transform(np.array([
+                state.observation
+                for state in states
+            ]))
         )
 
     def get_feature_names(

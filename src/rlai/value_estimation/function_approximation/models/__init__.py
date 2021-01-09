@@ -58,14 +58,14 @@ class FunctionApproximationModel(ABC):
     @abstractmethod
     def fit(
             self,
-            X: np.ndarray,
-            y: np.ndarray,
+            X: Any,
+            y: Any,
             weight: Optional[float]
     ):
         """
         Fit the model to a matrix of features and a vector of returns.
 
-        :param X: Features.
+        :param X: Feature matrix.
         :param y: Returns.
         :param weight: Weight.
         """

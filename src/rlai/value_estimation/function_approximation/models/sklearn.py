@@ -1,5 +1,5 @@
 from argparse import ArgumentParser
-from typing import Tuple, List, Optional
+from typing import Tuple, List, Optional, Any
 
 import numpy as np
 import pandas as pd
@@ -43,14 +43,14 @@ class SKLearnSGD(FunctionApproximationModel):
             '--sgd-alpha',
             type=float,
             default=0.0001,
-            help='Constant that multiplies the regularization term. The higher the value, the stronger the regularization.'
+            help='Constant that multiplies the regularization term. The higher the value, the stronger the regularization. Also used to compute the learning rate when set to learning_rate is set to ‘optimal’.'
         )
 
         parser.add_argument(
             '--learning-rate',
             type=str,
             default='invscaling',
-            help='Learning rate schedule.'
+            help='Learning rate schedule:  ‘constant‘, ‘optimal‘, ‘invscaling‘, or ‘adaptive‘.'
         )
 
         parser.add_argument(
@@ -58,6 +58,13 @@ class SKLearnSGD(FunctionApproximationModel):
             type=float,
             default=0.01,
             help='The initial learning rate for the ‘constant’, ‘invscaling’ or ‘adaptive’ schedules.'
+        )
+
+        parser.add_argument(
+            '--power-t',
+            type=float,
+            default=0.25,
+            help='The exponent for inverse scaling learning rate.'
         )
 
         return parser
@@ -91,8 +98,8 @@ class SKLearnSGD(FunctionApproximationModel):
 
     def fit(
             self,
-            X: np.ndarray,
-            y: np.ndarray,
+            X: Any,
+            y: Any,
             weight: Optional[float]
     ):
         """
@@ -123,10 +130,11 @@ class SKLearnSGD(FunctionApproximationModel):
         try:
 
             # predict values using the currently fitted model
+            X = self.feature_scaler.transform(X)
             values = self.model.predict(X)
 
-        # the following exception will be thrown if the model has not yet been fitted. catch and return uniformly valued
-        # outcomes.
+        # the following exception will be thrown if the scaler or model has not yet been fitted. catch and return
+        # uniformly valued outcomes.
         except NotFittedError:
             values = np.repeat(0.0, X.shape[0])
 

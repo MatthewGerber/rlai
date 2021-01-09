@@ -273,17 +273,9 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         :param weight: Weight.
         """
 
-        sample_X = self.get_X(state, [action])
-        if self.X is None:
-            self.X = sample_X
-        else:
-            self.X = np.append(self.X, sample_X, axis=0)
-
-        sample_y = np.array([value])
-        if self.y is None:
-            self.y = sample_y
-        else:
-            self.y = np.append(self.y, sample_y, axis=0)
+        self.experience_states.append(state)
+        self.experience_actions.append([action])
+        self.experience_values.append(value)
 
         if weight is not None:
             if self.weights is None:
@@ -309,10 +301,14 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         self.epsilon = epsilon
 
         # if we have data, then fit the model and reset the data.
-        if self.X is not None and self.y is not None:
-            self.model.fit(self.X, self.y, self.weights)
-            self.X = None
-            self.y = None
+        if len(self.experience_states) > 0 and len(self.experience_actions) > 0:
+
+            X = self.get_X(self.experience_states, self.experience_actions)
+            self.model.fit(X, self.experience_values, self.weights)
+
+            self.experience_states.clear()
+            self.experience_actions.clear()
+            self.experience_values.clear()
             self.weights = None
 
         if self.num_policy_updates is None:
@@ -335,24 +331,24 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         :return: Numpy array of evaluation results (values).
         """
 
-        X = self.get_X(state, actions)
+        X = self.get_X([state], [actions])
 
         return self.model.evaluate(X)
 
     def get_X(
             self,
-            state: MdpState,
-            actions: List[Action]
+            states: List[MdpState],
+            action_lists: List[List[Action]]
     ) -> np.ndarray:
         """
-        Get feature matrix for a state and list of actions.
+        Extract features for states and their associated actions.
 
-        :param state: State.
-        :param actions: Actions.
-        :return: Feature matrix (#obs, #features).
+        :param states: States.
+        :param action_lists: Action lists, one list per state in `states`.
+        :return: State-feature matrix.
         """
 
-        X = self.feature_extractor.extract(state, actions)
+        X = self.feature_extractor.extract(states, action_lists)
 
         # if no formula, then use result directly.
         if self.formula is None:
@@ -498,8 +494,9 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         self.num_updates_between_plots = num_updates_between_plots
         self.num_update_bins = num_update_bins
 
-        self.X: np.ndarray = None
-        self.y: np.ndarray = None
+        self.experience_states: List[MdpState] = []
+        self.experience_actions: List[List[Action]] = []
+        self.experience_values: List[float] = []
         self.weights: np.ndarray = None
         self.num_policy_updates: Optional[int] = None
         self.plot_df: Optional[pd.DataFrame] = None
