@@ -9,8 +9,7 @@ import numpy as np
 import pandas as pd
 from gym.spaces import Discrete, Box
 from numpy.random import RandomState
-from sklearn.exceptions import NotFittedError
-from sklearn.preprocessing import PolynomialFeatures, StandardScaler
+from sklearn.preprocessing import PolynomialFeatures
 
 from rlai.actions import Action, DiscretizedAction
 from rlai.agents.mdp import MdpAgent
@@ -372,28 +371,42 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
         self.check_state_and_action_lists(states, actions)
 
         X = self.interact(
-            state_features=self.polynomial_features.fit_transform(np.array([
-                state.observation
+            state_features=np.array([
+                self.compose_features(state.observation)
                 for state in states
-            ])),
+            ]),
             actions=actions
         )
 
-        # only update the scaler if the features will be for fitting. if they will be for prediction, then we should use
-        # whatever scaling parameters were obtained for fitting, as that's what the model coefficients are set for.
-        if for_fitting:
-            self.feature_scaler.partial_fit(X)
-
-        # scale features
-        try:
-
-            X = self.feature_scaler.transform(X)
-
-        # the following exception will be thrown if the scaler has not yet been fitted. catch and ignore scaling.
-        except NotFittedError:
-            pass
+        X = self.scale_features(X, for_fitting)
 
         return X
+
+    @staticmethod
+    def compose_features(
+            observation: np.ndarray
+    ) -> np.ndarray:
+
+        (
+            cart_position,
+            cart_velocity,
+            pole_angle,
+            pole_angular_velocity
+        ) = observation
+
+        # self.feature_names = [
+        #     'ctPos',
+        #     'ctVel',
+        #     'plAng',
+        #     'plAngVel'
+        # ]
+
+        return np.ravel(np.array([
+            [pole_angle * (pole_angular_velocity <= 0), pole_angle * (pole_angular_velocity > 0)],
+            [pole_angular_velocity * (pole_angle <= 0), pole_angular_velocity * (pole_angle > 0)],
+            [cart_position * (cart_velocity <= 0), cart_position * (cart_velocity > 0)],
+            [cart_velocity * (cart_position <= 0), cart_velocity * (cart_position > 0)]
+        ]))
 
     def get_feature_names(
             self
@@ -404,12 +417,16 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
         :return: List of feature names.
         """
 
-        return self.polynomial_features.get_feature_names([
-            'ctPos',
-            'ctVel',
-            'plAng',
-            'plAngVel'
-        ])
+        return [
+            'plAngNegVel',
+            'plAngPosVel',
+            'plVelNegAng',
+            'plVelPosAng',
+            'ctPosNegVel',
+            'ctPosPosVel',
+            'ctVelNegPos',
+            'ctVelPosPos'
+        ]  # self.polynomial_features.get_feature_names(self.feature_names)
 
     def __init__(
             self,
@@ -442,9 +459,7 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
         )
 
         self.polynomial_features = PolynomialFeatures(
-            degree=environment.gym_native.observation_space.shape[0],
+            degree=1,
             interaction_only=True,
             include_bias=False
         )
-
-        self.feature_scaler = StandardScaler()

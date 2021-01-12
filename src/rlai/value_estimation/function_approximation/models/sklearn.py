@@ -6,6 +6,7 @@ import pandas as pd
 from numpy.random import RandomState
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import SGDRegressor
+from sklearn.preprocessing import StandardScaler
 
 from rlai.meta import rl_text
 from rlai.utils import parse_arguments
@@ -38,6 +39,36 @@ class SKLearnSGD(FunctionApproximationModel):
             add_help=False
         )
 
+        # loss
+        parser.add_argument(
+            '--loss',
+            type=str,
+            default='squared_loss',
+            help='The loss function to be used. The possible values are `squared_loss`, `huber`, `epsilon_insensitive`, or `squared_epsilon_insensitive`.'
+        )
+
+        parser.add_argument(
+            '--sgd-epsilon',
+            type=float,
+            default=0.1,
+            help='Epsilon in the epsilon-insensitive loss functions.'
+        )
+
+        # regularization
+        parser.add_argument(
+            '--penalty',
+            type=str,
+            default='l2',
+            help='The penalty (aka regularization term) to be used. The possible values are `l2`, `l1`, `elasticnet`.'
+        )
+
+        parser.add_argument(
+            '--l1-ratio',
+            type=float,
+            default=0.15,
+            help='The elasticnet mixing parameter (0 for pure L2 and 1 for pure L1.'
+        )
+
         parser.add_argument(
             '--sgd-alpha',
             type=float,
@@ -45,6 +76,7 @@ class SKLearnSGD(FunctionApproximationModel):
             help='Constant that multiplies the regularization term. The higher the value, the stronger the regularization. Also used to compute the learning rate when set to learning_rate is set to `optimal`.'
         )
 
+        # learning rate (step size)
         parser.add_argument(
             '--learning-rate',
             type=str,
@@ -66,6 +98,14 @@ class SKLearnSGD(FunctionApproximationModel):
             help='The exponent for inverse scaling learning rate.'
         )
 
+        # other stuff
+        parser.add_argument(
+            '--verbose',
+            type=int,
+            default=0,
+            help='The verbosity level.'
+        )
+
         return parser
 
     @classmethod
@@ -84,10 +124,13 @@ class SKLearnSGD(FunctionApproximationModel):
 
         parsed_args, unparsed_args = parse_arguments(cls, args)
 
-        # alpha conflicts with gpi function arguments
+        # process conflicting parameters
         setattr(parsed_args, 'alpha', parsed_args.sgd_alpha)
         del parsed_args.sgd_alpha
+        setattr(parsed_args, 'epsilon', parsed_args.sgd_epsilon)
+        del parsed_args.sgd_epsilon
 
+        # instantiate model
         model = SKLearnSGD(
             random_state=random_state,
             **vars(parsed_args)
@@ -108,6 +151,9 @@ class SKLearnSGD(FunctionApproximationModel):
         :param y: Outcome vector (#obs,).
         :param weight: Weight.
         """
+
+        y = np.array(y).reshape(-1, 1)
+        y = StandardScaler().fit(y).transform(y)
 
         self.model.partial_fit(X=X, y=y, sample_weight=weight)
 
