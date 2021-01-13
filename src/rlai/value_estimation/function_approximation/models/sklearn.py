@@ -6,7 +6,6 @@ import pandas as pd
 from numpy.random import RandomState
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import SGDRegressor
-from sklearn.preprocessing import StandardScaler
 
 from rlai.meta import rl_text
 from rlai.utils import parse_arguments
@@ -151,9 +150,6 @@ class SKLearnSGD(FunctionApproximationModel):
         :param y: Outcome vector (#obs,).
         :param weight: Weight.
         """
-
-        y = np.array(y).reshape(-1, 1)
-        y = StandardScaler().fit(y).transform(y)
 
         self.model.partial_fit(X=X, y=y, sample_weight=weight)
 

@@ -9,7 +9,6 @@ import numpy as np
 import pandas as pd
 from gym.spaces import Discrete, Box
 from numpy.random import RandomState
-from sklearn.preprocessing import PolynomialFeatures
 
 from rlai.actions import Action, DiscretizedAction
 from rlai.agents.mdp import MdpAgent
@@ -20,7 +19,7 @@ from rlai.states import State
 from rlai.states.mdp import MdpState
 from rlai.utils import parse_arguments
 from rlai.value_estimation.function_approximation.models.feature_extraction import (
-    StateActionInteractionFeatureExtractor
+    StateActionInteractionFeatureExtractor, OneHotCategoricalFeatureInteracter
 )
 
 
@@ -370,43 +369,29 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
 
         self.check_state_and_action_lists(states, actions)
 
+        feature_matrix = np.array([
+            state.observation
+            for state in states
+        ])
+
+        contexts = [
+            FeatureContext(
+                cart_left_of_center=state.observation[0] < 0,
+                cart_moving_left=state.observation[1] < 0,
+                pole_left_of_vertical=state.observation[2] < 0,
+                pole_rotating_left=state.observation[3] < 0
+            )
+            for state in states
+        ]
+
+        feature_context_interaction = self.context_interacter.interact(feature_matrix, contexts)
+
         X = self.interact(
-            state_features=np.array([
-                self.compose_features(state.observation)
-                for state in states
-            ]),
+            state_features=feature_context_interaction,
             actions=actions
         )
 
-        X = self.scale_features(X, for_fitting)
-
         return X
-
-    @staticmethod
-    def compose_features(
-            observation: np.ndarray
-    ) -> np.ndarray:
-
-        (
-            cart_position,
-            cart_velocity,
-            pole_angle,
-            pole_angular_velocity
-        ) = observation
-
-        # self.feature_names = [
-        #     'ctPos',
-        #     'ctVel',
-        #     'plAng',
-        #     'plAngVel'
-        # ]
-
-        return np.ravel(np.array([
-            [pole_angle * (pole_angular_velocity <= 0), pole_angle * (pole_angular_velocity > 0)],
-            [pole_angular_velocity * (pole_angle <= 0), pole_angular_velocity * (pole_angle > 0)],
-            [cart_position * (cart_velocity <= 0), cart_position * (cart_velocity > 0)],
-            [cart_velocity * (cart_position <= 0), cart_velocity * (cart_position > 0)]
-        ]))
 
     def get_feature_names(
             self
@@ -417,16 +402,18 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
         :return: List of feature names.
         """
 
+        observation_feature_names = [
+            'cartPos',
+            'cartVel',
+            'polePos',
+            'poleVel'
+        ]
+
         return [
-            'plAngNegVel',
-            'plAngPosVel',
-            'plVelNegAng',
-            'plVelPosAng',
-            'ctPosNegVel',
-            'ctPosPosVel',
-            'ctVelNegPos',
-            'ctVelPosPos'
-        ]  # self.polynomial_features.get_feature_names(self.feature_names)
+            f'{context}_{name}'
+            for context in self.contexts
+            for name in observation_feature_names
+        ]
 
     def __init__(
             self,
@@ -458,8 +445,58 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
             ]
         )
 
-        self.polynomial_features = PolynomialFeatures(
-            degree=1,
-            interaction_only=True,
-            include_bias=False
-        )
+        self.contexts = [
+            FeatureContext(*context_bools)
+            for context_bools in product([True, False], [True, False], [True, False], [True, False])
+        ]
+
+        self.context_interacter = OneHotCategoricalFeatureInteracter(self.contexts)
+
+
+class FeatureContext:
+
+    def __init__(
+            self,
+            cart_left_of_center: bool,
+            cart_moving_left: bool,
+            pole_left_of_vertical: bool,
+            pole_rotating_left: bool
+    ):
+        self.cart_left_of_center = cart_left_of_center
+        self.cart_moving_left = cart_moving_left
+        self.pole_left_of_vertical = pole_left_of_vertical
+        self.pole_rotating_left = pole_rotating_left
+        self.i = hash(str(self))
+
+    def __eq__(
+            self,
+            other
+    ) -> bool:
+
+        other: FeatureContext
+
+        return all([
+            self.cart_left_of_center == other.cart_left_of_center,
+            self.cart_moving_left == other.cart_moving_left,
+            self.pole_left_of_vertical == other.pole_left_of_vertical,
+            self.pole_rotating_left == other.pole_rotating_left
+        ])
+
+    def __ne__(
+            self,
+            other
+    ) -> bool:
+
+        return not (self == other)
+
+    def __hash__(
+            self
+    ) -> int:
+
+        return self.i
+
+    def __str__(
+            self
+    ) -> str:
+
+        return f'{self.cart_left_of_center}_{self.cart_moving_left}_{self.pole_left_of_vertical}_{self.pole_rotating_left}'

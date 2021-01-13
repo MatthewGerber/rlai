@@ -176,27 +176,14 @@ class StateActionInteractionFeatureExtractor(FeatureExtractor, ABC):
             actions: List[Action]
     ) -> np.ndarray:
         """
-        Interact a state-feature matrix with one-hot encoded action vectors.
+        Interact a state-feature matrix with one-hot encoded actions.
 
         :param state_features: Feature matrix (#states, #features)
-        :param actions: Actions.
-        :return: State-action interacted feature matrix (#states, #actions * #features)
+        :param actions: Actions, with length equal to #states.
+        :return: State-action interacted feature matrix (#states, #action levels * #features)
         """
 
-        num_states = state_features.shape[0]
-        num_actions = len(actions)
-        if num_states != num_actions:
-            raise ValueError(f'Expected {num_states} actions, but got {num_actions}')
-
-        encoded_actions = self.action_encoder.transform(np.array(actions).reshape(-1, 1)).toarray()
-
-        # interact each feature-vector with its associated one-hot encoded action vector
-        interacted_state_features = np.array([
-            [a * d for a, d in product(encoded_action, state_features_vector)]
-            for state_features_vector, encoded_action in zip(state_features, encoded_actions)
-        ])
-
-        return interacted_state_features
+        return self.interacter.interact(state_features, actions)
 
     def __init__(
             self,
@@ -216,10 +203,7 @@ class StateActionInteractionFeatureExtractor(FeatureExtractor, ABC):
 
         self.actions = actions
 
-        # initialize the one-hot action encoder
-        action_array = np.array([actions])
-        self.action_encoder = OneHotEncoder(categories=action_array)
-        self.action_encoder.fit(action_array.reshape(-1, 1))
+        self.interacter = OneHotCategoricalFeatureInteracter(actions)
 
 
 @rl_text(chapter='Feature Extractors', page=1)
@@ -322,3 +306,52 @@ class StateActionIdentityFeatureExtractor(FeatureExtractor):
         super().__init__(
             environment=environment
         )
+
+
+class OneHotCategoricalFeatureInteracter:
+    """
+    Feature interacter for one-hot encoded categorical values.
+    """
+
+    def interact(
+            self,
+            feature_matrix: np.ndarray,
+            categorical_values: List[Any]
+    ) -> np.ndarray:
+        """
+        Perform one-hot interaction of a matrix of feature vectors with associated categorical levels.
+
+        :param feature_matrix: Feature matrix (#obs, #features).
+        :param categorical_values: List of categorical levels, with length equal to #obs.
+        :return: Interacted feature matrix (#obs, #features * #levels).
+        """
+
+        num_rows = feature_matrix.shape[0]
+        num_cats = len(categorical_values)
+        if num_rows != num_cats:
+            raise ValueError(f'Expected {num_rows} categorical values but got {num_cats}')
+
+        categorical_array = np.array(categorical_values).reshape(-1, 1)
+        encoded_categoricals = self.category_encoder.transform(categorical_array).toarray()
+
+        # interact each feature-vector with its associated one-hot encoded categorical vector
+        interacted_state_features = np.array([
+            [level * value for level, value in product(encoded_categorical, features_vector)]
+            for features_vector, encoded_categorical in zip(feature_matrix, encoded_categoricals)
+        ])
+
+        return interacted_state_features
+
+    def __init__(
+            self,
+            categories: List[Any]
+    ):
+        """
+        Initialize the interacter.
+
+        :param categories: List of categories. These can be of any type that is hashable.
+        """
+
+        category_array = np.array([categories])
+        self.category_encoder = OneHotEncoder(categories=category_array)
+        self.category_encoder.fit(category_array.reshape(-1, 1))
