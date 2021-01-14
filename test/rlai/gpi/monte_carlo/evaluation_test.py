@@ -46,7 +46,7 @@ def test_evaluate_q_pi():
 
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
 
-    q_S_A = TabularStateActionValueEstimator(mdp_environment, None)
+    q_S_A = TabularStateActionValueEstimator(mdp_environment, None, None)
 
     mdp_agent = StochasticMdpAgent(
         'test',

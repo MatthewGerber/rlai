@@ -18,6 +18,7 @@ def iterate_value_q_pi(
         environment: MdpEnvironment,
         num_improvements: int,
         num_episodes_per_improvement: int,
+        num_updates_per_improvement: Optional[int],
         alpha: Optional[float],
         mode: Union[Mode, str],
         n_steps: Optional[int],
@@ -35,8 +36,10 @@ def iterate_value_q_pi(
     :param agent: Agent.
     :param environment: Environment.
     :param num_improvements: Number of policy improvements to make.
-    :param num_episodes_per_improvement: Number of policy evaluation episodes to execute for each iteration of
+    :param num_episodes_per_improvement: Number of policy evaluation episodes to execute for each iteration of policy
     improvement.
+    :param num_updates_per_improvement: Number of state-action value updates to execute for each iteration of policy
+    improvement, or None for policy improvement per specified number of episodes.
     :param alpha: Constant step size to use when updating Q-values, or None for 1/n step size.
     :param mode: Evaluation mode (see `rlai.gpi.temporal_difference.evaluation.Mode`).
     :param n_steps: Number of steps (see `rlai.gpi.temporal_difference.evaluation.evaluate_q_pi`).
@@ -76,6 +79,8 @@ def iterate_value_q_pi(
             agent=agent,
             environment=environment,
             num_episodes=num_episodes_per_improvement,
+            num_updates_per_improvement=num_updates_per_improvement,
+            epsilon=epsilon,
             alpha=alpha,
             mode=mode,
             n_steps=n_steps,
@@ -104,6 +109,7 @@ def iterate_value_q_pi(
                 environment=planning_environment,
                 num_improvements=planning_environment.num_planning_improvements_per_direct_improvement,
                 num_episodes_per_improvement=num_episodes_per_improvement,
+                num_updates_per_improvement=num_updates_per_improvement,
                 alpha=alpha,
                 mode=mode,
                 n_steps=n_steps,
@@ -145,6 +151,7 @@ def iterate_value_q_pi(
                 'environment': environment,
                 'num_improvements': num_improvements - i,
                 'num_episodes_per_improvement': num_episodes_per_improvement,
+                'num_updates_per_improvement': num_updates_per_improvement,
                 'alpha': alpha,
                 'mode': mode,
                 'n_steps': n_steps,

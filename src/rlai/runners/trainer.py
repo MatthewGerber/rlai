@@ -130,6 +130,12 @@ def run(
         )
 
         filter_add_argument(
+            '--num-updates-per-improvement',
+            type=int,
+            help='Number of state-action value updates per policy improvement.'
+        )
+
+        filter_add_argument(
             '--update-upon-every-visit',
             type=str,
             choices=['True', 'False'],

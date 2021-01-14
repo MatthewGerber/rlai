@@ -35,6 +35,8 @@ def evaluate_q_pi(
         agent: MdpAgent,
         environment: MdpEnvironment,
         num_episodes: int,
+        num_updates_per_improvement: Optional[int],
+        epsilon: float,
         alpha: Optional[float],
         mode: Mode,
         n_steps: Optional[int],
@@ -49,6 +51,9 @@ def evaluate_q_pi(
     :param agent: Agent containing target policy to be optimized.
     :param environment: Environment.
     :param num_episodes: Number of episodes to execute.
+    :param num_updates_per_improvement: Number of state-action value updates to execute for each iteration of policy
+    improvement, or None for policy improvement per specified number of episodes.
+    :param epsilon: Epsilon.
     :param alpha: Constant step size to use when updating Q-values, or None for 1/n step size.
     :param mode: Evaluation mode (see `rlai.gpi.temporal_difference.evaluation.Mode`).
     :param n_steps: Number of steps to accumulate rewards before updating estimated state-action values. Must be in the
@@ -161,7 +166,9 @@ def evaluate_q_pi(
                     next_state_q_s_a=next_state_q_s_a,
                     alpha=alpha,
                     evaluated_states=evaluated_states,
-                    planning_environment=planning_environment
+                    planning_environment=planning_environment,
+                    num_updates_per_improvement=num_updates_per_improvement,
+                    epsilon=epsilon
                 )
 
             # advance the episode
@@ -183,7 +190,9 @@ def evaluate_q_pi(
                 next_state_q_s_a=0.0,
                 alpha=alpha,
                 evaluated_states=evaluated_states,
-                planning_environment=planning_environment
+                planning_environment=planning_environment,
+                num_updates_per_improvement=num_updates_per_improvement,
+                epsilon=epsilon
             )
             curr_t += 1
 
@@ -268,7 +277,9 @@ def update_q_S_A(
         next_state_q_s_a: float,
         alpha: float,
         evaluated_states: Set[MdpState],
-        planning_environment: Optional[MdpPlanningEnvironment]
+        planning_environment: Optional[MdpPlanningEnvironment],
+        num_updates_per_improvement: Optional[int],
+        epsilon: float
 ):
     """
     Update the value of the n-step state/action pair with the n-step TD target. The n-step TD target is the truncated
@@ -287,7 +298,12 @@ def update_q_S_A(
     :param evaluated_states: Evaluated states.
     :param planning_environment: Planning environment to be updated with experience gained during evaluation, or None to
     ignore the environment model.
+    :param num_updates_per_improvement: Number of state-action value updates to execute for each iteration of policy
+    improvement, or None for policy improvement per specified number of episodes.
+    :param epsilon: Epsilon.
     """
+
+    update_policy = False
 
     # if we're currently far enough along (i.e., have accumulated sufficient rewards), then update.
     update_t = curr_t - n_steps + 1
@@ -322,3 +338,14 @@ def update_q_S_A(
 
         # remove the time step from our n-step structure
         del t_state_a_g[update_t]
+
+        # update the policy per num updates
+        if num_updates_per_improvement is not None and q_S_A.update_count % num_updates_per_improvement == 0:
+            update_policy = True
+
+    if update_policy:
+        q_S_A.update_policy(
+            agent=agent,
+            states=evaluated_states,
+            epsilon=epsilon
+        )

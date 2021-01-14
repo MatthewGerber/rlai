@@ -43,6 +43,8 @@ class ApproximateValueEstimator(ValueEstimator):
 
         self.estimator.add_sample(self.state, self.action, value, weight)
 
+        self.estimator.update_count += 1
+
     def get_value(
             self
     ) -> float:
@@ -289,7 +291,7 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
             self,
             agent: MdpAgent,
             states: Optional[Set[MdpState]],
-            epsilon: float
+            epsilon: Optional[float]
     ) -> int:
         """
         Update an agent's policy using the current sample of experience collected through calls to `add_sample`.
@@ -299,6 +301,9 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         :param epsilon: Epsilon.
         :return: Number of states updated.
         """
+
+        if epsilon is None:
+            epsilon = 0.0
 
         self.epsilon = epsilon
 
@@ -488,11 +493,11 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         :param num_update_bins: Number of update bins, or None for no binning.
         """
 
-        if epsilon is None:
-            epsilon = 0.0
+        super().__init__(
+            environment=environment,
+            epsilon=epsilon
+        )
 
-        self.environment = environment
-        self.epsilon = epsilon
         self.model = model
         self.feature_extractor = feature_extractor
         self.formula = formula

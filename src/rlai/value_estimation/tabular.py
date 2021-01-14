@@ -37,6 +37,8 @@ class TabularValueEstimator(ValueEstimator):
             weight=weight
         )
 
+        self.estimator.update_count += 1
+
     def get_value(
             self
     ) -> float:
@@ -50,15 +52,19 @@ class TabularValueEstimator(ValueEstimator):
 
     def __init__(
             self,
+            estimator,
             alpha: float,
             weighted: bool
     ):
         """
         Initialize the estimator.
 
+        :param estimator: Estimator
         :param alpha: Step size.
         :param weighted: Whether estimator should be weighted.
         """
+
+        self.estimator: TabularStateActionValueEstimator = estimator
 
         self.averager = IncrementalSampleAverager(
             alpha=alpha,
@@ -101,11 +107,16 @@ class TabularActionValueEstimator(ActionValueEstimator):
     """
 
     def __init__(
-            self
+            self,
+            estimator
     ):
         """
         Initialize the estimator.
+
+        :param estimator: Estimator.
         """
+
+        self.estimator: TabularStateActionValueEstimator = estimator
 
         self.q_A: Dict[Action, TabularValueEstimator] = {}
 
@@ -253,6 +264,7 @@ class TabularStateActionValueEstimator(StateActionValueEstimator):
 
         estimator = TabularStateActionValueEstimator(
             environment=environment,
+            epsilon=epsilon,
             **vars(parsed_args)
         )
 
@@ -290,10 +302,10 @@ class TabularStateActionValueEstimator(StateActionValueEstimator):
         """
 
         if state not in self:
-            self[state] = TabularActionValueEstimator()
+            self[state] = TabularActionValueEstimator(estimator=self)
 
         if a not in self[state]:
-            self[state][a] = TabularValueEstimator(alpha=alpha, weighted=weighted)
+            self[state][a] = TabularValueEstimator(estimator=self, alpha=alpha, weighted=weighted)
 
     def update_policy(
             self,
@@ -310,6 +322,11 @@ class TabularStateActionValueEstimator(StateActionValueEstimator):
         :return: Number of states updated.
         """
 
+        if epsilon is None:
+            epsilon = 0.0
+
+        self.epsilon = epsilon
+
         q_pi = {
             s: {
                 a: self[s][a].get_value()
@@ -322,7 +339,7 @@ class TabularStateActionValueEstimator(StateActionValueEstimator):
         num_states_updated = improve_policy_with_q_pi(
             agent=agent,
             q_pi=q_pi,
-            epsilon=epsilon
+            epsilon=self.epsilon
         )
 
         return num_states_updated
@@ -330,18 +347,24 @@ class TabularStateActionValueEstimator(StateActionValueEstimator):
     def __init__(
             self,
             environment: MdpEnvironment,
+            epsilon: Optional[float],
             continuous_state_discretization_resolution: Optional[float]
     ):
         """
         Initialize the estimator.
 
         :param environment: Environment.
+        :param epsilon: Epsilon, or None for a purely greedy policy.
         :param continuous_state_discretization_resolution: A discretization resolution for continuous-state
         environments. Providing this value allows the agent to be used with discrete-state methods via
         discretization of the continuous-state dimensions.
         """
 
-        self.environment = environment
+        super().__init__(
+            environment=environment,
+            epsilon=epsilon
+        )
+
         self.continuous_state_discretization_resolution = continuous_state_discretization_resolution
 
         self.q_S_A: Dict[MdpState, TabularActionValueEstimator] = {}
