@@ -180,7 +180,7 @@ def evaluate_q_pi(
 
         # flush out the remaining n-step updates, with all next state-action values being zero.
         flush_n_steps = len(t_state_a_g) + 1
-        while len(t_state_a_g):
+        while len(t_state_a_g) > 0:
             update_q_S_A(
                 q_S_A=q_S_A,
                 n_steps=flush_n_steps,
@@ -303,8 +303,6 @@ def update_q_S_A(
     :param epsilon: Epsilon.
     """
 
-    improve_policy = False
-
     # if we're currently far enough along (i.e., have accumulated sufficient rewards), then update.
     update_t = curr_t - n_steps + 1
     if update_t in t_state_a_g:
@@ -316,17 +314,24 @@ def update_q_S_A(
         # discount applied here to next_state_q_s_a will be agent.gamma.
         td_target = g + (agent.gamma ** n_steps) * next_state_q_s_a
 
-        # initialize and update the state-action pair with the target value. first calculate the update error for
-        # possible use in updating the environment model.
+        # initialize/get the value estimator for the state-action pair
         q_S_A.initialize(state=update_state, a=update_a, alpha=alpha, weighted=False)
         value_estimator = q_S_A[update_state][update_a]
-        error = td_target - value_estimator.get_value()
+
+        # if we're using prioritized planning, then calculate the update error before we update the value estimation.
+        prioritized_planning = isinstance(planning_environment, PrioritizedSweepingMdpPlanningEnvironment)
+        if prioritized_planning:
+            error = td_target - value_estimator.get_value()
+        else:
+            error = None
+
+        # update the value estimator
         value_estimator.update(td_target)
 
         # if we're using prioritized-sweep planning, then update the priority queue. note that the priority queue
         # returns values with the lowest priority first. so negate the error to get the state-action pairs with highest
         # error to come out of the queue first.
-        if isinstance(planning_environment, PrioritizedSweepingMdpPlanningEnvironment):
+        if prioritized_planning:
             planning_environment.add_state_action_priority(update_state, update_a, -abs(error))
 
         # note the evaluated state if it has an index. states will only have indices if they are enumerated up front, or
@@ -341,11 +346,8 @@ def update_q_S_A(
 
         # update the policy per num updates
         if num_updates_per_improvement is not None and q_S_A.update_count % num_updates_per_improvement == 0:
-            improve_policy = True
-
-    if improve_policy:
-        q_S_A.improve_policy(
-            agent=agent,
-            states=evaluated_states,
-            epsilon=epsilon
-        )
+            q_S_A.improve_policy(
+                agent=agent,
+                states=evaluated_states,
+                epsilon=epsilon
+            )
