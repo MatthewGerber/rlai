@@ -303,7 +303,7 @@ def update_q_S_A(
     :param epsilon: Epsilon.
     """
 
-    update_policy = False
+    improve_policy = False
 
     # if we're currently far enough along (i.e., have accumulated sufficient rewards), then update.
     update_t = curr_t - n_steps + 1
@@ -341,10 +341,10 @@ def update_q_S_A(
 
         # update the policy per num updates
         if num_updates_per_improvement is not None and q_S_A.update_count % num_updates_per_improvement == 0:
-            update_policy = True
+            improve_policy = True
 
-    if update_policy:
-        q_S_A.update_policy(
+    if improve_policy:
+        q_S_A.improve_policy(
             agent=agent,
             states=evaluated_states,
             epsilon=epsilon

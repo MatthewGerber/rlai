@@ -12,7 +12,7 @@ from rlai.environments.openai_gym import Gym
 def plot_policy_iteration(
         iteration_average_reward: List[float],
         iteration_total_states: List[int],
-        iteration_num_states_updated: List[int],
+        iteration_num_states_improved: List[int],
         elapsed_seconds_average_rewards: Dict[int, List[float]]
 ):
     """
@@ -20,7 +20,7 @@ def plot_policy_iteration(
 
     :param iteration_average_reward: Average reward per iteration.
     :param iteration_total_states: Total number of states per iteration.
-    :param iteration_num_states_updated: Number of states updated per iteration.
+    :param iteration_num_states_improved: Number of states improved per iteration.
     :param elapsed_seconds_average_rewards: Elapsed seconds and average rewards.
     """
 
@@ -40,7 +40,7 @@ def plot_policy_iteration(
     # twin-x states per iteration
     state_space_ax = ax.twinx()
     state_space_ax.plot(iteration_total_states, '--', color='orange', label='total')
-    state_space_ax.plot(iteration_num_states_updated, '-', color='orange', label='updated')
+    state_space_ax.plot(iteration_num_states_improved, '-', color='orange', label='improved')
     state_space_ax.set_yscale('log')
     state_space_ax.set_ylabel('# states')
     state_space_ax.legend(loc='center right')

@@ -24,7 +24,7 @@ def improve_policy_with_q_pi(
     :param q_pi: State-action value estimates for the agent's policy.
     :param epsilon: Total probability mass to spread across all actions, resulting in an epsilon-greedy policy. Must
     be >= 0 if provided.
-    :return: Number of states in which the policy was updated.
+    :return: Number of states in which the policy was improved.
     """
 
     # noinspection PyTypeHints
@@ -47,34 +47,34 @@ def improve_policy_with_q_pi(
         for s in q_pi
     }
 
-    # generate policy update, assigning uniform probability across all maximizing actions in addition to a uniform
+    # generate policy improvement, assigning uniform probability across all maximizing actions in addition to a uniform
     # fraction of epsilon spread across all actions in the state.
-    policy_update = {
+    policy_improvement = {
         s: {
             a:
                 ((1.0 - epsilon) / S_num_maximizers[s]) + (epsilon / len(s.AA)) if a in q_pi[s] and q_pi[s][a] == S_max_q[s]
                 else epsilon / len(s.AA)
 
-            # update policy for all feasible actions in the state
+            # improve policy for all feasible actions in the state
             for a in s.AA
         }
         for s in agent.pi
 
-        # we can only update the policy for states that we have q-value estimates for
+        # we can only improve the policy for states that we have q-value estimates for
         if s in q_pi
     }
 
     # count up how many states got a new action distribution
-    num_states_updated = sum(
+    num_states_improved = sum(
         any(
-            agent.pi[s][a] != policy_update[s][a]
-            for a in policy_update[s]
+            agent.pi[s][a] != policy_improvement[s][a]
+            for a in policy_improvement[s]
         )
-        for s in policy_update
+        for s in policy_improvement
     )
 
-    # execute update on tabular policy
-    agent.pi.state_action_prob.update(policy_update)
+    # execute improvement on tabular policy
+    agent.pi.state_action_prob.update(policy_improvement)
 
     # check that the action probabilities in each state sum to 1.0
     if not np.allclose(
@@ -85,4 +85,4 @@ def improve_policy_with_q_pi(
     ):
         raise ValueError('Expected action probabilities to sum to 1.0')
 
-    return num_states_updated
+    return num_states_improved

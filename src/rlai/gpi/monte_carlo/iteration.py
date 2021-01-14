@@ -60,7 +60,7 @@ def iterate_value_q_pi(
     i = 0
     iteration_average_reward = []
     iteration_total_states = []
-    iteration_num_states_updated = []
+    iteration_num_states_improved = []
     elapsed_seconds_average_rewards = {}
     start_datetime = datetime.now()
     while i < num_improvements:
@@ -77,7 +77,7 @@ def iterate_value_q_pi(
             off_policy_agent=off_policy_agent
         )
 
-        num_states_updated = q_S_A.update_policy(
+        num_states_improved = q_S_A.improve_policy(
             agent=agent,
             states=evaluated_states,
             epsilon=epsilon
@@ -85,7 +85,7 @@ def iterate_value_q_pi(
 
         iteration_average_reward.append(average_reward)
         iteration_total_states.append(len(q_S_A))
-        iteration_num_states_updated.append(num_states_updated)
+        iteration_num_states_improved.append(num_states_improved)
 
         elapsed_seconds = int((datetime.now() - start_datetime).total_seconds())
         if elapsed_seconds not in elapsed_seconds_average_rewards:
@@ -96,7 +96,7 @@ def iterate_value_q_pi(
         i += 1
 
         if num_improvements_per_plot is not None and i % num_improvements_per_plot == 0:
-            plot_policy_iteration(iteration_average_reward, iteration_total_states, iteration_num_states_updated, elapsed_seconds_average_rewards)
+            plot_policy_iteration(iteration_average_reward, iteration_total_states, iteration_num_states_improved, elapsed_seconds_average_rewards)
 
         if num_improvements_per_checkpoint is not None and i % num_improvements_per_checkpoint == 0:
 
@@ -129,7 +129,7 @@ def iterate_value_q_pi(
     print(f'Value iteration of q_pi terminated after {i} iteration(s).')
 
     if make_final_policy_greedy:
-        q_S_A.update_policy(
+        q_S_A.improve_policy(
             agent=agent,
             states=None,
             epsilon=0.0
