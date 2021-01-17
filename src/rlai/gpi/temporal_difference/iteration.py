@@ -160,7 +160,8 @@ def iterate_value_q_pi(
                 'make_final_policy_greedy': make_final_policy_greedy,
                 'q_S_A': q_S_A,
                 'num_improvements_per_plot': num_improvements_per_plot,
-                'num_improvements_per_checkpoint': num_improvements_per_checkpoint
+                'num_improvements_per_checkpoint': num_improvements_per_checkpoint,
+                'checkpoint_path': checkpoint_path
             }
 
             with open(checkpoint_path, 'wb') as checkpoint_file:

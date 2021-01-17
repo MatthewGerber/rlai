@@ -197,12 +197,6 @@ def run(
             help='Fully-qualified type name of state-action value estimator to use.'
         )
 
-        filter_add_argument(
-            '--new-checkpoint-path',
-            type=str,
-            help='New checkpoint path.'
-        )
-
         parsed_train_function_args, unparsed_args = parse_arguments(train_function_arg_parser, unparsed_args)
 
         # convert boolean strings to bools
@@ -257,7 +251,6 @@ def run(
 
         # resumption will return agent
         if parsed_args.resume_train:
-
             agent = resume_from_checkpoint(
                 resume_function=train_function,
                 **train_function_args
@@ -265,7 +258,6 @@ def run(
 
         # fresh training initializes agent above
         else:
-
             train_function(
                 **train_function_args
             )
@@ -283,14 +275,7 @@ def run(
 
             print(f'Saved agent to {parsed_args.save_agent_path}')
 
-    if 'new_checkpoint_path' in train_function_args:
-        checkpoint_path = train_function_args['new_checkpoint_path']
-    elif 'checkpoint_path' in train_function_args:
-        checkpoint_path = train_function_args['checkpoint_path']
-    else:
-        checkpoint_path = None
-
-    return checkpoint_path, parsed_args.save_agent_path
+    return train_function_args.get('checkpoint_path'), parsed_args.save_agent_path
 
 
 if __name__ == '__main__':

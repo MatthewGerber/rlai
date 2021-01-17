@@ -435,18 +435,7 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
         :return: List of feature names.
         """
 
-        observation_feature_names = [
-            'cartPos',
-            'cartVel',
-            'polePos',
-            'poleVel'
-        ]
-
-        return [
-            f'{context}_{name}'
-            for context in self.contexts
-            for name in observation_feature_names
-        ]
+        raise ValueError('Not implemented')
 
     def __init__(
             self,
@@ -488,6 +477,11 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
 
 
 class FeatureContext:
+    """
+    Categorical context within with a feature explains an outcome independently of its explanation in another context.
+    This works quite similarly to traditional categorical interactions, except that they are specified programmatically
+    by this class.
+    """
 
     def __init__(
             self,
@@ -496,41 +490,66 @@ class FeatureContext:
             pole_left_of_vertical: bool,
             pole_rotating_left: bool
     ):
+        """
+        Initialize the context.
+
+        :param cart_left_of_center: Left of center.
+        :param cart_moving_left: Moving left.
+        :param pole_left_of_vertical: Left of vertical.
+        :param pole_rotating_left: Rotating left.
+        """
         self.cart_left_of_center = cart_left_of_center
         self.cart_moving_left = cart_moving_left
         self.pole_left_of_vertical = pole_left_of_vertical
         self.pole_rotating_left = pole_rotating_left
-        self.i = hash(str(self))
+        self.id = str(self)
 
     def __eq__(
             self,
             other
     ) -> bool:
+        """
+        Check equality.
+
+        :param other: Other context.
+        :return: True if equal and False otherwise.
+        """
 
         other: FeatureContext
 
-        return all([
-            self.cart_left_of_center == other.cart_left_of_center,
-            self.cart_moving_left == other.cart_moving_left,
-            self.pole_left_of_vertical == other.pole_left_of_vertical,
-            self.pole_rotating_left == other.pole_rotating_left
-        ])
+        return self.id == other.id
 
     def __ne__(
             self,
             other
     ) -> bool:
+        """
+        Check inequality.
+
+        :param other: Other context.
+        :return: True if unequal and False otherwise.
+        """
 
         return not (self == other)
 
     def __hash__(
             self
     ) -> int:
+        """
+        Get hash code.
 
-        return self.i
+        :return: Hash code.
+        """
+
+        return hash(self.id)
 
     def __str__(
             self
     ) -> str:
+        """
+        Get string.
+
+        :return: String.
+        """
 
         return f'{self.cart_left_of_center}_{self.cart_moving_left}_{self.pole_left_of_vertical}_{self.pole_rotating_left}'
