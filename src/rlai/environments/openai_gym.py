@@ -9,7 +9,8 @@ import numpy as np
 import pandas as pd
 from gym.spaces import Discrete, Box
 from numpy.random import RandomState
-from sklearn import preprocessing
+from sklearn.exceptions import NotFittedError
+from sklearn.preprocessing import StandardScaler
 
 from rlai.actions import Action, DiscretizedAction
 from rlai.agents.mdp import MdpAgent
@@ -375,11 +376,7 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
             for state in states
         ])
 
-        X = preprocessing.normalize(
-            X=X,
-            norm='l2',
-            axis=1
-        )
+        X = self.scale_features(X, for_fitting)
 
         contexts = [
             FeatureContext(
@@ -397,6 +394,35 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
             state_features=X,
             actions=actions
         )
+
+        return X
+
+    def scale_features(
+            self,
+            X: np.ndarray,
+            for_fitting: bool
+    ) -> np.ndarray:
+        """
+        Scale features.
+
+        :param X: Feature matrix.
+        :param for_fitting: Whether the extracted features will be used for fitting (True) or prediction (False).
+        :return: Scaled feature matrix.
+        """
+
+        # only fit the scaler if the features will be for fitting the model. if they will be for prediction, then we
+        # should use whatever scaling parameters were obtained for fitting, as that's what the model coefficients are
+        # calibrated for.
+        if for_fitting:
+            self.feature_scaler.partial_fit(X)
+
+        # scale features
+        try:
+            X = self.feature_scaler.transform(X)
+
+        # the following exception will be thrown if the scaler has not yet been fitted. catch and ignore scaling.
+        except NotFittedError:
+            pass
 
         return X
 
@@ -458,6 +484,7 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
         ]
 
         self.context_interacter = OneHotCategoricalFeatureInteracter(self.contexts)
+        self.feature_scaler = StandardScaler()
 
 
 class FeatureContext:
