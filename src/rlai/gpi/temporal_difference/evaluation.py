@@ -100,6 +100,7 @@ def evaluate_q_pi(
         curr_a = agent.act(curr_t)
         total_reward = 0.0
         t_state_a_g: Dict[int, Tuple[MdpState, Action, float]] = {}  # dictionary from time steps to tuples of state, action, and truncated return.
+        next_state_q_s_a = 0.0
         while not curr_state.terminal and (environment.T is None or curr_t < environment.T):
 
             advance_result, next_reward = environment.advance(
@@ -178,7 +179,14 @@ def evaluate_q_pi(
 
             total_reward += next_reward.r
 
-        # flush out the remaining n-step updates, with all next state-action values being zero.
+        # flush out the remaining n-step updates. if we terminated because we reached a terminal state, then all next-
+        # state values for the updates are zero. if instead we terminated because we reached the maximum number of time
+        # steps, then use the bootstrapped next-state value instead. this is an important distinction because these
+        # value can be dramatically different, and when discounting is not using (or is very small), the resulting
+        # value estimates can be correspondingly different.
+        if curr_state.terminal:
+            next_state_q_s_a = 0.0
+
         flush_n_steps = len(t_state_a_g) + 1
         while len(t_state_a_g) > 0:
             update_q_S_A(
@@ -187,7 +195,7 @@ def evaluate_q_pi(
                 curr_t=curr_t,
                 t_state_a_g=t_state_a_g,
                 agent=agent,
-                next_state_q_s_a=0.0,
+                next_state_q_s_a=next_state_q_s_a,
                 alpha=alpha,
                 evaluated_states=evaluated_states,
                 planning_environment=planning_environment,

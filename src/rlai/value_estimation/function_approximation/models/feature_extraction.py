@@ -5,8 +5,7 @@ from typing import List, Tuple, Any, Union
 
 import numpy as np
 import pandas as pd
-from sklearn.exceptions import NotFittedError
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.preprocessing import OneHotEncoder
 
 from rlai.actions import Action
 from rlai.environments.mdp import MdpEnvironment
@@ -94,39 +93,6 @@ class FeatureExtractor(ABC):
         """
         pass
 
-    def scale_features(
-            self,
-            X: np.ndarray,
-            for_fitting: bool
-    ) -> np.ndarray:
-        """
-        Scale features.
-
-        :param X: Feature matrix.
-        :param for_fitting: Whether the extracted features will be used for fitting (True) or prediction (False). This
-        function will only have an effect on X after being called with `for_fitting=True`. Calling this function first
-        with `for_fitting=False` is undefined because features for prediction cannot be scaled prior to fitting the
-        scaler on training data.
-        :return: Scaled feature matrix.
-        """
-
-        # only fit the scaler if the features will be for fitting the model. if they will be for prediction, then we
-        # should use whatever scaling parameters were obtained for fitting, as that's what the model coefficients are
-        # calibrated for.
-        if for_fitting:
-            self.feature_scaler.fit(X)
-
-        # scale features
-        try:
-
-            X = self.feature_scaler.transform(X)
-
-        # the following exception will be thrown if the scaler has not yet been fitted. catch and ignore scaling.
-        except NotFittedError:
-            pass
-
-        return X
-
     def __init__(
             self,
             environment: MdpEnvironment
@@ -138,8 +104,6 @@ class FeatureExtractor(ABC):
         """
 
         self.environment = environment
-
-        self.feature_scaler = StandardScaler()
 
 
 @rl_text(chapter='Feature Extractors', page=1)

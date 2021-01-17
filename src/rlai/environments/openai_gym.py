@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 from gym.spaces import Discrete, Box
 from numpy.random import RandomState
+from sklearn import preprocessing
 
 from rlai.actions import Action, DiscretizedAction
 from rlai.agents.mdp import MdpAgent
@@ -369,10 +370,16 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
 
         self.check_state_and_action_lists(states, actions)
 
-        feature_matrix = np.array([
-            state.observation
+        X = np.array([
+            np.append(state.observation, state.observation ** 2)
             for state in states
         ])
+
+        X = preprocessing.normalize(
+            X=X,
+            norm='l2',
+            axis=1
+        )
 
         contexts = [
             FeatureContext(
@@ -384,10 +391,10 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
             for state in states
         ]
 
-        feature_context_interaction = self.context_interacter.interact(feature_matrix, contexts)
+        X = self.context_interacter.interact(X, contexts)
 
         X = self.interact(
-            state_features=feature_context_interaction,
+            state_features=X,
             actions=actions
         )
 
