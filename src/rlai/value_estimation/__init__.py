@@ -221,7 +221,6 @@ class StateActionValueEstimator(ABC):
         if epsilon is None:
             epsilon = 0.0
 
-        self.environment = environment
         self.epsilon = epsilon
 
         self.update_count = 0

@@ -102,8 +102,7 @@ class FeatureExtractor(ABC):
 
         :param environment: Environment.
         """
-
-        self.environment = environment
+        pass
 
 
 @rl_text(chapter='Feature Extractors', page=1)

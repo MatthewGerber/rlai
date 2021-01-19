@@ -281,7 +281,7 @@ class TabularStateActionValueEstimator(StateActionValueEstimator):
 
         return TabularPolicy(
             continuous_state_discretization_resolution=self.continuous_state_discretization_resolution,
-            SS=self.environment.SS
+            SS=self.SS
         )
 
     def initialize(
@@ -298,7 +298,6 @@ class TabularStateActionValueEstimator(StateActionValueEstimator):
         :param a: Action.
         :param alpha: Step size.
         :param weighted: Whether the estimator should be weighted.
-        :return:
         """
 
         if state not in self:
@@ -365,6 +364,7 @@ class TabularStateActionValueEstimator(StateActionValueEstimator):
             epsilon=epsilon
         )
 
+        self.SS = environment.SS
         self.continuous_state_discretization_resolution = continuous_state_discretization_resolution
 
         self.q_S_A: Dict[MdpState, TabularActionValueEstimator] = {}
@@ -372,7 +372,7 @@ class TabularStateActionValueEstimator(StateActionValueEstimator):
         # for completeness, initialize the estimator for all terminal states. these will not be updated during execution
         # since no action ever takes an agent out of them; however, terminal states should have a value represented, if
         # only ever it is zero.
-        for terminal_state in self.environment.terminal_states:
+        for terminal_state in environment.terminal_states:
             for a in terminal_state.AA:
                 self.initialize(
                     state=terminal_state,
