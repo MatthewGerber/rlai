@@ -414,6 +414,17 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
         # should use whatever scaling parameters were obtained for fitting, as that's what the model coefficients are
         # calibrated for.
         if for_fitting:
+
+            if self.X_hist is not None and self.X_hist.shape[0] % 10000 == 0:
+                self.feature_scaler = StandardScaler()
+                self.feature_scaler.partial_fit(self.X_hist)
+                self.X_hist = None
+
+            if self.X_hist is None:
+                self.X_hist = X
+            else:
+                self.X_hist = np.append(self.X_hist, X, axis=0)
+
             self.feature_scaler.partial_fit(X)
 
         # scale features
@@ -474,6 +485,7 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
 
         self.context_interacter = OneHotCategoricalFeatureInteracter(self.contexts)
         self.feature_scaler = StandardScaler()
+        self.X_hist: Optional[np.ndarray] = None
 
 
 class FeatureContext:
