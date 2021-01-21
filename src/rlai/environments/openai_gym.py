@@ -9,8 +9,6 @@ import numpy as np
 import pandas as pd
 from gym.spaces import Discrete, Box
 from numpy.random import RandomState
-from sklearn.exceptions import NotFittedError
-from sklearn.preprocessing import StandardScaler
 
 from rlai.actions import Action, DiscretizedAction
 from rlai.agents.mdp import MdpAgent
@@ -21,7 +19,9 @@ from rlai.states import State
 from rlai.states.mdp import MdpState
 from rlai.utils import parse_arguments
 from rlai.value_estimation.function_approximation.models.feature_extraction import (
-    StateActionInteractionFeatureExtractor, OneHotCategoricalFeatureInteracter
+    StateActionInteractionFeatureExtractor,
+    OneHotCategoricalFeatureInteracter,
+    NonstationaryFeatureScaler
 )
 
 
@@ -376,7 +376,7 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
             for state in states
         ])
 
-        X = self.scale_features(X, for_fitting)
+        X = self.feature_scaler.scale_features(X, for_fitting)
 
         contexts = [
             FeatureContext(
@@ -394,46 +394,6 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
             state_features=X,
             actions=actions
         )
-
-        return X
-
-    def scale_features(
-            self,
-            X: np.ndarray,
-            for_fitting: bool
-    ) -> np.ndarray:
-        """
-        Scale features.
-
-        :param X: Feature matrix.
-        :param for_fitting: Whether the extracted features will be used for fitting (True) or prediction (False).
-        :return: Scaled feature matrix.
-        """
-
-        # only fit the scaler if the features will be for fitting the model. if they will be for prediction, then we
-        # should use whatever scaling parameters were obtained for fitting, as that's what the model coefficients are
-        # calibrated for.
-        if for_fitting:
-
-            if self.X_hist is not None and self.X_hist.shape[0] % 10000 == 0:
-                self.feature_scaler = StandardScaler()
-                self.feature_scaler.partial_fit(self.X_hist)
-                self.X_hist = None
-
-            if self.X_hist is None:
-                self.X_hist = X
-            else:
-                self.X_hist = np.append(self.X_hist, X, axis=0)
-
-            self.feature_scaler.partial_fit(X)
-
-        # scale features
-        try:
-            X = self.feature_scaler.transform(X)
-
-        # the following exception will be thrown if the scaler has not yet been fitted. catch and ignore scaling.
-        except NotFittedError:
-            pass
 
         return X
 
@@ -484,8 +444,12 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
         ]
 
         self.context_interacter = OneHotCategoricalFeatureInteracter(self.contexts)
-        self.feature_scaler = StandardScaler()
-        self.X_hist: Optional[np.ndarray] = None
+
+        self.feature_scaler = NonstationaryFeatureScaler(
+            num_observations_refit_feature_scaler=2000,
+            refit_history_length=4000,
+            refit_weight_decay=0.9999
+        )
 
 
 class FeatureContext:

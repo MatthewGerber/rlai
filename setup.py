@@ -17,7 +17,7 @@ INSTALL_REQUIREMENTS = [
     'attrs==20.3.0',
     'pyparsing==2.4.7',
     'future==0.18.2',
-    'scikit-learn==0.23.2',
+    'scikit-learn==0.24',
     'pandas==1.1.5',
     'patsy==0.5.1'
 ]

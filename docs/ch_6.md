@@ -13,6 +13,9 @@ Perform temporal-difference (TD) evaluation of an agent's policy within an envir
     :param agent: Agent containing target policy to be optimized.
     :param environment: Environment.
     :param num_episodes: Number of episodes to execute.
+    :param num_updates_per_improvement: Number of state-action value updates to execute for each iteration of policy
+    improvement, or None for policy improvement per specified number of episodes.
+    :param epsilon: Epsilon.
     :param alpha: Constant step size to use when updating Q-values, or None for 1/n step size.
     :param mode: Evaluation mode (see `rlai.gpi.temporal_difference.evaluation.Mode`).
     :param n_steps: Number of steps to accumulate rewards before updating estimated state-action values. Must be in the
@@ -30,8 +33,10 @@ Run temporal-difference value iteration on an agent using state-action value est
     :param agent: Agent.
     :param environment: Environment.
     :param num_improvements: Number of policy improvements to make.
-    :param num_episodes_per_improvement: Number of policy evaluation episodes to execute for each iteration of
+    :param num_episodes_per_improvement: Number of policy evaluation episodes to execute for each iteration of policy
     improvement.
+    :param num_updates_per_improvement: Number of state-action value updates to execute for each iteration of policy
+    improvement, or None for policy improvement per specified number of episodes.
     :param alpha: Constant step size to use when updating Q-values, or None for 1/n step size.
     :param mode: Evaluation mode (see `rlai.gpi.temporal_difference.evaluation.Mode`).
     :param n_steps: Number of steps (see `rlai.gpi.temporal_difference.evaluation.evaluate_q_pi`).
