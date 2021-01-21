@@ -43,6 +43,8 @@ class ApproximateValueEstimator(ValueEstimator):
 
         self.estimator.add_sample(self.state, self.action, value, weight)
 
+        self.estimator.update_count += 1
+
     def get_value(
             self
     ) -> float:
@@ -191,15 +193,15 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         )
 
         parser.add_argument(
-            '--num-updates-between-plots',
+            '--plot-model-per-improvements',
             type=int,
-            help='Number of updates between state-action value model plots. Ignore to only plot at the end.'
+            help='Number of policy improvements between plots of the state-action value model. Ignore to only plot the model at the end.'
         )
 
         parser.add_argument(
-            '--num-update-bins',
+            '--plot-model-bins',
             type=int,
-            help='Number of update bins used when plotting. Ignore for no binning.'
+            help='Number of bins used when plotting the model. Ignore for no binning.'
         )
 
         return parser
@@ -264,8 +266,8 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
             weight: Optional[float]
     ):
         """
-        Add a sample of experience to the estimator. The collection of samples will be used to update the function
-        approximation model when `update_policy` is called.
+        Add a sample of experience to the estimator. The collection of samples will be used to fit the function
+        approximation model when `improve_policy` is called.
 
         :param state: State.
         :param action: Action.
@@ -285,20 +287,23 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
 
         self.experience_pending = True
 
-    def update_policy(
+    def improve_policy(
             self,
             agent: MdpAgent,
             states: Optional[Set[MdpState]],
-            epsilon: float
+            epsilon: Optional[float]
     ) -> int:
         """
-        Update an agent's policy using the current sample of experience collected through calls to `add_sample`.
+        Improve an agent's policy using the current sample of experience collected through calls to `add_sample`.
 
-        :param agent: Agent whose policy should be updated.
-        :param states: States to update, or None for all states.
+        :param agent: Agent whose policy should be improved.
+        :param states: States to improve, or None for all states.
         :param epsilon: Epsilon.
-        :return: Number of states updated.
+        :return: Number of states improved.
         """
+
+        if epsilon is None:
+            epsilon = 0.0
 
         self.epsilon = epsilon
 
@@ -314,10 +319,10 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
             self.weights = None
             self.experience_pending = False
 
-        if self.num_policy_updates is None:
-            self.num_policy_updates = 1
+        if self.policy_improvement_count is None:
+            self.policy_improvement_count = 1
         else:
-            self.num_policy_updates += 1
+            self.policy_improvement_count += 1
 
         return -1 if states is None else len(states)
 
@@ -393,21 +398,21 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
             if 'bin' in model_summary.columns:
                 raise ValueError('Feature extractor returned disallowed column:  bin')
 
-            model_summary['n'] = self.num_policy_updates - 1
+            model_summary['n'] = self.policy_improvement_count - 1
 
             if self.plot_df is None:
                 self.plot_df = model_summary
             else:
                 self.plot_df = self.plot_df.append(model_summary, ignore_index=True)
 
-            if final or (self.num_updates_between_plots is not None and self.num_policy_updates % self.num_updates_between_plots == 0):
+            if final or (self.plot_model_per_improvements is not None and self.policy_improvement_count % self.plot_model_per_improvements == 0):
 
-                if self.num_update_bins is None:
-                    updates_per_bin = 1
+                if self.plot_model_bins is None:
+                    improvements_per_bin = 1
                     self.plot_df['bin'] = self.plot_df.n
                 else:
-                    updates_per_bin = math.ceil(self.num_policy_updates / self.num_update_bins)
-                    self.plot_df['bin'] = [int(n / updates_per_bin) for n in self.plot_df.n]
+                    improvements_per_bin = math.ceil(self.policy_improvement_count / self.plot_model_bins)
+                    self.plot_df['bin'] = [int(n / improvements_per_bin) for n in self.plot_df.n]
 
                 if isinstance(self.feature_extractor, StateActionInteractionFeatureExtractor):
 
@@ -438,7 +443,7 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
                             if i < axs.shape[0] - 1:
                                 ax.set_xlabel('')
                             else:
-                                ax.set_xlabel('Iteration' if self.num_update_bins is None else f'Bin of {updates_per_bin} iterations')
+                                ax.set_xlabel('Iteration' if self.plot_model_bins is None else f'Bin of {improvements_per_bin} iterations')
 
                             if i > 0:
                                 ax.set_title('')
@@ -458,8 +463,8 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
             feature_extractor: FeatureExtractor,
             formula: Optional[str],
             plot_model: Optional[bool],
-            num_updates_between_plots: Optional[int],
-            num_update_bins: Optional[int]
+            plot_model_per_improvements: Optional[int],
+            plot_model_bins: Optional[int]
     ):
         """
         Initialize the estimator.
@@ -484,28 +489,28 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         overhead with each call to the formula parser. A faster alternative is to avoid formula specification (pass
         None here) and return the feature matrix directly from the feature extractor as a numpy.ndarray.
         :param plot_model: Whether or not to plot the model.
-        :param num_updates_between_plots: Number of updates between plots.
-        :param num_update_bins: Number of update bins, or None for no binning.
+        :param plot_model_per_improvements: Number of policy improvements between between plots.
+        :param plot_model_bins: Number of plotting bins, or None for no binning.
         """
 
-        if epsilon is None:
-            epsilon = 0.0
+        super().__init__(
+            environment=environment,
+            epsilon=epsilon
+        )
 
-        self.environment = environment
-        self.epsilon = epsilon
         self.model = model
         self.feature_extractor = feature_extractor
         self.formula = formula
         self.plot_model = plot_model
-        self.num_updates_between_plots = num_updates_between_plots
-        self.num_update_bins = num_update_bins
+        self.plot_model_per_improvements = plot_model_per_improvements
+        self.plot_model_bins = plot_model_bins
 
         self.experience_states: List[MdpState] = []
         self.experience_actions: List[Action] = []
         self.experience_values: List[float] = []
         self.weights: np.ndarray = None
         self.experience_pending: bool = False
-        self.num_policy_updates: Optional[int] = None
+        self.policy_improvement_count: Optional[int] = None
         self.plot_df: Optional[pd.DataFrame] = None
 
     def __getitem__(

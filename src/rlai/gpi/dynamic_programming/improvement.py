@@ -27,7 +27,7 @@ def improve_policy_with_v_pi(
     :param agent: Agent.
     :param environment: Model-based environment.
     :param v_pi: State-value estimates for the agent's policy.
-    :return: Number of states in which the policy was updated.
+    :return: Number of states in which the policy was improved.
     """
 
     # noinspection PyTypeHints

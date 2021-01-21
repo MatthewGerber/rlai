@@ -1,7 +1,7 @@
 import os
 import pickle
 import statistics
-from typing import Dict, Optional, List, Callable
+from typing import Dict, List, Callable
 
 import matplotlib.pyplot as plt
 
@@ -12,7 +12,7 @@ from rlai.environments.openai_gym import Gym
 def plot_policy_iteration(
         iteration_average_reward: List[float],
         iteration_total_states: List[int],
-        iteration_num_states_updated: List[int],
+        iteration_num_states_improved: List[int],
         elapsed_seconds_average_rewards: Dict[int, List[float]]
 ):
     """
@@ -20,7 +20,7 @@ def plot_policy_iteration(
 
     :param iteration_average_reward: Average reward per iteration.
     :param iteration_total_states: Total number of states per iteration.
-    :param iteration_num_states_updated: Number of states updated per iteration.
+    :param iteration_num_states_improved: Number of states improved per iteration.
     :param elapsed_seconds_average_rewards: Elapsed seconds and average rewards.
     """
 
@@ -40,7 +40,7 @@ def plot_policy_iteration(
     # twin-x states per iteration
     state_space_ax = ax.twinx()
     state_space_ax.plot(iteration_total_states, '--', color='orange', label='total')
-    state_space_ax.plot(iteration_num_states_updated, '-', color='orange', label='updated')
+    state_space_ax.plot(iteration_num_states_improved, '-', color='orange', label='improved')
     state_space_ax.set_yscale('log')
     state_space_ax.set_ylabel('# states')
     state_space_ax.legend(loc='center right')
@@ -60,7 +60,6 @@ def plot_policy_iteration(
 def resume_from_checkpoint(
         checkpoint_path: str,
         resume_function: Callable,
-        new_checkpoint_path: Optional[str] = None,
         resume_args_mutator: Callable = None,
         **new_args
 ) -> MdpAgent:
@@ -69,8 +68,6 @@ def resume_from_checkpoint(
 
     :param checkpoint_path: Path to checkpoint file.
     :param resume_function: Function to resume.
-    :param new_checkpoint_path: Path to new checkpoint file, if the original should be left as it is. Pass `None` to
-    use and overwrite `checkpoint_path` with new checkpoints.
     :param resume_args_mutator: A function called prior to resumption. This function will be passed a dictionary of
     arguments comprising the checkpoint. The passed function can change these arguments if desired.
     :param new_args: As a simpler alternative to `resume_args_mutator`, pass any keyword arguments that should replace
@@ -78,15 +75,10 @@ def resume_from_checkpoint(
     :return: The updated agent.
     """
 
-    if new_checkpoint_path is None:
-        new_checkpoint_path = checkpoint_path
-
     print('Reading checkpoint file to resume...', end='')
     with open(os.path.expanduser(checkpoint_path), 'rb') as checkpoint_file:
         resume_args = pickle.load(checkpoint_file)
     print('.done')
-
-    resume_args['checkpoint_path'] = os.path.expanduser(new_checkpoint_path)
 
     # because the native gym environments cannot be pickled, we only retain a string identifier for the native gym
     # object as the value of `environment.gym_native`. the only way to resume such an environment is for the caller to

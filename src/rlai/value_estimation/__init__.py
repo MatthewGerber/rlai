@@ -179,19 +179,19 @@ class StateActionValueEstimator(ABC):
         pass
 
     @abstractmethod
-    def update_policy(
+    def improve_policy(
             self,
             agent: MdpAgent,
             states: Optional[Iterable[MdpState]],
             epsilon: float
     ) -> int:
         """
-        Update an agent's policy using the current state-action value estimates.
+        Improve an agent's policy using the current state-action value estimates.
 
-        :param agent: Agent whose policy should be updated.
-        :param states: States to update, or None for all states.
+        :param agent: Agent whose policy should be improved.
+        :param states: States to improve, or None for all states.
         :param epsilon: Epsilon.
-        :return: Number of states updated.
+        :return: Number of states improved.
         """
         pass
 
@@ -205,6 +205,25 @@ class StateActionValueEstimator(ABC):
         :param final: Whether or not this is the final time plot will be called.
         """
         pass
+
+    def __init__(
+            self,
+            environment: MdpEnvironment,
+            epsilon: Optional[float]
+    ):
+        """
+        Initialize the estimator.
+
+        :param environment: Environment.
+        :param epsilon: Epsilon, or None for a purely greedy policy.
+        """
+
+        if epsilon is None:
+            epsilon = 0.0
+
+        self.epsilon = epsilon
+
+        self.update_count = 0
 
     @abstractmethod
     def __getitem__(

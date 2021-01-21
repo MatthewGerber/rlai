@@ -25,7 +25,9 @@ def test_sarsa_iterate_value_q_pi():
 
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
 
-    q_S_A = TabularStateActionValueEstimator(mdp_environment, None)
+    epsilon = 0.05
+
+    q_S_A = TabularStateActionValueEstimator(mdp_environment, epsilon, None)
 
     mdp_agent = StochasticMdpAgent(
         'test',
@@ -39,10 +41,11 @@ def test_sarsa_iterate_value_q_pi():
         environment=mdp_environment,
         num_improvements=10,
         num_episodes_per_improvement=100,
+        num_updates_per_improvement=None,
         alpha=0.1,
         mode=Mode.SARSA,
         n_steps=1,
-        epsilon=0.05,
+        epsilon=epsilon,
         planning_environment=None,
         make_final_policy_greedy=False,
         q_S_A=q_S_A
@@ -64,7 +67,9 @@ def test_sarsa_iterate_value_q_pi_make_greedy():
 
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
 
-    q_S_A = TabularStateActionValueEstimator(mdp_environment, None)
+    epsilon = 0.05
+
+    q_S_A = TabularStateActionValueEstimator(mdp_environment, epsilon, None)
 
     mdp_agent = StochasticMdpAgent(
         'test',
@@ -78,10 +83,11 @@ def test_sarsa_iterate_value_q_pi_make_greedy():
         environment=mdp_environment,
         num_improvements=10,
         num_episodes_per_improvement=100,
+        num_updates_per_improvement=None,
         alpha=0.1,
         mode=Mode.SARSA,
         n_steps=1,
-        epsilon=0.05,
+        epsilon=epsilon,
         planning_environment=None,
         make_final_policy_greedy=True,
         q_S_A=q_S_A
@@ -103,7 +109,9 @@ def test_sarsa_iterate_value_q_pi_with_trajectory_planning():
 
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
 
-    q_S_A = TabularStateActionValueEstimator(mdp_environment, None)
+    epsilon = 0.05
+
+    q_S_A = TabularStateActionValueEstimator(mdp_environment, epsilon, None)
 
     mdp_agent = StochasticMdpAgent(
         'test',
@@ -125,10 +133,11 @@ def test_sarsa_iterate_value_q_pi_with_trajectory_planning():
         environment=mdp_environment,
         num_improvements=100,
         num_episodes_per_improvement=1,
+        num_updates_per_improvement=None,
         alpha=0.1,
         mode=Mode.SARSA,
         n_steps=1,
-        epsilon=0.05,
+        epsilon=epsilon,
         planning_environment=planning_environment,
         make_final_policy_greedy=True,
         q_S_A=q_S_A
@@ -150,7 +159,9 @@ def test_q_learning_iterate_value_q_pi():
 
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
 
-    q_S_A = TabularStateActionValueEstimator(mdp_environment, None)
+    epsilon = 0.05
+
+    q_S_A = TabularStateActionValueEstimator(mdp_environment, epsilon, None)
 
     mdp_agent = StochasticMdpAgent(
         'test',
@@ -164,10 +175,11 @@ def test_q_learning_iterate_value_q_pi():
         environment=mdp_environment,
         num_improvements=10,
         num_episodes_per_improvement=100,
+        num_updates_per_improvement=None,
         alpha=0.1,
         mode=Mode.Q_LEARNING,
         n_steps=1,
-        epsilon=0.05,
+        epsilon=epsilon,
         planning_environment=None,
         make_final_policy_greedy=False,
         q_S_A=q_S_A
@@ -214,6 +226,7 @@ def test_q_learning_iterate_value_q_pi_function_approximation():
         environment=mdp_environment,
         num_improvements=5,
         num_episodes_per_improvement=5,
+        num_updates_per_improvement=None,
         alpha=None,
         mode=Mode.Q_LEARNING,
         n_steps=None,
@@ -264,6 +277,7 @@ def test_q_learning_iterate_value_q_pi_function_approximation_no_formula():
         environment=mdp_environment,
         num_improvements=10,
         num_episodes_per_improvement=20,
+        num_updates_per_improvement=None,
         alpha=None,
         mode=Mode.Q_LEARNING,
         n_steps=None,
@@ -290,7 +304,9 @@ def test_expected_sarsa_iterate_value_q_pi():
 
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
 
-    q_S_A = TabularStateActionValueEstimator(mdp_environment, None)
+    epsilon = 0.05
+
+    q_S_A = TabularStateActionValueEstimator(mdp_environment, epsilon, None)
 
     mdp_agent = StochasticMdpAgent(
         'test',
@@ -304,10 +320,11 @@ def test_expected_sarsa_iterate_value_q_pi():
         environment=mdp_environment,
         num_improvements=10,
         num_episodes_per_improvement=100,
+        num_updates_per_improvement=None,
         alpha=0.1,
         mode=Mode.EXPECTED_SARSA,
         n_steps=1,
-        epsilon=0.05,
+        epsilon=epsilon,
         planning_environment=None,
         make_final_policy_greedy=False,
         q_S_A=q_S_A
@@ -329,7 +346,9 @@ def test_n_step_q_learning_iterate_value_q_pi():
 
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
 
-    q_S_A = TabularStateActionValueEstimator(mdp_environment, None)
+    epsilon = 0.05
+
+    q_S_A = TabularStateActionValueEstimator(mdp_environment, epsilon, None)
 
     mdp_agent = StochasticMdpAgent(
         'test',
@@ -343,10 +362,11 @@ def test_n_step_q_learning_iterate_value_q_pi():
         environment=mdp_environment,
         num_improvements=10,
         num_episodes_per_improvement=100,
+        num_updates_per_improvement=None,
         alpha=0.1,
         mode=Mode.Q_LEARNING,
         n_steps=3,
-        epsilon=0.05,
+        epsilon=epsilon,
         planning_environment=None,
         make_final_policy_greedy=False,
         q_S_A=q_S_A

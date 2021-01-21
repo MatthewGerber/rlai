@@ -21,7 +21,9 @@ def test_learn():
         gym_id='CartPole-v1'
     )
 
-    q_S_A = TabularStateActionValueEstimator(gym, 0.001)
+    epsilon = 0.05
+
+    q_S_A = TabularStateActionValueEstimator(gym, epsilon, 0.001)
 
     mdp_agent = StochasticMdpAgent(
         'agent',
@@ -35,10 +37,11 @@ def test_learn():
         environment=gym,
         num_improvements=10,
         num_episodes_per_improvement=100,
+        num_updates_per_improvement=None,
         alpha=0.1,
         mode=Mode.SARSA,
         n_steps=1,
-        epsilon=0.05,
+        epsilon=epsilon,
         planning_environment=None,
         make_final_policy_greedy=False,
         q_S_A=q_S_A

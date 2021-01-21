@@ -35,6 +35,8 @@ def evaluate_q_pi(
         agent: MdpAgent,
         environment: MdpEnvironment,
         num_episodes: int,
+        num_updates_per_improvement: Optional[int],
+        epsilon: float,
         alpha: Optional[float],
         mode: Mode,
         n_steps: Optional[int],
@@ -49,6 +51,9 @@ def evaluate_q_pi(
     :param agent: Agent containing target policy to be optimized.
     :param environment: Environment.
     :param num_episodes: Number of episodes to execute.
+    :param num_updates_per_improvement: Number of state-action value updates to execute for each iteration of policy
+    improvement, or None for policy improvement per specified number of episodes.
+    :param epsilon: Epsilon.
     :param alpha: Constant step size to use when updating Q-values, or None for 1/n step size.
     :param mode: Evaluation mode (see `rlai.gpi.temporal_difference.evaluation.Mode`).
     :param n_steps: Number of steps to accumulate rewards before updating estimated state-action values. Must be in the
@@ -95,6 +100,7 @@ def evaluate_q_pi(
         curr_a = agent.act(curr_t)
         total_reward = 0.0
         t_state_a_g: Dict[int, Tuple[MdpState, Action, float]] = {}  # dictionary from time steps to tuples of state, action, and truncated return.
+        next_state_q_s_a = 0.0
         while not curr_state.terminal and (environment.T is None or curr_t < environment.T):
 
             advance_result, next_reward = environment.advance(
@@ -161,7 +167,9 @@ def evaluate_q_pi(
                     next_state_q_s_a=next_state_q_s_a,
                     alpha=alpha,
                     evaluated_states=evaluated_states,
-                    planning_environment=planning_environment
+                    planning_environment=planning_environment,
+                    num_updates_per_improvement=num_updates_per_improvement,
+                    epsilon=epsilon
                 )
 
             # advance the episode
@@ -171,19 +179,28 @@ def evaluate_q_pi(
 
             total_reward += next_reward.r
 
-        # flush out the remaining n-step updates, with all next state-action values being zero.
+        # flush out the remaining n-step updates. if we terminated because we reached a terminal state, then all next-
+        # state values for the updates are zero. if instead we terminated because we reached the maximum number of time
+        # steps, then use the bootstrapped next-state value instead. this is an important distinction because these
+        # value can be dramatically different, and when discounting is not using (or is very small), the resulting
+        # value estimates can be correspondingly different.
+        if curr_state.terminal:
+            next_state_q_s_a = 0.0
+
         flush_n_steps = len(t_state_a_g) + 1
-        while len(t_state_a_g):
+        while len(t_state_a_g) > 0:
             update_q_S_A(
                 q_S_A=q_S_A,
                 n_steps=flush_n_steps,
                 curr_t=curr_t,
                 t_state_a_g=t_state_a_g,
                 agent=agent,
-                next_state_q_s_a=0.0,
+                next_state_q_s_a=next_state_q_s_a,
                 alpha=alpha,
                 evaluated_states=evaluated_states,
-                planning_environment=planning_environment
+                planning_environment=planning_environment,
+                num_updates_per_improvement=num_updates_per_improvement,
+                epsilon=epsilon
             )
             curr_t += 1
 
@@ -268,7 +285,9 @@ def update_q_S_A(
         next_state_q_s_a: float,
         alpha: float,
         evaluated_states: Set[MdpState],
-        planning_environment: Optional[MdpPlanningEnvironment]
+        planning_environment: Optional[MdpPlanningEnvironment],
+        num_updates_per_improvement: Optional[int],
+        epsilon: float
 ):
     """
     Update the value of the n-step state/action pair with the n-step TD target. The n-step TD target is the truncated
@@ -287,6 +306,9 @@ def update_q_S_A(
     :param evaluated_states: Evaluated states.
     :param planning_environment: Planning environment to be updated with experience gained during evaluation, or None to
     ignore the environment model.
+    :param num_updates_per_improvement: Number of state-action value updates to execute for each iteration of policy
+    improvement, or None for policy improvement per specified number of episodes.
+    :param epsilon: Epsilon.
     """
 
     # if we're currently far enough along (i.e., have accumulated sufficient rewards), then update.
@@ -300,17 +322,24 @@ def update_q_S_A(
         # discount applied here to next_state_q_s_a will be agent.gamma.
         td_target = g + (agent.gamma ** n_steps) * next_state_q_s_a
 
-        # initialize and update the state-action pair with the target value. first calculate the update error for
-        # possible use in updating the environment model.
+        # initialize/get the value estimator for the state-action pair
         q_S_A.initialize(state=update_state, a=update_a, alpha=alpha, weighted=False)
         value_estimator = q_S_A[update_state][update_a]
-        error = td_target - value_estimator.get_value()
+
+        # if we're using prioritized planning, then calculate the update error before we update the value estimation.
+        prioritized_planning = isinstance(planning_environment, PrioritizedSweepingMdpPlanningEnvironment)
+        if prioritized_planning:
+            error = td_target - value_estimator.get_value()
+        else:
+            error = None
+
+        # update the value estimator
         value_estimator.update(td_target)
 
         # if we're using prioritized-sweep planning, then update the priority queue. note that the priority queue
         # returns values with the lowest priority first. so negate the error to get the state-action pairs with highest
         # error to come out of the queue first.
-        if isinstance(planning_environment, PrioritizedSweepingMdpPlanningEnvironment):
+        if prioritized_planning:
             planning_environment.add_state_action_priority(update_state, update_a, -abs(error))
 
         # note the evaluated state if it has an index. states will only have indices if they are enumerated up front, or
@@ -322,3 +351,11 @@ def update_q_S_A(
 
         # remove the time step from our n-step structure
         del t_state_a_g[update_t]
+
+        # update the policy per num updates
+        if num_updates_per_improvement is not None and q_S_A.update_count % num_updates_per_improvement == 0:
+            q_S_A.improve_policy(
+                agent=agent,
+                states=evaluated_states,
+                epsilon=epsilon
+            )

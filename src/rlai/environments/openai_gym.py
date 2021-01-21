@@ -9,8 +9,6 @@ import numpy as np
 import pandas as pd
 from gym.spaces import Discrete, Box
 from numpy.random import RandomState
-from sklearn.exceptions import NotFittedError
-from sklearn.preprocessing import PolynomialFeatures, StandardScaler
 
 from rlai.actions import Action, DiscretizedAction
 from rlai.agents.mdp import MdpAgent
@@ -21,7 +19,9 @@ from rlai.states import State
 from rlai.states.mdp import MdpState
 from rlai.utils import parse_arguments
 from rlai.value_estimation.function_approximation.models.feature_extraction import (
-    StateActionInteractionFeatureExtractor
+    StateActionInteractionFeatureExtractor,
+    OneHotCategoricalFeatureInteracter,
+    NonstationaryFeatureScaler
 )
 
 
@@ -371,27 +371,29 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
 
         self.check_state_and_action_lists(states, actions)
 
+        X = np.array([
+            np.append(state.observation, state.observation ** 2)
+            for state in states
+        ])
+
+        X = self.feature_scaler.scale_features(X, for_fitting)
+
+        contexts = [
+            FeatureContext(
+                cart_left_of_center=state.observation[0] < 0,
+                cart_moving_left=state.observation[1] < 0,
+                pole_left_of_vertical=state.observation[2] < 0,
+                pole_rotating_left=state.observation[3] < 0
+            )
+            for state in states
+        ]
+
+        X = self.context_interacter.interact(X, contexts)
+
         X = self.interact(
-            state_features=self.polynomial_features.fit_transform(np.array([
-                state.observation
-                for state in states
-            ])),
+            state_features=X,
             actions=actions
         )
-
-        # only update the scaler if the features will be for fitting. if they will be for prediction, then we should use
-        # whatever scaling parameters were obtained for fitting, as that's what the model coefficients are set for.
-        if for_fitting:
-            self.feature_scaler.partial_fit(X)
-
-        # scale features
-        try:
-
-            X = self.feature_scaler.transform(X)
-
-        # the following exception will be thrown if the scaler has not yet been fitted. catch and ignore scaling.
-        except NotFittedError:
-            pass
 
         return X
 
@@ -404,12 +406,7 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
         :return: List of feature names.
         """
 
-        return self.polynomial_features.get_feature_names([
-            'ctPos',
-            'ctVel',
-            'plAng',
-            'plAngVel'
-        ])
+        raise ValueError('Not implemented')
 
     def __init__(
             self,
@@ -441,10 +438,94 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
             ]
         )
 
-        self.polynomial_features = PolynomialFeatures(
-            degree=environment.gym_native.observation_space.shape[0],
-            interaction_only=True,
-            include_bias=False
+        self.contexts = [
+            FeatureContext(*context_bools)
+            for context_bools in product([True, False], [True, False], [True, False], [True, False])
+        ]
+
+        self.context_interacter = OneHotCategoricalFeatureInteracter(self.contexts)
+
+        self.feature_scaler = NonstationaryFeatureScaler(
+            num_observations_refit_feature_scaler=2000,
+            refit_history_length=4000,
+            refit_weight_decay=0.9999
         )
 
-        self.feature_scaler = StandardScaler()
+
+class FeatureContext:
+    """
+    Categorical context within with a feature explains an outcome independently of its explanation in another context.
+    This works quite similarly to traditional categorical interactions, except that they are specified programmatically
+    by this class.
+    """
+
+    def __init__(
+            self,
+            cart_left_of_center: bool,
+            cart_moving_left: bool,
+            pole_left_of_vertical: bool,
+            pole_rotating_left: bool
+    ):
+        """
+        Initialize the context.
+
+        :param cart_left_of_center: Left of center.
+        :param cart_moving_left: Moving left.
+        :param pole_left_of_vertical: Left of vertical.
+        :param pole_rotating_left: Rotating left.
+        """
+        self.cart_left_of_center = cart_left_of_center
+        self.cart_moving_left = cart_moving_left
+        self.pole_left_of_vertical = pole_left_of_vertical
+        self.pole_rotating_left = pole_rotating_left
+        self.id = str(self)
+
+    def __eq__(
+            self,
+            other
+    ) -> bool:
+        """
+        Check equality.
+
+        :param other: Other context.
+        :return: True if equal and False otherwise.
+        """
+
+        other: FeatureContext
+
+        return self.id == other.id
+
+    def __ne__(
+            self,
+            other
+    ) -> bool:
+        """
+        Check inequality.
+
+        :param other: Other context.
+        :return: True if unequal and False otherwise.
+        """
+
+        return not (self == other)
+
+    def __hash__(
+            self
+    ) -> int:
+        """
+        Get hash code.
+
+        :return: Hash code.
+        """
+
+        return hash(self.id)
+
+    def __str__(
+            self
+    ) -> str:
+        """
+        Get string.
+
+        :return: String.
+        """
+
+        return f'{self.cart_left_of_center}_{self.cart_moving_left}_{self.pole_left_of_vertical}_{self.pole_rotating_left}'

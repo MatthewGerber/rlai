@@ -44,7 +44,7 @@ Improve an agent's policy according to its state-value estimates. This makes the
     :param agent: Agent.
     :param environment: Model-based environment.
     :param v_pi: State-value estimates for the agent's policy.
-    :return: Number of states in which the policy was updated.
+    :return: Number of states in which the policy was improved.
 ```
 ### [rlai.gpi.improvement.improve_policy_with_q_pi](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/improvement.py#L12)
 ```
@@ -56,7 +56,7 @@ Improve an agent's policy according to its state-action value estimates. This ma
     :param q_pi: State-action value estimates for the agent's policy.
     :param epsilon: Total probability mass to spread across all actions, resulting in an epsilon-greedy policy. Must
     be >= 0 if provided.
-    :return: Number of states in which the policy was updated.
+    :return: Number of states in which the policy was improved.
 ```
 ### [rlai.gpi.dynamic_programming.iteration.iterate_policy_q_pi](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/dynamic_programming/iteration.py#L60)
 ```

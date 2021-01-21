@@ -263,17 +263,15 @@ class GridworldFeatureExtractor(StateActionInteractionFeatureExtractor):
 
         self.check_state_and_action_lists(states, actions)
 
-        num_rows = self.environment.grid.shape[0]
-        num_cols = self.environment.grid.shape[1]
-        rows = [int(state.i / num_cols) for state in states]
-        cols = [state.i % num_cols for state in states]
+        rows = [int(state.i / self.num_cols) for state in states]
+        cols = [state.i % self.num_cols for state in states]
 
         state_features = np.array([
             [
                 row,  # from top
-                num_rows - row - 1,  # from bottom
+                self.num_rows - row - 1,  # from bottom
                 col,  # from left
-                num_cols - col - 1  # from right
+                self.num_cols - col - 1  # from right
             ]
             for row, col in zip(rows, cols)
         ])
@@ -313,3 +311,6 @@ class GridworldFeatureExtractor(StateActionInteractionFeatureExtractor):
                 environment.a_right
             ]
         )
+
+        self.num_rows = environment.grid.shape[0]
+        self.num_cols = environment.grid.shape[1]
