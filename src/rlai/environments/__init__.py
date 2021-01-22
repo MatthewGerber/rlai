@@ -103,6 +103,13 @@ class Environment(ABC):
         :return: True if a terminal state was entered and the run should terminate, and False otherwise.
         """
 
+    def close(
+            self
+    ):
+        """
+        Close the environment, releasing resources.
+        """
+
     def __init__(
             self,
             name: str,

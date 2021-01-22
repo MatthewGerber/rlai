@@ -262,6 +262,8 @@ def run(
                 **train_function_args
             )
 
+            train_function_args['environment'].close()
+
         print('Training complete.')
 
         # try to save agent

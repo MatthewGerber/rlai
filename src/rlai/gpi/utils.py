@@ -114,4 +114,6 @@ def resume_from_checkpoint(
 
     resume_function(**resume_args)
 
+    resume_environment.close()
+
     return resume_args['agent']

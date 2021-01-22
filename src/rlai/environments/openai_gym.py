@@ -203,6 +203,15 @@ class Gym(MdpEnvironment):
 
         return self.state
 
+    def close(
+            self
+    ):
+        """
+        Close the environment, releasing resources.
+        """
+
+        self.gym_native.close()
+
     def __init__(
             self,
             random_state: RandomState,
