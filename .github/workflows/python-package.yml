@@ -38,5 +38,6 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        xvfb-run --auto-servernum -- coverage run --source=src --omit=src/rlai/meta/* -m pytest ./test
+        sudo xvfb-run --auto-servernum &
+        coverage run --source=src --omit=src/rlai/meta/* -m pytest ./test
         coveralls
