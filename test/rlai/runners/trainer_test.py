@@ -7,13 +7,19 @@ import numpy as np
 
 from rlai.policies.tabular import TabularPolicy
 from rlai.runners.trainer import run
-from xvfbwrapper import Xvfb
 
 
 def test_run():
 
-    vdisplay = Xvfb()
-    vdisplay.start()
+    # if we're running headless (e.g., in github build action), then start an X display session to allow openai gym
+    # rendering to work.
+    headless = os.getenv('HEADLESS') == 'True'
+    if headless:
+        from xvfbwrapper import Xvfb
+        virtual_display = Xvfb()
+        virtual_display.start()
+    else:
+        virtual_display = None
 
     try:
         run_args_list = [
@@ -71,4 +77,5 @@ def test_run():
             print('passed.')
 
     finally:
-        vdisplay.stop()
+        if headless:
+            virtual_display.stop()
