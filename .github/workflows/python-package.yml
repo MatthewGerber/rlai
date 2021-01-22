@@ -25,6 +25,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
+        apt-get install xorg-dev libglu1-mesa libgl1-mesa-dev xvfb libxinerama1 libxcursor1
         sudo apt-get install python-opengl
         python -m pip install --upgrade pip
         python -m pip install -e .[test]
@@ -38,5 +39,5 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        coverage run --source=src --omit=src/rlai/meta/* -m pytest ./test
+        xvfb-run -a -s "-screen 0 1400x900x24 +extension RANDR" -- coverage run --source=src --omit=src/rlai/meta/* -m pytest ./test
         coveralls
