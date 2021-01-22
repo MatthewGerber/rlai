@@ -26,6 +26,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get install xvfb herbstluftwm
+        pip install pytest-xvfb
         python -m pip install --upgrade pip
         python -m pip install -e .[test]
     - name: Lint with flake8
@@ -38,7 +39,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        
+
         export DISPLAY=:99.0
         start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :99 -screen 0 1920x1200x24 -ac +extension GLX +render -noreset
         sleep 5
