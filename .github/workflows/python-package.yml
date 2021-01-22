@@ -38,6 +38,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        sudo Xvfb :0 -screen 0 1280x1024x24 &
+        Xvfb :1 -screen 0 1024x768x24 -ac +extension GLX +render -noreset &> xvfb.log &
+        export DISPLAY=:1
         coverage run --source=src --omit=src/rlai/meta/* -m pytest ./test
         coveralls
