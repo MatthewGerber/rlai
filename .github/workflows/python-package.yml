@@ -25,7 +25,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
-        sudo apt-get install xorg-dev libglu1-mesa libgl1-mesa-dev xvfb libxinerama1 libxcursor1 python-opengl
+        sudo apt-get install xvfb python-opengl
         python -m pip install --upgrade pip
         python -m pip install -e .[test]
     - name: Lint with flake8
@@ -38,5 +38,5 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        xvfb-run -a -s "-screen 0 1400x900x24 +extension RANDR" -- coverage run --source=src --omit=src/rlai/meta/* -m pytest ./test
+        xvfb-run --auto-servernum -- coverage run --source=src --omit=src/rlai/meta/* -m pytest ./test
         coveralls
