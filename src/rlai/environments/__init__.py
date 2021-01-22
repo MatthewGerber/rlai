@@ -46,7 +46,6 @@ class Environment(ABC):
         :param random_state: Random state.
         :return: 2-tuple of an environment and a list of unparsed arguments.
         """
-        pass
 
     @abstractmethod
     def reset_for_new_run(
@@ -103,7 +102,6 @@ class Environment(ABC):
         :param monitor: Monitor.
         :return: True if a terminal state was entered and the run should terminate, and False otherwise.
         """
-        pass
 
     def __init__(
             self,

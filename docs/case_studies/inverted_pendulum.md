@@ -12,24 +12,24 @@ in this environment. The episode terminates almost immediately as the agent lose
 
 Train a control agent for the inverted pendulum environment with the following command.
 ```
-rlai train --agent "rlai.agents.mdp.StochasticMdpAgent" --continuous-state-discretization-resolution 0.1 --gamma 1 --environment "rlai.environments.openai_gym.Gym" --gym-id "CartPole-v1" --render-every-nth-episode 5000 --video-directory "~/Desktop/cartpole_videos" --train-function "rlai.gpi.temporal_difference.iteration.iterate_value_q_pi" --mode "Q_LEARNING" --num-improvements 5000 --num-episodes-per-improvement 50 --T 1000 --epsilon 0.01 --make-final-policy-greedy True --num-improvements-per-plot 100 --num-improvements-per-checkpoint 100 --checkpoint-path "~/Desktop/cartpole_checkpoint.pickle" --save-agent-path "~/Desktop/cartpole_agent.pickle"
+rlai train --agent rlai.agents.mdp.StochasticMdpAgent --continuous-state-discretization-resolution 0.1 --gamma 1 --environment rlai.environments.openai_gym.Gym --gym-id CartPole-v1 --render-every-nth-episode 5000 --video-directory ~/Desktop/cartpole_videos --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode Q_LEARNING --num-improvements 5000 --num-episodes-per-improvement 50 --T 1000 --epsilon 0.01 --q-S-A rlai.value_estimation.tabular.TabularStateActionValueEstimator --make-final-policy-greedy True --num-improvements-per-plot 100 --save-agent-path ~/Desktop/cartpole_agent.pickle
 ```
 
 Arguments are explained below.
 * `train`:  Train the agent.
-* `--agent "rlai.agents.mdp.StochasticMdpAgent"`:  Standard stochastic MDP agent. 
+* `--agent rlai.agents.mdp.StochasticMdpAgent`:  Standard stochastic MDP agent. 
 * `--continuous-state-discretization-resolution 0.1`:  Discretize the continuous state space into discrete intervals 
   with resolution 0.1. The methods used here are for discrete-state problems, so some type of discretization of the 
   continuous state space is required.
 * `--gamma 1`:  No discount. All state-action pairs in the episode will receive equal credit for the total duration of 
   balancing achieved. 
-* `--environment "rlai.environments.openai_gym.Gym"`:  Environment class. 
-* `--gym-id "CartPole-v1"`:  OpenAI Gym environment identifier.
+* `--environment rlai.environments.openai_gym.Gym`:  Environment class. 
+* `--gym-id CartPole-v1`:  OpenAI Gym environment identifier.
 * `--render-every-nth-episode 5000`:  Render a video every 5000 episodes (100 improvements).
-* `--video-directory "~/Desktop/cartpole_videos"`:  Where to store rendered videos.
-* `--train-function "rlai.gpi.temporal_difference.iteration.iterate_value_q_pi"`:  Run iterative temporal-differencing 
+* `--video-directory ~/Desktop/cartpole_videos`:  Where to store rendered videos.
+* `--train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi`:  Run iterative temporal-differencing 
   on the agent's state-action value function. 
-* `--mode "Q_LEARNING"`:  Use q-learning to bootstrap the value of the next state-action pair. 
+* `--mode Q_LEARNING`:  Use q-learning to bootstrap the value of the next state-action pair. 
 * `--num-improvements 5000`:  Number of policy improvements (iterations).
 * `--num-episodes-per-improvement 50`:  Number of episodes per improvement.
 * `--T 1000`:  Maximum number of time steps per episode. Without this, the episode length will be unconstrained. This 
@@ -37,9 +37,7 @@ Arguments are explained below.
 * `--epsilon 0.01`:  Probability of behaving randomly at each time step.
 * `--make-final-policy-greedy True`:  After all learning iterations, make the final policy greedy (i.e., `epsilon=0.0`).
 * `--num-improvements-per-plot 100`:  Plot training performance every 100 iterations.
-* `--num-improvements-per-checkpoint 100`:  Checkpoint the learning process every 100 iterations, enabling resumption.
-* `--checkpoint-path "~/Desktop/cartpole_checkpoint.pickle"`:  Where to store the checkpoint.
-* `--save-agent-path "~/Desktop/cartpole_agent.pickle"`:  Where to save the final agent.
+* `--save-agent-path ~/Desktop/cartpole_agent.pickle`:  Where to save the final agent.
 
 The training progression is shown below.
 

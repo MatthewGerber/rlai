@@ -2,11 +2,12 @@ import os
 import pickle
 
 import numpy as np
+import pytest
 from numpy.random import RandomState
 
 from rlai.agents.mdp import StochasticMdpAgent
 from rlai.environments.gridworld import Gridworld
-from rlai.gpi.dynamic_programming.evaluation import evaluate_v_pi, evaluate_q_pi
+from rlai.gpi.dynamic_programming.evaluation import evaluate_v_pi, evaluate_q_pi, check_termination_criteria
 from rlai.policies.tabular import TabularPolicy
 
 
@@ -96,3 +97,22 @@ def test_evaluate_q_pi():
         fixture = pickle.load(file)
 
     assert q_pi == fixture
+
+
+def test_check_termination_criteria():
+
+    assert check_termination_criteria(0, 1) == (None, 1)
+    assert check_termination_criteria(-1, 1) == (None, 1)
+    assert check_termination_criteria(1, 0) == (1, None)
+    assert check_termination_criteria(1, -1) == (1, None)
+
+    with pytest.raises(ValueError):
+        check_termination_criteria(None, None)
+
+    with pytest.raises(ValueError):
+        check_termination_criteria(0, None)
+
+    with pytest.raises(ValueError):
+        check_termination_criteria(None, 0)
+
+    assert check_termination_criteria(1, 2) == (1, 2)

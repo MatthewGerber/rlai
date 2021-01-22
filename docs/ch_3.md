@@ -7,7 +7,7 @@ MDP environment.
 ```
 State of an MDP.
 ```
-### [rlai.environments.mdp.ModelBasedMdpEnvironment](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/mdp.py#L143)
+### [rlai.environments.mdp.ModelBasedMdpEnvironment](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/mdp.py#L142)
 ```
 Model-based MDP environment. Adds the specification of a probability distribution over next states and rewards.
 ```

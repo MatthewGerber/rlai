@@ -70,7 +70,7 @@ class Gridworld(ModelBasedMdpEnvironment):
                 grid = g.grid.transpose()
             elif a == g.a_left:
                 grid = np.flipud(g.grid.transpose())
-            else:
+            else:  # pragma no cover
                 raise ValueError(f'Unknown action:  {a}')
 
             # go row by row, with the final row transitioning to itself

@@ -11,7 +11,6 @@ from rlai.environments.mdp import MdpEnvironment
 from rlai.meta import rl_text
 from rlai.policies.tabular import TabularPolicy
 from rlai.rewards import Reward
-from rlai.states import State
 from rlai.states.mdp import MdpState
 from rlai.utils import parse_arguments
 
@@ -68,6 +67,9 @@ class Pit:
 
         :return: Number of seeds picked.
         """
+
+        if self.count <= 0:
+            raise ValueError('Cannot pick empty pocket.')
 
         count = self.count
         self.count = 0
@@ -270,7 +272,7 @@ class Mancala(MdpEnvironment):
     def reset_for_new_run(
             self,
             agent: MdpAgent
-    ) -> State:
+    ) -> MdpState:
         """
         Reset the game to the initial state.
 
@@ -376,8 +378,6 @@ class Mancala(MdpEnvironment):
 
         # pick pocket
         pick_count = pocket.pick()
-        if pick_count <= 0:
-            raise ValueError('Cannot pick empty pocket.')
 
         # sow
         sow_pocket = None

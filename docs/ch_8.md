@@ -1,5 +1,5 @@
 # Chapter 8:  Planning and Learning with Tabular Methods
-### [rlai.environments.mdp.MdpPlanningEnvironment](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/mdp.py#L259)
+### [rlai.environments.mdp.MdpPlanningEnvironment](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/mdp.py#L258)
 ```
 An MDP planning environment, used to generate simulated experience based on a model of the MDP that is learned
     through direct experience with the actual environment.
@@ -8,7 +8,7 @@ An MDP planning environment, used to generate simulated experience based on a mo
 ```
 An environment model.
 ```
-### [rlai.environments.mdp.PrioritizedSweepingMdpPlanningEnvironment](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/mdp.py#L339)
+### [rlai.environments.mdp.PrioritizedSweepingMdpPlanningEnvironment](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/mdp.py#L338)
 ```
 State-action transitions are prioritized based on the degree to which learning updates their values, and transitions
     with the highest priority are explored during planning.

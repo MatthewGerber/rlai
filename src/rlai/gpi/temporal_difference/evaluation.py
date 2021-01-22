@@ -40,7 +40,7 @@ def evaluate_q_pi(
         alpha: Optional[float],
         mode: Mode,
         n_steps: Optional[int],
-        planning_environment: MdpPlanningEnvironment,
+        planning_environment: Optional[MdpPlanningEnvironment],
         q_S_A: StateActionValueEstimator
 ) -> Tuple[Set[MdpState], float]:
     """
@@ -260,7 +260,7 @@ def get_bootstrapped_state_action_value(
                     td_target_a = max(q_S_A[state], key=lambda action: q_S_A[state][action].get_value())
                 else:
                     td_target_a = sample_list_item(state.AA, probs=None, random_state=environment.random_state)
-            else:
+            else:  # pragma no cover
                 raise ValueError(f'Unknown TD mode:  {mode}')
 
             # get the state-action value if we have an estimate for it; otherwise, it's zero.

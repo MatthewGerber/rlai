@@ -15,7 +15,6 @@ from rlai.agents.mdp import MdpAgent
 from rlai.environments.mdp import MdpEnvironment
 from rlai.meta import rl_text
 from rlai.rewards import Reward
-from rlai.states import State
 from rlai.states.mdp import MdpState
 from rlai.utils import parse_arguments
 from rlai.value_estimation.function_approximation.models.feature_extraction import (
@@ -176,7 +175,7 @@ class Gym(MdpEnvironment):
     def reset_for_new_run(
             self,
             agent: MdpAgent
-    ) -> State:
+    ) -> GymState:
         """
         Reset the environment for a new run (episode).
 
@@ -290,7 +289,7 @@ class Gym(MdpEnvironment):
                     np.linspace(low, high, math.ceil((high - low) / continuous_action_discretization_resolution))
                     for low, high in zip(box.low, box.high)
                 ]
-            else:
+            else:  # pragma no cover
                 raise ValueError(f'Unknown format of continuous action space:  {box}')
 
             self.actions = [
@@ -301,7 +300,7 @@ class Gym(MdpEnvironment):
                 for i, n_dim_action in enumerate(product(*action_discretizations))
             ]
 
-        else:
+        else:  # pragma no cover
             raise ValueError(f'Unknown Gym action space type:  {type(self.gym_native.action_space)}')
 
 
@@ -418,10 +417,10 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
         :param environment: Environment.
         """
 
-        if not isinstance(environment.gym_native.action_space, Discrete):
+        if not isinstance(environment.gym_native.action_space, Discrete):  # pragma no cover
             raise ValueError('Expected a discrete action space, but did not get one.')
 
-        if environment.gym_native.action_space.n != 2:
+        if environment.gym_native.action_space.n != 2:  # pragma no cover
             raise ValueError('Expected two actions:  left and right')
 
         super().__init__(

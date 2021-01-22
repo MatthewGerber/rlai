@@ -34,6 +34,7 @@ def test_iterate_value_q_pi():
         num_episodes_per_improvement=1,
         update_upon_every_visit=False,
         epsilon=epsilon,
+        planning_environment=None,
         make_final_policy_greedy=False,
         q_S_A=q_S_A
     )
@@ -81,6 +82,7 @@ def test_off_policy_monte_carlo():
         num_episodes_per_improvement=1,
         update_upon_every_visit=True,
         epsilon=epsilon,
+        planning_environment=None,
         make_final_policy_greedy=False,
         q_S_A=q_S_A,
         off_policy_agent=off_policy_agent

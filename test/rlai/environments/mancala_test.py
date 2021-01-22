@@ -2,6 +2,7 @@ import os
 import pickle
 import tempfile
 
+import pytest
 from numpy.random import RandomState
 
 from rlai.agents import Human
@@ -10,6 +11,7 @@ from rlai.environments.mancala import Mancala, Pit
 from rlai.gpi.monte_carlo.iteration import iterate_value_q_pi
 from rlai.gpi.utils import resume_from_checkpoint
 from rlai.policies.tabular import TabularPolicy
+from rlai.utils import sample_list_item
 from rlai.value_estimation.tabular import TabularStateActionValueEstimator
 from test.rlai.utils import tabular_pi_legacy_eq
 
@@ -50,6 +52,7 @@ def test_learn():
         num_episodes_per_improvement=100,
         update_upon_every_visit=False,
         epsilon=epsilon,
+        planning_environment=None,
         make_final_policy_greedy=False,
         q_S_A=q_S_A,
         num_improvements_per_checkpoint=3,
@@ -104,6 +107,7 @@ def test_learn():
         num_episodes_per_improvement=100,
         update_upon_every_visit=False,
         epsilon=epsilon,
+        planning_environment=None,
         make_final_policy_greedy=False,
         q_S_A=q_S_A
     )
@@ -118,6 +122,9 @@ def test_pit():
 
     assert str(pit) == '0:  Player 1, 5*'
 
+    with pytest.raises(ValueError, match='Cannot pick empty pocket.'):
+        Pit(True, 0, False).pick()
+
 
 def test_human_player_mutator():
 
@@ -126,3 +133,42 @@ def test_human_player_mutator():
     Mancala.human_player_mutator(mancala)
 
     assert isinstance(mancala.player_2, Human)
+
+
+def test_human_player():
+
+    random_state = RandomState(12345)
+
+    human = Human()
+
+    def mock_input(prompt):
+        s = human.most_recent_state
+        selected_a = sample_list_item(s.AA, probs=None, random_state=random_state)
+        return selected_a.name
+
+    human.get_input = mock_input
+
+    mancala: Mancala = Mancala(
+        random_state=random_state,
+        T=None,
+        initial_count=4,
+        player_2=human
+    )
+
+    epsilon = 0.05
+
+    q_S_A = TabularStateActionValueEstimator(mancala, epsilon, None)
+
+    p1 = StochasticMdpAgent(
+        'player 1',
+        random_state,
+        q_S_A.get_initial_policy(),
+        1
+    )
+
+    state = mancala.reset_for_new_run(p1)
+    p1.reset_for_new_run(state)
+    a = p1.act(0)
+    state, reward = mancala.advance(state, 0, a, p1)
+
+    assert mancala.board[7].count == 0 and state.i == 1 and reward.i == 2

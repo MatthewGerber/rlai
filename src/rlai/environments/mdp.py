@@ -63,7 +63,6 @@ class MdpEnvironment(Environment, ABC):
         :param agent: Agent.
         :return: 2-tuple of next state and next reward.
         """
-        pass
 
     @final
     def run_step(
@@ -362,7 +361,7 @@ class PrioritizedSweepingMdpPlanningEnvironment(MdpPlanningEnvironment):
         parser.add_argument(
             '--priority-theta',
             type=float,
-            help='Threshold on priority values, below which state-action pairs are added to the priority queue.'
+            help='Threshold on priority values, below which state-action pairs are added to the priority queue. Note that all priority values are negative, with higher priorities being larger negative values.'
         )
 
         return parser
@@ -409,18 +408,19 @@ class PrioritizedSweepingMdpPlanningEnvironment(MdpPlanningEnvironment):
         :return: 2-tuple of (1) 3-tuple of current state, current action, and next-state, and (2) reward.
         """
 
-        planning_state, a = self.get_state_action_with_highest_priority()
+        planning_state, planning_a = self.get_state_action_with_highest_priority()
 
         # if there is nothing left in the priority queue, then the planning episode is done.
         if planning_state is None:
             planning_state = state
+            planning_a = a
             next_state = copy(state)
             next_state.terminal = True
             r = 0.0
         else:
 
             # sample next state and reward from model
-            next_state, r = self.model.sample_next_state_and_reward(planning_state, a, self.random_state)
+            next_state, r = self.model.sample_next_state_and_reward(planning_state, planning_a, self.random_state)
 
             # add predecessors into priority queue
             for pred_state, pred_action, r in self.get_predecessor_state_action_rewards(planning_state):
@@ -428,7 +428,7 @@ class PrioritizedSweepingMdpPlanningEnvironment(MdpPlanningEnvironment):
                 priority = -abs(target_value - self.q_S_A[pred_state][pred_action].get_value())
                 self.add_state_action_priority(pred_state, pred_action, priority)
 
-        return (planning_state, a, next_state), Reward(None, r)
+        return (planning_state, planning_a, next_state), Reward(None, r)
 
     def get_predecessor_state_action_rewards(
             self,

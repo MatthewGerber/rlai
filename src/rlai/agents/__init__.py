@@ -7,6 +7,7 @@ from numpy.random import RandomState
 from rlai.actions import Action
 from rlai.meta import rl_text
 from rlai.policies import Policy
+from rlai.policies.tabular import TabularPolicy
 from rlai.states import State
 from rlai.states.mdp import MdpState
 from rlai.utils import get_base_argument_parser
@@ -46,7 +47,6 @@ class Agent(ABC):
         :param pi: Policy.
         :return: List of agents.
         """
-        pass
 
     def reset_for_new_run(
             self,
@@ -120,7 +120,6 @@ class Agent(ABC):
         :param t: Current time step.
         :return: Action
         """
-        pass
 
     def reward(
             self,
@@ -180,10 +179,8 @@ class Human(Agent):
             pi: Optional[Policy]
     ) -> List:
         """
-        Not implemented. Will raise exception.
+        Not implemented.
         """
-
-        raise ValueError('Not implemented')
 
     def __act__(
             self,
@@ -215,12 +212,27 @@ class Human(Agent):
             prompt += '\nEnter your selection:  '
 
             try:
-                chosen_name = input(prompt)
+                chosen_name = self.get_input(prompt)
                 action = self.most_recent_state.AA[a_name_i[chosen_name]]
             except Exception:
                 pass
 
         return action
+
+    @staticmethod
+    def get_input(
+            prompt: str
+    ) -> str:
+        """
+        Get input from the human agent.
+
+        :param prompt: Prompt.
+        :return: Input.
+        """
+
+        # don't compute coverage for the following. we mock the current function for tests, but the input function
+        # can't be patched. https://stackoverflow.com/questions/21046717/python-mocking-raw-input-in-unittests
+        return input(prompt)  # pragma no cover
 
     def __init__(
             self
@@ -233,3 +245,7 @@ class Human(Agent):
             name='human',
             random_state=None
         )
+
+        # TODO:  This is a hack to make the human agent compatible with tabular methdods, which request state
+        # identifiers during operation.
+        self.pi = TabularPolicy(None, None)

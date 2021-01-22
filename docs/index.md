@@ -20,9 +20,10 @@ generally applicable beyond such examples. The approach taken here should be gen
   
 # Features
 
-* Diagnostic and interpretation tools:  As the environment and agent increase in complexity (e.g., from small, 
-  discrete-space gridworlds to large, continuous-space control problems), the need for diagnostic and interpretation tools 
-  becomes apparent. Such tools can be found [here](model_diagnostics_and_interpretation.md).
+* Diagnostic and interpretation tools:  Diagnostic and interpretation tools become critical as the environment and agent 
+  increase in complexity (e.g., from tabular methods in small, discrete-space gridworlds to value function approximation 
+  methods in large, continuous-space control problems). Such tools can be found 
+  [here](model_diagnostics_and_interpretation.md).
 
 # Case Studies
 The gridworld and other simple environments (e.g., gambler's problem) are used throughout the package to develop, 
