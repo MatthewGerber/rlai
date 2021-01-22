@@ -8,7 +8,7 @@ import numpy as np
 from rlai.policies.tabular import TabularPolicy
 from rlai.runners.trainer import run
 from xvfbwrapper import Xvfb
-
+import matplotlib.pyplot as plt
 
 def test_run():
 
@@ -71,4 +71,5 @@ def test_run():
             print('passed.')
 
     finally:
+        plt.close('all')
         vdisplay.stop()
