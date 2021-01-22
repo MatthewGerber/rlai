@@ -25,8 +25,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
-        apt-get install xorg-dev libglu1-mesa libgl1-mesa-dev xvfb libxinerama1 libxcursor1
-        sudo apt-get install python-opengl
+        sudo apt-get install xorg-dev libglu1-mesa libgl1-mesa-dev xvfb libxinerama1 libxcursor1 python-opengl
         python -m pip install --upgrade pip
         python -m pip install -e .[test]
     - name: Lint with flake8
