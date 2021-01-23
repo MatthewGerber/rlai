@@ -41,7 +41,6 @@ class Policy(ABC):
         :param state: State.
         :return: True if policy is defined for state and False otherwise.
         """
-        pass
 
     @abstractmethod
     def __getitem__(
@@ -54,4 +53,3 @@ class Policy(ABC):
         :param state: State.
         :return: Dictionary of action-probability items.
         """
-        pass

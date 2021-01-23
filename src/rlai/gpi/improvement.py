@@ -82,7 +82,7 @@ def improve_policy_with_q_pi(
             sum(agent.pi[s].values())
             for s in agent.pi
         ], 1.0
-    ):
+    ):  # pragma no cover
         raise ValueError('Expected action probabilities to sum to 1.0')
 
     return num_states_improved

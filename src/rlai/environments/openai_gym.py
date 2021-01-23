@@ -251,7 +251,7 @@ class Gym(MdpEnvironment):
         self.gym_native._max_episode_steps = 999999999999 if self.T is None else self.T
 
         if continuous_action_discretization_resolution is not None and not isinstance(self.gym_native.action_space, Box):
-            raise ValueError(f'Continuous-action discretization is only valid for Box action-space environments.')
+            raise ValueError('Continuous-action discretization is only valid for Box action-space environments.')
 
         # set up rendering...either display-only or saved videos
         self.render_every_nth_episode = render_every_nth_episode

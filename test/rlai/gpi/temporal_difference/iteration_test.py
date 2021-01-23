@@ -2,6 +2,7 @@ import os
 import pickle
 
 import numpy as np
+import pytest
 from numpy.random import RandomState
 
 from rlai.agents.mdp import StochasticMdpAgent
@@ -296,6 +297,7 @@ def test_q_learning_iterate_value_q_pi_function_approximation_no_formula():
 
     assert np.allclose(mdp_agent.pi.estimator.model.model.coef_, pi_fixture.estimator.model.model.coef_)
     assert mdp_agent.pi.format_state_action_probs(mdp_environment.SS) == pi_fixture.format_state_action_probs(mdp_environment.SS)
+    assert mdp_agent.pi.format_state_action_values(mdp_environment.SS) == pi_fixture.format_state_action_values(mdp_environment.SS)
 
 
 def test_expected_sarsa_iterate_value_q_pi():
@@ -380,3 +382,37 @@ def test_n_step_q_learning_iterate_value_q_pi():
         fixture_pi, fixture_q_S_A = pickle.load(file)
 
     assert tabular_pi_legacy_eq(mdp_agent.pi, fixture_pi) and tabular_estimator_legacy_eq(q_S_A, fixture_q_S_A)
+
+
+def test_invalid_epsilon_iterate_value_q_pi():
+
+    random_state = RandomState(12345)
+
+    mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
+
+    epsilon = 0.00
+
+    q_S_A = TabularStateActionValueEstimator(mdp_environment, epsilon, None)
+
+    mdp_agent = StochasticMdpAgent(
+        'test',
+        random_state,
+        q_S_A.get_initial_policy(),
+        1
+    )
+
+    with pytest.raises(ValueError, match='epsilon must be strictly > 0 for TD-learning'):
+        iterate_value_q_pi(
+            agent=mdp_agent,
+            environment=mdp_environment,
+            num_improvements=10,
+            num_episodes_per_improvement=100,
+            num_updates_per_improvement=None,
+            alpha=0.1,
+            mode=Mode.Q_LEARNING,
+            n_steps=3,
+            epsilon=epsilon,
+            planning_environment=None,
+            make_final_policy_greedy=False,
+            q_S_A=q_S_A
+        )

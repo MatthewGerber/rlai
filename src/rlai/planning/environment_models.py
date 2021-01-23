@@ -33,7 +33,6 @@ class EnvironmentModel(ABC):
         :param next_state: Subsequent state.
         :param reward: Subsequent reward.
         """
-        pass
 
     @abstractmethod
     def is_defined_for_state_action(
@@ -48,7 +47,6 @@ class EnvironmentModel(ABC):
         :param action: Action.
         :return: True if defined and False otherwise.
         """
-        pass
 
 
 @rl_text(chapter=8, page=170)

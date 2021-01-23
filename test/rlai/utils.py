@@ -1,4 +1,5 @@
-from typing import Dict
+import os
+from typing import Dict, Any
 
 from rlai.actions import Action
 from rlai.policies import Policy
@@ -55,3 +56,21 @@ def tabular_estimator_legacy_eq(
         return False
 
     return True
+
+
+def init_virtual_display() -> Any:
+    """
+    Initialize a new virtual display if running in headless mode.
+
+    :return: Virtual display, or None if not running headless.
+    """
+
+    headless = os.getenv('HEADLESS') == 'True'
+    if headless:
+        from xvfbwrapper import Xvfb
+        virtual_display = Xvfb()
+        virtual_display.start()
+    else:
+        virtual_display = None
+
+    return virtual_display

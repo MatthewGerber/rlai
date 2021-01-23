@@ -71,7 +71,7 @@ def test_evaluate_q_pi():
         agent=mdp_agent,
         environment=mdp_environment,
         theta=0.001,
-        num_iterations=None,
+        num_iterations=100,
         update_in_place=True
     )
 
@@ -79,7 +79,7 @@ def test_evaluate_q_pi():
         agent=mdp_agent,
         environment=mdp_environment,
         theta=0.001,
-        num_iterations=None,
+        num_iterations=200,
         update_in_place=False
     )
 
