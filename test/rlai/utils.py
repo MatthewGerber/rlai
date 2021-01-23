@@ -58,19 +58,20 @@ def tabular_estimator_legacy_eq(
     return True
 
 
-def init_virtual_display() -> Any:
+VIRTUAL_DISPLAY_INITIALIZED = False
+
+
+def init_virtual_display():
     """
     Initialize a new virtual display if running in headless mode.
-
-    :return: Virtual display, or None if not running headless.
     """
 
+    global VIRTUAL_DISPLAY_INITIALIZED
+
     headless = os.getenv('HEADLESS') == 'True'
-    if headless:
+
+    if headless and not VIRTUAL_DISPLAY_INITIALIZED:
         from xvfbwrapper import Xvfb
         virtual_display = Xvfb()
         virtual_display.start()
-    else:
-        virtual_display = None
-
-    return virtual_display
+        VIRTUAL_DISPLAY_INITIALIZED = True
