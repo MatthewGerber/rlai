@@ -297,6 +297,7 @@ def test_q_learning_iterate_value_q_pi_function_approximation_no_formula():
 
     assert np.allclose(mdp_agent.pi.estimator.model.model.coef_, pi_fixture.estimator.model.model.coef_)
     assert mdp_agent.pi.format_state_action_probs(mdp_environment.SS) == pi_fixture.format_state_action_probs(mdp_environment.SS)
+    assert mdp_agent.pi.format_state_action_values(mdp_environment.SS) == pi_fixture.format_state_action_values(mdp_environment.SS)
 
 
 def test_expected_sarsa_iterate_value_q_pi():
