@@ -2,16 +2,15 @@ import os
 import pickle
 import shlex
 import tempfile
-from contextlib import nullcontext
 
 import pytest
+from numpy.random import RandomState
 
 from rlai.environments.openai_gym import Gym
 from rlai.gpi.monte_carlo.iteration import iterate_value_q_pi
 from rlai.gpi.utils import resume_from_checkpoint
 from rlai.runners.trainer import run
 from test.rlai.utils import init_virtual_display
-from numpy.random import RandomState
 
 
 def test_resume_gym_invalid_environment():
