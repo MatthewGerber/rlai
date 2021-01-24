@@ -122,7 +122,7 @@ def main():
         meta_md.write(f'{readme_base}\n\n')
 
         # write sorted string chapters
-        meta_md.write('# General Topics\n')
+        meta_md.write('# Links to Code by Topic\n')
         for chapter in sorted(filter(lambda ch: isinstance(ch, str), chapter_page_descriptions)):
             ch_filename = f'ch_{chapter.replace(" ", "_")}.md'
             meta_md.write(f'### [{chapter}]({ch_filename})\n')
@@ -133,7 +133,7 @@ def main():
                         ch_md.write(description)
 
         # write sorted numeric chapters
-        meta_md.write('\n# Book Chapters\n')
+        meta_md.write('\n# Links to Code by Book Chapter\n')
         for chapter in sorted(filter(lambda ch: isinstance(ch, int), chapter_page_descriptions)):
             ch_filename = f'ch_{chapter}.md'
             meta_md.write(f'### [Chapter {chapter}:  {ch_num_name[chapter]}]({ch_filename})\n')

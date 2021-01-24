@@ -10,12 +10,29 @@ some.
 examples covered; however, such implementations do not necessarily lead to reusable and extensible code that is 
 generally applicable beyond such examples. The approach taken here should be generally applicable well beyond the text.
 
-# Installation and Use
-* Source code:  The `rlai` code is distributed via [PyPI](https://pypi.org/project/rlai/) and can be installed with 
-  `pip install rlai`. See the [example repository](https://github.com/MatthewGerber/rlai-dependency-example) for how a 
-  project can be structured to consume the `rlai` package functionality within source code.
-* Command-line interface:  Using `rlai` from the command-line interface (CLI) is demonstrated in the case studies below 
-  and is also explored in the [CLI guide](cli_guide.md).
+# Installation, Use, and Development
+The `rlai` code is distributed via [PyPI](https://pypi.org/project/rlai/) and can be installed with `pip install rlai`. 
+See the [example repository](https://github.com/MatthewGerber/rlai-dependency-example) for how a project can be 
+structured to consume the `rlai` package functionality within source code. Using `rlai` from the command-line interface 
+(CLI) is demonstrated in the case studies below and is also explored in the [CLI guide](cli_guide.md).
+  
+There are several ways to get involved with the use and development of this package. Below are a few ideas organized
+by area of interest.
+
+* Incorporate new statistical learning methods:  The RLAI 
+  [SKLearnSGD](https://github.com/MatthewGerber/rlai/blob/master/src/rlai/value_estimation/function_approximation/models/sklearn.py)
+  module demonstrates how to use methods in scikit-learn (in this case stochastic gradient descent regression) to 
+  approximate state-action value functions. This is just one approach, and it would be interesting to compare time, 
+  memory, and reward performance with a nonparametric approach like 
+  [KNN regression](https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsRegressor.html).
+  
+* Explore new OpenAI Gym environments:  OpenAI Gym provides a wide range of interesting environments, and
+  experimenting with them can be as simple as modifying an existing training command (e.g., the one for
+  [inverted pendulum](https://matthewgerber.github.io/rlai/case_studies/inverted_pendulum.html)), replacing the 
+  `--gym-id` with something else. Other changes might be needed depending on the environment, but Gym is particularly
+  convenient.
+  
+Feel free to submit issues and pull requests.
   
 # Features
 * Diagnostic and interpretation tools:  Diagnostic and interpretation tools become critical as the environment and agent 
@@ -38,21 +55,3 @@ to train agents for and are instructive for understanding how agents are paramet
 A list of figures can be found [here](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/figures). Most of these 
 are reproductions of those shown in the Sutton and Barto text; however, even the reproductions typically provide detail 
 not shown in the text.
-
-# Getting Involved
-There are several ways to get involved with the use and development of this package. Below are a few ideas organized
-by area of interest.
-
-* Incorporate new statistical learning methods:  The 
-  [rlai.value_estimation.function_approximation.models.sklearn.SKLearnSGD](https://github.com/MatthewGerber/rlai/blob/master/src/rlai/value_estimation/function_approximation/models/sklearn.py)
-  module demonstrates how to use methods in scikit-learn to approximate state-action value functions, in this case
-  stochastic gradient descent regression. This is just one approach, and it would be interesting to compare time, 
-  memory, and reward performance with a nonparametric approach like 
-  [KNN regression](https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsRegressor.html).
-  
-* Explore new OpenAI Gym environments:  OpenAI Gym provides a wide range of interesting environments, and
-  experimenting with them can be as simple as modifying an existing training command (e.g., the one for
-  [inverted pendulum](https://matthewgerber.github.io/rlai/case_studies/inverted_pendulum.html)), replacing the 
-  `--gym-id` with something else. Other changes might be needed depending on the environment, but Gym is particularly
-  convenient.
-  
