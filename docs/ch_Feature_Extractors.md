@@ -5,7 +5,7 @@ A feature extractor for the gridworld. This extractor, being based on the `State
     directly extracts the fully interacted state-action feature matrix. It returns numpy.ndarray feature matrices, which
     are not compatible with the Patsy formula-based interface.
 ```
-### [rlai.environments.openai_gym.CartpoleFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/openai_gym.py#L308)
+### [rlai.environments.openai_gym.CartpoleFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/openai_gym.py#L317)
 ```
 A feature extractor for the OpenAI cartpole environment. This extractor, being based on the
     `StateActionInteractionFeatureExtractor`, directly extracts the fully interacted state-action feature matrix. It

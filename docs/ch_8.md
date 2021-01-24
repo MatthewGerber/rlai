@@ -13,7 +13,7 @@ An environment model.
 State-action transitions are prioritized based on the degree to which learning updates their values, and transitions
     with the highest priority are explored during planning.
 ```
-### [rlai.planning.environment_models.StochasticEnvironmentModel](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/planning/environment_models.py#L55)
+### [rlai.planning.environment_models.StochasticEnvironmentModel](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/planning/environment_models.py#L53)
 ```
 A stochastic environment model.
 ```

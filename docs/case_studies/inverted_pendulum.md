@@ -151,8 +151,15 @@ scikit-learn's stochastic gradient descent. Documentation for the model and its 
 * `--num-improvements-per-checkpoint 50`
 * `--checkpoint-path ~/Desktop/cartpole_checkpoint.pickle`
 *`--save-agent-path ~/Desktop/cartpole_agent.pickle`
-
-
+  
 ## Results
+
+The video below shows the trained agent controlling the inverted pendulum. Note how the agent actively controls both the 
+vertical balance of the pendulum (ideally upright) and the cart's horizontal position along the track (ideally in the 
+middle). The episode ends after the maximum number of time steps is reached, rather than due to a control failure.
+
+{% include youtubePlayer.html id="E76S7YTDoek" %}
+
+Also note that the control obtained here is much tighter than achieved with tabular methods above.
 
 ## Ablation Tests
