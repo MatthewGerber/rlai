@@ -1,32 +1,50 @@
 # Inverted Pendulum
 The inverted pendulum is also known as cart-pole balancing, where the goal is to keep a bottom-hinged pole balanced for
-as long as possible. Imagine balancing a broom with the handle's end in your open palm. You can read more about this 
-environment [here](https://gym.openai.com/envs/CartPole-v1/). Below is an example of running a random (untrained) agent 
-in this environment. The episode terminates almost immediately as the agent loses balance control.
+as long as possible by moving a cart left or right. Imagine balancing a broom with the handle's end in your open palm. 
+You can read more about this environment [here](https://gym.openai.com/envs/CartPole-v1/). Below is an example of 
+running a random (untrained) agent in this environment. The episode terminates almost immediately as the agent loses 
+balance control.
 
 {% include youtubePlayer.html id="rGnf9CFwD7M" %}
 
 ## Tabular State-Action Value Function
+This section describes training and results for an agent using tabular methods for state-action value estimation. The
+primary challenge with this approach is to simultaneously (1) discretize the continuous state space to a sufficiently 
+fine resolution, thereby resolving state-action pairs sufficient for control, and (2) estimate the state-action value 
+function in a practically feasible number of time steps and within memory constraints. These objectives are opposed, 
+with increases in resolution making estimation more expensive. The tradeoff is unavoidable with tabular methods. A 
+later section of this case study will eliminate discretization of the state space by imposing a parametric form on the 
+state-action value function. This change will eliminate memory constraints, but it will introduce several new 
+challenges. First, the tabular approach...
 
 ### Training
 
 Train a control agent for the inverted pendulum environment with the following command.
 ```
-rlai train --agent rlai.agents.mdp.StochasticMdpAgent --continuous-state-discretization-resolution 0.1 --gamma 1 --environment rlai.environments.openai_gym.Gym --gym-id CartPole-v1 --render-every-nth-episode 5000 --video-directory ~/Desktop/cartpole_videos --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode Q_LEARNING --num-improvements 5000 --num-episodes-per-improvement 50 --T 1000 --epsilon 0.01 --q-S-A rlai.value_estimation.tabular.TabularStateActionValueEstimator --make-final-policy-greedy True --num-improvements-per-plot 100 --save-agent-path ~/Desktop/cartpole_agent.pickle
+rlai train --agent rlai.agents.mdp.StochasticMdpAgent --continuous-state-discretization-resolution 0.1 --gamma 1 --environment rlai.environments.openai_gym.Gym --gym-id CartPole-v1 --render-every-nth-episode 5000 --video-directory ~/Desktop/cartpole_videos --force --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode Q_LEARNING --num-improvements 5000 --num-episodes-per-improvement 50 --T 1000 --epsilon 0.01 --q-S-A rlai.value_estimation.tabular.TabularStateActionValueEstimator --make-final-policy-greedy True --num-improvements-per-plot 100 --save-agent-path ~/Desktop/cartpole_agent.pickle
 ```
 
 Arguments are explained below.
+
+### RLAI
 * `train`:  Train the agent.
+
+### Agent  
 * `--agent rlai.agents.mdp.StochasticMdpAgent`:  Standard stochastic MDP agent. 
 * `--continuous-state-discretization-resolution 0.1`:  Discretize the continuous state space into discrete intervals 
   with resolution 0.1. The methods used here are for discrete-state problems, so some type of discretization of the 
   continuous state space is required.
 * `--gamma 1`:  No discount. All state-action pairs in the episode will receive equal credit for the total duration of 
-  balancing achieved. 
+  balancing achieved.
+  
+### Environment
 * `--environment rlai.environments.openai_gym.Gym`:  Environment class. 
 * `--gym-id CartPole-v1`:  OpenAI Gym environment identifier.
 * `--render-every-nth-episode 5000`:  Render a video every 5000 episodes (100 improvements).
 * `--video-directory ~/Desktop/cartpole_videos`:  Where to store rendered videos.
+* `--force`: Overwrite videos in the video directory.
+  
+### State-Action Value Iteration
 * `--train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi`:  Run iterative temporal-differencing 
   on the agent's state-action value function. 
 * `--mode Q_LEARNING`:  Use q-learning to bootstrap the value of the next state-action pair. 
@@ -35,19 +53,22 @@ Arguments are explained below.
 * `--T 1000`:  Maximum number of time steps per episode. Without this, the episode length will be unconstrained. This 
   can slow down learning in later iterations where the agent has developed a reasonable policy.
 * `--epsilon 0.01`:  Probability of behaving randomly at each time step.
+  
+# Other Parameters
 * `--make-final-policy-greedy True`:  After all learning iterations, make the final policy greedy (i.e., `epsilon=0.0`).
 * `--num-improvements-per-plot 100`:  Plot training performance every 100 iterations.
 * `--save-agent-path ~/Desktop/cartpole_agent.pickle`:  Where to save the final agent.
 
 The training progression is shown below.
 
-![inverted-pendulum](https://github.com/MatthewGerber/rlai/raw/master/trained_agents/cartpole/cartpole_training.png)
+![inverted-pendulum-tabular](https://github.com/MatthewGerber/rlai/raw/master/trained_agents/cartpole/tabular/cartpole_training.png)
 
 In the left sub-figure above, the left y-axis shows how long the control agent is able to keep the pole balanced, the 
 right y-axis shows the size of the state space, and the x-axis shows improvement iterations for the agent's policy. The 
 right sub-figure shows the same reward y-axis but along a time x-axis. Based on the learning trajectory, it seems clear
 that the agent would have continued to improve its policy given more time; however, as shown below, the results are 
-quite satisfactory after 7 hours of wallclock training time.
+quite satisfactory after 7 hours of wallclock training time. Note, however, that the value function estimator is 
+approaching 10^5 (100000) states for this relatively simple environment.
 
 ### Results
 
@@ -59,3 +80,79 @@ middle). The episode ends after the maximum number of time steps is reached, rat
 
 ## Parametric State-Action Value Function
 
+As shown above, tabular methods present a conceptually straightforward approach to estimating state-action value 
+functions in continuous state-space environments. Practically, the estimation problem is complicated by the need for
+very large state spaces and accordingly long training times. This is akin to the challenges presented by nonparametric 
+function approximation methods such as k-nearest neighbor (KNN). KNN retains all training samples (it is memory-based), 
+and the function is approximated at a point by averaging a subsample around the point. The tabular approach described 
+above does not retain all training samples, but it does retain an average value in each of the discretized state-space 
+intervals. The number of intervals is bounded only by the range of the state dimensions (which may be unbounded). The 
+time and memory challenges in KNN and discretized tabular methods are therefore quite similar.
+
+The approach in this section is to approximate the state-action value function by imposing a parametric form upon it.
+We will have far fewer parameters (e.g., 10^2) than the number of discretized intervals in our tabular approach (e.g., 
+10^5), but we will consequently need to take great care when defining the parametric form and estimating the parameter
+values from experience in the environment. There is nothing novel about this tradeoff; it is exactly the distinction 
+between parametric and nonparametric statistical learning methods.
+
+## Training
+
+One of the most challenging aspects of parametric RL is selecting training hyperparameters (i.e., parameters of learning
+beyond those of the parametric form, such as step sizes). Very little scientific theory exists to guide a-priori 
+setting of hyperparameter values in arbitrary tasks. As a result, significant trial-and-error is usually involved, 
+either manual or by automated search. Call it an "art" if you wish, but that might be too generous. This section 
+presents training with hyperparameters values that generate a high-performance agent, but keep in mind that significant
+manual experiementation was required. A later section will show what happens when these values are changed.
+
+```
+rlai train --agent rlai.agents.mdp.StochasticMdpAgent --gamma 0.95 --environment rlai.environments.openai_gym.Gym --gym-id CartPole-v1 --render-every-nth-episode 100 --video-directory ~/Desktop/cartpole_videos --force --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode SARSA --num-improvements 15000 --num-episodes-per-improvement 1 --num-updates-per-improvement 1 --epsilon 0.2 --q-S-A rlai.value_estimation.function_approximation.estimators.ApproximateStateActionValueEstimator --function-approximation-model rlai.value_estimation.function_approximation.models.sklearn.SKLearnSGD --loss squared_loss --sgd-alpha 0.0 --learning-rate constant --eta0 0.0001 --verbose 1 --feature-extractor rlai.environments.openai_gym.CartpoleFeatureExtractor --make-final-policy-greedy True --num-improvements-per-plot 50 --num-improvements-per-checkpoint 50 --checkpoint-path ~/Desktop/cartpole_checkpoint.pickle --save-agent-path ~/Desktop/cartpole_agent.pickle
+```
+
+Arguments are explained below (many explanations are given above and not duplicated here).
+
+### RLAI 
+* `train`:  Train the agent.
+
+### Agent
+* `--agent rlai.agents.mdp.StochasticMdpAgent`
+* `--gamma 0.95`
+
+### Environment
+* `--environment rlai.environments.openai_gym.Gym`
+* `--gym-id CartPole-v1`
+* `--render-every-nth-episode 100`
+* `--video-directory ~/Desktop/cartpole_videos`
+* `--force`
+
+### State-Action Value Iteration
+* `--train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi`
+* `--mode SARSA`
+* `--num-improvements 15000`
+* `--num-episodes-per-improvement 1`
+* `--num-updates-per-improvement 1`
+* `--epsilon 0.2`
+
+### State-Action Value Model
+* `--q-S-A rlai.value_estimation.function_approximation.estimators.ApproximateStateActionValueEstimator`:  Use function 
+approximation.
+* `--function-approximation-model rlai.value_estimation.function_approximation.models.sklearn.SKLearnSGD`:  Use 
+scikit-learn's stochastic gradient descent. Documentation for the model and its arguments below can be found 
+[here](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.SGDRegressor.html).
+* `--loss squared_loss`
+* `--sgd-alpha 0.0`
+* `--learning-rate constant`
+* `--eta0 0.0001`
+* `--verbose 1`
+* `--feature-extractor rlai.environments.openai_gym.CartpoleFeatureExtractor`:  Use the feature extractor specified.
+
+### Other Parameters
+* `--make-final-policy-greedy True`
+* `--num-improvements-per-plot 50`
+* `--num-improvements-per-checkpoint 50`
+* `--checkpoint-path ~/Desktop/cartpole_checkpoint.pickle`
+*`--save-agent-path ~/Desktop/cartpole_agent.pickle`
+
+
+## Results
+
+## Ablation Tests

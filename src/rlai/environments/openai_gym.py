@@ -455,7 +455,7 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
 
         self.feature_scaler = NonstationaryFeatureScaler(
             num_observations_refit_feature_scaler=2000,
-            refit_history_length=4000,
+            refit_history_length=10000,
             refit_weight_decay=0.9999
         )
 

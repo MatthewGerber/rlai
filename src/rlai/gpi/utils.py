@@ -54,7 +54,7 @@ def plot_policy_iteration(
     ax.legend()
     ax.grid()
 
-    plt.show()
+    plt.show(block=False)
 
 
 def resume_from_checkpoint(
