@@ -26,10 +26,10 @@ rlai train --agent rlai.agents.mdp.StochasticMdpAgent --continuous-state-discret
 
 Arguments are explained below.
 
-### RLAI
+#### RLAI
 * `train`:  Train the agent.
 
-### Agent  
+#### Agent  
 * `--agent rlai.agents.mdp.StochasticMdpAgent`:  Standard stochastic MDP agent. 
 * `--continuous-state-discretization-resolution 0.1`:  Discretize the continuous state space into discrete intervals 
   with resolution 0.1. The methods used here are for discrete-state problems, so some type of discretization of the 
@@ -37,14 +37,14 @@ Arguments are explained below.
 * `--gamma 1`:  No discount. All state-action pairs in the episode will receive equal credit for the total duration of 
   balancing achieved.
   
-### Environment
+#### Environment
 * `--environment rlai.environments.openai_gym.Gym`:  Environment class. 
 * `--gym-id CartPole-v1`:  OpenAI Gym environment identifier.
 * `--render-every-nth-episode 5000`:  Render a video every 5000 episodes (100 improvements).
 * `--video-directory ~/Desktop/cartpole_videos`:  Where to store rendered videos.
 * `--force`: Overwrite videos in the video directory.
   
-### State-Action Value Iteration
+#### State-Action Value Iteration
 * `--train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi`:  Run iterative temporal-differencing 
   on the agent's state-action value function. 
 * `--mode Q_LEARNING`:  Use q-learning to bootstrap the value of the next state-action pair. 
@@ -54,7 +54,7 @@ Arguments are explained below.
   can slow down learning in later iterations where the agent has developed a reasonable policy.
 * `--epsilon 0.01`:  Probability of behaving randomly at each time step.
   
-# Other Parameters
+#### Other Parameters
 * `--make-final-policy-greedy True`:  After all learning iterations, make the final policy greedy (i.e., `epsilon=0.0`).
 * `--num-improvements-per-plot 100`:  Plot training performance every 100 iterations.
 * `--save-agent-path ~/Desktop/cartpole_agent.pickle`:  Where to save the final agent.
@@ -95,7 +95,7 @@ We will have far fewer parameters (e.g., 10^2) than the number of discretized in
 values from experience in the environment. There is nothing novel about this tradeoff; it is exactly the distinction 
 between parametric and nonparametric statistical learning methods.
 
-## Training
+### Training
 
 One of the most challenging aspects of parametric RL is selecting training hyperparameters (i.e., parameters of learning
 beyond those of the parametric form, such as step sizes). Very little scientific theory exists to guide a-priori 
@@ -110,21 +110,21 @@ rlai train --agent rlai.agents.mdp.StochasticMdpAgent --gamma 0.95 --environment
 
 Arguments are explained below (many explanations are given above and not duplicated here).
 
-### RLAI 
+#### RLAI 
 * `train`:  Train the agent.
 
-### Agent
+#### Agent
 * `--agent rlai.agents.mdp.StochasticMdpAgent`
 * `--gamma 0.95`
 
-### Environment
+#### Environment
 * `--environment rlai.environments.openai_gym.Gym`
 * `--gym-id CartPole-v1`
 * `--render-every-nth-episode 100`
 * `--video-directory ~/Desktop/cartpole_videos`
 * `--force`
 
-### State-Action Value Iteration
+#### State-Action Value Iteration
 * `--train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi`
 * `--mode SARSA`
 * `--num-improvements 15000`
@@ -132,7 +132,7 @@ Arguments are explained below (many explanations are given above and not duplica
 * `--num-updates-per-improvement 1`
 * `--epsilon 0.2`
 
-### State-Action Value Model
+#### State-Action Value Model
 * `--q-S-A rlai.value_estimation.function_approximation.estimators.ApproximateStateActionValueEstimator`:  Use function 
 approximation.
 * `--function-approximation-model rlai.value_estimation.function_approximation.models.sklearn.SKLearnSGD`:  Use 
@@ -142,17 +142,17 @@ scikit-learn's stochastic gradient descent. Documentation for the model and its 
 * `--sgd-alpha 0.0`
 * `--learning-rate constant`
 * `--eta0 0.0001`
-* `--verbose 1`
+* `--verbose 1`1
 * `--feature-extractor rlai.environments.openai_gym.CartpoleFeatureExtractor`:  Use the feature extractor specified.
 
-### Other Parameters
+#### Other Parameters
 * `--make-final-policy-greedy True`
 * `--num-improvements-per-plot 50`
 * `--num-improvements-per-checkpoint 50`
 * `--checkpoint-path ~/Desktop/cartpole_checkpoint.pickle`
 *`--save-agent-path ~/Desktop/cartpole_agent.pickle`
   
-## Results
+### Results
 
 The video below shows the trained agent controlling the inverted pendulum. Note how the agent actively controls both the 
 vertical balance of the pendulum (ideally upright) and the cart's horizontal position along the track (ideally in the 
