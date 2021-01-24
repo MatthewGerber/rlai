@@ -142,7 +142,7 @@ scikit-learn's stochastic gradient descent. Documentation for the model and its 
 * `--sgd-alpha 0.0`
 * `--learning-rate constant`
 * `--eta0 0.0001`
-* `--verbose 1`1
+* `--verbose 1`
 * `--feature-extractor rlai.environments.openai_gym.CartpoleFeatureExtractor`:  Use the feature extractor specified.
 
 #### Other Parameters
