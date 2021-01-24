@@ -35,6 +35,27 @@ def test_resume_gym_invalid_environment():
             environment=resume_environment
         )
 
+    def mutator(args):
+        args['num_improvements'] = 3
+
+    random_state = RandomState(12345)
+
+    agent = resume_from_checkpoint(
+        checkpoint_path,
+        iterate_value_q_pi,
+        environment=Gym(random_state, None, 'CartPole-v1', None),
+        resume_args_mutator=mutator
+    )
+
+    # uncomment the following line and run test to update fixture
+    # with open(f'{os.path.dirname(__file__)}/fixtures/test_resume_gym_invalid_environment.pickle', 'wb') as file:
+    #     pickle.dump(agent.pi, file)
+
+    with open(f'{os.path.dirname(__file__)}/fixtures/test_resume_gym_invalid_environment.pickle', 'rb') as file:
+        pi_fixture = pickle.load(file)
+
+    assert agent.pi == pi_fixture
+
 
 def test_resume_gym_valid_environment():
 

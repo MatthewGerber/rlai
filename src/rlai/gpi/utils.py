@@ -60,7 +60,7 @@ def plot_policy_iteration(
 def resume_from_checkpoint(
         checkpoint_path: str,
         resume_function: Callable,
-        resume_args_mutator: Callable = None,
+        resume_args_mutator: Callable[[Dict], None] = None,
         **new_args
 ) -> MdpAgent:
     """
@@ -110,7 +110,7 @@ def resume_from_checkpoint(
         })
 
     if resume_args_mutator is not None:
-        resume_args_mutator(**resume_args)
+        resume_args_mutator(resume_args)
 
     resume_function(**resume_args)
 

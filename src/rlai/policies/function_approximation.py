@@ -75,6 +75,9 @@ class FunctionApproximationPolicy(Policy):
         :return: True if policy is defined for state and False otherwise.
         """
 
+        if state is None:
+            raise ValueError('Attempted to check for None in policy.')
+
         return True
 
     def __getitem__(
