@@ -22,8 +22,6 @@ def run(
     :returns: 2-tuple of the checkpoint path (if any) and the saved agent path.
     """
 
-    random_state = RandomState(12345)
-
     parser = get_base_argument_parser(
         prog='rlai train',
         description='Train an agent in an environment.'
@@ -65,7 +63,19 @@ def run(
         help='Path to store resulting agent to.'
     )
 
+    parser.add_argument(
+        '--random-seed',
+        type=int,
+        help='Random seed. Omit to generate an arbitrary random seed.'
+    )
+
     parsed_args, unparsed_args = parse_arguments(parser, args)
+
+    if parsed_args.random_seed is None:
+        warnings.warn('No random seed provided to the trainer. Results will not be replicable. Consider passing --random-seed argument.')
+        random_state = RandomState()
+    else:
+        random_state = RandomState(parsed_args.random_seed)
 
     train_function_args = {}
 
@@ -195,6 +205,12 @@ def run(
             '--q-S-A',
             type=str,
             help='Fully-qualified type name of state-action value estimator to use.'
+        )
+
+        filter_add_argument(
+            '--pdf-save-path',
+            type=str,
+            help='Path where a PDF of all plots is to be saved.'
         )
 
         parsed_train_function_args, unparsed_args = parse_arguments(train_function_arg_parser, unparsed_args)

@@ -5,6 +5,7 @@ from typing import Optional, List, Tuple, Iterator, Set
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from matplotlib.backends.backend_pdf import PdfPages
 from numpy.random import RandomState
 from patsy.highlevel import dmatrix
 
@@ -380,12 +381,14 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
 
     def plot(
             self,
-            final: bool
+            final: bool,
+            pdf: PdfPages
     ):
         """
         Plot the estimator.
 
         :param final: Whether or not this is the final time plot will be called.
+        :param pdf: PDF for plots.
         """
 
         if self.plot_model:
@@ -450,7 +453,11 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
 
                     fig.suptitle('Model coefficients over iterations')
                     plt.tight_layout()
-                    plt.show()
+
+                    if pdf is None:
+                        plt.show()
+                    else:
+                        pdf.savefig()
 
                 else:
                     raise ValueError(f'Unknown feature extractor type:  {type(self.feature_extractor)}')

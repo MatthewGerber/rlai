@@ -123,7 +123,7 @@ class SKLearnSGD(FunctionApproximationModel):
 
         parsed_args, unparsed_args = parse_arguments(cls, args)
 
-        # process conflicting parameters
+        # process arguments whose names conflict with arguments used elsewhere
         setattr(parsed_args, 'alpha', parsed_args.sgd_alpha)
         del parsed_args.sgd_alpha
         setattr(parsed_args, 'epsilon', parsed_args.sgd_epsilon)

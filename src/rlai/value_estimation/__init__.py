@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from argparse import ArgumentParser
 from typing import Optional, Iterable, Tuple, List, Any, Iterator
 
+from matplotlib.backends.backend_pdf import PdfPages
 from numpy.random import RandomState
 
 from rlai.actions import Action
@@ -197,12 +198,14 @@ class StateActionValueEstimator(ABC):
 
     def plot(
             self,
-            final: bool
+            final: bool,
+            pdf: PdfPages
     ):
         """
         Plot the estimator.
 
         :param final: Whether or not this is the final time plot will be called.
+        :param pdf: PDF for plots.
         """
         pass
 

@@ -25,7 +25,7 @@ def run(
     """
 
     parser = ArgumentParser(
-        description='Run an agent within an environment. This does not support learning GPI-style (e.g., monte carlo or temporal difference) learning. See trainer.py for such methods.',
+        description='Run an agent within an environment. This does not support learning (e.g., monte carlo or temporal difference). See trainer.py for such methods.',
         allow_abbrev=False
     )
 
@@ -38,7 +38,7 @@ def run(
     parser.add_argument(
         '--pdf-save-path',
         type=str,
-        help='Path to save PDF to.'
+        help='Path where a PDF of all plots is to be saved.'
     )
 
     parser.add_argument(

@@ -4,6 +4,7 @@ import statistics
 from typing import Dict, List, Callable
 
 import matplotlib.pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
 
 from rlai.agents.mdp import MdpAgent
 from rlai.environments.openai_gym import Gym
@@ -13,7 +14,8 @@ def plot_policy_iteration(
         iteration_average_reward: List[float],
         iteration_total_states: List[int],
         iteration_num_states_improved: List[int],
-        elapsed_seconds_average_rewards: Dict[int, List[float]]
+        elapsed_seconds_average_rewards: Dict[int, List[float]],
+        pdf: PdfPages
 ):
     """
     Plot status of policy iteration.
@@ -22,6 +24,7 @@ def plot_policy_iteration(
     :param iteration_total_states: Total number of states per iteration.
     :param iteration_num_states_improved: Number of states improved per iteration.
     :param elapsed_seconds_average_rewards: Elapsed seconds and average rewards.
+    :param pdf: PDF for plots.
     """
 
     plt.close('all')
@@ -54,7 +57,10 @@ def plot_policy_iteration(
     ax.legend()
     ax.grid()
 
-    plt.show(block=False)
+    if pdf is None:
+        plt.show(block=False)
+    else:
+        pdf.savefig()
 
 
 def resume_from_checkpoint(

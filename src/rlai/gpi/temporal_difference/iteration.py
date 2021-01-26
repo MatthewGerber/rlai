@@ -3,6 +3,8 @@ import pickle
 from datetime import datetime
 from typing import Optional, Union
 
+from matplotlib.backends.backend_pdf import PdfPages
+
 from rlai.agents.mdp import MdpAgent
 from rlai.environments.mdp import MdpEnvironment, MdpPlanningEnvironment, PrioritizedSweepingMdpPlanningEnvironment
 from rlai.environments.openai_gym import Gym
@@ -28,7 +30,8 @@ def iterate_value_q_pi(
         q_S_A: StateActionValueEstimator,
         num_improvements_per_plot: Optional[int] = None,
         num_improvements_per_checkpoint: Optional[int] = None,
-        checkpoint_path: Optional[str] = None
+        checkpoint_path: Optional[str] = None,
+        pdf_save_path: Optional[str] = None
 ):
     """
     Run temporal-difference value iteration on an agent using state-action value estimates.
@@ -53,6 +56,7 @@ def iterate_value_q_pi(
     None to turn off all plotting.
     :param num_improvements_per_checkpoint: Number of improvements per checkpoint save.
     :param checkpoint_path: Checkpoint path. Must be provided if `num_improvements_per_checkpoint` is provided.
+    :param pdf_save_path: Path where a PDF of all plots is to be saved, or None for no PDF.
     """
 
     if epsilon is None or epsilon <= 0:
@@ -63,6 +67,10 @@ def iterate_value_q_pi(
 
     if isinstance(mode, str):
         mode = Mode[mode]
+
+    pdf = None
+    if pdf_save_path is not None:
+        pdf = PdfPages(pdf_save_path)
 
     i = 0
     iteration_average_reward = []
@@ -94,7 +102,10 @@ def iterate_value_q_pi(
             epsilon=epsilon
         )
 
-        q_S_A.plot(final=False)
+        q_S_A.plot(
+            final=False,
+            pdf=pdf
+        )
 
         iteration_average_reward.append(average_reward)
         iteration_total_states.append(len(q_S_A))
@@ -119,7 +130,8 @@ def iterate_value_q_pi(
                 q_S_A=q_S_A,
                 num_improvements_per_plot=None,
                 num_improvements_per_checkpoint=None,
-                checkpoint_path=None
+                checkpoint_path=None,
+                pdf_save_path=None
             )
             print('Finished planning.')
 
@@ -132,7 +144,7 @@ def iterate_value_q_pi(
         i += 1
 
         if num_improvements_per_plot is not None and i % num_improvements_per_plot == 0:
-            plot_policy_iteration(iteration_average_reward, iteration_total_states, iteration_num_states_improved, elapsed_seconds_average_rewards)
+            plot_policy_iteration(iteration_average_reward, iteration_total_states, iteration_num_states_improved, elapsed_seconds_average_rewards, pdf)
 
         if num_improvements_per_checkpoint is not None and i % num_improvements_per_checkpoint == 0:
 
@@ -161,7 +173,8 @@ def iterate_value_q_pi(
                 'q_S_A': q_S_A,
                 'num_improvements_per_plot': num_improvements_per_plot,
                 'num_improvements_per_checkpoint': num_improvements_per_checkpoint,
-                'checkpoint_path': checkpoint_path
+                'checkpoint_path': checkpoint_path,
+                'pdf_save_path': pdf_save_path
             }
 
             with open(checkpoint_path, 'wb') as checkpoint_file:
@@ -172,7 +185,10 @@ def iterate_value_q_pi(
 
     print(f'Value iteration of q_pi terminated after {i} iteration(s).')
 
-    q_S_A.plot(final=True)
+    q_S_A.plot(
+        final=True,
+        pdf=pdf
+    )
 
     if make_final_policy_greedy:
         q_S_A.improve_policy(
@@ -180,3 +196,7 @@ def iterate_value_q_pi(
             states=None,
             epsilon=0.0
         )
+
+    if pdf is not None:
+        pdf.close()
+        print(f'PDF of plots is available at {pdf_save_path}')

@@ -1,5 +1,6 @@
 import os
 import pickle
+import tempfile
 
 import pytest
 from numpy.random import RandomState
@@ -153,4 +154,36 @@ def test_invalid_iterate_value_q_pi():
         make_final_policy_greedy=False,
         q_S_A=q_S_A,
         off_policy_agent=None
+    )
+
+
+def test_iterate_value_q_pi_with_pdf():
+
+    random_state = RandomState(12345)
+
+    mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
+
+    epsilon = 0.1
+
+    q_S_A = TabularStateActionValueEstimator(mdp_environment, epsilon, None)
+
+    mdp_agent = StochasticMdpAgent(
+        'test',
+        random_state,
+        q_S_A.get_initial_policy(),
+        1
+    )
+
+    iterate_value_q_pi(
+        agent=mdp_agent,
+        environment=mdp_environment,
+        num_improvements=3000,
+        num_episodes_per_improvement=1,
+        update_upon_every_visit=False,
+        epsilon=epsilon,
+        planning_environment=None,
+        make_final_policy_greedy=False,
+        q_S_A=q_S_A,
+        num_improvements_per_plot=1500,
+        pdf_save_path=tempfile.NamedTemporaryFile(delete=False).name
     )

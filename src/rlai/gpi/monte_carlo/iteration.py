@@ -4,6 +4,8 @@ import warnings
 from datetime import datetime
 from typing import Optional
 
+from matplotlib.backends.backend_pdf import PdfPages
+
 from rlai.agents.mdp import MdpAgent
 from rlai.environments.mdp import MdpEnvironment, MdpPlanningEnvironment
 from rlai.environments.openai_gym import Gym
@@ -27,7 +29,8 @@ def iterate_value_q_pi(
         off_policy_agent: Optional[MdpAgent] = None,
         num_improvements_per_plot: Optional[int] = None,
         num_improvements_per_checkpoint: Optional[int] = None,
-        checkpoint_path: Optional[str] = None
+        checkpoint_path: Optional[str] = None,
+        pdf_save_path: Optional[str] = None
 ):
     """
     Run Monte Carlo value iteration on an agent using state-action value estimates. This iteration function operates
@@ -51,6 +54,7 @@ def iterate_value_q_pi(
     None to turn off all plotting.
     :param num_improvements_per_checkpoint: Number of improvements per checkpoint save.
     :param checkpoint_path: Checkpoint path. Must be provided if `num_improvements_per_checkpoint` is provided.
+    :param pdf_save_path: Path where a PDF of all plots is to be saved, or None for no PDF.
     """
 
     if planning_environment is not None:
@@ -61,6 +65,10 @@ def iterate_value_q_pi(
 
     if checkpoint_path is not None:
         checkpoint_path = os.path.expanduser(checkpoint_path)
+
+    pdf = None
+    if pdf_save_path is not None:
+        pdf = PdfPages(pdf_save_path)
 
     i = 0
     iteration_average_reward = []
@@ -101,7 +109,7 @@ def iterate_value_q_pi(
         i += 1
 
         if num_improvements_per_plot is not None and i % num_improvements_per_plot == 0:
-            plot_policy_iteration(iteration_average_reward, iteration_total_states, iteration_num_states_improved, elapsed_seconds_average_rewards)
+            plot_policy_iteration(iteration_average_reward, iteration_total_states, iteration_num_states_improved, elapsed_seconds_average_rewards, pdf)
 
         if num_improvements_per_checkpoint is not None and i % num_improvements_per_checkpoint == 0:
 
@@ -124,7 +132,8 @@ def iterate_value_q_pi(
                 'off_policy_agent': off_policy_agent,
                 'num_improvements_per_plot': num_improvements_per_plot,
                 'num_improvements_per_checkpoint': num_improvements_per_checkpoint,
-                'checkpoint_path': checkpoint_path
+                'checkpoint_path': checkpoint_path,
+                'pdf_save_path': pdf_save_path
             }
 
             with open(checkpoint_path, 'wb') as checkpoint_file:
@@ -141,3 +150,7 @@ def iterate_value_q_pi(
             states=None,
             epsilon=0.0
         )
+
+    if pdf is not None:
+        pdf.close()
+        print(f'PDF of plots is available at {pdf_save_path}')
