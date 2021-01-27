@@ -4,6 +4,7 @@ from typing import Tuple, List, Any, Optional
 
 import numpy as np
 import pandas as pd
+from matplotlib.backends.backend_pdf import PdfPages
 from numpy.random import RandomState
 
 from rlai.meta import rl_text
@@ -53,7 +54,6 @@ class FunctionApproximationModel(ABC):
         :param random_state: Random state.
         :return: 2-tuple of a state-action value estimator and a list of unparsed arguments.
         """
-        pass
 
     @abstractmethod
     def fit(
@@ -69,7 +69,6 @@ class FunctionApproximationModel(ABC):
         :param y: Returns.
         :param weight: Weight.
         """
-        pass
 
     @abstractmethod
     def evaluate(
@@ -82,20 +81,30 @@ class FunctionApproximationModel(ABC):
         :param X: Observations.
         :return: Vector of evaluations.
         """
-        pass
 
-    @abstractmethod
-    def get_summary(
+    def get_feature_action_coefficients(
             self,
             feature_extractor: FeatureExtractor
-    ) -> pd.DataFrame:
+    ) -> Optional[pd.DataFrame]:
         """
-        Get a pandas.DataFrame that summarizes the model (e.g., in terms of its coefficients).
+        Get a pandas.DataFrame containing one row per feature and one column per action, with the cells containing the
+        coefficient value of the associated feature-action pair.
 
         :param feature_extractor: Feature extractor used to build the model.
-        :return: DataFrame.
+        :return: DataFrame (#features, #actions).
         """
-        pass
+
+    def plot(
+            self,
+            plot: bool,
+            pdf: PdfPages
+    ):
+        """
+        Plot the model.
+
+        :param plot: Whether or not to plot.
+        :param pdf: PDF for plots.
+        """
 
     @abstractmethod
     def __eq__(
@@ -108,7 +117,6 @@ class FunctionApproximationModel(ABC):
         :param other: Other model.
         :return: True if equal and False otherwise.
         """
-        pass
 
     @abstractmethod
     def __ne__(
@@ -121,4 +129,3 @@ class FunctionApproximationModel(ABC):
         :param other: Other model.
         :return: True if not equal and False otherwise.
         """
-        pass

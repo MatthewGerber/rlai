@@ -52,9 +52,9 @@ def run(
     )
 
     parser.add_argument(
-        '--resume-train',
+        '--resume',
         action='store_true',
-        help='Resume training an agent from a checkpoint path.'
+        help='Resume training an agent from a previously saved checkpoint path.'
     )
 
     parser.add_argument(
@@ -266,7 +266,7 @@ def run(
             warnings.warn('No --save-agent-path has been specified, so no agent will be saved after training.')
 
         # resumption will return agent
-        if parsed_args.resume_train:
+        if parsed_args.resume:
             agent = resume_from_checkpoint(
                 resume_function=train_function,
                 **train_function_args

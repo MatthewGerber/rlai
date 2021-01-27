@@ -249,3 +249,25 @@ def parse_arguments(
     del parsed_args.help
 
     return parsed_args, unparsed_args
+
+
+class StdStreamReader:
+
+    def write(
+            self,
+            s: str
+    ):
+        self.buffer.append(s)
+        self.stream.write(s)
+
+    def clear(
+            self
+    ):
+        self.buffer.clear()
+
+    def __init__(
+            self,
+            stream
+    ):
+        self.stream = stream
+        self.buffer = []

@@ -1,14 +1,18 @@
+import re
+import sys
 from argparse import ArgumentParser
 from typing import Tuple, List, Optional, Any
 
 import numpy as np
 import pandas as pd
+from matplotlib.backends.backend_pdf import PdfPages
 from numpy.random import RandomState
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import SGDRegressor
+import matplotlib.pyplot as plt
 
 from rlai.meta import rl_text
-from rlai.utils import parse_arguments
+from rlai.utils import parse_arguments, IncrementalSampleAverager, StdStreamReader
 from rlai.value_estimation.function_approximation.models import FunctionApproximationModel, FeatureExtractor
 from rlai.value_estimation.function_approximation.models.feature_extraction import (
     StateActionInteractionFeatureExtractor
@@ -97,14 +101,6 @@ class SKLearnSGD(FunctionApproximationModel):
             help='The exponent for inverse scaling learning rate.'
         )
 
-        # other stuff
-        parser.add_argument(
-            '--verbose',
-            type=int,
-            default=0,
-            help='The verbosity level.'
-        )
-
         return parser
 
     @classmethod
@@ -151,7 +147,19 @@ class SKLearnSGD(FunctionApproximationModel):
         :param weight: Weight.
         """
 
+        eta0_scalar = 1.01 ** max(np.abs(np.array(y)).max(), 1.0)
+        self.model.eta0 = self.base_eta0 / eta0_scalar
         self.model.partial_fit(X=X, y=y, sample_weight=weight)
+
+        for y_value in y:
+            self.y_averager.update(y_value)
+            self.eta0_averager.update(self.model.eta0)
+
+        for line in self.stdout_reader.buffer:
+            avg_loss = float(line.rsplit(' ', maxsplit=1)[1])
+            self.loss_averager.update(avg_loss)
+
+        self.stdout_reader.clear()
 
     def evaluate(
             self,
@@ -175,15 +183,16 @@ class SKLearnSGD(FunctionApproximationModel):
 
         return values
 
-    def get_summary(
+    def get_feature_action_coefficients(
             self,
             feature_extractor: FeatureExtractor
-    ) -> pd.DataFrame:
+    ) -> Optional[pd.DataFrame]:
         """
-        Get a pandas.DataFrame that summarizes the model (e.g., in terms of its coefficients).
+        Get a pandas.DataFrame containing one row per feature and one column per action, with the cells containing the
+        coefficient value of the associated feature-action pair.
 
         :param feature_extractor: Feature extractor used to build the model.
-        :return: DataFrame.
+        :return: DataFrame (#features, #actions).
         """
 
         if isinstance(feature_extractor, StateActionInteractionFeatureExtractor):
@@ -217,6 +226,38 @@ class SKLearnSGD(FunctionApproximationModel):
 
         return coefficients
 
+    def plot(
+            self,
+            plot: bool,
+            pdf: PdfPages
+    ):
+        """
+        Plot the model.
+
+        :param plot: Whether or not to plot.
+        :param pdf: PDF for plots.
+        """
+
+        self.y_averages.append(self.y_averager.get_value())
+        self.y_averager.reset()
+
+        self.loss_averages.append(self.loss_averager.get_value())
+        self.loss_averager.reset()
+
+        self.eta0_averages.append(self.eta0_averager.get_value())
+        self.eta0_averager.reset()
+        
+        if plot:
+            plt.plot(self.y_averages)
+            plt.plot(self.loss_averages)
+            eta0_ax = plt.twinx()
+            eta0_ax.plot(self.eta0_averages)
+
+            if pdf is None:
+                plt.show()
+            else:
+                pdf.savefig()
+
     def __init__(
             self,
             **kwargs
@@ -227,7 +268,21 @@ class SKLearnSGD(FunctionApproximationModel):
         :param kwargs: Keyword arguments to pass to SGDRegressor.
         """
 
+        # verbose is required in order to capture output for plotting
+        kwargs['verbose'] = 1
         self.model = SGDRegressor(**kwargs)
+
+        self.stdout_reader = StdStreamReader(sys.stdout)
+        sys.stdout = self.stdout_reader
+
+        # Norm: 6.38, NNZs: 256, Bias: 8.932199, T: 1, Avg. loss: 0.001514
+        self.base_eta0 = self.model.eta0
+        self.y_averager = IncrementalSampleAverager()
+        self.y_averages = []
+        self.loss_averager = IncrementalSampleAverager()
+        self.loss_averages = []
+        self.eta0_averager = IncrementalSampleAverager()
+        self.eta0_averages = []
 
     def __eq__(
             self,

@@ -393,74 +393,107 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
 
         if self.plot_model:
 
-            model_summary = self.model.get_summary(self.feature_extractor)
+            do_plot = final or (self.plot_model_per_improvements is not None and self.policy_improvement_count % self.plot_model_per_improvements == 0)
 
-            if 'n' in model_summary.columns:
-                raise ValueError('Feature extractor returned disallowed column:  n')
+            # update/plot feature-action coefficients. this is done in the current class, to support a range of model
+            # classes that are all capable of returning a feature-action coefficient dataframe.
+            feature_action_coefficients = self.model.get_feature_action_coefficients(self.feature_extractor)
+            if feature_action_coefficients is not None:
+                self.update_and_plot_feature_action_coefficients(
+                    feature_action_coefficients=feature_action_coefficients,
+                    plot=do_plot,
+                    pdf=pdf
+                )
 
-            if 'bin' in model_summary.columns:
-                raise ValueError('Feature extractor returned disallowed column:  bin')
+            # let the model do any further, more specific plotting.
+            self.model.plot(
+                plot=do_plot,
+                pdf=pdf
+            )
 
-            model_summary['n'] = self.policy_improvement_count - 1
+    def update_and_plot_feature_action_coefficients(
+            self,
+            feature_action_coefficients: pd.DataFrame,
+            plot: bool,
+            pdf: PdfPages
+    ):
+        """
+        Update and (optionally) plot the feature-action coefficients.
 
-            if self.plot_df is None:
-                self.plot_df = model_summary
+        :param feature_action_coefficients: Feature-action coefficient DataFrame.
+        :param plot: Whether or not plotting should be done, in addition to updating the coefficients.
+        :param pdf: PDF for plots.
+        """
+
+        if 'n' in feature_action_coefficients.columns:
+            raise ValueError('Feature extractor returned disallowed column:  n')
+
+        if 'bin' in feature_action_coefficients.columns:
+            raise ValueError('Feature extractor returned disallowed column:  bin')
+
+        feature_action_coefficients['n'] = self.policy_improvement_count - 1
+
+        if self.feature_action_coefficients is None:
+            self.feature_action_coefficients = feature_action_coefficients
+        else:
+            self.feature_action_coefficients = self.feature_action_coefficients.append(feature_action_coefficients, ignore_index=True)
+
+        if plot:
+
+            if self.plot_model_bins is None:
+                improvements_per_bin = 1
+                self.feature_action_coefficients['bin'] = self.feature_action_coefficients.n
             else:
-                self.plot_df = self.plot_df.append(model_summary, ignore_index=True)
+                improvements_per_bin = math.ceil(self.policy_improvement_count / self.plot_model_bins)
+                self.feature_action_coefficients['bin'] = [
+                    int(n / improvements_per_bin)
+                    for n in self.feature_action_coefficients.n
+                ]
 
-            if final or (self.plot_model_per_improvements is not None and self.policy_improvement_count % self.plot_model_per_improvements == 0):
+            if isinstance(self.feature_extractor, StateActionInteractionFeatureExtractor):
 
-                if self.plot_model_bins is None:
-                    improvements_per_bin = 1
-                    self.plot_df['bin'] = self.plot_df.n
+                # set up plots
+                feature_names = self.feature_action_coefficients.feature_name.unique().tolist()
+                n_rows = len(feature_names)
+                action_names = [a.name for a in self.feature_extractor.actions]
+                n_cols = len(action_names)
+                fig, axs = plt.subplots(
+                    nrows=n_rows,
+                    ncols=n_cols,
+                    sharex='all',
+                    sharey='row',
+                    figsize=(3 * n_cols, 3 * n_rows)
+                )
+
+                # plot one row per feature, with actions as the columns
+                for i, feature_name in enumerate(feature_names):
+                    feature_df = self.feature_action_coefficients[self.feature_action_coefficients.feature_name == feature_name]
+                    boxplot_axs = axs[i, :]
+                    feature_df.boxplot(column=action_names, by='bin', ax=boxplot_axs)
+                    boxplot_axs[0].set_ylabel(f'w({feature_name})')
+
+                # reset labels and titles
+                for i, row in enumerate(axs):
+                    for ax in row:
+
+                        if i < axs.shape[0] - 1:
+                            ax.set_xlabel('')
+                        else:
+                            ax.set_xlabel('Iteration' if self.plot_model_bins is None else f'Bin of {improvements_per_bin} iterations')
+
+                        if i > 0:
+                            ax.set_title('')
+
+                fig.suptitle('Model coefficients over iterations')
+                plt.tight_layout()
+
+                if pdf is None:
+                    plt.show()
                 else:
-                    improvements_per_bin = math.ceil(self.policy_improvement_count / self.plot_model_bins)
-                    self.plot_df['bin'] = [int(n / improvements_per_bin) for n in self.plot_df.n]
+                    pdf.savefig()
 
-                if isinstance(self.feature_extractor, StateActionInteractionFeatureExtractor):
-
-                    # set up plots
-                    feature_names = self.plot_df.feature_name.unique().tolist()
-                    n_rows = len(feature_names)
-                    action_names = [a.name for a in self.feature_extractor.actions]
-                    n_cols = len(action_names)
-                    fig, axs = plt.subplots(
-                        nrows=n_rows,
-                        ncols=n_cols,
-                        sharex='all',
-                        sharey='row',
-                        figsize=(3 * n_cols, 3 * n_rows)
-                    )
-
-                    # plot one row per feature, with actions as the columns
-                    for i, feature_name in enumerate(feature_names):
-                        feature_df = self.plot_df[self.plot_df.feature_name == feature_name]
-                        boxplot_axs = axs[i, :]
-                        feature_df.boxplot(column=action_names, by='bin', ax=boxplot_axs)
-                        boxplot_axs[0].set_ylabel(f'w({feature_name})')
-
-                    # reset labels and titles
-                    for i, row in enumerate(axs):
-                        for ax in row:
-
-                            if i < axs.shape[0] - 1:
-                                ax.set_xlabel('')
-                            else:
-                                ax.set_xlabel('Iteration' if self.plot_model_bins is None else f'Bin of {improvements_per_bin} iterations')
-
-                            if i > 0:
-                                ax.set_title('')
-
-                    fig.suptitle('Model coefficients over iterations')
-                    plt.tight_layout()
-
-                    if pdf is None:
-                        plt.show()
-                    else:
-                        pdf.savefig()
-
-                else:
-                    raise ValueError(f'Unknown feature extractor type:  {type(self.feature_extractor)}')
+            else:
+                raise ValueError(f'Unknown feature extractor type:  {type(self.feature_extractor)}')
 
     def __init__(
             self,
@@ -518,7 +551,7 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         self.weights: np.ndarray = None
         self.experience_pending: bool = False
         self.policy_improvement_count: Optional[int] = None
-        self.plot_df: Optional[pd.DataFrame] = None
+        self.feature_action_coefficients: Optional[pd.DataFrame] = None
 
     def __getitem__(
             self,

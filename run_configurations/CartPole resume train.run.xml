@@ -13,7 +13,7 @@
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
     <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/rlai/runners/trainer.py" />
-    <option name="PARAMETERS" value="--resume-train --environment rlai.environments.openai_gym.Gym --gym-id CartPole-v1 --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --checkpoint-path ~/Desktop/cartpole_checkpoint.pickle --save-agent-path ~/Desktop/cartpole_agent.pickle" />
+    <option name="PARAMETERS" value="--resume --environment rlai.environments.openai_gym.Gym --gym-id CartPole-v1 --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --checkpoint-path ~/Desktop/cartpole_checkpoint.pickle --save-agent-path ~/Desktop/cartpole_agent.pickle" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />
