@@ -1,7 +1,7 @@
 import importlib
 from argparse import Namespace, ArgumentParser
 from importlib import import_module
-from typing import List, Any, Optional, Callable, Tuple
+from typing import List, Any, Optional, Callable, Tuple, TextIO
 
 import numpy as np
 from numpy.random import RandomState
@@ -257,17 +257,19 @@ class StdStreamReader:
             self,
             s: str
     ):
-        self.buffer.append(s)
         self.stream.write(s)
 
-    def clear(
-            self
-    ):
-        self.buffer.clear()
+        if s != '\n':
+            self.buffer.append(s)
+            while len(self.buffer) > self.max_buffer_len:
+                del self.buffer[0]
 
     def __init__(
             self,
-            stream
+            stream: TextIO,
+            max_buffer_len: int
     ):
         self.stream = stream
+        self.max_buffer_len = max_buffer_len
+
         self.buffer = []

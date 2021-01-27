@@ -1,15 +1,14 @@
-import re
 import sys
 from argparse import ArgumentParser
 from typing import Tuple, List, Optional, Any
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from matplotlib.backends.backend_pdf import PdfPages
 from numpy.random import RandomState
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import SGDRegressor
-import matplotlib.pyplot as plt
 
 from rlai.meta import rl_text
 from rlai.utils import parse_arguments, IncrementalSampleAverager, StdStreamReader
@@ -150,16 +149,16 @@ class SKLearnSGD(FunctionApproximationModel):
         eta0_scalar = 1.01 ** max(np.abs(np.array(y)).max(), 1.0)
         self.model.eta0 = self.base_eta0 / eta0_scalar
         self.model.partial_fit(X=X, y=y, sample_weight=weight)
+        fit_line = self.stdout_reader.buffer[-2]
+        avg_loss = float(fit_line.rsplit(' ', maxsplit=1)[1])  # example line:  Norm: 6.38, NNZs: 256, Bias: 8.932199, T: 1, Avg. loss: 0.001514
 
         for y_value in y:
+            self.y_values.append(y_value)
             self.y_averager.update(y_value)
-            self.eta0_averager.update(self.model.eta0)
-
-        for line in self.stdout_reader.buffer:
-            avg_loss = float(line.rsplit(' ', maxsplit=1)[1])
+            self.loss_values.append(avg_loss)
             self.loss_averager.update(avg_loss)
-
-        self.stdout_reader.clear()
+            self.eta0_values.append(self.model.eta0)
+            self.eta0_averager.update(self.model.eta0)
 
     def evaluate(
             self,
@@ -228,30 +227,62 @@ class SKLearnSGD(FunctionApproximationModel):
 
     def plot(
             self,
-            plot: bool,
+            feature_extractor: FeatureExtractor,
+            policy_improvement_count: int,
+            num_improvement_bins: Optional[int],
+            do_plot: bool,
             pdf: PdfPages
     ):
         """
         Plot the model.
 
-        :param plot: Whether or not to plot.
+        :param feature_extractor: Feature extractor used to build the model.
+        :param policy_improvement_count: Number of policy improvements that have been made.
+        :param num_improvement_bins: Number of bins to plot.
+        :param do_plot: Whether or not to plot.
         :param pdf: PDF for plots.
         """
 
-        self.y_averages.append(self.y_averager.get_value())
-        self.y_averager.reset()
+        super().plot(
+            feature_extractor=feature_extractor,
+            policy_improvement_count=policy_improvement_count,
+            num_improvement_bins=num_improvement_bins,
+            do_plot=do_plot,
+            pdf=pdf
+        )
 
-        self.loss_averages.append(self.loss_averager.get_value())
-        self.loss_averager.reset()
+        if self.y_averager.n > 0:
+            self.y_averages.append(self.y_averager.get_value())
+            self.y_averager.reset()
 
-        self.eta0_averages.append(self.eta0_averager.get_value())
-        self.eta0_averager.reset()
-        
-        if plot:
+        if self.loss_averager.n > 0:
+            self.loss_averages.append(self.loss_averager.get_value())
+            self.loss_averager.reset()
+
+        if self.eta0_averager.n > 0:
+            self.eta0_averages.append(self.eta0_averager.get_value())
+            self.eta0_averager.reset()
+
+        if do_plot:
+
             plt.plot(self.y_averages)
             plt.plot(self.loss_averages)
             eta0_ax = plt.twinx()
             eta0_ax.plot(self.eta0_averages)
+
+            if pdf is None:
+                plt.show()
+            else:
+                pdf.savefig()
+
+            plt.plot(self.y_values)
+            plt.plot(self.loss_values)
+            eta0_ax = plt.twinx()
+            eta0_ax.plot(self.eta0_values)
+
+            self.y_values.clear()
+            self.loss_averages.clear()
+            self.eta0_values.clear()
 
             if pdf is None:
                 plt.show()
@@ -268,19 +299,23 @@ class SKLearnSGD(FunctionApproximationModel):
         :param kwargs: Keyword arguments to pass to SGDRegressor.
         """
 
+        super().__init__()
+
         # verbose is required in order to capture output for plotting
         kwargs['verbose'] = 1
         self.model = SGDRegressor(**kwargs)
 
-        self.stdout_reader = StdStreamReader(sys.stdout)
+        self.stdout_reader = StdStreamReader(sys.stdout, 20)
         sys.stdout = self.stdout_reader
 
-        # Norm: 6.38, NNZs: 256, Bias: 8.932199, T: 1, Avg. loss: 0.001514
         self.base_eta0 = self.model.eta0
+        self.y_values = []
         self.y_averager = IncrementalSampleAverager()
         self.y_averages = []
+        self.loss_values = []
         self.loss_averager = IncrementalSampleAverager()
         self.loss_averages = []
+        self.eta0_values = []
         self.eta0_averager = IncrementalSampleAverager()
         self.eta0_averages = []
 
