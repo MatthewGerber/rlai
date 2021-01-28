@@ -271,6 +271,8 @@ class SKLearnSGD(FunctionApproximationModel):
             pdf=pdf
         )
 
+        # collect average values for the current policy improvement iteration and reset the averagers. there's no need
+        # to collect values for the time steps, as these are collected during the calls to fit.
         if self.y_averager.n > 0:
             self.y_averages.append(self.y_averager.get_value())
             self.y_averager.reset()
@@ -285,7 +287,9 @@ class SKLearnSGD(FunctionApproximationModel):
 
         if render:
 
-            x_values = np.arange(1, len(self.y_averages) + 1)
+            # plot values for all improvement iterations since the previous rendering
+            num_plot_iterations = len(self.y_averages)
+            x_values = np.arange(self.plot_start_iteration, self.plot_start_iteration + num_plot_iterations)
             plt.plot(x_values, self.y_averages, color='red', label='Reward (G) obtained')
             plt.plot(x_values, self.loss_averages, color='mediumpurple', label='Average model loss')
             plt.xticks(x_values)
@@ -297,12 +301,19 @@ class SKLearnSGD(FunctionApproximationModel):
             eta0_ax.plot(x_values, self.eta0_averages, linestyle='--', label='Step size (eta0)')
             eta0_ax.legend(loc='upper right')
 
+            self.y_averages.clear()
+            self.loss_averages.clear()
+            self.eta0_averages.clear()
+            self.plot_start_iteration += num_plot_iterations
+
             if pdf is None:
                 plt.show()
             else:
                 pdf.savefig()
 
-            x_values = np.arange(1, len(self.y_values) + 1)
+            # plot values for all time steps since the previous rendering
+            num_plot_time_steps = len(self.y_values)
+            x_values = np.arange(self.plot_start_time_step, self.plot_start_time_step + num_plot_time_steps)
             plt.plot(x_values, self.y_values, color='red', label='Reward (G) obtained')
             plt.plot(x_values, self.loss_values, color='mediumpurple', label='Average model loss')
             plt.xlabel('Time step')
@@ -316,6 +327,7 @@ class SKLearnSGD(FunctionApproximationModel):
             self.y_values.clear()
             self.loss_values.clear()
             self.eta0_values.clear()
+            self.plot_start_time_step += num_plot_time_steps
 
             if pdf is None:
                 plt.show()
@@ -338,10 +350,10 @@ class SKLearnSGD(FunctionApproximationModel):
 
         self.scale_eta0_for_y = scale_eta0_for_y
 
-        # verbose is required in order to capture standard output for plotting. if a verbosity level of 0 is passed,
-        # then set flag indicating that we should not print captured output back to stdout; otherwise, print captured
-        # output back to stdout as the caller expects.
-        passed_verbose = kwargs['verbose']
+        # verbose is required in order to capture standard output for plotting. if a verbosity level is not passed or
+        # passed as 0, then set flag indicating that we should not print captured output back to stdout; otherwise,
+        # print captured output back to stdout as the caller expects.
+        passed_verbose = kwargs.get('verbose', 0)
         kwargs['verbose'] = 1
         self.print_output = passed_verbose != 0
 
@@ -356,6 +368,8 @@ class SKLearnSGD(FunctionApproximationModel):
         self.eta0_values = []
         self.eta0_averager = IncrementalSampleAverager()
         self.eta0_averages = []
+        self.plot_start_iteration = 1
+        self.plot_start_time_step = 1
 
     def __eq__(
             self,
