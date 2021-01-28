@@ -208,7 +208,7 @@ def test_q_learning_iterate_value_q_pi_function_approximation():
     q_S_A = ApproximateStateActionValueEstimator(
         mdp_environment,
         epsilon,
-        SKLearnSGD(random_state=random_state),
+        SKLearnSGD(random_state=random_state, scale_eta0_for_y=False),
         StateActionIdentityFeatureExtractor(mdp_environment),
         f'C(s, levels={[s.i for s in mdp_environment.SS]}):C(a, levels={[a.i for a in mdp_environment.SS[0].AA]})',
         False,
@@ -259,7 +259,7 @@ def test_q_learning_iterate_value_q_pi_function_approximation_no_formula():
     q_S_A = ApproximateStateActionValueEstimator(
         mdp_environment,
         epsilon,
-        SKLearnSGD(random_state=random_state),
+        SKLearnSGD(random_state=random_state, scale_eta0_for_y=False),
         GridworldFeatureExtractor(mdp_environment),
         None,
         False,

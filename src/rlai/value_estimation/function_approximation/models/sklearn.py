@@ -100,6 +100,12 @@ class SKLearnSGD(FunctionApproximationModel):
             help='The exponent for inverse scaling learning rate.'
         )
 
+        parser.add_argument(
+            '--scale-eta0-for-y',
+            action='store_true',
+            help='Scale eta0 dynamically with respect to y.'
+        )
+
         return parser
 
     @classmethod
@@ -146,8 +152,10 @@ class SKLearnSGD(FunctionApproximationModel):
         :param weight: Weight.
         """
 
-        eta0_scalar = 1.01 ** max(np.abs(np.array(y)).max(), 1.0)
-        self.model.eta0 = self.base_eta0 / eta0_scalar
+        if self.scale_eta0_for_y:
+            eta0_scalar = 1.01 ** max(np.abs(np.array(y)).max(), 1.0)
+            self.model.eta0 = self.base_eta0 / eta0_scalar
+
         self.model.partial_fit(X=X, y=y, sample_weight=weight)
         fit_line = self.stdout_reader.buffer[-2]
         avg_loss = float(fit_line.rsplit(' ', maxsplit=1)[1])  # example line:  Norm: 6.38, NNZs: 256, Bias: 8.932199, T: 1, Avg. loss: 0.001514
@@ -265,23 +273,36 @@ class SKLearnSGD(FunctionApproximationModel):
 
         if do_plot:
 
-            plt.plot(self.y_averages)
-            plt.plot(self.loss_averages)
+            x_values = np.arange(1, len(self.y_averages) + 1)
+            plt.plot(x_values, self.y_averages, label='Reward (G) obtained')
+            plt.plot(x_values, self.loss_averages, label='Average model loss')
+            plt.xticks(x_values)
+            plt.grid()
+            plt.legend(loc='upper left')
+            plt.xlabel('Policy improvement iteration')
+
             eta0_ax = plt.twinx()
-            eta0_ax.plot(self.eta0_averages)
+            eta0_ax.plot(x_values, self.eta0_averages, linestyle='--', label='Step size (eta0)')
+            eta0_ax.legend(loc='upper right')
 
             if pdf is None:
                 plt.show()
             else:
                 pdf.savefig()
 
-            plt.plot(self.y_values)
-            plt.plot(self.loss_values)
+            x_values = np.arange(1, len(self.y_values) + 1)
+            plt.plot(x_values, self.y_values, label='Reward (G) obtained')
+            plt.plot(x_values, self.loss_values, label='Average model loss')
+            plt.xlabel('Time step')
+            plt.grid()
+            plt.legend(loc='upper left')
+
             eta0_ax = plt.twinx()
-            eta0_ax.plot(self.eta0_values)
+            eta0_ax.plot(x_values, self.eta0_values, linestyle='--', label='Step size (eta0)')
+            eta0_ax.legend(loc='upper right')
 
             self.y_values.clear()
-            self.loss_averages.clear()
+            self.loss_values.clear()
             self.eta0_values.clear()
 
             if pdf is None:
@@ -291,15 +312,19 @@ class SKLearnSGD(FunctionApproximationModel):
 
     def __init__(
             self,
+            scale_eta0_for_y: bool,
             **kwargs
     ):
         """
         Initialize the model.
 
+        :param scale_eta0_for_y: Whether or not to scale the value of eta0 for y.
         :param kwargs: Keyword arguments to pass to SGDRegressor.
         """
 
         super().__init__()
+
+        self.scale_eta0_for_y = scale_eta0_for_y
 
         # verbose is required in order to capture output for plotting
         kwargs['verbose'] = 1

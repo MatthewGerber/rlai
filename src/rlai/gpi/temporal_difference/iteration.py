@@ -8,6 +8,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 from rlai.agents.mdp import MdpAgent
 from rlai.environments.mdp import MdpEnvironment, MdpPlanningEnvironment, PrioritizedSweepingMdpPlanningEnvironment
 from rlai.environments.openai_gym import Gym
+from rlai.gpi import PolicyImprovementEvent
 from rlai.gpi.temporal_difference.evaluation import evaluate_q_pi, Mode
 from rlai.gpi.utils import plot_policy_iteration
 from rlai.meta import rl_text
@@ -99,7 +100,8 @@ def iterate_value_q_pi(
         num_states_improved = q_S_A.improve_policy(
             agent=agent,
             states=evaluated_states,
-            epsilon=epsilon
+            epsilon=epsilon,
+            event=PolicyImprovementEvent.FINISHED_EVALUATION
         )
 
         q_S_A.plot(
@@ -194,7 +196,8 @@ def iterate_value_q_pi(
         q_S_A.improve_policy(
             agent=agent,
             states=None,
-            epsilon=0.0
+            epsilon=0.0,
+            event=PolicyImprovementEvent.FINISHED_EVALUATION
         )
 
     if pdf is not None:

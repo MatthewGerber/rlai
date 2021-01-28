@@ -8,6 +8,7 @@ from numpy.random import RandomState
 from rlai.actions import Action
 from rlai.agents.mdp import MdpAgent
 from rlai.environments.mdp import MdpEnvironment
+from rlai.gpi import PolicyImprovementEvent
 from rlai.meta import rl_text
 from rlai.policies import Policy
 from rlai.states.mdp import MdpState
@@ -184,17 +185,30 @@ class StateActionValueEstimator(ABC):
             self,
             agent: MdpAgent,
             states: Optional[Iterable[MdpState]],
-            epsilon: float
-    ) -> int:
+            epsilon: float,
+            event: PolicyImprovementEvent
+    ):
         """
         Improve an agent's policy using the current state-action value estimates.
 
         :param agent: Agent whose policy should be improved.
         :param states: States to improve, or None for all states.
         :param epsilon: Epsilon.
+        :param event: Event that triggered the improvement.
         :return: Number of states improved.
         """
-        pass
+
+        if event == PolicyImprovementEvent.FINISHED_EVALUATION:
+            if self.episodic_policy_improvement_count is None:
+                self.episodic_policy_improvement_count = 1
+            else:
+                self.episodic_policy_improvement_count += 1
+
+        elif event == PolicyImprovementEvent.UPDATED_VALUE_ESTIMATE:
+            if self.value_policy_improvement_count is None:
+                self.value_policy_improvement_count = 1
+            else:
+                self.value_policy_improvement_count += 1
 
     def plot(
             self,
@@ -207,7 +221,6 @@ class StateActionValueEstimator(ABC):
         :param final: Whether or not this is the final time plot will be called.
         :param pdf: PDF for plots.
         """
-        pass
 
     def __init__(
             self,
@@ -227,6 +240,8 @@ class StateActionValueEstimator(ABC):
         self.epsilon = epsilon
 
         self.update_count = 0
+        self.episodic_policy_improvement_count: Optional[int] = None
+        self.value_policy_improvement_count: Optional[int] = None
 
     @abstractmethod
     def __getitem__(

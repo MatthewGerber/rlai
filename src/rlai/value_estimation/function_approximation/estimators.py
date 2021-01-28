@@ -10,6 +10,7 @@ from patsy.highlevel import dmatrix
 from rlai.actions import Action
 from rlai.agents.mdp import MdpAgent
 from rlai.environments.mdp import MdpEnvironment
+from rlai.gpi import PolicyImprovementEvent
 from rlai.meta import rl_text
 from rlai.policies.function_approximation import FunctionApproximationPolicy
 from rlai.states.mdp import MdpState
@@ -289,7 +290,8 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
             self,
             agent: MdpAgent,
             states: Optional[Set[MdpState]],
-            epsilon: Optional[float]
+            epsilon: Optional[float],
+            event: PolicyImprovementEvent
     ) -> int:
         """
         Improve an agent's policy using the current sample of experience collected through calls to `add_sample`.
@@ -297,8 +299,16 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         :param agent: Agent whose policy should be improved.
         :param states: States to improve, or None for all states.
         :param epsilon: Epsilon.
+        :param event: Event that triggered the improvement.
         :return: Number of states improved.
         """
+
+        super().improve_policy(
+            agent=agent,
+            states=states,
+            epsilon=epsilon,
+            event=event
+        )
 
         if epsilon is None:
             epsilon = 0.0
@@ -316,11 +326,6 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
             self.experience_values.clear()
             self.weights = None
             self.experience_pending = False
-
-        if self.policy_improvement_count is None:
-            self.policy_improvement_count = 1
-        else:
-            self.policy_improvement_count += 1
 
         return -1 if states is None else len(states)
 
@@ -390,11 +395,11 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
 
         if self.plot_model:
 
-            do_plot = final or (self.plot_model_per_improvements is not None and self.policy_improvement_count % self.plot_model_per_improvements == 0)
+            do_plot = final or (self.plot_model_per_improvements is not None and self.episodic_policy_improvement_count % self.plot_model_per_improvements == 0)
 
             self.model.plot(
                 feature_extractor=self.feature_extractor,
-                policy_improvement_count=self.policy_improvement_count,
+                policy_improvement_count=self.episodic_policy_improvement_count,
                 num_improvement_bins=self.plot_model_bins,
                 do_plot=do_plot,
                 pdf=pdf
@@ -455,7 +460,6 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         self.experience_values: List[float] = []
         self.weights: np.ndarray = None
         self.experience_pending: bool = False
-        self.policy_improvement_count: Optional[int] = None
 
     def __getitem__(
             self,

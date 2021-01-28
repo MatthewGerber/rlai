@@ -252,11 +252,20 @@ def parse_arguments(
 
 
 class StdStreamReader:
+    """
+    Standard stream reader (tee).
+    """
 
     def write(
             self,
             s: str
     ):
+        """
+        Write.
+
+        :param s: String.
+        """
+
         self.stream.write(s)
 
         if s != '\n':
@@ -264,11 +273,27 @@ class StdStreamReader:
             while len(self.buffer) > self.max_buffer_len:
                 del self.buffer[0]
 
+    def flush(
+            self
+    ):
+        """
+        Flush the stream.
+        """
+
+        self.stream.flush()
+
     def __init__(
             self,
             stream: TextIO,
             max_buffer_len: int
     ):
+        """
+        Initialize the reader.
+
+        :param stream: Standard stream.
+        :param max_buffer_len: Maximum buffer length.
+        """
+
         self.stream = stream
         self.max_buffer_len = max_buffer_len
 
