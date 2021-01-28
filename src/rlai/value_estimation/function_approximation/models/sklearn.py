@@ -11,7 +11,7 @@ from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import SGDRegressor
 
 from rlai.meta import rl_text
-from rlai.utils import parse_arguments, IncrementalSampleAverager, StdStreamReader
+from rlai.utils import parse_arguments, IncrementalSampleAverager, StdStreamTee
 from rlai.value_estimation.function_approximation.models import FunctionApproximationModel, FeatureExtractor
 from rlai.value_estimation.function_approximation.models.feature_extraction import (
     StateActionInteractionFeatureExtractor
@@ -156,8 +156,11 @@ class SKLearnSGD(FunctionApproximationModel):
             eta0_scalar = 1.01 ** max(np.abs(np.array(y)).max(), 1.0)
             self.model.eta0 = self.base_eta0 / eta0_scalar
 
+        stdout_tee = StdStreamTee(sys.stdout, 20)
+        sys.stdout = stdout_tee
         self.model.partial_fit(X=X, y=y, sample_weight=weight)
-        fit_line = self.stdout_reader.buffer[-2]
+        sys.stdout = sys.__stdout__
+        fit_line = stdout_tee.buffer[-2]
         avg_loss = float(fit_line.rsplit(' ', maxsplit=1)[1])  # example line:  Norm: 6.38, NNZs: 256, Bias: 8.932199, T: 1, Avg. loss: 0.001514
 
         for y_value in y:
@@ -329,10 +332,6 @@ class SKLearnSGD(FunctionApproximationModel):
         # verbose is required in order to capture output for plotting
         kwargs['verbose'] = 1
         self.model = SGDRegressor(**kwargs)
-
-        self.stdout_reader = StdStreamReader(sys.stdout, 20)
-        sys.stdout = self.stdout_reader
-
         self.base_eta0 = self.model.eta0
         self.y_values = []
         self.y_averager = IncrementalSampleAverager()

@@ -353,7 +353,7 @@ def update_q_S_A(
         # remove the time step from our n-step structure
         del t_state_a_g[update_t]
 
-        # update the policy per num updates
+        # update the policy per number of updates
         if num_updates_per_improvement is not None and q_S_A.update_count % num_updates_per_improvement == 0:
             q_S_A.improve_policy(
                 agent=agent,

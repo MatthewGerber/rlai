@@ -251,9 +251,9 @@ def parse_arguments(
     return parsed_args, unparsed_args
 
 
-class StdStreamReader:
+class StdStreamTee:
     """
-    Standard stream reader (tee).
+    Standard stream tee.
     """
 
     def write(
