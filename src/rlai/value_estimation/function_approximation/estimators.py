@@ -395,13 +395,13 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
 
         if self.plot_model:
 
-            do_plot = final or (self.plot_model_per_improvements is not None and self.episodic_policy_improvement_count % self.plot_model_per_improvements == 0)
+            render = final or (self.plot_model_per_improvements is not None and self.evaluation_policy_improvement_count % self.plot_model_per_improvements == 0)
 
             self.model.plot(
                 feature_extractor=self.feature_extractor,
-                policy_improvement_count=self.episodic_policy_improvement_count,
+                policy_improvement_count=self.evaluation_policy_improvement_count,
                 num_improvement_bins=self.plot_model_bins,
-                do_plot=do_plot,
+                render=render,
                 pdf=pdf
             )
 

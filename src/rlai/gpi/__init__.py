@@ -11,3 +11,6 @@ class PolicyImprovementEvent(Enum):
 
     # We updated a value estimate.
     UPDATED_VALUE_ESTIMATE = auto()
+
+    # We're making the policy greedy.
+    MAKING_POLICY_GREEDY = auto()

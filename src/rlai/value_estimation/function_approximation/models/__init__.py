@@ -93,7 +93,7 @@ class FunctionApproximationModel(ABC):
             feature_extractor: FeatureExtractor,
             policy_improvement_count: int,
             num_improvement_bins: Optional[int],
-            do_plot: bool,
+            render: bool,
             pdf: PdfPages
     ):
         """
@@ -102,7 +102,8 @@ class FunctionApproximationModel(ABC):
         :param feature_extractor: Feature extractor used to build the model.
         :param policy_improvement_count: Number of policy improvements that have been made.
         :param num_improvement_bins: Number of bins to plot.
-        :param do_plot: Whether or not to plot.
+        :param render: Whether or not to render the plot data. If False, then plot data will be updated but nothing will
+        be shown.
         :param pdf: PDF for plots.
         """
 
@@ -126,7 +127,7 @@ class FunctionApproximationModel(ABC):
             else:
                 self.feature_action_coefficients = self.feature_action_coefficients.append(feature_action_coefficients, ignore_index=True)
 
-            if do_plot:
+            if render:
 
                 if num_improvement_bins is None:
                     improvements_per_bin = 1

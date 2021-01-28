@@ -105,7 +105,7 @@ def iterate_value_q_pi(
         )
 
         q_S_A.plot(
-            final=False,
+            final=i == num_improvements - 1,
             pdf=pdf
         )
 
@@ -187,17 +187,12 @@ def iterate_value_q_pi(
 
     print(f'Value iteration of q_pi terminated after {i} iteration(s).')
 
-    q_S_A.plot(
-        final=True,
-        pdf=pdf
-    )
-
     if make_final_policy_greedy:
         q_S_A.improve_policy(
             agent=agent,
             states=None,
             epsilon=0.0,
-            event=PolicyImprovementEvent.FINISHED_EVALUATION
+            event=PolicyImprovementEvent.MAKING_POLICY_GREEDY
         )
 
     if pdf is not None:

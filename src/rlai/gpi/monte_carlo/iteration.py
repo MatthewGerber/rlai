@@ -151,7 +151,7 @@ def iterate_value_q_pi(
             agent=agent,
             states=None,
             epsilon=0.0,
-            event=PolicyImprovementEvent.FINISHED_EVALUATION
+            event=PolicyImprovementEvent.MAKING_POLICY_GREEDY
         )
 
     if pdf is not None:

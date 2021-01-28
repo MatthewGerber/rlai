@@ -106,6 +106,14 @@ class SKLearnSGD(FunctionApproximationModel):
             help='Scale eta0 dynamically with respect to y.'
         )
 
+        # other stuff
+        parser.add_argument(
+            '--verbose',
+            type=int,
+            default=0,
+            help='Verbosity level.'
+        )
+
         return parser
 
     @classmethod
@@ -156,7 +164,7 @@ class SKLearnSGD(FunctionApproximationModel):
             eta0_scalar = 1.01 ** max(np.abs(np.array(y)).max(), 1.0)
             self.model.eta0 = self.base_eta0 / eta0_scalar
 
-        stdout_tee = StdStreamTee(sys.stdout, 20)
+        stdout_tee = StdStreamTee(sys.stdout, 20, self.print_output)
         sys.stdout = stdout_tee
         self.model.partial_fit(X=X, y=y, sample_weight=weight)
         sys.stdout = sys.__stdout__
@@ -241,7 +249,7 @@ class SKLearnSGD(FunctionApproximationModel):
             feature_extractor: FeatureExtractor,
             policy_improvement_count: int,
             num_improvement_bins: Optional[int],
-            do_plot: bool,
+            render: bool,
             pdf: PdfPages
     ):
         """
@@ -250,7 +258,8 @@ class SKLearnSGD(FunctionApproximationModel):
         :param feature_extractor: Feature extractor used to build the model.
         :param policy_improvement_count: Number of policy improvements that have been made.
         :param num_improvement_bins: Number of bins to plot.
-        :param do_plot: Whether or not to plot.
+        :param render: Whether or not to render the plot data. If False, then plot data will be updated but nothing will
+        be shown.
         :param pdf: PDF for plots.
         """
 
@@ -258,7 +267,7 @@ class SKLearnSGD(FunctionApproximationModel):
             feature_extractor=feature_extractor,
             policy_improvement_count=policy_improvement_count,
             num_improvement_bins=num_improvement_bins,
-            do_plot=do_plot,
+            render=render,
             pdf=pdf
         )
 
@@ -274,11 +283,11 @@ class SKLearnSGD(FunctionApproximationModel):
             self.eta0_averages.append(self.eta0_averager.get_value())
             self.eta0_averager.reset()
 
-        if do_plot:
+        if render:
 
             x_values = np.arange(1, len(self.y_averages) + 1)
-            plt.plot(x_values, self.y_averages, label='Reward (G) obtained')
-            plt.plot(x_values, self.loss_averages, label='Average model loss')
+            plt.plot(x_values, self.y_averages, color='red', label='Reward (G) obtained')
+            plt.plot(x_values, self.loss_averages, color='mediumpurple', label='Average model loss')
             plt.xticks(x_values)
             plt.grid()
             plt.legend(loc='upper left')
@@ -294,8 +303,8 @@ class SKLearnSGD(FunctionApproximationModel):
                 pdf.savefig()
 
             x_values = np.arange(1, len(self.y_values) + 1)
-            plt.plot(x_values, self.y_values, label='Reward (G) obtained')
-            plt.plot(x_values, self.loss_values, label='Average model loss')
+            plt.plot(x_values, self.y_values, color='red', label='Reward (G) obtained')
+            plt.plot(x_values, self.loss_values, color='mediumpurple', label='Average model loss')
             plt.xlabel('Time step')
             plt.grid()
             plt.legend(loc='upper left')
@@ -329,8 +338,13 @@ class SKLearnSGD(FunctionApproximationModel):
 
         self.scale_eta0_for_y = scale_eta0_for_y
 
-        # verbose is required in order to capture output for plotting
+        # verbose is required in order to capture standard output for plotting. if a verbosity level of 0 is passed,
+        # then set flag indicating that we should not print captured output back to stdout; otherwise, print captured
+        # output back to stdout as the caller expects.
+        passed_verbose = kwargs['verbose']
         kwargs['verbose'] = 1
+        self.print_output = passed_verbose != 0
+
         self.model = SGDRegressor(**kwargs)
         self.base_eta0 = self.model.eta0
         self.y_values = []

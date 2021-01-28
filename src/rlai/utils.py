@@ -266,7 +266,8 @@ class StdStreamTee:
         :param s: String.
         """
 
-        self.stream.write(s)
+        if self.print_to_stream:
+            self.stream.write(s)
 
         if s != '\n':
             self.buffer.append(s)
@@ -285,16 +286,19 @@ class StdStreamTee:
     def __init__(
             self,
             stream: TextIO,
-            max_buffer_len: int
+            max_buffer_len: int,
+            print_to_stream: bool
     ):
         """
         Initialize the reader.
 
         :param stream: Standard stream.
         :param max_buffer_len: Maximum buffer length.
+        :param print_to_stream: Whether or not to print back to stream.
         """
 
         self.stream = stream
         self.max_buffer_len = max_buffer_len
+        self.print_to_stream = print_to_stream
 
         self.buffer = []
