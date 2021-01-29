@@ -6,6 +6,7 @@ from numpy.random import RandomState
 from rlai.actions import Action
 from rlai.agents.mdp import MdpAgent
 from rlai.environments.mdp import MdpEnvironment
+from rlai.gpi import PolicyImprovementEvent
 from rlai.gpi.improvement import improve_policy_with_q_pi
 from rlai.meta import rl_text
 from rlai.policies.tabular import TabularPolicy
@@ -310,7 +311,8 @@ class TabularStateActionValueEstimator(StateActionValueEstimator):
             self,
             agent: MdpAgent,
             states: Optional[Iterable[MdpState]],
-            epsilon: float
+            epsilon: float,
+            event: PolicyImprovementEvent
     ) -> int:
         """
         Improve an agent's policy using the current state-action value estimates.
@@ -318,8 +320,16 @@ class TabularStateActionValueEstimator(StateActionValueEstimator):
         :param agent: Agent whose policy should be improved.
         :param states: States to improve, or None for all states.
         :param epsilon: Epsilon.
+        :param event: Event that triggered the improvement.
         :return: Number of states improved.
         """
+
+        super().improve_policy(
+            agent=agent,
+            states=states,
+            epsilon=epsilon,
+            event=event
+        )
 
         if epsilon is None:
             epsilon = 0.0

@@ -190,5 +190,5 @@ def run(
     return monitors
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma no cover
     run(sys.argv[1:])

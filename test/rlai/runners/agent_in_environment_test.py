@@ -4,6 +4,7 @@ import shlex
 import tempfile
 from typing import Dict, List
 
+import pytest
 from numpy.testing import assert_array_equal
 from numpy.random import RandomState
 
@@ -90,3 +91,18 @@ def test_run():
             )
 
         print('passed.')
+
+
+def test_unparsed_args():
+
+    with pytest.raises(ValueError, match='Unparsed arguments'):
+        run(shlex.split('--random-seed 12345 --T 100 --n-runs 200 --environment rlai.environments.bandit.KArmedBandit --k 10 --agent rlai.agents.q_value.EpsilonGreedy --epsilon 0.2 0.0 --testing'))
+
+
+def test_plot():
+
+    # without pdf (without random seed)
+    run(shlex.split('--T 100 --n-runs 200 --environment rlai.environments.bandit.KArmedBandit --k 10 --agent rlai.agents.q_value.EpsilonGreedy --epsilon 0.2 0.0 --plot --figure-name test'))
+
+    # with pdf
+    run(shlex.split(f'--random-seed 12345 --T 100 --n-runs 200 --environment rlai.environments.bandit.KArmedBandit --k 10 --agent rlai.agents.q_value.EpsilonGreedy --epsilon 0.2 0.0 --plot --pdf-save-path {tempfile.NamedTemporaryFile(delete=False).name}'))

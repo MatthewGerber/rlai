@@ -1,14 +1,17 @@
+import sys
 from argparse import ArgumentParser
 from typing import Tuple, List, Optional, Any
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from matplotlib.backends.backend_pdf import PdfPages
 from numpy.random import RandomState
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import SGDRegressor
 
 from rlai.meta import rl_text
-from rlai.utils import parse_arguments
+from rlai.utils import parse_arguments, IncrementalSampleAverager, StdStreamTee
 from rlai.value_estimation.function_approximation.models import FunctionApproximationModel, FeatureExtractor
 from rlai.value_estimation.function_approximation.models.feature_extraction import (
     StateActionInteractionFeatureExtractor
@@ -97,12 +100,18 @@ class SKLearnSGD(FunctionApproximationModel):
             help='The exponent for inverse scaling learning rate.'
         )
 
+        parser.add_argument(
+            '--scale-eta0-for-y',
+            action='store_true',
+            help='Scale eta0 dynamically with respect to y.'
+        )
+
         # other stuff
         parser.add_argument(
             '--verbose',
             type=int,
             default=0,
-            help='The verbosity level.'
+            help='Verbosity level.'
         )
 
         return parser
@@ -151,7 +160,31 @@ class SKLearnSGD(FunctionApproximationModel):
         :param weight: Weight.
         """
 
+        # scale the step size according to y. TODO:  expose the base as a cli argument
+        if self.scale_eta0_for_y:
+            eta0_scalar = 1.01 ** max(np.abs(np.array(y)).max(), 1.0)
+            self.model.eta0 = self.base_eta0 / eta0_scalar
+
+        # put tee on standard output in order to grab the loss value printed by sklearn
+        stdout_tee = StdStreamTee(sys.stdout, 20, self.print_output)
+        sys.stdout = stdout_tee
         self.model.partial_fit(X=X, y=y, sample_weight=weight)
+        sys.stdout = sys.__stdout__
+
+        fit_line = stdout_tee.buffer[-2]
+        if not fit_line.startswith('Norm:'):  # pragma no cover
+            raise ValueError(f'Expected sklearn output to start with Norm:')
+
+        avg_loss = float(fit_line.rsplit(' ', maxsplit=1)[1])  # example line:  Norm: 6.38, NNZs: 256, Bias: 8.932199, T: 1, Avg. loss: 0.001514
+
+        # save y values. each is associated with the same average loss and eta0 (step size).
+        for y_value in y:
+            self.y_values.append(y_value)
+            self.y_averager.update(y_value)
+            self.loss_values.append(avg_loss)
+            self.loss_averager.update(avg_loss)
+            self.eta0_values.append(self.model.eta0)
+            self.eta0_averager.update(self.model.eta0)
 
     def evaluate(
             self,
@@ -175,15 +208,16 @@ class SKLearnSGD(FunctionApproximationModel):
 
         return values
 
-    def get_summary(
+    def get_feature_action_coefficients(
             self,
             feature_extractor: FeatureExtractor
-    ) -> pd.DataFrame:
+    ) -> Optional[pd.DataFrame]:
         """
-        Get a pandas.DataFrame that summarizes the model (e.g., in terms of its coefficients).
+        Get a pandas.DataFrame containing one row per feature and one column per action, with the cells containing the
+        coefficient value of the associated feature-action pair.
 
         :param feature_extractor: Feature extractor used to build the model.
-        :return: DataFrame.
+        :return: DataFrame (#features, #actions).
         """
 
         if isinstance(feature_extractor, StateActionInteractionFeatureExtractor):
@@ -217,17 +251,132 @@ class SKLearnSGD(FunctionApproximationModel):
 
         return coefficients
 
+    def plot(
+            self,
+            feature_extractor: FeatureExtractor,
+            policy_improvement_count: int,
+            num_improvement_bins: Optional[int],
+            render: bool,
+            pdf: PdfPages
+    ):
+        """
+        Plot the model.
+
+        :param feature_extractor: Feature extractor used to build the model.
+        :param policy_improvement_count: Number of policy improvements that have been made.
+        :param num_improvement_bins: Number of bins to plot.
+        :param render: Whether or not to render the plot data. If False, then plot data will be updated but nothing will
+        be shown.
+        :param pdf: PDF for plots.
+        """
+
+        super().plot(
+            feature_extractor=feature_extractor,
+            policy_improvement_count=policy_improvement_count,
+            num_improvement_bins=num_improvement_bins,
+            render=render,
+            pdf=pdf
+        )
+
+        # collect average values for the current policy improvement iteration and reset the averagers. there's no need
+        # to collect values for the time steps, as these are collected during the calls to fit.
+        if self.y_averager.n > 0:
+            self.y_averages.append(self.y_averager.get_value())
+            self.y_averager.reset()
+
+        if self.loss_averager.n > 0:
+            self.loss_averages.append(self.loss_averager.get_value())
+            self.loss_averager.reset()
+
+        if self.eta0_averager.n > 0:
+            self.eta0_averages.append(self.eta0_averager.get_value())
+            self.eta0_averager.reset()
+
+        if render:
+
+            # plot values for all improvement iterations since the previous rendering
+            num_plot_iterations = len(self.y_averages)
+            x_values = np.arange(self.plot_start_iteration, self.plot_start_iteration + num_plot_iterations)
+            plt.plot(x_values, self.y_averages, color='red', label='Reward (G) obtained')
+            plt.plot(x_values, self.loss_averages, color='mediumpurple', label='Average model loss')
+            plt.xticks(x_values)
+            plt.grid()
+            plt.legend(loc='upper left')
+            plt.xlabel('Policy improvement iteration')
+
+            eta0_ax = plt.twinx()
+            eta0_ax.plot(x_values, self.eta0_averages, linestyle='--', label='Step size (eta0)')
+            eta0_ax.legend(loc='upper right')
+
+            self.y_averages.clear()
+            self.loss_averages.clear()
+            self.eta0_averages.clear()
+            self.plot_start_iteration += num_plot_iterations
+
+            if pdf is None:
+                plt.show()
+            else:
+                pdf.savefig()
+
+            # plot values for all time steps since the previous rendering
+            num_plot_time_steps = len(self.y_values)
+            x_values = np.arange(self.plot_start_time_step, self.plot_start_time_step + num_plot_time_steps)
+            plt.plot(x_values, self.y_values, color='red', label='Reward (G) obtained')
+            plt.plot(x_values, self.loss_values, color='mediumpurple', label='Average model loss')
+            plt.xlabel('Time step')
+            plt.grid()
+            plt.legend(loc='upper left')
+
+            eta0_ax = plt.twinx()
+            eta0_ax.plot(x_values, self.eta0_values, linestyle='--', label='Step size (eta0)')
+            eta0_ax.legend(loc='upper right')
+
+            self.y_values.clear()
+            self.loss_values.clear()
+            self.eta0_values.clear()
+            self.plot_start_time_step += num_plot_time_steps
+
+            if pdf is None:
+                plt.show()
+            else:
+                pdf.savefig()
+
     def __init__(
             self,
+            scale_eta0_for_y: bool,
             **kwargs
     ):
         """
         Initialize the model.
 
+        :param scale_eta0_for_y: Whether or not to scale the value of eta0 for y.
         :param kwargs: Keyword arguments to pass to SGDRegressor.
         """
 
+        super().__init__()
+
+        self.scale_eta0_for_y = scale_eta0_for_y
+
+        # verbose is required in order to capture standard output for plotting. if a verbosity level is not passed or
+        # passed as 0, then set flag indicating that we should not print captured output back to stdout; otherwise,
+        # print captured output back to stdout as the caller expects.
+        passed_verbose = kwargs.get('verbose', 0)
+        kwargs['verbose'] = 1
+        self.print_output = passed_verbose != 0
+
         self.model = SGDRegressor(**kwargs)
+        self.base_eta0 = self.model.eta0
+        self.y_values = []
+        self.y_averager = IncrementalSampleAverager()
+        self.y_averages = []
+        self.loss_values = []
+        self.loss_averager = IncrementalSampleAverager()
+        self.loss_averages = []
+        self.eta0_values = []
+        self.eta0_averager = IncrementalSampleAverager()
+        self.eta0_averages = []
+        self.plot_start_iteration = 1
+        self.plot_start_time_step = 1
 
     def __eq__(
             self,

@@ -64,7 +64,6 @@ class FeatureExtractor(ABC):
         :param for_fitting: Whether the extracted features will be used for fitting (True) or prediction (False).
         :return: State-feature pandas.DataFrame or numpy.ndarray.
         """
-        pass
 
     @staticmethod
     def check_state_and_action_lists(
@@ -92,7 +91,6 @@ class FeatureExtractor(ABC):
 
         :return: List of feature names.
         """
-        pass
 
     def __init__(
             self,
@@ -103,7 +101,6 @@ class FeatureExtractor(ABC):
 
         :param environment: Environment.
         """
-        pass
 
 
 @rl_text(chapter='Feature Extractors', page=1)
