@@ -178,7 +178,7 @@ class FunctionApproximationModel(ABC):
                     plt.tight_layout()
 
                     if pdf is None:
-                        plt.show()
+                        plt.show(block=False)
                     else:
                         pdf.savefig()
 

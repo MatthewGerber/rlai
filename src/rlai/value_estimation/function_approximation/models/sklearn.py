@@ -222,10 +222,14 @@ class SKLearnSGD(FunctionApproximationModel):
 
         if isinstance(feature_extractor, StateActionInteractionFeatureExtractor):
 
+            # not all feature extractors return names. bail if the given one does not.
+            feature_names = feature_extractor.get_feature_names()
+            if feature_names is None:
+                return None
+
             # get (#features, #actions) array of coefficients, along with feature names.
             num_actions = len(feature_extractor.actions)
             coefficients = self.model.coef_.reshape((-1, num_actions), order='F')
-            feature_names = feature_extractor.get_feature_names()
 
             # add intercept if we fit one
             if self.model.fit_intercept:
@@ -299,8 +303,6 @@ class SKLearnSGD(FunctionApproximationModel):
             x_values = np.arange(self.plot_start_iteration, self.plot_start_iteration + num_plot_iterations)
             plt.plot(x_values, self.y_averages, color='red', label='Reward (G) obtained')
             plt.plot(x_values, self.loss_averages, color='mediumpurple', label='Average model loss')
-            plt.xticks(x_values)
-            plt.grid()
             plt.legend(loc='upper left')
             plt.xlabel('Policy improvement iteration')
 
@@ -314,7 +316,7 @@ class SKLearnSGD(FunctionApproximationModel):
             self.plot_start_iteration += num_plot_iterations
 
             if pdf is None:
-                plt.show()
+                plt.show(block=False)
             else:
                 pdf.savefig()
 
@@ -324,7 +326,6 @@ class SKLearnSGD(FunctionApproximationModel):
             plt.plot(x_values, self.y_values, color='red', label='Reward (G) obtained')
             plt.plot(x_values, self.loss_values, color='mediumpurple', label='Average model loss')
             plt.xlabel('Time step')
-            plt.grid()
             plt.legend(loc='upper left')
 
             eta0_ax = plt.twinx()
@@ -337,7 +338,7 @@ class SKLearnSGD(FunctionApproximationModel):
             self.plot_start_time_step += num_plot_time_steps
 
             if pdf is None:
-                plt.show()
+                plt.show(block=False)
             else:
                 pdf.savefig()
 

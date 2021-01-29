@@ -407,14 +407,14 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
 
     def get_feature_names(
             self
-    ) -> List[str]:
+    ) -> Optional[List[str]]:
         """
         Get names of extracted features.
 
         :return: List of feature names.
         """
 
-        raise ValueError('Not implemented')
+        return None
 
     def __init__(
             self,

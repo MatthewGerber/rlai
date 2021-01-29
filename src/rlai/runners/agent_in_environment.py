@@ -182,7 +182,7 @@ def run(
         optimal_action_ax.legend()
 
         if pdf is None:
-            plt.show()
+            plt.show(block=False)
         else:
             pdf.savefig()
             pdf.close()

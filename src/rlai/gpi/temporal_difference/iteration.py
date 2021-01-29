@@ -71,7 +71,7 @@ def iterate_value_q_pi(
 
     pdf = None
     if pdf_save_path is not None:
-        pdf = PdfPages(pdf_save_path)
+        pdf = PdfPages(os.path.expanduser(pdf_save_path))
 
     i = 0
     iteration_average_reward = []
