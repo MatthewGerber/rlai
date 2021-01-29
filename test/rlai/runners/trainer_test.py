@@ -4,6 +4,7 @@ import shlex
 import tempfile
 
 import numpy as np
+import pytest
 
 from rlai.policies.tabular import TabularPolicy
 from rlai.runners.trainer import run
@@ -67,3 +68,38 @@ def test_run():
             assert np.allclose(agent.pi.estimator.model.model.coef_, agent_fixture.pi.estimator.model.model.coef_)
 
         print('passed.')
+
+
+def test_missing_arguments():
+
+    run(shlex.split('--agent rlai.agents.mdp.StochasticMdpAgent --gamma 1 --environment rlai.environments.gridworld.Gridworld --id example_4_1 --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode Q_LEARNING --num-improvements 10 --num-episodes-per-improvement 5 --epsilon 0.01 --q-S-A rlai.value_estimation.tabular.TabularStateActionValueEstimator --make-final-policy-greedy True'))
+
+
+def test_unparsed_arguments():
+
+    with pytest.raises(ValueError, match='Unparsed arguments'):
+        run(shlex.split('--agent rlai.agents.mdp.StochasticMdpAgent --gamma 1 --environment rlai.environments.gridworld.Gridworld --id example_4_1 --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode Q_LEARNING --num-improvements 10 --num-episodes-per-improvement 5 --epsilon 0.01 --q-S-A rlai.value_estimation.tabular.TabularStateActionValueEstimator --make-final-policy-greedy True --XXXX'))
+
+
+def test_help():
+
+    run(shlex.split('--agent rlai.agents.mdp.StochasticMdpAgent --help'))
+
+
+def test_resume():
+
+    checkpoint_path, agent_path = run(shlex.split(f'--random-seed 12345 --agent rlai.agents.mdp.StochasticMdpAgent --gamma 1 --environment rlai.environments.gridworld.Gridworld --id example_4_1 --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode Q_LEARNING --num-improvements 10 --num-episodes-per-improvement 5 --epsilon 0.01 --q-S-A rlai.value_estimation.tabular.TabularStateActionValueEstimator --make-final-policy-greedy True --num-improvements-per-checkpoint 10 --checkpoint-path {tempfile.NamedTemporaryFile(delete=False).name} --save-agent-path {tempfile.NamedTemporaryFile(delete=False).name}'))
+
+    _, resumed_agent_path = run(shlex.split(f'--resume --random-seed 12345 --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --num-improvements 10 --checkpoint-path {checkpoint_path} --save-agent-path {tempfile.NamedTemporaryFile(delete=False).name}'))
+
+    with open(resumed_agent_path, 'rb') as f:
+        agent = pickle.load(f)
+
+    # uncomment the following line and run test to update fixture
+    # with open(f'{os.path.dirname(__file__)}/fixtures/test_resume.pickle', 'wb') as file:
+    #     pickle.dump(agent, file)
+
+    with open(f'{os.path.dirname(__file__)}/fixtures/test_resume.pickle', 'rb') as file:
+        agent_fixture = pickle.load(file)
+
+    assert agent.pi == agent_fixture.pi

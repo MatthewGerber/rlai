@@ -114,10 +114,10 @@ class FunctionApproximationModel(ABC):
             if feature_action_coefficients.shape[0] > 10 or feature_action_coefficients.shape[1] > 10:
                 warnings.warn(f'Feature-action DataFrame is too large to generate boxplots for ({feature_action_coefficients.shape}). Skipping feature-action coefficient boxplots.')
 
-            if 'n' in feature_action_coefficients.columns:
+            if 'n' in feature_action_coefficients.columns:  # pragma no cover
                 raise ValueError('Feature extractor returned disallowed column:  n')
 
-            if 'bin' in feature_action_coefficients.columns:
+            if 'bin' in feature_action_coefficients.columns:  # pragma no cover
                 raise ValueError('Feature extractor returned disallowed column:  bin')
 
             feature_action_coefficients['n'] = policy_improvement_count - 1

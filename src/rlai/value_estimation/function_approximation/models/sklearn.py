@@ -160,17 +160,24 @@ class SKLearnSGD(FunctionApproximationModel):
         :param weight: Weight.
         """
 
+        # scale the step size according to y. TODO:  expose the base as a cli argument
         if self.scale_eta0_for_y:
             eta0_scalar = 1.01 ** max(np.abs(np.array(y)).max(), 1.0)
             self.model.eta0 = self.base_eta0 / eta0_scalar
 
+        # put tee on standard output in order to grab the loss value printed by sklearn
         stdout_tee = StdStreamTee(sys.stdout, 20, self.print_output)
         sys.stdout = stdout_tee
         self.model.partial_fit(X=X, y=y, sample_weight=weight)
         sys.stdout = sys.__stdout__
+
         fit_line = stdout_tee.buffer[-2]
+        if not fit_line.startswith('Norm:'):  # pragma no cover
+            raise ValueError(f'Expected sklearn output to start with Norm:')
+
         avg_loss = float(fit_line.rsplit(' ', maxsplit=1)[1])  # example line:  Norm: 6.38, NNZs: 256, Bias: 8.932199, T: 1, Avg. loss: 0.001514
 
+        # save y values. each is associated with the same average loss and eta0 (step size).
         for y_value in y:
             self.y_values.append(y_value)
             self.y_averager.update(y_value)
