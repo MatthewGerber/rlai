@@ -69,6 +69,7 @@ def test_invalid_gym_arguments():
 
 def test_unimplemented_feature_names():
 
-    cartpole = Gym(RandomState(), None, 'CartPole-v0')
-    with pytest.raises(ValueError, match='Not implemented'):
-        CartpoleFeatureExtractor(cartpole).get_feature_names()
+    cartpole_environment = Gym(RandomState(), None, 'CartPole-v0')
+    cartpole_fex = CartpoleFeatureExtractor(cartpole_environment)
+
+    assert cartpole_fex.get_feature_names() is None

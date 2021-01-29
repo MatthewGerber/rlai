@@ -409,9 +409,9 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
             self
     ) -> Optional[List[str]]:
         """
-        Get names of extracted features.
+        Not implemented.
 
-        :return: List of feature names.
+        :return: Will always return None.
         """
 
         return None
