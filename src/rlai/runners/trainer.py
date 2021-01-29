@@ -52,9 +52,9 @@ def run(
     )
 
     parser.add_argument(
-        '--resume-train',
+        '--resume',
         action='store_true',
-        help='Resume training an agent from a checkpoint path.'
+        help='Resume training an agent from a previously saved checkpoint path.'
     )
 
     parser.add_argument(
@@ -245,7 +245,7 @@ def run(
             pi=None if train_function_args.get('q_S_A') is None else train_function_args['q_S_A'].get_initial_policy()
         )
 
-        if len(agents) != 1:
+        if len(agents) != 1:  # pragma no cover
             raise ValueError('Training is only supported for single agents. Please specify one agent.')
 
         agent = agents[0]
@@ -266,7 +266,7 @@ def run(
             warnings.warn('No --save-agent-path has been specified, so no agent will be saved after training.')
 
         # resumption will return agent
-        if parsed_args.resume_train:
+        if parsed_args.resume:
             agent = resume_from_checkpoint(
                 resume_function=train_function,
                 **train_function_args
@@ -283,7 +283,7 @@ def run(
         print('Training complete.')
 
         # try to save agent
-        if agent is None:
+        if agent is None:  # pragma no cover
             warnings.warn('No agent resulting at end of training. Nothing to save.')
         elif parsed_args.save_agent_path is None:
             warnings.warn('No --save-agent-path specified. Not saving agent.')
@@ -296,5 +296,5 @@ def run(
     return train_function_args.get('checkpoint_path'), parsed_args.save_agent_path
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma no cover
     run(sys.argv[1:])

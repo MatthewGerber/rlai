@@ -8,6 +8,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 from rlai.agents.mdp import MdpAgent
 from rlai.environments.mdp import MdpEnvironment, MdpPlanningEnvironment, PrioritizedSweepingMdpPlanningEnvironment
 from rlai.environments.openai_gym import Gym
+from rlai.gpi import PolicyImprovementEvent
 from rlai.gpi.temporal_difference.evaluation import evaluate_q_pi, Mode
 from rlai.gpi.utils import plot_policy_iteration
 from rlai.meta import rl_text
@@ -99,11 +100,12 @@ def iterate_value_q_pi(
         num_states_improved = q_S_A.improve_policy(
             agent=agent,
             states=evaluated_states,
-            epsilon=epsilon
+            epsilon=epsilon,
+            event=PolicyImprovementEvent.FINISHED_EVALUATION
         )
 
         q_S_A.plot(
-            final=False,
+            final=i == num_improvements - 1,
             pdf=pdf
         )
 
@@ -185,16 +187,12 @@ def iterate_value_q_pi(
 
     print(f'Value iteration of q_pi terminated after {i} iteration(s).')
 
-    q_S_A.plot(
-        final=True,
-        pdf=pdf
-    )
-
     if make_final_policy_greedy:
         q_S_A.improve_policy(
             agent=agent,
             states=None,
-            epsilon=0.0
+            epsilon=0.0,
+            event=PolicyImprovementEvent.MAKING_POLICY_GREEDY
         )
 
     if pdf is not None:

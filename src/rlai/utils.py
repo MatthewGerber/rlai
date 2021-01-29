@@ -1,7 +1,7 @@
 import importlib
 from argparse import Namespace, ArgumentParser
 from importlib import import_module
-from typing import List, Any, Optional, Callable, Tuple
+from typing import List, Any, Optional, Callable, Tuple, TextIO
 
 import numpy as np
 from numpy.random import RandomState
@@ -249,3 +249,56 @@ def parse_arguments(
     del parsed_args.help
 
     return parsed_args, unparsed_args
+
+
+class StdStreamTee:
+    """
+    Standard stream tee.
+    """
+
+    def write(
+            self,
+            s: str
+    ):
+        """
+        Write.
+
+        :param s: String.
+        """
+
+        if self.print_to_stream:
+            self.stream.write(s)
+
+        if s != '\n':
+            self.buffer.append(s)
+            while len(self.buffer) > self.max_buffer_len:
+                del self.buffer[0]
+
+    def flush(
+            self
+    ):
+        """
+        Flush the stream.
+        """
+
+        self.stream.flush()
+
+    def __init__(
+            self,
+            stream: TextIO,
+            max_buffer_len: int,
+            print_to_stream: bool
+    ):
+        """
+        Initialize the reader.
+
+        :param stream: Standard stream.
+        :param max_buffer_len: Maximum buffer length.
+        :param print_to_stream: Whether or not to print back to stream.
+        """
+
+        self.stream = stream
+        self.max_buffer_len = max_buffer_len
+        self.print_to_stream = print_to_stream
+
+        self.buffer = []

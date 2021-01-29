@@ -8,6 +8,7 @@ from numpy.random import RandomState
 from rlai.actions import Action
 from rlai.agents.mdp import MdpAgent
 from rlai.environments.mdp import MdpEnvironment
+from rlai.gpi import PolicyImprovementEvent
 from rlai.meta import rl_text
 from rlai.policies import Policy
 from rlai.states.mdp import MdpState
@@ -184,17 +185,23 @@ class StateActionValueEstimator(ABC):
             self,
             agent: MdpAgent,
             states: Optional[Iterable[MdpState]],
-            epsilon: float
-    ) -> int:
+            epsilon: float,
+            event: PolicyImprovementEvent
+    ):
         """
         Improve an agent's policy using the current state-action value estimates.
 
         :param agent: Agent whose policy should be improved.
         :param states: States to improve, or None for all states.
         :param epsilon: Epsilon.
+        :param event: Event that triggered the improvement.
         :return: Number of states improved.
         """
-        pass
+
+        if event == PolicyImprovementEvent.FINISHED_EVALUATION:
+            self.evaluation_policy_improvement_count += 1
+        elif event == PolicyImprovementEvent.UPDATED_VALUE_ESTIMATE:
+            self.value_estimate_policy_improvement_count += 1
 
     def plot(
             self,
@@ -207,7 +214,6 @@ class StateActionValueEstimator(ABC):
         :param final: Whether or not this is the final time plot will be called.
         :param pdf: PDF for plots.
         """
-        pass
 
     def __init__(
             self,
@@ -227,6 +233,8 @@ class StateActionValueEstimator(ABC):
         self.epsilon = epsilon
 
         self.update_count = 0
+        self.evaluation_policy_improvement_count: int = 0
+        self.value_estimate_policy_improvement_count: int = 0
 
     @abstractmethod
     def __getitem__(
@@ -239,7 +247,6 @@ class StateActionValueEstimator(ABC):
         :param state: State.
         :return: Action-value estimator.
         """
-        pass
 
     @abstractmethod
     def __len__(
@@ -250,7 +257,6 @@ class StateActionValueEstimator(ABC):
 
         :return: Number of states.
         """
-        pass
 
     @abstractmethod
     def __contains__(
@@ -263,7 +269,6 @@ class StateActionValueEstimator(ABC):
         :param state: State.
         :return: True if defined and False otherise.
         """
-        pass
 
     @abstractmethod
     def __eq__(
@@ -276,7 +281,6 @@ class StateActionValueEstimator(ABC):
         :param other: Other estimator.
         :return: True if equal and False otherwise.
         """
-        pass
 
     @abstractmethod
     def __ne__(
@@ -289,4 +293,3 @@ class StateActionValueEstimator(ABC):
         :param other: Other estimator.
         :return: True if not equal and False otherwise.
         """
-        pass

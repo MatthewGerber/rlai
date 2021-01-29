@@ -1,8 +1,6 @@
-import math
 from argparse import ArgumentParser
 from typing import Optional, List, Tuple, Iterator, Set
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from matplotlib.backends.backend_pdf import PdfPages
@@ -12,16 +10,14 @@ from patsy.highlevel import dmatrix
 from rlai.actions import Action
 from rlai.agents.mdp import MdpAgent
 from rlai.environments.mdp import MdpEnvironment
+from rlai.gpi import PolicyImprovementEvent
 from rlai.meta import rl_text
 from rlai.policies.function_approximation import FunctionApproximationPolicy
 from rlai.states.mdp import MdpState
 from rlai.utils import load_class, parse_arguments
 from rlai.value_estimation import ValueEstimator, ActionValueEstimator, StateActionValueEstimator
 from rlai.value_estimation.function_approximation.models import FunctionApproximationModel
-from rlai.value_estimation.function_approximation.models.feature_extraction import (
-    FeatureExtractor,
-    StateActionInteractionFeatureExtractor
-)
+from rlai.value_estimation.function_approximation.models.feature_extraction import FeatureExtractor
 
 
 @rl_text(chapter='Value Estimation', page=195)
@@ -292,7 +288,8 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
             self,
             agent: MdpAgent,
             states: Optional[Set[MdpState]],
-            epsilon: Optional[float]
+            epsilon: Optional[float],
+            event: PolicyImprovementEvent
     ) -> int:
         """
         Improve an agent's policy using the current sample of experience collected through calls to `add_sample`.
@@ -300,8 +297,16 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         :param agent: Agent whose policy should be improved.
         :param states: States to improve, or None for all states.
         :param epsilon: Epsilon.
+        :param event: Event that triggered the improvement.
         :return: Number of states improved.
         """
+
+        super().improve_policy(
+            agent=agent,
+            states=states,
+            epsilon=epsilon,
+            event=event
+        )
 
         if epsilon is None:
             epsilon = 0.0
@@ -319,11 +324,6 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
             self.experience_values.clear()
             self.weights = None
             self.experience_pending = False
-
-        if self.policy_improvement_count is None:
-            self.policy_improvement_count = 1
-        else:
-            self.policy_improvement_count += 1
 
         return -1 if states is None else len(states)
 
@@ -393,74 +393,15 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
 
         if self.plot_model:
 
-            model_summary = self.model.get_summary(self.feature_extractor)
+            render = final or (self.plot_model_per_improvements is not None and self.evaluation_policy_improvement_count % self.plot_model_per_improvements == 0)
 
-            if 'n' in model_summary.columns:
-                raise ValueError('Feature extractor returned disallowed column:  n')
-
-            if 'bin' in model_summary.columns:
-                raise ValueError('Feature extractor returned disallowed column:  bin')
-
-            model_summary['n'] = self.policy_improvement_count - 1
-
-            if self.plot_df is None:
-                self.plot_df = model_summary
-            else:
-                self.plot_df = self.plot_df.append(model_summary, ignore_index=True)
-
-            if final or (self.plot_model_per_improvements is not None and self.policy_improvement_count % self.plot_model_per_improvements == 0):
-
-                if self.plot_model_bins is None:
-                    improvements_per_bin = 1
-                    self.plot_df['bin'] = self.plot_df.n
-                else:
-                    improvements_per_bin = math.ceil(self.policy_improvement_count / self.plot_model_bins)
-                    self.plot_df['bin'] = [int(n / improvements_per_bin) for n in self.plot_df.n]
-
-                if isinstance(self.feature_extractor, StateActionInteractionFeatureExtractor):
-
-                    # set up plots
-                    feature_names = self.plot_df.feature_name.unique().tolist()
-                    n_rows = len(feature_names)
-                    action_names = [a.name for a in self.feature_extractor.actions]
-                    n_cols = len(action_names)
-                    fig, axs = plt.subplots(
-                        nrows=n_rows,
-                        ncols=n_cols,
-                        sharex='all',
-                        sharey='row',
-                        figsize=(3 * n_cols, 3 * n_rows)
-                    )
-
-                    # plot one row per feature, with actions as the columns
-                    for i, feature_name in enumerate(feature_names):
-                        feature_df = self.plot_df[self.plot_df.feature_name == feature_name]
-                        boxplot_axs = axs[i, :]
-                        feature_df.boxplot(column=action_names, by='bin', ax=boxplot_axs)
-                        boxplot_axs[0].set_ylabel(f'w({feature_name})')
-
-                    # reset labels and titles
-                    for i, row in enumerate(axs):
-                        for ax in row:
-
-                            if i < axs.shape[0] - 1:
-                                ax.set_xlabel('')
-                            else:
-                                ax.set_xlabel('Iteration' if self.plot_model_bins is None else f'Bin of {improvements_per_bin} iterations')
-
-                            if i > 0:
-                                ax.set_title('')
-
-                    fig.suptitle('Model coefficients over iterations')
-                    plt.tight_layout()
-
-                    if pdf is None:
-                        plt.show()
-                    else:
-                        pdf.savefig()
-
-                else:
-                    raise ValueError(f'Unknown feature extractor type:  {type(self.feature_extractor)}')
+            self.model.plot(
+                feature_extractor=self.feature_extractor,
+                policy_improvement_count=self.evaluation_policy_improvement_count,
+                num_improvement_bins=self.plot_model_bins,
+                render=render,
+                pdf=pdf
+            )
 
     def __init__(
             self,
@@ -517,8 +458,6 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         self.experience_values: List[float] = []
         self.weights: np.ndarray = None
         self.experience_pending: bool = False
-        self.policy_improvement_count: Optional[int] = None
-        self.plot_df: Optional[pd.DataFrame] = None
 
     def __getitem__(
             self,

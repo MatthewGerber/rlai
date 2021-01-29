@@ -5,6 +5,7 @@ from typing import Dict, Set, Tuple, Optional
 from rlai.actions import Action
 from rlai.agents.mdp import MdpAgent
 from rlai.environments.mdp import MdpEnvironment, MdpPlanningEnvironment, PrioritizedSweepingMdpPlanningEnvironment
+from rlai.gpi import PolicyImprovementEvent
 from rlai.meta import rl_text
 from rlai.states.mdp import MdpState
 from rlai.utils import IncrementalSampleAverager, sample_list_item
@@ -352,10 +353,11 @@ def update_q_S_A(
         # remove the time step from our n-step structure
         del t_state_a_g[update_t]
 
-        # update the policy per num updates
+        # update the policy per number of updates
         if num_updates_per_improvement is not None and q_S_A.update_count % num_updates_per_improvement == 0:
             q_S_A.improve_policy(
                 agent=agent,
                 states=evaluated_states,
-                epsilon=epsilon
+                epsilon=epsilon,
+                event=PolicyImprovementEvent.UPDATED_VALUE_ESTIMATE
             )

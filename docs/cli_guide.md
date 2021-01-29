@@ -9,7 +9,7 @@ rlai train --help
 ```
 The output of the above command should be something like the following.
 ```
-usage: rlai train [--help] [--agent AGENT] [--environment ENVIRONMENT] [--planning-environment PLANNING_ENVIRONMENT] [--train-function TRAIN_FUNCTION] [--resume-train]
+usage: rlai train [--help] [--agent AGENT] [--environment ENVIRONMENT] [--planning-environment PLANNING_ENVIRONMENT] [--train-function TRAIN_FUNCTION] [--resume]
                   [--save-agent-path SAVE_AGENT_PATH]
 
 Train an agent in an environment.
@@ -23,7 +23,7 @@ optional arguments:
                         Fully-qualified type name of planning environment to train agent in.
   --train-function TRAIN_FUNCTION
                         Fully-qualified type name of function to use for training the agent.
-  --resume-train        Resume training an agent from a checkpoint path.
+  --resume              Resume training an agent from a checkpoint path.
   --save-agent-path SAVE_AGENT_PATH
                         Path to store resulting agent to.
 

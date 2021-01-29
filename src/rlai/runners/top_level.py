@@ -1,6 +1,6 @@
 import sys
 from argparse import ArgumentParser
-from typing import List
+from typing import List, Union, Tuple, Optional
 
 from rlai.meta import rl_text
 from rlai.runners import trainer, agent_in_environment
@@ -10,11 +10,12 @@ from rlai.utils import load_class, parse_arguments
 @rl_text(chapter='Training and Running Agents', page=1)
 def run(
         args: List[str] = None
-):
+) -> Union[None, Tuple[Optional[str], str]]:
     """
     Run RLAI.
 
     :param args: Arguments.
+    :return: Return value of specified function.
     """
 
     # create the top-level rlai parser and add subparsers for commands
@@ -34,7 +35,7 @@ def run(
     help_parser.set_defaults(func=show_help)
 
     parsed_args, unparsed_args = parser.parse_known_args(args)
-    parsed_args.func(unparsed_args)
+    return parsed_args.func(unparsed_args)
 
 
 def show_help(
@@ -57,5 +58,5 @@ def show_help(
         print(f'{ex}')
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma no cover
     run(sys.argv[1:])
