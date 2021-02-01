@@ -40,6 +40,13 @@ MUJOCO_REQUIREMENTS = [
     'mujoco-py==2.0.2.13'
 ]
 
+JUPYTER_REQUIREMENS = [
+    'jupyterlab==3.0.6',
+    'ipython==7.19.0',
+    'ipympl==0.6.3',
+    'tornado==6.1.0'
+]
+
 with open(path.join(path.abspath(path.dirname(__file__)), 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
@@ -62,7 +69,8 @@ setup(
     extras_require={
         'test:': TEST_REQUIREMENTS,
         'dev:': TEST_REQUIREMENTS + DEV_REQUIREMENTS,
-        'mujoco:': MUJOCO_REQUIREMENTS
+        'mujoco:': MUJOCO_REQUIREMENTS,
+        'jupyter': JUPYTER_REQUIREMENS
     },
     entry_points={
         'console_scripts': [
