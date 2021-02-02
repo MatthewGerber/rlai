@@ -38,6 +38,10 @@ def update_policy_iteration_plot():
 
     with _plot_data_lock:
 
+        # plot data will be None prior to the first call to plot_policy_iteration
+        if _iteration_average_reward is None:
+            return
+
         iterations = list(range(1, len(_iteration_average_reward) + 1))
 
         _iteration_average_reward_line.set_data(iterations, _iteration_average_reward)
@@ -100,7 +104,7 @@ def plot_policy_iteration(
             _elapsed_seconds_average_rewards = elapsed_seconds_average_rewards.copy()
 
         # sleep to let others threads (e.g., the main thread) plot if needed.
-        time.sleep(1)
+        time.sleep(0.01)
 
         return None
 
@@ -134,6 +138,7 @@ def plot_policy_iteration(
     _time_ax.grid()
 
     if pdf is None:
+        plt.tight_layout()
         plt.show(block=False)
         return fig
     else:

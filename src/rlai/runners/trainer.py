@@ -2,6 +2,7 @@ import os
 import pickle
 import sys
 import warnings
+from argparse import ArgumentParser
 from typing import List, Tuple, Optional
 
 from numpy.random import RandomState
@@ -102,117 +103,7 @@ def run(
     if parsed_args.train_function is not None:
 
         train_function = import_function(parsed_args.train_function)
-
-        train_function_arg_parser = get_base_argument_parser(prog=parsed_args.train_function)
-
-        # get argument names expected by training function
-        # noinspection PyUnresolvedReferences
-        train_function_arg_names = train_function.__code__.co_varnames[:train_function.__code__.co_argcount]
-
-        def filter_add_argument(
-                name: str,
-                **kwargs
-        ):
-            """
-            Filter arguments to those defined by the function before adding them to the argument parser.
-
-            :param name: Argument name.
-            :param kwargs: Other arguments.
-            """
-
-            var_name = name.lstrip('-').replace('-', '_')
-            if var_name in train_function_arg_names:
-                train_function_arg_parser.add_argument(
-                    name,
-                    **kwargs
-                )
-
-        filter_add_argument(
-            '--num-improvements',
-            type=int,
-            help='Number of improvements.'
-        )
-
-        filter_add_argument(
-            '--num-episodes-per-improvement',
-            type=int,
-            help='Number of episodes per improvement.'
-        )
-
-        filter_add_argument(
-            '--num-updates-per-improvement',
-            type=int,
-            help='Number of state-action value updates per policy improvement.'
-        )
-
-        filter_add_argument(
-            '--update-upon-every-visit',
-            type=str,
-            choices=['True', 'False'],
-            help='Whether or not to update values upon each visit to a state or state-action pair.'
-        )
-
-        filter_add_argument(
-            '--alpha',
-            type=float,
-            help='Step size.'
-        )
-
-        filter_add_argument(
-            '--epsilon',
-            type=float,
-            help='Total probability mass to allocate across all policy actions.'
-        )
-
-        filter_add_argument(
-            '--make-final-policy-greedy',
-            type=str,
-            choices=['True', 'False'],
-            help='Whether or not to make the final policy greedy after training is complete.'
-        )
-
-        filter_add_argument(
-            '--num-improvements-per-plot',
-            type=int,
-            help='Number of improvements per plot.'
-        )
-
-        filter_add_argument(
-            '--num-improvements-per-checkpoint',
-            type=int,
-            help='Number of improvements per checkpoint.'
-        )
-
-        filter_add_argument(
-            '--checkpoint-path',
-            type=str,
-            help='Path to checkpoint file.'
-        )
-
-        filter_add_argument(
-            '--mode',
-            type=str,
-            help='Temporal difference evaluation mode (SARSA, Q_LEARNING, EXPECTED_SARSA).'
-        )
-
-        filter_add_argument(
-            '--n-steps',
-            type=int,
-            help='N-step update value.'
-        )
-
-        filter_add_argument(
-            '--q-S-A',
-            type=str,
-            help='Fully-qualified type name of state-action value estimator to use.'
-        )
-
-        filter_add_argument(
-            '--pdf-save-path',
-            type=str,
-            help='Path where a PDF of all plots is to be saved.'
-        )
-
+        train_function_arg_parser = get_argument_parser_for_train_function(parsed_args.train_function)
         parsed_train_function_args, unparsed_args = parse_arguments(train_function_arg_parser, unparsed_args)
 
         # convert boolean strings to bools
@@ -294,6 +185,131 @@ def run(
             print(f'Saved agent to {parsed_args.save_agent_path}')
 
     return train_function_args.get('checkpoint_path'), parsed_args.save_agent_path
+
+
+def get_argument_parser_for_train_function(
+        function_name: str
+) -> ArgumentParser:
+    """
+    Get argument parser for a train function.
+
+    :param function_name: Function name.
+    :return: Argument parser.
+    """
+
+    argument_parser = get_base_argument_parser(prog=function_name)
+
+    function = import_function(function_name)
+
+    # get argument names expected by training function
+    # noinspection PyUnresolvedReferences
+    arg_names = function.__code__.co_varnames[:function.__code__.co_argcount]
+
+    def filter_add_argument(
+            name: str,
+            **kwargs
+    ):
+        """
+        Filter arguments to those defined by the function before adding them to the argument parser.
+
+        :param name: Argument name.
+        :param kwargs: Other arguments.
+        """
+
+        var_name = name.lstrip('-').replace('-', '_')
+        if var_name in arg_names:
+            argument_parser.add_argument(
+                name,
+                **kwargs
+            )
+
+    filter_add_argument(
+        '--num-improvements',
+        type=int,
+        help='Number of improvements.'
+    )
+
+    filter_add_argument(
+        '--num-episodes-per-improvement',
+        type=int,
+        help='Number of episodes per improvement.'
+    )
+
+    filter_add_argument(
+        '--num-updates-per-improvement',
+        type=int,
+        help='Number of state-action value updates per policy improvement.'
+    )
+
+    filter_add_argument(
+        '--update-upon-every-visit',
+        type=str,
+        choices=['True', 'False'],
+        help='Whether or not to update values upon each visit to a state or state-action pair.'
+    )
+
+    filter_add_argument(
+        '--alpha',
+        type=float,
+        help='Step size.'
+    )
+
+    filter_add_argument(
+        '--epsilon',
+        type=float,
+        help='Total probability mass to allocate across all policy actions.'
+    )
+
+    filter_add_argument(
+        '--make-final-policy-greedy',
+        type=str,
+        choices=['True', 'False'],
+        help='Whether or not to make the final policy greedy after training is complete.'
+    )
+
+    filter_add_argument(
+        '--num-improvements-per-plot',
+        type=int,
+        help='Number of improvements per plot.'
+    )
+
+    filter_add_argument(
+        '--num-improvements-per-checkpoint',
+        type=int,
+        help='Number of improvements per checkpoint.'
+    )
+
+    filter_add_argument(
+        '--checkpoint-path',
+        type=str,
+        help='Path to checkpoint file.'
+    )
+
+    filter_add_argument(
+        '--mode',
+        type=str,
+        help='Temporal difference evaluation mode (SARSA, Q_LEARNING, EXPECTED_SARSA).'
+    )
+
+    filter_add_argument(
+        '--n-steps',
+        type=int,
+        help='N-step update value.'
+    )
+
+    filter_add_argument(
+        '--q-S-A',
+        type=str,
+        help='Fully-qualified type name of state-action value estimator to use.'
+    )
+
+    filter_add_argument(
+        '--pdf-save-path',
+        type=str,
+        help='Path where a PDF of all plots is to be saved.'
+    )
+
+    return argument_parser
 
 
 if __name__ == '__main__':  # pragma no cover
