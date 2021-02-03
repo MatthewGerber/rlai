@@ -4,7 +4,7 @@ from typing import List, Union, Tuple, Optional
 
 from rlai.meta import rl_text
 from rlai.runners import trainer, agent_in_environment
-from rlai.utils import load_class, parse_arguments
+from rlai.utils import parse_arguments, get_argument_parser
 
 
 @rl_text(chapter='Training and Running Agents', page=1)
@@ -51,8 +51,7 @@ def show_help(
         print('Usage:  rlai help CLASS')
 
     try:
-        loaded_class = load_class(args[0])
-        parser = loaded_class.get_argument_parser()
+        parser = get_argument_parser(args[0])
         parse_arguments(parser, ['--help'])
     except Exception as ex:
         print(f'{ex}')

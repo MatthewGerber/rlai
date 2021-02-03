@@ -46,7 +46,8 @@ class SKLearnSGD(FunctionApproximationModel):
             '--loss',
             type=str,
             default='squared_loss',
-            help='The loss function to be used. The possible values are `squared_loss`, `huber`, `epsilon_insensitive`, or `squared_epsilon_insensitive`.'
+            help='The loss function to be used.',
+            choices=['squared_loss', 'huber', 'epsilon_insensitive', 'squared_epsilon_insensitive']
         )
 
         parser.add_argument(
@@ -61,14 +62,15 @@ class SKLearnSGD(FunctionApproximationModel):
             '--penalty',
             type=str,
             default='l2',
-            help='The penalty (aka regularization term) to be used. The possible values are `l2`, `l1`, `elasticnet`.'
+            help='The penalty (aka regularization term) to be used.',
+            choices=['l2', 'l1', 'elasticnet']
         )
 
         parser.add_argument(
             '--l1-ratio',
             type=float,
             default=0.15,
-            help='The elasticnet mixing parameter (0 for pure L2 and 1 for pure L1.'
+            help='The elasticnet mixing parameter (0 for pure L2 and 1 for pure L1).'
         )
 
         parser.add_argument(
@@ -83,7 +85,8 @@ class SKLearnSGD(FunctionApproximationModel):
             '--learning-rate',
             type=str,
             default='invscaling',
-            help='Learning rate schedule:  `constant`, `optimal`, `invscaling`, or `adaptive`.'
+            help='Learning rate schedule.',
+            choices=['constant', 'optimal', 'invscaling', 'adaptive']
         )
 
         parser.add_argument(

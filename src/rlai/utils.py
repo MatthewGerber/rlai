@@ -195,22 +195,24 @@ def load_class(
     return class_ref
 
 
-def get_help(
-    fully_qualified_class_name: str
-) -> str:
+def get_argument_parser(
+        fully_qualified_class_name
+) -> ArgumentParser:
     """
-    Get help for a class.
+    Get argument parser for a class.
 
     :param fully_qualified_class_name: Name.
-    :return: Formatted help.
+    :return: Argument parser.
     """
 
+    parser = None
     try:
         loaded_class = load_class(fully_qualified_class_name)
         parser = loaded_class.get_argument_parser()
-        return parser.format_help()
     except Exception:
-        return ''
+        pass
+
+    return parser
 
 
 def get_base_argument_parser(

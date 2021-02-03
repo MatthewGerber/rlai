@@ -110,7 +110,8 @@ class Gridworld(ModelBasedMdpEnvironment):
             '--id',
             type=str,
             default='example_4_1',
-            help='Gridworld identifier.'
+            help='Gridworld identifier.',
+            choices=['example_4_1']
         )
 
         return parser
