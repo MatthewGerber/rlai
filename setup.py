@@ -5,6 +5,8 @@ from setuptools import (
 )
 
 INSTALL_REQUIREMENTS = [
+
+    # core requirements
     'scipy==1.5.2',
     'matplotlib==3.3.1',
     'numpy==1.19.0',
@@ -36,10 +38,13 @@ DEV_REQUIREMENTS = [
     'bump2version==1.0.1'
 ]
 
+# mujoco requires a more elaborate registration and installation process, and the bindings below only work after going
+# through the registration and install.
 MUJOCO_REQUIREMENTS = [
     'mujoco-py==2.0.2.13'
 ]
 
+# consumers of the core rlai package shouldn't be bothered with the jupyter dependencies
 JUPYTER_REQUIREMENS = [
     'jupyterlab==3.0.6',
     'ipython==7.19.0',

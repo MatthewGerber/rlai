@@ -23,53 +23,7 @@ def run(
     :returns: 2-tuple of the checkpoint path (if any) and the saved agent path.
     """
 
-    parser = get_base_argument_parser(
-        prog='rlai train',
-        description='Train an agent in an environment.'
-    )
-
-    parser.add_argument(
-        '--agent',
-        type=str,
-        help='Fully-qualified type name of agent to train.'
-    )
-
-    parser.add_argument(
-        '--environment',
-        type=str,
-        help='Fully-qualified type name of environment to train agent in.'
-    )
-
-    parser.add_argument(
-        '--planning-environment',
-        type=str,
-        help='Fully-qualified type name of planning environment to train agent in.'
-    )
-
-    parser.add_argument(
-        '--train-function',
-        type=str,
-        help='Fully-qualified type name of function to use for training the agent.'
-    )
-
-    parser.add_argument(
-        '--resume',
-        action='store_true',
-        help='Resume training an agent from a previously saved checkpoint path.'
-    )
-
-    parser.add_argument(
-        '--save-agent-path',
-        type=str,
-        help='Path to store resulting agent to.'
-    )
-
-    parser.add_argument(
-        '--random-seed',
-        type=int,
-        help='Random seed. Omit to generate an arbitrary random seed.'
-    )
-
+    parser = get_argument_parser_for_run()
     parsed_args, unparsed_args = parse_arguments(parser, args)
 
     if parsed_args.random_seed is None:
@@ -185,6 +139,63 @@ def run(
             print(f'Saved agent to {parsed_args.save_agent_path}')
 
     return train_function_args.get('checkpoint_path'), parsed_args.save_agent_path
+
+
+def get_argument_parser_for_run() -> ArgumentParser:
+    """
+    Get argument parser for the run function.
+
+    :return: Argument parser.
+    """
+
+    parser = get_base_argument_parser(
+        prog='rlai train',
+        description='Train an agent in an environment.'
+    )
+
+    parser.add_argument(
+        '--agent',
+        type=str,
+        help='Fully-qualified type name of agent to train.'
+    )
+
+    parser.add_argument(
+        '--environment',
+        type=str,
+        help='Fully-qualified type name of environment to train agent in.'
+    )
+
+    parser.add_argument(
+        '--planning-environment',
+        type=str,
+        help='Fully-qualified type name of planning environment to train agent in.'
+    )
+
+    parser.add_argument(
+        '--train-function',
+        type=str,
+        help='Fully-qualified type name of function to use for training the agent.'
+    )
+
+    parser.add_argument(
+        '--resume',
+        action='store_true',
+        help='Resume training an agent from a previously saved checkpoint path.'
+    )
+
+    parser.add_argument(
+        '--save-agent-path',
+        type=str,
+        help='Path to store resulting agent to.'
+    )
+
+    parser.add_argument(
+        '--random-seed',
+        type=int,
+        help='Random seed. Omit to generate an arbitrary random seed.'
+    )
+
+    return parser
 
 
 def get_argument_parser_for_train_function(
