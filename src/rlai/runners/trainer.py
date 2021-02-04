@@ -1,6 +1,7 @@
 import os
 import pickle
 import sys
+import threading
 import warnings
 from argparse import ArgumentParser
 from typing import List, Tuple, Optional
@@ -9,19 +10,35 @@ from numpy.random import RandomState
 
 from rlai.gpi.utils import resume_from_checkpoint
 from rlai.meta import rl_text
-from rlai.utils import import_function, load_class, get_base_argument_parser, parse_arguments
+from rlai.utils import (
+    import_function,
+    load_class,
+    get_base_argument_parser,
+    parse_arguments
+)
 
 
 @rl_text(chapter='Training and Running Agents', page=1)
 def run(
-        args: List[str] = None
+        args: List[str] = None,
+        thread_management_event: threading.Event = None
 ) -> Tuple[Optional[str], str]:
     """
     Train an agent in an environment.
 
     :param args: Arguments.
+    :param thread_management_event: A threading.Event that will be used to manage the thread that is executing the
+    current function. If None, then training will continue until termination criteria (e.g., number of iterations) are
+    met. If not None, then the passed threading.Event will be waited upon before starting each iteration. If the
+    threading.Event blocks, then another thread will need to clear the event before the iteration continues.
     :returns: 2-tuple of the checkpoint path (if any) and the saved agent path.
     """
+
+    # initialize with flag set if not passed, so that execution will not block. since the caller will not hold a
+    # reference to the event, it cannot be cleared and execution will never block.
+    if thread_management_event is None:
+        thread_management_event = threading.Event()
+        thread_management_event.set()
 
     parser = get_argument_parser_for_run()
     parsed_args, unparsed_args = parse_arguments(parser, args)
@@ -32,7 +49,9 @@ def run(
     else:
         random_state = RandomState(parsed_args.random_seed)
 
-    train_function_args = {}
+    train_function_args = {
+        'thread_management_event': thread_management_event
+    }
 
     # load environment
     if parsed_args.environment is not None:
@@ -60,7 +79,7 @@ def run(
         train_function_arg_parser = get_argument_parser_for_train_function(parsed_args.train_function)
         parsed_train_function_args, unparsed_args = parse_arguments(train_function_arg_parser, unparsed_args)
 
-        # convert boolean strings to bools
+        # convert parsed boolean strings to bools
         if hasattr(parsed_train_function_args, 'update_upon_every_visit') and parsed_train_function_args.update_upon_every_visit is not None:
             parsed_train_function_args.update_upon_every_visit = parsed_train_function_args.update_upon_every_visit == 'True'
 
@@ -110,14 +129,14 @@ def run(
         if parsed_args.save_agent_path is None:
             warnings.warn('No --save-agent-path has been specified, so no agent will be saved after training.')
 
-        # resumption will return agent
+        # resumption will return a trained version of the agent contained in the checkpoint file
         if parsed_args.resume:
             agent = resume_from_checkpoint(
                 resume_function=train_function,
                 **train_function_args
             )
 
-        # fresh training initializes agent above
+        # fresh training will train the agent that was initialized above and passed in
         else:
             train_function(
                 **train_function_args
