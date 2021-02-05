@@ -12,25 +12,32 @@ generally applicable beyond such examples. The approach taken here should be gen
 
 # Installation, Use, and Development
 The `rlai` code is distributed via [PyPI](https://pypi.org/project/rlai/) and can be installed with `pip install rlai`. 
-See the [example repository](https://github.com/MatthewGerber/rlai-dependency-example) for how a project can be 
-structured to consume the `rlai` package functionality within source code. Using `rlai` from the command-line interface 
-(CLI) is demonstrated in the case studies below and is also explored in the [CLI guide](cli_guide.md).
-  
-There are several ways to get involved with the use and development of this package. Below are a few ideas organized
-by area of interest.
+There are several ways to use the package.
 
-* Incorporate new statistical learning methods:  The RLAI 
-  [SKLearnSGD](https://github.com/MatthewGerber/rlai/blob/master/src/rlai/value_estimation/function_approximation/models/sklearn.py)
-  module demonstrates how to use methods in scikit-learn (in this case stochastic gradient descent regression) to 
-  approximate state-action value functions. This is just one approach, and it would be interesting to compare time, 
-  memory, and reward performance with a nonparametric approach like 
-  [KNN regression](https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsRegressor.html).
+* Incorporate `rlai` into another project:  See the 
+  [example repository](https://github.com/MatthewGerber/rlai-dependency-example) for how a project can be structured to 
+  consume the `rlai` package functionality within source code.
   
+* Use `rlai` directly
+    * Most of the `rlai` functionality is exposed via the companion JupyterLab notebook. See the 
+      [JupyterLab guide](jupyterlab_guide.md) for more information. 
+    * Using `rlai` from the command-line interface (CLI) is demonstrated in the case studies below and is also explored 
+      in the [CLI guide](cli_guide.md).
+
+Looking for a place to dig in? Below are a few ideas organized by area of interest.
+
 * Explore new OpenAI Gym environments:  OpenAI Gym provides a wide range of interesting environments, and
   experimenting with them can be as simple as modifying an existing training command (e.g., the one for
   [inverted pendulum](https://matthewgerber.github.io/rlai/case_studies/inverted_pendulum.html)), replacing the 
   `--gym-id` with something else. Other changes might be needed depending on the environment, but Gym is particularly
   convenient.
+
+* Incorporate new statistical learning methods:  The `rlai` 
+  [SKLearnSGD](https://github.com/MatthewGerber/rlai/blob/master/src/rlai/value_estimation/function_approximation/models/sklearn.py)
+  module demonstrates how to use methods in scikit-learn (in this case stochastic gradient descent regression) to 
+  approximate state-action value functions. This is just one approach, and it would be interesting to compare time, 
+  memory, and reward performance with a nonparametric approach like 
+  [KNN regression](https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsRegressor.html).
   
 Feel free to submit issues and pull requests.
   

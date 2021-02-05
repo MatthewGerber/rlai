@@ -1,7 +1,6 @@
 import os
 import pickle
 import sys
-import threading
 import warnings
 from argparse import ArgumentParser
 from typing import List, Tuple, Optional
@@ -14,31 +13,32 @@ from rlai.utils import (
     import_function,
     load_class,
     get_base_argument_parser,
-    parse_arguments
+    parse_arguments,
+    RunThreadManager
 )
 
 
 @rl_text(chapter='Training and Running Agents', page=1)
 def run(
         args: List[str] = None,
-        thread_management_event: threading.Event = None
-) -> Tuple[Optional[str], str]:
+        thread_manager: RunThreadManager = None
+) -> Tuple[Optional[str], Optional[str]]:
     """
     Train an agent in an environment.
 
     :param args: Arguments.
-    :param thread_management_event: A threading.Event that will be used to manage the thread that is executing the
-    current function. If None, then training will continue until termination criteria (e.g., number of iterations) are
-    met. If not None, then the passed threading.Event will be waited upon before starting each iteration. If the
-    threading.Event blocks, then another thread will need to clear the event before the iteration continues.
-    :returns: 2-tuple of the checkpoint path (if any) and the saved agent path.
+    :param thread_manager: Thread manager for the thread that is executing the current function. If None, then training
+    will continue until termination criteria (e.g., number of iterations) are met. If not None, then the passed
+    manager will be waited upon before starting each iteration. If the manager blocks, then another thread will need to
+    clear the manager before the iteration continues. If the manager aborts, then this function will return as soon as
+    possible.
+    :returns: 2-tuple of the checkpoint path (if any) and the saved agent path (if any).
     """
 
     # initialize with flag set if not passed, so that execution will not block. since the caller will not hold a
-    # reference to the event, it cannot be cleared and execution will never block.
-    if thread_management_event is None:
-        thread_management_event = threading.Event()
-        thread_management_event.set()
+    # reference to the manager, it cannot be cleared and execution will never block.
+    if thread_manager is None:
+        thread_manager = RunThreadManager(True)
 
     parser = get_argument_parser_for_run()
     parsed_args, unparsed_args = parse_arguments(parser, args)
@@ -50,7 +50,7 @@ def run(
         random_state = RandomState(parsed_args.random_seed)
 
     train_function_args = {
-        'thread_management_event': thread_management_event
+        'thread_manager': thread_manager
     }
 
     # load environment
