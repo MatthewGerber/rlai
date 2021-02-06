@@ -47,7 +47,6 @@ class FeatureExtractor(ABC):
         :param environment: Environment.
         :return: 2-tuple of a feature extractor and a list of unparsed arguments.
         """
-        pass
 
     @abstractmethod
     def extract(

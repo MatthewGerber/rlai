@@ -83,7 +83,7 @@ class Gym(MdpEnvironment):
         parser.add_argument(
             '--gym-id',
             type=str,
-            help='Initial seed count in each pit.'
+            help='Gym identifier. See https://gym.openai.com/envs for a list of environments (e.g., CartPole-v1).'
         )
 
         parser.add_argument(

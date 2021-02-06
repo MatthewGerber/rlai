@@ -1,8 +1,11 @@
-# Using `rlai` from the Command-Line Interface (CLI)
+# Using `rlai` from the Command-Line Interface
 
 Installing `rlai` from PyPI will install the source code for the package, and it will also create a command-line 
-program that can be used to invoke `rlai` functionality. This guide focuses on the latter. Issue the following command
-to test whether installation succeeded.
+interface (CLI) that can be used to invoke `rlai` functionality. This guide focuses on the CLI. Note that the CLI 
+exposes the full breadth and depth of the `rlai` package. It is powerful, but it can be challenging to use correctly.
+Please see the [JupyterLab](jupyterlab_guide.md) guide for a graphical interface to `rlai`.
+
+Issue the following command to test whether installation succeeded.
 
 ```
 rlai train --help

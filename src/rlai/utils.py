@@ -1,4 +1,5 @@
 import importlib
+import threading
 from argparse import Namespace, ArgumentParser
 from importlib import import_module
 from typing import List, Any, Optional, Callable, Tuple, TextIO
@@ -195,6 +196,26 @@ def load_class(
     return class_ref
 
 
+def get_argument_parser(
+        fully_qualified_class_name
+) -> ArgumentParser:
+    """
+    Get argument parser for a class.
+
+    :param fully_qualified_class_name: Name.
+    :return: Argument parser.
+    """
+
+    parser = None
+    try:
+        loaded_class = load_class(fully_qualified_class_name)
+        parser = loaded_class.get_argument_parser()
+    except Exception:
+        pass
+
+    return parser
+
+
 def get_base_argument_parser(
         **kwargs
 ) -> ArgumentParser:
@@ -302,3 +323,28 @@ class StdStreamTee:
         self.print_to_stream = print_to_stream
 
         self.buffer = []
+
+
+class RunThreadManager(threading.Event):
+    """
+    Manager for run threads, combining a wait event with an abort signal.
+    """
+
+    def __init__(
+            self,
+            initial_flag: bool
+    ):
+        """
+        Initialize the thread manager.
+
+        :param initial_flag: Initial flag value (see threading.Thread).
+        """
+
+        super().__init__()
+
+        if initial_flag:
+            self.set()
+        else:
+            self.clear()
+
+        self.abort = False

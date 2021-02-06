@@ -12,6 +12,7 @@ from rlai.gpi import PolicyImprovementEvent
 from rlai.gpi.temporal_difference.evaluation import evaluate_q_pi, Mode
 from rlai.gpi.utils import plot_policy_iteration
 from rlai.meta import rl_text
+from rlai.utils import RunThreadManager
 from rlai.value_estimation import StateActionValueEstimator
 
 
@@ -29,6 +30,7 @@ def iterate_value_q_pi(
         planning_environment: Optional[MdpPlanningEnvironment],
         make_final_policy_greedy: bool,
         q_S_A: StateActionValueEstimator,
+        thread_manager: RunThreadManager = None,
         num_improvements_per_plot: Optional[int] = None,
         num_improvements_per_checkpoint: Optional[int] = None,
         checkpoint_path: Optional[str] = None,
@@ -53,12 +55,18 @@ def iterate_value_q_pi(
     :param make_final_policy_greedy: Whether or not to make the agent's final policy greedy with respect to the q-values
     that have been learned, regardless of the value of epsilon used to estimate the q-values.
     :param q_S_A: State-action value estimator.
+    :param thread_manager: Thread manager. The current function (and the thread running it) will wait on this manager
+    before starting each iteration. This provides a mechanism for pausing, resuming, and aborting training. Omit for no
+    waiting.
     :param num_improvements_per_plot: Number of improvements to make before plotting the per-improvement average. Pass
     None to turn off all plotting.
     :param num_improvements_per_checkpoint: Number of improvements per checkpoint save.
     :param checkpoint_path: Checkpoint path. Must be provided if `num_improvements_per_checkpoint` is provided.
     :param pdf_save_path: Path where a PDF of all plots is to be saved, or None for no PDF.
     """
+
+    if thread_manager is None:
+        thread_manager = RunThreadManager(True)
 
     if epsilon is None or epsilon <= 0:
         raise ValueError('epsilon must be strictly > 0 for TD-learning')
@@ -80,6 +88,11 @@ def iterate_value_q_pi(
     elapsed_seconds_average_rewards = {}
     start_datetime = datetime.now()
     while i < num_improvements:
+
+        thread_manager.wait()
+
+        if thread_manager.abort:
+            break
 
         print(f'Value iteration {i + 1}:  ', end='')
 

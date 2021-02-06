@@ -2,73 +2,45 @@ import os
 import pickle
 import sys
 import warnings
+from argparse import ArgumentParser
 from typing import List, Tuple, Optional
 
 from numpy.random import RandomState
 
 from rlai.gpi.utils import resume_from_checkpoint
 from rlai.meta import rl_text
-from rlai.utils import import_function, load_class, get_base_argument_parser, parse_arguments
+from rlai.utils import (
+    import_function,
+    load_class,
+    get_base_argument_parser,
+    parse_arguments,
+    RunThreadManager
+)
 
 
 @rl_text(chapter='Training and Running Agents', page=1)
 def run(
-        args: List[str] = None
-) -> Tuple[Optional[str], str]:
+        args: List[str] = None,
+        thread_manager: RunThreadManager = None
+) -> Tuple[Optional[str], Optional[str]]:
     """
     Train an agent in an environment.
 
     :param args: Arguments.
-    :returns: 2-tuple of the checkpoint path (if any) and the saved agent path.
+    :param thread_manager: Thread manager for the thread that is executing the current function. If None, then training
+    will continue until termination criteria (e.g., number of iterations) are met. If not None, then the passed
+    manager will be waited upon before starting each iteration. If the manager blocks, then another thread will need to
+    clear the manager before the iteration continues. If the manager aborts, then this function will return as soon as
+    possible.
+    :returns: 2-tuple of the checkpoint path (if any) and the saved agent path (if any).
     """
 
-    parser = get_base_argument_parser(
-        prog='rlai train',
-        description='Train an agent in an environment.'
-    )
+    # initialize with flag set if not passed, so that execution will not block. since the caller will not hold a
+    # reference to the manager, it cannot be cleared and execution will never block.
+    if thread_manager is None:
+        thread_manager = RunThreadManager(True)
 
-    parser.add_argument(
-        '--agent',
-        type=str,
-        help='Fully-qualified type name of agent to train.'
-    )
-
-    parser.add_argument(
-        '--environment',
-        type=str,
-        help='Fully-qualified type name of environment to train agent in.'
-    )
-
-    parser.add_argument(
-        '--planning-environment',
-        type=str,
-        help='Fully-qualified type name of planning environment to train agent in.'
-    )
-
-    parser.add_argument(
-        '--train-function',
-        type=str,
-        help='Fully-qualified type name of function to use for training the agent.'
-    )
-
-    parser.add_argument(
-        '--resume',
-        action='store_true',
-        help='Resume training an agent from a previously saved checkpoint path.'
-    )
-
-    parser.add_argument(
-        '--save-agent-path',
-        type=str,
-        help='Path to store resulting agent to.'
-    )
-
-    parser.add_argument(
-        '--random-seed',
-        type=int,
-        help='Random seed. Omit to generate an arbitrary random seed.'
-    )
-
+    parser = get_argument_parser_for_run()
     parsed_args, unparsed_args = parse_arguments(parser, args)
 
     if parsed_args.random_seed is None:
@@ -77,7 +49,9 @@ def run(
     else:
         random_state = RandomState(parsed_args.random_seed)
 
-    train_function_args = {}
+    train_function_args = {
+        'thread_manager': thread_manager
+    }
 
     # load environment
     if parsed_args.environment is not None:
@@ -102,120 +76,10 @@ def run(
     if parsed_args.train_function is not None:
 
         train_function = import_function(parsed_args.train_function)
-
-        train_function_arg_parser = get_base_argument_parser(prog=parsed_args.train_function)
-
-        # get argument names expected by training function
-        # noinspection PyUnresolvedReferences
-        train_function_arg_names = train_function.__code__.co_varnames[:train_function.__code__.co_argcount]
-
-        def filter_add_argument(
-                name: str,
-                **kwargs
-        ):
-            """
-            Filter arguments to those defined by the function before adding them to the argument parser.
-
-            :param name: Argument name.
-            :param kwargs: Other arguments.
-            """
-
-            var_name = name.lstrip('-').replace('-', '_')
-            if var_name in train_function_arg_names:
-                train_function_arg_parser.add_argument(
-                    name,
-                    **kwargs
-                )
-
-        filter_add_argument(
-            '--num-improvements',
-            type=int,
-            help='Number of improvements.'
-        )
-
-        filter_add_argument(
-            '--num-episodes-per-improvement',
-            type=int,
-            help='Number of episodes per improvement.'
-        )
-
-        filter_add_argument(
-            '--num-updates-per-improvement',
-            type=int,
-            help='Number of state-action value updates per policy improvement.'
-        )
-
-        filter_add_argument(
-            '--update-upon-every-visit',
-            type=str,
-            choices=['True', 'False'],
-            help='Whether or not to update values upon each visit to a state or state-action pair.'
-        )
-
-        filter_add_argument(
-            '--alpha',
-            type=float,
-            help='Step size.'
-        )
-
-        filter_add_argument(
-            '--epsilon',
-            type=float,
-            help='Total probability mass to allocate across all policy actions.'
-        )
-
-        filter_add_argument(
-            '--make-final-policy-greedy',
-            type=str,
-            choices=['True', 'False'],
-            help='Whether or not to make the final policy greedy after training is complete.'
-        )
-
-        filter_add_argument(
-            '--num-improvements-per-plot',
-            type=int,
-            help='Number of improvements per plot.'
-        )
-
-        filter_add_argument(
-            '--num-improvements-per-checkpoint',
-            type=int,
-            help='Number of improvements per checkpoint.'
-        )
-
-        filter_add_argument(
-            '--checkpoint-path',
-            type=str,
-            help='Path to checkpoint file.'
-        )
-
-        filter_add_argument(
-            '--mode',
-            type=str,
-            help='Temporal difference evaluation mode (SARSA, Q_LEARNING, EXPECTED_SARSA).'
-        )
-
-        filter_add_argument(
-            '--n-steps',
-            type=int,
-            help='N-step update value.'
-        )
-
-        filter_add_argument(
-            '--q-S-A',
-            type=str,
-            help='Fully-qualified type name of state-action value estimator to use.'
-        )
-
-        filter_add_argument(
-            '--pdf-save-path',
-            type=str,
-            help='Path where a PDF of all plots is to be saved.'
-        )
-
+        train_function_arg_parser = get_argument_parser_for_train_function(parsed_args.train_function)
         parsed_train_function_args, unparsed_args = parse_arguments(train_function_arg_parser, unparsed_args)
 
-        # convert boolean strings to bools
+        # convert parsed boolean strings to bools
         if hasattr(parsed_train_function_args, 'update_upon_every_visit') and parsed_train_function_args.update_upon_every_visit is not None:
             parsed_train_function_args.update_upon_every_visit = parsed_train_function_args.update_upon_every_visit == 'True'
 
@@ -265,14 +129,14 @@ def run(
         if parsed_args.save_agent_path is None:
             warnings.warn('No --save-agent-path has been specified, so no agent will be saved after training.')
 
-        # resumption will return agent
+        # resumption will return a trained version of the agent contained in the checkpoint file
         if parsed_args.resume:
             agent = resume_from_checkpoint(
                 resume_function=train_function,
                 **train_function_args
             )
 
-        # fresh training initializes agent above
+        # fresh training will train the agent that was initialized above and passed in
         else:
             train_function(
                 **train_function_args
@@ -294,6 +158,188 @@ def run(
             print(f'Saved agent to {parsed_args.save_agent_path}')
 
     return train_function_args.get('checkpoint_path'), parsed_args.save_agent_path
+
+
+def get_argument_parser_for_run() -> ArgumentParser:
+    """
+    Get argument parser for the run function.
+
+    :return: Argument parser.
+    """
+
+    parser = get_base_argument_parser(
+        prog='rlai train',
+        description='Train an agent in an environment.'
+    )
+
+    parser.add_argument(
+        '--agent',
+        type=str,
+        help='Fully-qualified type name of agent to train.'
+    )
+
+    parser.add_argument(
+        '--environment',
+        type=str,
+        help='Fully-qualified type name of environment to train agent in.'
+    )
+
+    parser.add_argument(
+        '--planning-environment',
+        type=str,
+        help='Fully-qualified type name of planning environment to train agent in.'
+    )
+
+    parser.add_argument(
+        '--train-function',
+        type=str,
+        help='Fully-qualified type name of function to use for training the agent.'
+    )
+
+    parser.add_argument(
+        '--resume',
+        action='store_true',
+        help='Resume training an agent from a previously saved checkpoint path.'
+    )
+
+    parser.add_argument(
+        '--save-agent-path',
+        type=str,
+        help='Path to store resulting agent to.'
+    )
+
+    parser.add_argument(
+        '--random-seed',
+        type=int,
+        help='Random seed. Omit to generate an arbitrary random seed.'
+    )
+
+    return parser
+
+
+def get_argument_parser_for_train_function(
+        function_name: str
+) -> ArgumentParser:
+    """
+    Get argument parser for a train function.
+
+    :param function_name: Function name.
+    :return: Argument parser.
+    """
+
+    argument_parser = get_base_argument_parser(prog=function_name)
+
+    function = import_function(function_name)
+
+    # get argument names expected by training function
+    # noinspection PyUnresolvedReferences
+    arg_names = function.__code__.co_varnames[:function.__code__.co_argcount]
+
+    def filter_add_argument(
+            name: str,
+            **kwargs
+    ):
+        """
+        Filter arguments to those defined by the function before adding them to the argument parser.
+
+        :param name: Argument name.
+        :param kwargs: Other arguments.
+        """
+
+        var_name = name.lstrip('-').replace('-', '_')
+        if var_name in arg_names:
+            argument_parser.add_argument(
+                name,
+                **kwargs
+            )
+
+    filter_add_argument(
+        '--num-improvements',
+        type=int,
+        help='Number of improvements.'
+    )
+
+    filter_add_argument(
+        '--num-episodes-per-improvement',
+        type=int,
+        help='Number of episodes per improvement.'
+    )
+
+    filter_add_argument(
+        '--num-updates-per-improvement',
+        type=int,
+        help='Number of state-action value updates per policy improvement.'
+    )
+
+    filter_add_argument(
+        '--update-upon-every-visit',
+        type=str,
+        choices=['True', 'False'],
+        help='Whether or not to update values upon each visit to a state or state-action pair.'
+    )
+
+    filter_add_argument(
+        '--alpha',
+        type=float,
+        help='Step size.'
+    )
+
+    filter_add_argument(
+        '--epsilon',
+        type=float,
+        help='Total probability mass to allocate across all policy actions.'
+    )
+
+    filter_add_argument(
+        '--make-final-policy-greedy',
+        type=str,
+        choices=['True', 'False'],
+        help='Whether or not to make the final policy greedy after training is complete.'
+    )
+
+    filter_add_argument(
+        '--num-improvements-per-plot',
+        type=int,
+        help='Number of improvements per plot.'
+    )
+
+    filter_add_argument(
+        '--num-improvements-per-checkpoint',
+        type=int,
+        help='Number of improvements per checkpoint.'
+    )
+
+    filter_add_argument(
+        '--checkpoint-path',
+        type=str,
+        help='Path to checkpoint file.'
+    )
+
+    filter_add_argument(
+        '--mode',
+        type=str,
+        help='Temporal difference evaluation mode (SARSA, Q_LEARNING, EXPECTED_SARSA).'
+    )
+
+    filter_add_argument(
+        '--n-steps',
+        type=int,
+        help='N-step update value.'
+    )
+
+    filter_add_argument(
+        '--q-S-A',
+        type=str,
+        help='Fully-qualified type name of state-action value estimator to use.'
+    )
+
+    filter_add_argument(
+        '--pdf-save-path',
+        type=str,
+        help='Path where a PDF of all plots is to be saved.'
+    )
+
+    return argument_parser
 
 
 if __name__ == '__main__':  # pragma no cover

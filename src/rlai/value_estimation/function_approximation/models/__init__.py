@@ -94,7 +94,7 @@ class FunctionApproximationModel(ABC):
             policy_improvement_count: int,
             num_improvement_bins: Optional[int],
             render: bool,
-            pdf: PdfPages
+            pdf: Optional[PdfPages]
     ):
         """
         Plot the model.
@@ -128,6 +128,8 @@ class FunctionApproximationModel(ABC):
                 self.feature_action_coefficients = self.feature_action_coefficients.append(feature_action_coefficients, ignore_index=True)
 
             if render:
+
+                plt.close('all')
 
                 if num_improvement_bins is None:
                     improvements_per_bin = 1
@@ -182,7 +184,7 @@ class FunctionApproximationModel(ABC):
                     else:
                         pdf.savefig()
 
-                else:
+                else:  # pragma no cover
                     raise ValueError(f'Unknown feature extractor type:  {type(feature_extractor)}')
 
     def get_feature_action_coefficients(
