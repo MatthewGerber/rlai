@@ -23,3 +23,4 @@ def test_help():
     top_level.run(shlex.split(f'help rlai.agents.mdp.StochasticMdpAgent'))
     top_level.run(shlex.split(f'help rlai.agents.mdp.StochasticMdpAgent'))
     top_level.run(shlex.split(f'help rlai.agents.mdp.StochasticMdpAgentXXXX'))
+    top_level.run(shlex.split(f'help'))

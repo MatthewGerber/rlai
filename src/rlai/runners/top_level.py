@@ -47,14 +47,14 @@ def show_help(
     :param args: Arguments.
     """
 
-    if len(args) != 1:
+    if len(args) == 1:
+        try:
+            parser = get_argument_parser(args[0])
+            parse_arguments(parser, ['--help'])
+        except Exception as ex:
+            print(f'{ex}')
+    else:
         print('Usage:  rlai help CLASS')
-
-    try:
-        parser = get_argument_parser(args[0])
-        parse_arguments(parser, ['--help'])
-    except Exception as ex:
-        print(f'{ex}')
 
 
 if __name__ == '__main__':  # pragma no cover

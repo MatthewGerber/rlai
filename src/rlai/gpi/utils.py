@@ -64,7 +64,7 @@ def plot_policy_iteration(
         iteration_total_states: List[int],
         iteration_num_states_improved: List[int],
         elapsed_seconds_average_rewards: Dict[int, List[float]],
-        pdf: PdfPages
+        pdf: Optional[PdfPages]
 ) -> Optional[plt.Figure]:
     """
     Plot status of policy iteration.
@@ -107,6 +107,8 @@ def plot_policy_iteration(
         time.sleep(0.01)
 
         return None
+
+    plt.close('all')
 
     # noinspection PyTypeChecker
     fig, axs = plt.subplots(nrows=1, ncols=2, sharey=True, figsize=(12, 6))

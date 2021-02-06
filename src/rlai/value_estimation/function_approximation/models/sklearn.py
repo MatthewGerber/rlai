@@ -242,7 +242,7 @@ class SKLearnSGD(FunctionApproximationModel):
             # check feature extractor names against model dimensions
             num_feature_names = len(feature_names)
             num_dims = coefficients.shape[0]
-            if num_feature_names != num_dims:
+            if num_feature_names != num_dims:  # pragma no cover
                 raise ValueError(f'Number of feature names ({num_feature_names}) does not match number of dimensions ({num_dims}).')
 
             # convert to dataframe with named columns
@@ -264,7 +264,7 @@ class SKLearnSGD(FunctionApproximationModel):
             policy_improvement_count: int,
             num_improvement_bins: Optional[int],
             render: bool,
-            pdf: PdfPages
+            pdf: Optional[PdfPages]
     ):
         """
         Plot the model.
@@ -301,15 +301,19 @@ class SKLearnSGD(FunctionApproximationModel):
 
         if render:
 
+            # noinspection PyTypeChecker
+            fig, axs = plt.subplots(nrows=1, ncols=2, sharey=True, figsize=(15, 7.5))
+
             # plot values for all improvement iterations since the previous rendering
+            ax = axs[0]
             num_plot_iterations = len(self.y_averages)
             x_values = np.arange(self.plot_start_iteration, self.plot_start_iteration + num_plot_iterations)
-            plt.plot(x_values, self.y_averages, color='red', label='Reward (G) obtained')
-            plt.plot(x_values, self.loss_averages, color='mediumpurple', label='Average model loss')
-            plt.legend(loc='upper left')
-            plt.xlabel('Policy improvement iteration')
+            ax.plot(x_values, self.y_averages, color='red', label='Reward (G) obtained')
+            ax.plot(x_values, self.loss_averages, color='mediumpurple', label='Average model loss')
+            ax.legend(loc='upper left')
+            ax.set_xlabel('Policy improvement iteration')
 
-            eta0_ax = plt.twinx()
+            eta0_ax = ax.twinx()
             eta0_ax.plot(x_values, self.eta0_averages, linestyle='--', label='Step size (eta0)')
             eta0_ax.legend(loc='upper right')
 
@@ -318,20 +322,16 @@ class SKLearnSGD(FunctionApproximationModel):
             self.eta0_averages.clear()
             self.plot_start_iteration += num_plot_iterations
 
-            if pdf is None:
-                plt.show(block=False)
-            else:
-                pdf.savefig()
-
             # plot values for all time steps since the previous rendering
+            ax = axs[1]
             num_plot_time_steps = len(self.y_values)
             x_values = np.arange(self.plot_start_time_step, self.plot_start_time_step + num_plot_time_steps)
-            plt.plot(x_values, self.y_values, color='red', label='Reward (G) obtained')
-            plt.plot(x_values, self.loss_values, color='mediumpurple', label='Average model loss')
-            plt.xlabel('Time step')
-            plt.legend(loc='upper left')
+            ax.plot(x_values, self.y_values, color='red', label='Reward (G) obtained')
+            ax.plot(x_values, self.loss_values, color='mediumpurple', label='Average model loss')
+            ax.set_xlabel('Time step')
+            ax.legend(loc='upper left')
 
-            eta0_ax = plt.twinx()
+            eta0_ax = ax.twinx()
             eta0_ax.plot(x_values, self.eta0_values, linestyle='--', label='Step size (eta0)')
             eta0_ax.legend(loc='upper right')
 
