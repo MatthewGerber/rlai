@@ -3,7 +3,7 @@ from argparse import ArgumentParser
 from copy import copy
 from functools import partial
 from queue import PriorityQueue
-from typing import List, Tuple, Optional, final, Dict
+from typing import List, Tuple, Optional, Dict
 
 import numpy as np
 from numpy.random import RandomState
@@ -64,7 +64,6 @@ class MdpEnvironment(Environment, ABC):
         :return: 2-tuple of next state and next reward.
         """
 
-    @final
     def run_step(
             self,
             t: int,

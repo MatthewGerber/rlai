@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from argparse import ArgumentParser
-from typing import Tuple, List, Any, final, Optional
+from typing import Tuple, List, Any, Optional
 
 from numpy.random import RandomState
 
@@ -63,7 +63,6 @@ class Environment(ABC):
 
         return None
 
-    @final
     def run(
             self,
             agent,  # can't provide Agent type hint due to circular reference with Environment

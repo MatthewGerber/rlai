@@ -66,7 +66,7 @@ setup(
     url='https://matthewgerber.github.io/rlai',
     packages=find_namespace_packages(where='src'),
     package_dir={'': 'src'},
-    python_requires='==3.8.5',
+    python_requires='~=3.7',
     install_requires=[
         INSTALL_REQUIREMENTS
     ],

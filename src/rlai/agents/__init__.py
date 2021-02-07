@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from argparse import ArgumentParser
-from typing import List, final, Optional, Dict
+from typing import List, Optional, Dict
 
 from numpy.random import RandomState
 
@@ -79,7 +79,6 @@ class Agent(ABC):
         self.most_recent_state = state
         self.most_recent_state_tick = t
 
-    @final
     def act(
             self,
             t
