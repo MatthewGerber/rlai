@@ -376,6 +376,7 @@ class NonstationaryFeatureScaler:
 
                 # delete old rows from history and reset number of extractions
                 num_rows_to_delete = max(history_length + self.num_observations_refit_feature_scaler - self.refit_history_length, 0)
+                num_rows_to_delete = min(num_rows_to_delete, self.refit_history.shape[0])
                 if num_rows_to_delete > 0:
                     rows_to_delete = list(range(num_rows_to_delete))
                     self.refit_history = np.delete(self.refit_history, rows_to_delete, axis=0)

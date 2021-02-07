@@ -227,6 +227,9 @@ def test_iterate_value_q_pi_multi_threaded():
             num_improvements_per_plot=10
         )
 
+    # premature update should have no effect
+    assert update_policy_iteration_plot() is None
+
     # initialize plot from main thread
     plot_policy_iteration(
         iteration_average_reward=[],

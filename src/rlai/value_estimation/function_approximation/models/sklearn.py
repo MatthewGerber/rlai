@@ -253,7 +253,7 @@ class SKLearnSGD(FunctionApproximationModel):
 
             coefficients['feature_name'] = feature_names
 
-        else:
+        else:  # pragma no cover
             raise ValueError(f'Unknown feature extractor type:  {type(feature_extractor)}')
 
         return coefficients

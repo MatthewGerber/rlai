@@ -16,6 +16,9 @@ from rlai.value_estimation.function_approximation.models.feature_extraction impo
     StateActionInteractionFeatureExtractor
 )
 
+MAX_PLOT_COEFFICIENTS = 10
+MAX_PLOT_ACTIONS = 10
+
 
 @rl_text(chapter=9, page=197)
 class FunctionApproximationModel(ABC):
@@ -109,10 +112,18 @@ class FunctionApproximationModel(ABC):
 
         feature_action_coefficients = self.get_feature_action_coefficients(feature_extractor)
 
-        if feature_action_coefficients is not None:
+        plot_coefficients = True
 
-            if feature_action_coefficients.shape[0] > 10 or feature_action_coefficients.shape[1] > 10:
-                warnings.warn(f'Feature-action DataFrame is too large to generate boxplots for ({feature_action_coefficients.shape}). Skipping feature-action coefficient boxplots.')
+        # some models/extractors return no coefficients
+        if feature_action_coefficients is None:
+            plot_coefficients = False
+
+        # some return too many
+        elif feature_action_coefficients.shape[0] > MAX_PLOT_COEFFICIENTS or feature_action_coefficients.shape[1] > MAX_PLOT_ACTIONS:
+            plot_coefficients = False
+            warnings.warn(f'Feature-action coefficient DataFrame is too large to generate boxplots for ({feature_action_coefficients.shape}). Skipping feature-action coefficient boxplots.')
+
+        if plot_coefficients:
 
             if 'n' in feature_action_coefficients.columns:  # pragma no cover
                 raise ValueError('Feature extractor returned disallowed column:  n')
