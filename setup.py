@@ -21,7 +21,13 @@ INSTALL_REQUIREMENTS = [
     'future==0.18.2',
     'scikit-learn==0.24',
     'pandas==1.1.5',
-    'patsy==0.5.1'
+    'patsy==0.5.1',
+
+    # jupyter requirements
+    'jupyterlab==3.0.6',
+    'ipython==7.19.0',
+    'ipympl==0.6.3',
+    'tornado==6.1.0'
 ]
 
 TEST_REQUIREMENTS = [
@@ -42,14 +48,6 @@ DEV_REQUIREMENTS = [
 # through the registration and install.
 MUJOCO_REQUIREMENTS = [
     'mujoco-py==2.0.2.13'
-]
-
-# consumers of the core rlai package shouldn't be bothered with the jupyter dependencies
-JUPYTER_REQUIREMENS = [
-    'jupyterlab==3.0.6',
-    'ipython==7.19.0',
-    'ipympl==0.6.3',
-    'tornado==6.1.0'
 ]
 
 with open(path.join(path.abspath(path.dirname(__file__)), 'README.md'), encoding='utf-8') as f:
@@ -74,8 +72,7 @@ setup(
     extras_require={
         'test:': TEST_REQUIREMENTS,
         'dev:': TEST_REQUIREMENTS + DEV_REQUIREMENTS,
-        'mujoco:': MUJOCO_REQUIREMENTS,
-        'jupyter': JUPYTER_REQUIREMENS
+        'mujoco:': MUJOCO_REQUIREMENTS
     },
     entry_points={
         'console_scripts': [
