@@ -23,7 +23,8 @@ INSTALL_REQUIREMENTS = [
     'pandas==1.1.5',
     'patsy==0.5.1',
 
-    # jupyterlab dependencies are here, but the actual jupyterlab package is split out into an extra.
+    # jupyter requirements
+    'jupyterlab==3.0.6',
     'ipython==7.19.0',
     'ipympl==0.6.3',
     'tornado==6.1.0'
@@ -41,10 +42,6 @@ TEST_REQUIREMENTS = [
 
 DEV_REQUIREMENTS = [
     'bump2version==1.0.1'
-]
-
-JUPYTERLAB_REQUIREMENTS = [
-    'jupyterlab==3.0.6',
 ]
 
 # mujoco requires a more elaborate registration and installation process, and the bindings below only work after going
@@ -75,8 +72,7 @@ setup(
     extras_require={
         'test:': TEST_REQUIREMENTS,
         'dev:': TEST_REQUIREMENTS + DEV_REQUIREMENTS,
-        'mujoco:': MUJOCO_REQUIREMENTS,
-        'jupyter': JUPYTERLAB_REQUIREMENTS
+        'mujoco:': MUJOCO_REQUIREMENTS
     },
     entry_points={
         'console_scripts': [
