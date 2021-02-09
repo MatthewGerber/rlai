@@ -33,7 +33,6 @@ class ValueEstimator(ABC):
         :param value: New value.
         :param weight: Weight.
         """
-        pass
 
     @abstractmethod
     def get_value(
@@ -44,7 +43,6 @@ class ValueEstimator(ABC):
 
         :return: Value.
         """
-        pass
 
     def __str__(
             self
@@ -75,7 +73,6 @@ class ActionValueEstimator(ABC):
         :param action: Action.
         :return: Value estimator.
         """
-        pass
 
     @abstractmethod
     def __len__(
@@ -86,7 +83,6 @@ class ActionValueEstimator(ABC):
 
         :return: Number of actions.
         """
-        pass
 
     @abstractmethod
     def __iter__(
@@ -97,7 +93,6 @@ class ActionValueEstimator(ABC):
 
         :return: Iterator.
         """
-        pass
 
     @abstractmethod
     def __contains__(
@@ -110,7 +105,6 @@ class ActionValueEstimator(ABC):
         :param action: Action.
         :return: True if defined and False otherwise.
         """
-        pass
 
 
 @rl_text(chapter='Value Estimation', page=23)
@@ -149,7 +143,6 @@ class StateActionValueEstimator(ABC):
         :param epsilon: Epsilon.
         :return: 2-tuple of a state-action value estimator and a list of unparsed arguments.
         """
-        pass
 
     @abstractmethod
     def get_initial_policy(
@@ -160,7 +153,6 @@ class StateActionValueEstimator(ABC):
 
         :return: Policy.
         """
-        pass
 
     def initialize(
             self,
@@ -178,7 +170,6 @@ class StateActionValueEstimator(ABC):
         :param weighted: Whether the estimator should be weighted.
         :return:
         """
-        pass
 
     @abstractmethod
     def improve_policy(
