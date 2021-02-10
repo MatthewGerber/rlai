@@ -1,6 +1,8 @@
 import sys
+import threading
+import time
 from argparse import ArgumentParser
-from typing import Tuple, List, Optional, Any
+from typing import Tuple, List, Optional, Any, Dict
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -106,7 +108,7 @@ class SKLearnSGD(FunctionApproximationModel):
         parser.add_argument(
             '--scale-eta0-for-y',
             action='store_true',
-            help='Scale eta0 dynamically with respect to y.'
+            help='Pass this flag to scale eta0 dynamically with respect to y.'
         )
 
         # other stuff
@@ -171,23 +173,29 @@ class SKLearnSGD(FunctionApproximationModel):
         # put tee on standard output in order to grab the loss value printed by sklearn
         stdout_tee = StdStreamTee(sys.stdout, 20, self.print_output)
         sys.stdout = stdout_tee
+
+        # update fit
         self.model.partial_fit(X=X, y=y, sample_weight=weight)
+
+        # reassign standard output
         sys.stdout = sys.__stdout__
 
+        # get loss emitted by sklearn
         fit_line = stdout_tee.buffer[-2]
         if not fit_line.startswith('Norm:'):  # pragma no cover
             raise ValueError(f'Expected sklearn output to start with Norm:')
 
         avg_loss = float(fit_line.rsplit(' ', maxsplit=1)[1])  # example line:  Norm: 6.38, NNZs: 256, Bias: 8.932199, T: 1, Avg. loss: 0.001514
 
-        # save y values. each is associated with the same average loss and eta0 (step size).
-        for y_value in y:
-            self.y_values.append(y_value)
-            self.y_averager.update(y_value)
-            self.loss_values.append(avg_loss)
-            self.loss_averager.update(avg_loss)
-            self.eta0_values.append(self.model.eta0)
-            self.eta0_averager.update(self.model.eta0)
+        # save y, loss, and eta0 values. each y-value is associated with the same average loss and eta0 (step size).
+        with self.plot_data_lock:
+            for y_value in y:
+                self.y_values.append(y_value)
+                self.y_averager.update(y_value)
+                self.loss_values.append(avg_loss)
+                self.loss_averager.update(avg_loss)
+                self.eta0_values.append(self.model.eta0)
+                self.eta0_averager.update(self.model.eta0)
 
     def evaluate(
             self,
@@ -265,7 +273,7 @@ class SKLearnSGD(FunctionApproximationModel):
             num_improvement_bins: Optional[int],
             render: bool,
             pdf: Optional[PdfPages]
-    ):
+    ) -> Optional[plt.Figure]:
         """
         Plot the model.
 
@@ -275,6 +283,7 @@ class SKLearnSGD(FunctionApproximationModel):
         :param render: Whether or not to render the plot data. If False, then plot data will be updated but nothing will
         be shown.
         :param pdf: PDF for plots.
+        :return: Matplotlib figure, if one was generated and not plotting to PDF.
         """
 
         super().plot(
@@ -285,65 +294,94 @@ class SKLearnSGD(FunctionApproximationModel):
             pdf=pdf
         )
 
-        # collect average values for the current policy improvement iteration and reset the averagers. there's no need
-        # to collect values for the time steps, as these are collected during the calls to fit.
-        if self.y_averager.n > 0:
-            self.y_averages.append(self.y_averager.get_value())
-            self.y_averager.reset()
+        with self.plot_data_lock:
 
-        if self.loss_averager.n > 0:
-            self.loss_averages.append(self.loss_averager.get_value())
-            self.loss_averager.reset()
+            # collect average values for the current policy improvement iteration and reset the averagers. the
+            # individual y, loss, and eta0 values have already been collected (during the calls to fit).
+            if self.y_averager.n > 0:
+                self.y_averages.append(self.y_averager.get_value())
+                self.y_averager.reset()
 
-        if self.eta0_averager.n > 0:
-            self.eta0_averages.append(self.eta0_averager.get_value())
-            self.eta0_averager.reset()
+            if self.loss_averager.n > 0:
+                self.loss_averages.append(self.loss_averager.get_value())
+                self.loss_averager.reset()
 
-        if render:
+            if self.eta0_averager.n > 0:
+                self.eta0_averages.append(self.eta0_averager.get_value())
+                self.eta0_averager.reset()
 
-            # noinspection PyTypeChecker
-            fig, axs = plt.subplots(nrows=1, ncols=2, sharey=True, figsize=(15, 7.5))
+            # sleep to let others threads (e.g., the main thread) plot if needed.
+            if threading.current_thread() != threading.main_thread():
+                time.sleep(0.01)
 
-            # plot values for all improvement iterations since the previous rendering
-            ax = axs[0]
-            num_plot_iterations = len(self.y_averages)
-            x_values = np.arange(self.plot_start_iteration, self.plot_start_iteration + num_plot_iterations)
-            ax.plot(x_values, self.y_averages, color='red', label='Reward (G) obtained')
-            ax.plot(x_values, self.loss_averages, color='mediumpurple', label='Average model loss')
-            ax.legend(loc='upper left')
-            ax.set_xlabel('Policy improvement iteration')
+            # render the plot
+            elif render:
 
-            eta0_ax = ax.twinx()
-            eta0_ax.plot(x_values, self.eta0_averages, linestyle='--', label='Step size (eta0)')
-            eta0_ax.legend(loc='upper right')
+                # noinspection PyTypeChecker
+                fig, axs = plt.subplots(nrows=1, ncols=2, sharey=True, figsize=(12, 6))
 
-            self.y_averages.clear()
-            self.loss_averages.clear()
-            self.eta0_averages.clear()
-            self.plot_start_iteration += num_plot_iterations
+                # returns and losses per iteration
+                self.iteration_ax = axs[0]
+                iterations = list(range(1, len(self.y_averages) + 1))
+                self.iteration_return_line, = self.iteration_ax.plot(iterations, self.y_averages, linewidth=0.75, color='C0', label='Obtained')
+                self.iteration_loss_line, = self.iteration_ax.plot(iterations, self.loss_averages, linewidth=0.75, color='C1', label='Loss')
+                self.iteration_ax.set_xlabel('Policy improvement iteration')
+                self.iteration_ax.set_ylabel('Average discounted return (G)')
+                self.iteration_ax.legend(loc='upper left')
 
-            # plot values for all time steps since the previous rendering
-            ax = axs[1]
-            num_plot_time_steps = len(self.y_values)
-            x_values = np.arange(self.plot_start_time_step, self.plot_start_time_step + num_plot_time_steps)
-            ax.plot(x_values, self.y_values, color='red', label='Reward (G) obtained')
-            ax.plot(x_values, self.loss_values, color='mediumpurple', label='Average model loss')
-            ax.set_xlabel('Time step')
-            ax.legend(loc='upper left')
+                # twin-x step size
+                self.iteration_eta0_ax = self.iteration_ax.twinx()
+                self.iteration_eta0_line, = self.iteration_eta0_ax.plot(iterations, self.eta0_averages, linewidth=0.75, color='C2', label='Step size (eta0)')
+                self.iteration_eta0_ax.legend(loc='upper right')
 
-            eta0_ax = ax.twinx()
-            eta0_ax.plot(x_values, self.eta0_values, linestyle='--', label='Step size (eta0)')
-            eta0_ax.legend(loc='upper right')
+                # plot values for all time steps since the previous rendering
+                self.time_step_ax = axs[1]
+                time_steps = list(range(1, len(self.y_values) + 1))
+                self.time_return_line, = self.time_step_ax.plot(time_steps, self.y_values, linewidth=0.75, color='C0', label='Obtained')
+                self.time_loss_line, = self.time_step_ax.plot(time_steps, self.loss_values, linewidth=0.75, color='C1', label='Loss')
+                self.time_step_ax.set_xlabel('Time step')
+                self.iteration_ax.set_ylabel('Average discounted return (G)')
+                self.time_step_ax.legend(loc='upper left')
 
-            self.y_values.clear()
-            self.loss_values.clear()
-            self.eta0_values.clear()
-            self.plot_start_time_step += num_plot_time_steps
+                # twin-x step size
+                self.time_eta0_ax = self.time_step_ax.twinx()
+                self.time_eta0_line, = self.time_eta0_ax.plot(time_steps, self.eta0_values, linewidth=0.75, color='C2', label='Step size (eta0)')
+                self.time_eta0_ax.legend(loc='upper right')
 
-            if pdf is None:
-                plt.show(block=False)
-            else:
-                pdf.savefig()
+                plt.tight_layout()
+
+                if pdf is None:
+                    plt.show(block=False)
+                    return fig
+                else:
+                    pdf.savefig()
+
+    def update_plot(
+            self
+    ):
+        """
+        Update the plot. Can only be done from the main thread.
+        """
+
+        if threading.current_thread() != threading.main_thread():
+            raise ValueError('Can only update plot on main thread.')
+
+        with self.plot_data_lock:
+
+            # plot axes will be None prior to the first call to self.plot
+            if self.iteration_ax is None:
+                return
+
+            iterations = list(range(1, len(self.y_averages) + 1))
+
+            self.iteration_return_line.set_data(iterations, self.y_averages)
+            self.iteration_loss_line.set_data(iterations, self.loss_averages)
+            self.iteration_ax.relim()
+            self.iteration_ax.autoscale_view()
+
+            self.iteration_eta0_line.set_data(iterations, self.eta0_averages)
+            self.iteration_eta0_ax.relim()
+            self.iteration_eta0_ax.autoscale_view()
 
     def __init__(
             self,
@@ -379,8 +417,18 @@ class SKLearnSGD(FunctionApproximationModel):
         self.eta0_values = []
         self.eta0_averager = IncrementalSampleAverager()
         self.eta0_averages = []
-        self.plot_start_iteration = 1
-        self.plot_start_time_step = 1
+
+        self.iteration_ax = None
+        self.iteration_return_line = None
+        self.iteration_loss_line = None
+        self.iteration_eta0_ax = None
+        self.iteration_eta0_line = None
+        self.time_step_ax = None
+        self.time_return_line = None
+        self.time_loss_line = None
+        self.time_eta0_ax = None
+        self.time_eta0_line = None
+        self.plot_data_lock = threading.Lock()
 
     def __eq__(
             self,
@@ -407,3 +455,19 @@ class SKLearnSGD(FunctionApproximationModel):
         """
 
         return not (self == other)
+
+    def __getstate__(
+            self
+    ) -> Dict:
+        """
+        Get the state to pickle for the current instance.
+
+        :return: Dictionary.
+        """
+
+        d = dict(self.__dict__)
+
+        # the plot data lock cannot be pickled
+        del d['plot_data_lock']
+
+        return d

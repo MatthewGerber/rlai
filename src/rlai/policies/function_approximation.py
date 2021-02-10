@@ -96,7 +96,7 @@ class FunctionApproximationPolicy(Policy):
         max_value = max(values)
         num_maximizers = sum(value == max_value for value in values)
         action_prob = {
-            action: (((1 - self.estimator.epsilon) / num_maximizers) if value == max_value else 0.0) + self.estimator.epsilon / len(values)
+            action: (((1.0 - self.estimator.epsilon) / num_maximizers) if value == max_value else 0.0) + self.estimator.epsilon / len(values)
             for action, value in zip(state.AA, values)
         }
 

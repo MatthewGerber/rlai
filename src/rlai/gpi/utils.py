@@ -139,8 +139,9 @@ def plot_policy_iteration(
     _time_ax.legend()
     _time_ax.grid()
 
+    plt.tight_layout()
+
     if pdf is None:
-        plt.tight_layout()
         plt.show(block=False)
         return fig
     else:

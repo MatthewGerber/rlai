@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from argparse import ArgumentParser
 from typing import Optional, Iterable, Tuple, List, Any, Iterator
 
+import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 from numpy.random import RandomState
 
@@ -198,12 +199,20 @@ class StateActionValueEstimator(ABC):
             self,
             final: bool,
             pdf: PdfPages
-    ):
+    ) -> Optional[plt.Figure]:
         """
         Plot the estimator.
 
         :param final: Whether or not this is the final time plot will be called.
         :param pdf: PDF for plots.
+        :return: Matplotlib figure, if one was generated and not plotting to PDF.
+        """
+
+    def update_plot(
+            self
+    ):
+        """
+        Update the plot. Can only be done from the main thread.
         """
 
     def __init__(

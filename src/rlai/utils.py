@@ -235,7 +235,7 @@ def get_base_argument_parser(
     parser.add_argument(
         '--help',
         action='store_true',
-        help='Print usage and argument descriptions.'
+        help='Pass this flag to print usage and argument descriptions.'
     )
 
     return parser

@@ -107,7 +107,7 @@ class Gym(MdpEnvironment):
         parser.add_argument(
             '--force',
             action='store_true',
-            help='Force the writing of videos into the video directory. Will overwrite/delete content in the directory.'
+            help='Pass this flag to force the writing of videos into the video directory. Will overwrite/delete content in the directory.'
         )
 
         return parser

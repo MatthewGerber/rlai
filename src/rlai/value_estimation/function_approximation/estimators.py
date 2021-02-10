@@ -1,6 +1,7 @@
 from argparse import ArgumentParser
 from typing import Optional, List, Tuple, Iterator, Set
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from matplotlib.backends.backend_pdf import PdfPages
@@ -186,7 +187,7 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         parser.add_argument(
             '--plot-model',
             action='store_true',
-            help='Whether or not to plot the model (e.g., coefficients).'
+            help='Pass this flag to plot the model (e.g., coefficients, diagnostics, etc.).'
         )
 
         parser.add_argument(
@@ -383,25 +384,35 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
             self,
             final: bool,
             pdf: PdfPages
-    ):
+    ) -> Optional[plt.Figure]:
         """
         Plot the estimator.
 
         :param final: Whether or not this is the final time plot will be called.
         :param pdf: PDF for plots.
+        :return: Matplotlib figure, if one was generated and not plotting to PDF.
         """
 
         if self.plot_model:
 
             render = final or (self.plot_model_per_improvements is not None and self.evaluation_policy_improvement_count % self.plot_model_per_improvements == 0)
 
-            self.model.plot(
+            return self.model.plot(
                 feature_extractor=self.feature_extractor,
                 policy_improvement_count=self.evaluation_policy_improvement_count,
                 num_improvement_bins=self.plot_model_bins,
                 render=render,
                 pdf=pdf
             )
+
+    def update_plot(
+            self
+    ):
+        """
+        Update the plot. Can only be done from the main thread.
+        """
+
+        self.model.update_plot()
 
     def __init__(
             self,

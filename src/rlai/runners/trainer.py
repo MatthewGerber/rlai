@@ -3,7 +3,7 @@ import pickle
 import sys
 import warnings
 from argparse import ArgumentParser
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Callable, Dict
 
 from numpy.random import RandomState
 
@@ -21,7 +21,8 @@ from rlai.utils import (
 @rl_text(chapter='Training and Running Agents', page=1)
 def run(
         args: List[str] = None,
-        thread_manager: RunThreadManager = None
+        thread_manager: RunThreadManager = None,
+        train_function_args_callback: Callable[[Dict], None] = None
 ) -> Tuple[Optional[str], Optional[str]]:
     """
     Train an agent in an environment.
@@ -32,6 +33,11 @@ def run(
     manager will be waited upon before starting each iteration. If the manager blocks, then another thread will need to
     clear the manager before the iteration continues. If the manager aborts, then this function will return as soon as
     possible.
+    :param train_function_args_callback: A callback function to be called with the arguments that will be passed to the
+    training function. This gives the caller an opportunity to grab references to the internal arguments that will be
+    used in training. For example, plotting from the Jupyter Lab interface grabs the state-action value estimator
+    (q_S_A) from the passed dictionary to use in updating its plots. This callback is only called for fresh training. It
+    is not called when resuming from a checkpoint.
     :returns: 2-tuple of the checkpoint path (if any) and the saved agent path (if any).
     """
 
@@ -138,6 +144,10 @@ def run(
 
         # fresh training will train the agent that was initialized above and passed in
         else:
+
+            if train_function_args_callback is not None:
+                train_function_args_callback(train_function_args)
+
             train_function(
                 **train_function_args
             )
@@ -199,7 +209,7 @@ def get_argument_parser_for_run() -> ArgumentParser:
     parser.add_argument(
         '--resume',
         action='store_true',
-        help='Resume training an agent from a previously saved checkpoint path.'
+        help='Pass this flag to resume training an agent from a previously saved checkpoint path.'
     )
 
     parser.add_argument(

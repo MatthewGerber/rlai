@@ -68,7 +68,7 @@ def run(
     parser.add_argument(
         '--plot',
         action='store_true',
-        help='Plot rewards.'
+        help='Pass this flag to plot rewards.'
     )
 
     parsed_args, unparsed_args = parser.parse_known_args(args)
@@ -180,6 +180,8 @@ def run(
         optimal_action_ax.set_ylabel(f'% optimal action selected')
         optimal_action_ax.grid()
         optimal_action_ax.legend()
+
+        plt.tight_layout()
 
         if pdf is None:
             plt.show(block=False)

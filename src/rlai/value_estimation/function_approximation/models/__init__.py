@@ -44,7 +44,7 @@ class FunctionApproximationModel(ABC):
         parser.add_argument(
             '--help',
             action='store_true',
-            help='Print usage and argument descriptions.'
+            help='Pass this flag to print usage and argument descriptions.'
         )
 
         return parser
@@ -98,7 +98,7 @@ class FunctionApproximationModel(ABC):
             num_improvement_bins: Optional[int],
             render: bool,
             pdf: Optional[PdfPages]
-    ):
+    ) -> Optional[plt.Figure]:
         """
         Plot the model.
 
@@ -108,6 +108,7 @@ class FunctionApproximationModel(ABC):
         :param render: Whether or not to render the plot data. If False, then plot data will be updated but nothing will
         be shown.
         :param pdf: PDF for plots.
+        :return: Matplotlib figure, if one was generated and not plotting to PDF.
         """
 
         feature_action_coefficients = self.get_feature_action_coefficients(feature_extractor)
@@ -188,15 +189,24 @@ class FunctionApproximationModel(ABC):
                                 ax.set_title('')
 
                     fig.suptitle('Model coefficients over iterations')
+
                     plt.tight_layout()
 
                     if pdf is None:
                         plt.show(block=False)
+                        return fig
                     else:
                         pdf.savefig()
 
                 else:  # pragma no cover
                     raise ValueError(f'Unknown feature extractor type:  {type(feature_extractor)}')
+
+    def update_plot(
+            self
+    ):
+        """
+        Update the plot. Can only be done from the main thread.
+        """
 
     def get_feature_action_coefficients(
             self,
