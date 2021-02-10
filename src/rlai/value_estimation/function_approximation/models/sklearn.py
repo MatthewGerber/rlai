@@ -275,7 +275,10 @@ class SKLearnSGD(FunctionApproximationModel):
             pdf: Optional[PdfPages]
     ) -> Optional[plt.Figure]:
         """
-        Plot the model.
+        Plot the model. If called from the main thread and render is True, then a new plot will be generated. If called
+        from a background thread, then the data used by the plot will be updated but a plot will not be generated or
+        updated. This supports a pattern in which a background thread generates new plot data, and a UI thread (e.g., in
+        a Jupyter notebook) periodically calls `update_plot` to redraw the plot with the latest data.
 
         :param feature_extractor: Feature extractor used to build the model.
         :param policy_improvement_count: Number of policy improvements that have been made.
@@ -314,7 +317,9 @@ class SKLearnSGD(FunctionApproximationModel):
             if threading.current_thread() != threading.main_thread():
                 time.sleep(0.01)
 
-            # render the plot
+            # render the plot. the usual pattern is for this to happen only once at the start of training, and on the
+            # main thread. subsequently, the main thread will call update_plot to redraw with the latest plot data
+            # provided by another thread above.
             elif render:
 
                 # noinspection PyTypeChecker
@@ -323,29 +328,29 @@ class SKLearnSGD(FunctionApproximationModel):
                 # returns and losses per iteration
                 self.iteration_ax = axs[0]
                 iterations = list(range(1, len(self.y_averages) + 1))
-                self.iteration_return_line, = self.iteration_ax.plot(iterations, self.y_averages, linewidth=0.75, color='C0', label='Obtained')
-                self.iteration_loss_line, = self.iteration_ax.plot(iterations, self.loss_averages, linewidth=0.75, color='C1', label='Loss')
+                self.iteration_return_line, = self.iteration_ax.plot(iterations, self.y_averages, linewidth=0.75, color='darkgreen', label='Obtained')
+                self.iteration_loss_line, = self.iteration_ax.plot(iterations, self.loss_averages, linewidth=0.75, color='red', label='Loss')
                 self.iteration_ax.set_xlabel('Policy improvement iteration')
                 self.iteration_ax.set_ylabel('Average discounted return (G)')
                 self.iteration_ax.legend(loc='upper left')
 
                 # twin-x step size
                 self.iteration_eta0_ax = self.iteration_ax.twinx()
-                self.iteration_eta0_line, = self.iteration_eta0_ax.plot(iterations, self.eta0_averages, linewidth=0.75, color='C2', label='Step size (eta0)')
+                self.iteration_eta0_line, = self.iteration_eta0_ax.plot(iterations, self.eta0_averages, linewidth=0.75, color='blue', label='Step size (eta0)')
                 self.iteration_eta0_ax.legend(loc='upper right')
 
                 # plot values for all time steps since the previous rendering
                 self.time_step_ax = axs[1]
                 time_steps = list(range(1, len(self.y_values) + 1))
-                self.time_return_line, = self.time_step_ax.plot(time_steps, self.y_values, linewidth=0.75, color='C0', label='Obtained')
-                self.time_loss_line, = self.time_step_ax.plot(time_steps, self.loss_values, linewidth=0.75, color='C1', label='Loss')
+                self.time_return_line, = self.time_step_ax.plot(time_steps, self.y_values, linewidth=0.75, color='darkgreen', label='Obtained')
+                self.time_loss_line, = self.time_step_ax.plot(time_steps, self.loss_values, linewidth=0.75, color='red', label='Loss')
                 self.time_step_ax.set_xlabel('Time step')
                 self.iteration_ax.set_ylabel('Average discounted return (G)')
                 self.time_step_ax.legend(loc='upper left')
 
                 # twin-x step size
                 self.time_eta0_ax = self.time_step_ax.twinx()
-                self.time_eta0_line, = self.time_eta0_ax.plot(time_steps, self.eta0_values, linewidth=0.75, color='C2', label='Step size (eta0)')
+                self.time_eta0_line, = self.time_eta0_ax.plot(time_steps, self.eta0_values, linewidth=0.75, color='blue', label='Step size (eta0)')
                 self.time_eta0_ax.legend(loc='upper right')
 
                 plt.tight_layout()
@@ -360,7 +365,7 @@ class SKLearnSGD(FunctionApproximationModel):
             self
     ):
         """
-        Update the plot. Can only be done from the main thread.
+        Update the plot of the model. Can only be called from the main thread.
         """
 
         if threading.current_thread() != threading.main_thread():

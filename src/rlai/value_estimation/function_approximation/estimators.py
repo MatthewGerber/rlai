@@ -386,7 +386,11 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
             pdf: PdfPages
     ) -> Optional[plt.Figure]:
         """
-        Plot the estimator.
+        Plot the estimator. If called from the main thread, then the rendering schedule will be checked and a new plot
+        will be generated per the schedule. If called from a background thread, then the data used by the plot will be
+        updated but a plot will not be generated or updated. This supports a pattern in which a background thread
+        generates new plot data, and a UI thread (e.g., in a Jupyter notebook) periodically calls `update_plot` to
+        redraw the plot with the latest data.
 
         :param final: Whether or not this is the final time plot will be called.
         :param pdf: PDF for plots.
@@ -409,7 +413,7 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
             self
     ):
         """
-        Update the plot. Can only be done from the main thread.
+        Update the plot of the estimator. Can only be called from the main thread.
         """
 
         self.model.update_plot()

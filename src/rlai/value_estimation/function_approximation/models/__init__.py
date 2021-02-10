@@ -1,4 +1,5 @@
 import math
+import threading
 import warnings
 from abc import ABC, abstractmethod
 from argparse import ArgumentParser
@@ -111,6 +112,11 @@ class FunctionApproximationModel(ABC):
         :return: Matplotlib figure, if one was generated and not plotting to PDF.
         """
 
+        # TODO:  update the current function to follow the ui/background thread pattern used elsewhere to surface plots
+        # in the jupyter notebook.
+        if threading.current_thread() != threading.main_thread():
+            return
+
         feature_action_coefficients = self.get_feature_action_coefficients(feature_extractor)
 
         plot_coefficients = True
@@ -205,7 +211,7 @@ class FunctionApproximationModel(ABC):
             self
     ):
         """
-        Update the plot. Can only be done from the main thread.
+        Update the plot of the model. Can only be called from the main thread.
         """
 
     def get_feature_action_coefficients(
