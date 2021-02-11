@@ -189,12 +189,22 @@ class SKLearnSGD(FunctionApproximationModel):
 
         # save y, loss, and eta0 values. each y-value is associated with the same average loss and eta0 (step size).
         with self.plot_data_lock:
+
+            if self.plot_iteration not in self.iteration_y_values:
+                self.iteration_y_values[self.plot_iteration] = []
+
+            if self.plot_iteration not in self.iteration_loss_values:
+                self.iteration_loss_values[self.plot_iteration] = []
+
+            if self.plot_iteration not in self.iteration_eta0_values:
+                self.iteration_eta0_values[self.plot_iteration] = []
+
             for y_value in y:
-                self.y_values.append(y_value)
+                self.iteration_y_values[self.plot_iteration].append(y_value)
                 self.y_averager.update(y_value)
-                self.loss_values.append(avg_loss)
+                self.iteration_loss_values[self.plot_iteration].append(avg_loss)
                 self.loss_averager.update(avg_loss)
-                self.eta0_values.append(self.model.eta0)
+                self.iteration_eta0_values[self.plot_iteration].append(self.model.eta0)
                 self.eta0_averager.update(self.model.eta0)
 
     def evaluate(
@@ -323,7 +333,7 @@ class SKLearnSGD(FunctionApproximationModel):
             elif render:
 
                 # noinspection PyTypeChecker
-                fig, axs = plt.subplots(nrows=1, ncols=2, sharey=True, figsize=(12, 6))
+                fig, axs = plt.subplots(nrows=1, ncols=2, sharey=True, figsize=(13, 6.5))
 
                 # returns and losses per iteration
                 self.iteration_ax = axs[0]
@@ -337,21 +347,28 @@ class SKLearnSGD(FunctionApproximationModel):
                 # twin-x step size
                 self.iteration_eta0_ax = self.iteration_ax.twinx()
                 self.iteration_eta0_line, = self.iteration_eta0_ax.plot(iterations, self.eta0_averages, linewidth=0.75, color='blue', label='Step size (eta0)')
+                self.iteration_eta0_ax.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
                 self.iteration_eta0_ax.legend(loc='upper right')
 
-                # plot values for all time steps since the previous rendering
+                # plot values for all time steps of the most recent plot iteration. there might not yet be any data in
+                # the current iteration, so watch out.
                 self.time_step_ax = axs[1]
-                time_steps = list(range(1, len(self.y_values) + 1))
-                self.time_return_line, = self.time_step_ax.plot(time_steps, self.y_values, linewidth=0.75, color='darkgreen', label='Obtained')
-                self.time_loss_line, = self.time_step_ax.plot(time_steps, self.loss_values, linewidth=0.75, color='red', label='Loss')
-                self.time_step_ax.set_xlabel('Time step')
+                y_values = self.iteration_y_values.get(self.plot_iteration, [])
+                time_steps = list(range(1, len(y_values) + 1))
+                self.time_step_return_line, = self.time_step_ax.plot(time_steps, y_values, linewidth=0.75, color='darkgreen', label='Obtained')
+                self.time_step_loss_line, = self.time_step_ax.plot(time_steps, self.iteration_loss_values.get(self.plot_iteration, []), linewidth=0.75, color='red', label='Loss')
+                self.time_step_ax.set_xlabel(f'Time step (iteration {self.plot_iteration})')
                 self.iteration_ax.set_ylabel('Average discounted return (G)')
                 self.time_step_ax.legend(loc='upper left')
 
                 # twin-x step size
-                self.time_eta0_ax = self.time_step_ax.twinx()
-                self.time_eta0_line, = self.time_eta0_ax.plot(time_steps, self.eta0_values, linewidth=0.75, color='blue', label='Step size (eta0)')
-                self.time_eta0_ax.legend(loc='upper right')
+                self.time_step_eta0_ax = self.time_step_ax.twinx()
+                self.time_step_eta0_line, = self.time_step_eta0_ax.plot(time_steps, self.iteration_eta0_values.get(self.plot_iteration, []), linewidth=0.75, color='blue', label='Step size (eta0)')
+                self.time_step_eta0_ax.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
+                self.time_step_eta0_ax.legend(loc='upper right')
+
+                # share y-axis scale between the two twin-x axes
+                self.iteration_eta0_ax.get_shared_y_axes().join(self.iteration_eta0_ax, self.time_step_eta0_ax)
 
                 plt.tight_layout()
 
@@ -361,11 +378,18 @@ class SKLearnSGD(FunctionApproximationModel):
                 else:
                     pdf.savefig()
 
+            # move to next plot iteration
+            self.plot_iteration += 1
+
     def update_plot(
-            self
+            self,
+            time_step_detail_iteration: Optional[int]
     ):
         """
         Update the plot of the model. Can only be called from the main thread.
+
+        :param time_step_detail_iteration: Iteration for which to plot time-step-level detail, or None for no detail.
+        Passing -1 will plot detail for the most recently completed iteration.
         """
 
         if threading.current_thread() != threading.main_thread():
@@ -387,6 +411,30 @@ class SKLearnSGD(FunctionApproximationModel):
             self.iteration_eta0_line.set_data(iterations, self.eta0_averages)
             self.iteration_eta0_ax.relim()
             self.iteration_eta0_ax.autoscale_view()
+
+            if time_step_detail_iteration is not None:
+
+                # the current iteration is likely incomplete. use the previous iteration to ensure that we plot a
+                # completed iteration. the current iteration could be complete, but the likely use case for passing -1
+                # is to rapidly replot as training proceeds. in this case, the caller won't mind if they see the
+                # previous iteration.
+                if time_step_detail_iteration == -1:
+                    time_step_detail_iteration = len(self.iteration_y_values) - 2
+
+                if time_step_detail_iteration >= 0:
+
+                    y_values = self.iteration_y_values[time_step_detail_iteration]
+                    time_steps = list(range(1, len(y_values) + 1))
+
+                    self.time_step_return_line.set_data(time_steps, y_values)
+                    self.time_step_loss_line.set_data(time_steps, self.iteration_loss_values[time_step_detail_iteration])
+                    self.time_step_ax.set_xlabel(f'Time step (iteration {time_step_detail_iteration + 1})')  # display as 1-based
+                    self.time_step_ax.relim()
+                    self.time_step_ax.autoscale_view()
+
+                    self.time_step_eta0_line.set_data(time_steps, self.iteration_eta0_values[time_step_detail_iteration])
+                    self.time_step_eta0_ax.relim()
+                    self.time_step_eta0_ax.autoscale_view()
 
     def __init__(
             self,
@@ -413,15 +461,17 @@ class SKLearnSGD(FunctionApproximationModel):
 
         self.model = SGDRegressor(**kwargs)
         self.base_eta0 = self.model.eta0
-        self.y_values = []
+
+        self.plot_iteration = 0
+        self.iteration_y_values: Dict[int, List[float]] = {}
         self.y_averager = IncrementalSampleAverager()
-        self.y_averages = []
-        self.loss_values = []
+        self.y_averages: List[float] = []
+        self.iteration_loss_values: Dict[int, List[float]] = {}
         self.loss_averager = IncrementalSampleAverager()
-        self.loss_averages = []
-        self.eta0_values = []
+        self.loss_averages: List[float] = []
+        self.iteration_eta0_values: Dict[int, List[float]] = {}
         self.eta0_averager = IncrementalSampleAverager()
-        self.eta0_averages = []
+        self.eta0_averages: List[float] = []
 
         self.iteration_ax = None
         self.iteration_return_line = None
@@ -429,10 +479,10 @@ class SKLearnSGD(FunctionApproximationModel):
         self.iteration_eta0_ax = None
         self.iteration_eta0_line = None
         self.time_step_ax = None
-        self.time_return_line = None
-        self.time_loss_line = None
-        self.time_eta0_ax = None
-        self.time_eta0_line = None
+        self.time_step_return_line = None
+        self.time_step_loss_line = None
+        self.time_step_eta0_ax = None
+        self.time_step_eta0_line = None
         self.plot_data_lock = threading.Lock()
 
     def __eq__(

@@ -213,10 +213,14 @@ class StateActionValueEstimator(ABC):
         """
 
     def update_plot(
-            self
+            self,
+            time_step_detail_iteration: Optional[int]
     ):
         """
         Update the plot of the estimator. Can only be called from the main thread.
+
+        :param time_step_detail_iteration: Iteration for which to plot time-step-level detail, or None for no detail.
+        Passing -1 will plot detail for the most recently completed iteration.
         """
 
     def __init__(
