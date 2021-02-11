@@ -10,6 +10,15 @@ some.
 examples covered; however, such implementations do not necessarily lead to reusable and extensible code that is 
 generally applicable beyond such examples. The approach taken here should be generally applicable well beyond the text.
 
+# Quick Start
+For single-click access to a graphical interface for `rlai`, please click below:
+
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/MatthewGerber/rlai/HEAD?urlpath=lab/tree/jupyter/trainer.ipynb)
+
+Note that Binder notebooks are hosted for free by sponsors who donate computational infrastructure. Limitations are 
+placed on each notebook, so don't expect the Binder interface to support heavy workloads. See the following section for
+alternatives.
+
 # Installation, Use, and Development
 The `rlai` code is distributed via [PyPI](https://pypi.org/project/rlai/) and can be installed with `pip install rlai`. 
 There are several ways to use the package.

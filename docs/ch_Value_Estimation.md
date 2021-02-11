@@ -1,13 +1,13 @@
 # Value Estimation
-### [rlai.value_estimation.ActionValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/value_estimation.py#L62)
+### [rlai.value_estimation.ActionValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/value_estimation.py#L61)
 ```
 Action value estimator.
 ```
-### [rlai.value_estimation.StateActionValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/value_estimation.py#L117)
+### [rlai.value_estimation.StateActionValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/value_estimation.py#L112)
 ```
 State-action value estimator.
 ```
-### [rlai.value_estimation.ValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/value_estimation.py#L19)
+### [rlai.value_estimation.ValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/value_estimation.py#L20)
 ```
 Value estimator.
 ```
@@ -23,15 +23,15 @@ Tabular state-action value estimator.
 ```
 Tabular value estimator.
 ```
-### [rlai.value_estimation.function_approximation.estimators.ApproximateActionValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/value_estimation/function_approximation/estimators.py#L76)
+### [rlai.value_estimation.function_approximation.estimators.ApproximateActionValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/value_estimation/function_approximation/estimators.py#L77)
 ```
 Approximate action-value estimator.
 ```
-### [rlai.value_estimation.function_approximation.estimators.ApproximateStateActionValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/value_estimation/function_approximation/estimators.py#L146)
+### [rlai.value_estimation.function_approximation.estimators.ApproximateStateActionValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/value_estimation/function_approximation/estimators.py#L147)
 ```
 Approximate state-action value estimator.
 ```
-### [rlai.value_estimation.function_approximation.estimators.ApproximateValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/value_estimation/function_approximation/estimators.py#L24)
+### [rlai.value_estimation.function_approximation.estimators.ApproximateValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/value_estimation/function_approximation/estimators.py#L25)
 ```
 Approximate value estimator.
 ```

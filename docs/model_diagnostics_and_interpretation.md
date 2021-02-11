@@ -4,7 +4,7 @@ Diagnostic and interpretation tools are standard issue for statistical models, t
 developed and covered within RL. These tools are particularly important when value functions are approximated with 
 models rather than calculated directly in tabular fashion.
 
-## Model Plots
+## Model Coefficient Plots
 Consider the gridworld of Example 4.1 solved with temporal-difference q-learning and stochastic gradient descent based 
 on the four features extracted by 
 `rlai.environments.gridworld.GridworldFeatureExtractor`. These features quantify the agent's distance from the top, 
@@ -31,4 +31,12 @@ top-left and bottom-right corners of the 4x4 gridworld. Symmetric explanations a
 for the other feature-action pairs shown. Note that the curvatures shown in the boxplots over time correspond to the 
 iterative convergence of the stochastic gradient descent optimization. The curvature itself does not indicate the 
 relationship of interest; rather, one should inspect the sign and magnitude of the final value.
+
+## Model Instrumentation
+
+The [JupyterLab interface](jupyterlab_guide.md) provides detailed instrumentation for certain models in real time, as
+shown below. This information can be useful when diagnosing convergence and stability issues in state-action value
+function approximation.
+
+![sgd-instrumentation](jupyterlab-diag.png)
 

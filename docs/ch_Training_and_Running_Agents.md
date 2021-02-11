@@ -22,5 +22,10 @@ Train an agent in an environment.
     manager will be waited upon before starting each iteration. If the manager blocks, then another thread will need to
     clear the manager before the iteration continues. If the manager aborts, then this function will return as soon as
     possible.
+    :param train_function_args_callback: A callback function to be called with the arguments that will be passed to the
+    training function. This gives the caller an opportunity to grab references to the internal arguments that will be
+    used in training. For example, plotting from the Jupyter Lab interface grabs the state-action value estimator
+    (q_S_A) from the passed dictionary to use in updating its plots. This callback is only called for fresh training. It
+    is not called when resuming from a checkpoint.
     :returns: 2-tuple of the checkpoint path (if any) and the saved agent path (if any).
 ```

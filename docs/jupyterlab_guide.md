@@ -1,13 +1,28 @@
 # Using `rlai` from the JupyterLab Interface
 
-A companion JupyterLab notebook is provided to ease the use of `rlai`. The goal
-of the interface is to assist with the creation of commands for subsequent 
-processing.
+A companion JupyterLab notebook is provided to ease the use of `rlai`. The goal of the interface is to assist with the 
+composition, execution, and real-time inspection of `rlai` commands. The primary composer interface is show below:
 
 ![jupyterlab](jupyterlab-composer.png)
+
+The notebook provides controls for starting, pausing, and resuming the execution of `rlai` commands. All plots are
+interactive and support zooming, panning, and axis rescaling. An example is shown below:
+
 ![jupyterlab-running](jupyterlab-running.png)
 
-## Installation
+Certain state-active value function estimators (e.g., the scikit-learn stochastic gradient descent model) support 
+diagnostic plots. An example is shown below:
+
+![jupyterlab-diag](jupyterlab-diag.png)
+
+For single-click access to the notebook, please click below:
+
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/MatthewGerber/rlai/HEAD?urlpath=lab/tree/jupyter/trainer.ipynb)
+
+Note that Binder notebooks are hosted for free by sponsors who donate computational infrastructure. Limitations are 
+placed on each notebook, so don't expect the Binder interface to support heavy workloads.
+
+## Local Installation
 In addition to installing the core `rlai` package, you will need to further 
 install the `jupyter` extra. This can be done with pip via 
 `pip install rlai[jupyter]`. Following installation, there are a few additional
