@@ -165,9 +165,9 @@ class SKLearnSGD(FunctionApproximationModel):
         :param weight: Weight.
         """
 
-        # scale the step size according to y. TODO:  expose the base as a cli argument
+        # TODO:  Add more here (e.g., put max(y) in the exponent for some base we expose)
         if self.scale_eta0_for_y:
-            eta0_scalar = 1.01 ** max(np.abs(np.array(y)).max(), 1.0)
+            eta0_scalar = np.abs(np.array(y)).max()
             self.model.eta0 = self.base_eta0 / eta0_scalar
 
         # put tee on standard output in order to grab the loss value printed by sklearn
