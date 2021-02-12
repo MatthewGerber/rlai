@@ -347,7 +347,7 @@ class SKLearnSGD(FunctionApproximationModel):
                 # twin-x step size
                 self.iteration_eta0_ax = self.iteration_ax.twinx()
                 self.iteration_eta0_line, = self.iteration_eta0_ax.plot(iterations, self.eta0_averages, linewidth=0.75, color='blue', label='Step size (eta0)')
-                self.iteration_eta0_ax.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
+                self.iteration_eta0_ax.set_yscale('log')
                 self.iteration_eta0_ax.legend(loc='upper right')
 
                 # plot values for all time steps of the most recent plot iteration. there might not yet be any data in
@@ -364,7 +364,7 @@ class SKLearnSGD(FunctionApproximationModel):
                 # twin-x step size
                 self.time_step_eta0_ax = self.time_step_ax.twinx()
                 self.time_step_eta0_line, = self.time_step_eta0_ax.plot(time_steps, self.iteration_eta0_values.get(self.plot_iteration, []), linewidth=0.75, color='blue', label='Step size (eta0)')
-                self.time_step_eta0_ax.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
+                self.time_step_eta0_ax.set_yscale('log')
                 self.time_step_eta0_ax.legend(loc='upper right')
 
                 # share y-axis scale between the two twin-x axes
