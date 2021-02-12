@@ -18,7 +18,6 @@ state-action value function. This change will eliminate memory constraints, but 
 challenges. First, the tabular approach...
 
 ### Training
-
 Train a control agent for the inverted pendulum environment with the following command.
 ```
 rlai train --agent rlai.agents.mdp.StochasticMdpAgent --continuous-state-discretization-resolution 0.1 --gamma 1 --environment rlai.environments.openai_gym.Gym --gym-id CartPole-v1 --render-every-nth-episode 5000 --video-directory ~/Desktop/cartpole_videos --force --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode Q_LEARNING --num-improvements 5000 --num-episodes-per-improvement 50 --T 1000 --epsilon 0.01 --q-S-A rlai.value_estimation.tabular.TabularStateActionValueEstimator --make-final-policy-greedy True --num-improvements-per-plot 100 --save-agent-path ~/Desktop/cartpole_agent.pickle
@@ -71,7 +70,6 @@ quite satisfactory after 7 hours of wallclock training time. Note, however, that
 approaching 10^5 (100000) states for this relatively simple environment.
 
 ### Results
-
 The video below shows the trained agent controlling the inverted pendulum. Note how the agent actively controls both the 
 vertical balance of the pendulum (ideally upright) and the cart's horizontal position along the track (ideally in the 
 middle). The episode ends after the maximum number of time steps is reached, rather than due to a control failure.
@@ -79,7 +77,6 @@ middle). The episode ends after the maximum number of time steps is reached, rat
 {% include youtubePlayer.html id="bnQFT31_WfI" %}
 
 ## Parametric State-Action Value Function
-
 As shown above, tabular methods present a conceptually straightforward approach to estimating state-action value 
 functions in continuous state-space environments. Practically, the estimation problem is complicated by the need for
 very large state spaces and accordingly long training times. This is akin to the challenges presented by nonparametric 
@@ -96,7 +93,6 @@ values from experience in the environment. There is nothing novel about this tra
 between parametric and nonparametric statistical learning methods.
 
 ### Training
-
 One of the most challenging aspects of parametric RL is selecting training hyperparameters (i.e., parameters of learning
 beyond those of the parametric form, such as step sizes). Very little scientific theory exists to guide a-priori 
 setting of hyperparameter values in arbitrary tasks. As a result, significant trial-and-error is usually involved, 
@@ -149,10 +145,9 @@ scikit-learn's stochastic gradient descent. Documentation for the model and its 
 * `--num-improvements-per-plot 50`
 * `--num-improvements-per-checkpoint 50`
 * `--checkpoint-path ~/Desktop/cartpole_checkpoint.pickle`
-*`--save-agent-path ~/Desktop/cartpole_agent.pickle`
+* `--save-agent-path ~/Desktop/cartpole_agent.pickle`
   
 ### Results
-
 The video below shows the trained agent controlling the inverted pendulum. Note how the agent actively controls both the 
 vertical balance of the pendulum (ideally upright) and the cart's horizontal position along the track (ideally in the 
 middle). The episode ends after the maximum number of time steps is reached, rather than due to a control failure.
@@ -160,5 +155,3 @@ middle). The episode ends after the maximum number of time steps is reached, rat
 {% include youtubePlayer.html id="E76S7YTDoek" %}
 
 Also note that the control obtained here is much tighter than achieved with tabular methods above.
-
-## Ablation Tests
