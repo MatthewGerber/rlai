@@ -523,6 +523,7 @@ class SKLearnSGD(FunctionApproximationModel):
         d = dict(self.__dict__)
 
         # the plot data lock cannot be pickled
-        del d['plot_data_lock']
+        if 'plot_data_lock' in d:
+            del d['plot_data_lock']
 
         return d
