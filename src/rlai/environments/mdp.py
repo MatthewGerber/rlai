@@ -525,6 +525,36 @@ class PrioritizedSweepingMdpPlanningEnvironment(MdpPlanningEnvironment):
         self.bootstrap_function: Optional[partial] = None
         self.q_S_A: Optional[Dict[MdpState, Dict[Action, IncrementalSampleAverager]]] = None
 
+    def __getstate__(
+            self
+    ) -> Dict:
+        """
+        Get state dictionary for pickling.
+
+        :return: State dictionary.
+        """
+
+        state_dict = dict(self.__dict__)
+
+        # the priority queue cannot be pickled. blank it out.
+        state_dict['state_action_priority'] = None
+
+        return state_dict
+
+    def __setstate__(
+            self,
+            state
+    ):
+        """
+        Set the state dictionary.
+
+        :param state: State dictionary.
+        """
+
+        self.__dict__ = state
+
+        self.state_action_priority = PriorityQueue()
+
 
 @rl_text(chapter=8, page=174)
 class TrajectorySamplingMdpPlanningEnvironment(MdpPlanningEnvironment):

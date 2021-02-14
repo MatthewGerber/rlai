@@ -6,8 +6,7 @@ from typing import Optional, Union
 from matplotlib.backends.backend_pdf import PdfPages
 
 from rlai.agents.mdp import MdpAgent
-from rlai.environments.mdp import MdpEnvironment, MdpPlanningEnvironment, PrioritizedSweepingMdpPlanningEnvironment
-from rlai.environments.openai_gym import Gym
+from rlai.environments.mdp import MdpEnvironment, MdpPlanningEnvironment
 from rlai.gpi import PolicyImprovementEvent
 from rlai.gpi.temporal_difference.evaluation import evaluate_q_pi, Mode
 from rlai.gpi.utils import plot_policy_iteration
@@ -162,10 +161,6 @@ def iterate_value_q_pi(
             plot_policy_iteration(iteration_average_reward, iteration_total_states, iteration_num_states_improved, elapsed_seconds_average_rewards, pdf)
 
         if num_improvements_per_checkpoint is not None and i % num_improvements_per_checkpoint == 0:
-
-            # priority queues cannot be pickled since they contain thread locks
-            if isinstance(planning_environment, PrioritizedSweepingMdpPlanningEnvironment):
-                planning_environment.state_action_priority = None
 
             resume_args = {
                 'agent': agent,
