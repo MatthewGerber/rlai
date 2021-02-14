@@ -2,7 +2,7 @@ import math
 import os
 from argparse import ArgumentParser
 from itertools import product
-from typing import List, Tuple, Optional, Union
+from typing import List, Tuple, Optional, Union, Dict
 
 import gym
 import numpy as np
@@ -267,7 +267,7 @@ class Gym(MdpEnvironment):
                 self.display_only_rendering = True
                 self.render_current_episode = True
 
-            # saved videos via wrapper
+            # save videos via wrapper
             else:
                 self.gym_native = gym.wrappers.Monitor(
                     env=self.gym_native,
@@ -311,6 +311,25 @@ class Gym(MdpEnvironment):
 
         else:  # pragma no cover
             raise ValueError(f'Unknown Gym action space type:  {type(self.gym_native.action_space)}')
+
+    def __getstate__(
+            self
+    ) -> Dict:
+
+        state_dict = dict(self.__dict__)
+
+        # gym environments cannot be pickled, so just save the native id so that we can resume it later.
+        state_dict['gym_native'] = self.gym_native.spec.id
+
+        return state_dict
+
+    def __setstate__(
+            self,
+            state
+    ):
+        self.__dict__ = state
+
+        # re-initialize native gym environment
 
 
 @rl_text(chapter='Feature Extractors', page=1)

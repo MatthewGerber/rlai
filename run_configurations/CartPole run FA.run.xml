@@ -13,7 +13,7 @@
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
     <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/rlai/runners/agent_in_environment.py" />
-    <option name="PARAMETERS" value="--agent ../../../trained_agents/cartpole/parametric/cartpole_agent.pickle --environment rlai.environments.openai_gym.Gym --gym-id CartPole-v1 --render-every-nth-episode 1 --n-runs 1 --T 1000 --plot" />
+    <option name="PARAMETERS" value="--agent ~/Desktop/cartpole_agent.pickle --environment rlai.environments.openai_gym.Gym --gym-id CartPole-v1 --render-every-nth-episode 1 --n-runs 1 --T 10000 --plot" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />
