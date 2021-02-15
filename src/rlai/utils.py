@@ -147,6 +147,7 @@ def sample_list_item(
 
     cum_probs = probs.cumsum()
     final_cum_prob = cum_probs[-1]
+
     if abs(1.0 - final_cum_prob) > 0.0000001:
         raise ValueError(f'Expected cumulative probabilities to sum to 1, but got {final_cum_prob} instead.')
 
@@ -160,7 +161,7 @@ def sample_list_item(
 
 
 def import_function(
-        name: str
+        name: Optional[str]
 ) -> Optional[Callable]:
     """
     Import function from fully-qualified name.
@@ -337,7 +338,7 @@ class RunThreadManager(threading.Event):
         """
         Initialize the thread manager.
 
-        :param initial_flag: Initial flag value (see threading.Thread).
+        :param initial_flag: Initial flag value (see threading.Thread for the use of this argument).
         """
 
         super().__init__()

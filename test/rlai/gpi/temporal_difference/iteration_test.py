@@ -204,7 +204,7 @@ def test_q_learning_iterate_value_q_pi():
     assert tabular_pi_legacy_eq(mdp_agent.pi, pi_fixture) and tabular_estimator_legacy_eq(q_S_A, q_S_A_fixture)
 
 
-def test_q_learning_iterate_value_q_pi_function_approximation():
+def test_q_learning_iterate_value_q_pi_function_approximation_with_formula():
 
     random_state = RandomState(12345)
 
@@ -306,6 +306,49 @@ def test_q_learning_iterate_value_q_pi_function_approximation_no_formula():
     assert np.allclose(mdp_agent.pi.estimator.model.model.coef_, pi_fixture.estimator.model.model.coef_)
     assert mdp_agent.pi.format_state_action_probs(mdp_environment.SS) == pi_fixture.format_state_action_probs(mdp_environment.SS)
     assert mdp_agent.pi.format_state_action_values(mdp_environment.SS) == pi_fixture.format_state_action_values(mdp_environment.SS)
+
+
+def test_q_learning_iterate_value_q_pi_function_approximation_invalid_formula():
+
+    random_state = RandomState(12345)
+
+    mdp_environment: Gridworld = Gridworld.example_4_1(random_state, 20)
+
+    epsilon = 0.05
+
+    q_S_A = ApproximateStateActionValueEstimator(
+        mdp_environment,
+        epsilon,
+        SKLearnSGD(random_state=random_state, scale_eta0_for_y=False),
+        GridworldFeatureExtractor(mdp_environment),
+        f'C(s, levels={[s.i for s in mdp_environment.SS]}):C(a, levels={[a.i for a in mdp_environment.SS[0].AA]})',
+        False,
+        None,
+        None
+    )
+
+    mdp_agent = StochasticMdpAgent(
+        'test',
+        random_state,
+        q_S_A.get_initial_policy(),
+        1
+    )
+
+    with pytest.raises(ValueError, match='Invalid combination of formula'):
+        iterate_value_q_pi(
+            agent=mdp_agent,
+            environment=mdp_environment,
+            num_improvements=5,
+            num_episodes_per_improvement=5,
+            num_updates_per_improvement=None,
+            alpha=None,
+            mode=Mode.Q_LEARNING,
+            n_steps=None,
+            epsilon=epsilon,
+            planning_environment=None,
+            make_final_policy_greedy=False,
+            q_S_A=q_S_A
+        )
 
 
 def test_expected_sarsa_iterate_value_q_pi():
@@ -657,3 +700,75 @@ def test_q_learning_iterate_value_q_pi_function_approximation_policy_ne():
 
     assert mdp_agent_1.pi.estimator != mdp_agent_2.pi.estimator
     assert mdp_agent_1.pi.estimator.model != mdp_agent_2.pi.estimator.model
+
+
+def test_q_learning_iterate_value_q_pi_tabular_policy_ne():
+
+    random_state = RandomState(12345)
+
+    mdp_environment: Gridworld = Gridworld.example_4_1(random_state, 20)
+
+    epsilon = 0.05
+
+    q_S_A_1 = TabularStateActionValueEstimator(
+        mdp_environment,
+        epsilon,
+        None
+    )
+
+    mdp_agent_1 = StochasticMdpAgent(
+        'test',
+        random_state,
+        q_S_A_1.get_initial_policy(),
+        1
+    )
+
+    iterate_value_q_pi(
+        agent=mdp_agent_1,
+        environment=mdp_environment,
+        num_improvements=5,
+        num_episodes_per_improvement=10,
+        num_updates_per_improvement=None,
+        alpha=None,
+        mode=Mode.Q_LEARNING,
+        n_steps=None,
+        epsilon=epsilon,
+        planning_environment=None,
+        make_final_policy_greedy=True,
+        q_S_A=q_S_A_1
+    )
+
+    q_S_A_2 = TabularStateActionValueEstimator(
+        mdp_environment,
+        epsilon,
+        None
+    )
+
+    mdp_agent_2 = StochasticMdpAgent(
+        'test',
+        random_state,
+        q_S_A_2.get_initial_policy(),
+        1
+    )
+
+    iterate_value_q_pi(
+        agent=mdp_agent_2,
+        environment=mdp_environment,
+        num_improvements=5,
+        num_episodes_per_improvement=5,
+        num_updates_per_improvement=None,
+        alpha=None,
+        mode=Mode.Q_LEARNING,
+        n_steps=None,
+        epsilon=epsilon,
+        planning_environment=None,
+        make_final_policy_greedy=True,
+        q_S_A=q_S_A_2
+    )
+
+    test_state = mdp_environment.SS[5]
+    test_action = test_state.AA[0]
+
+    assert q_S_A_1 != q_S_A_2
+    assert q_S_A_1[test_state] != q_S_A_2[test_state]
+    assert q_S_A_1[test_state][test_action] != q_S_A_2[test_state][test_action]

@@ -260,6 +260,12 @@ def test_iterate_value_q_pi_with_pdf():
         pdf_save_path=tempfile.NamedTemporaryFile(delete=False).name
     )
 
+    with pytest.raises(ValueError, match='Epsilon must be >= 0'):
+        q_S_A.improve_policy(mdp_agent, states=None, epsilon=-1.0, event=PolicyImprovementEvent.MAKING_POLICY_GREEDY)
+
+    assert q_S_A.improve_policy(mdp_agent, None, None, PolicyImprovementEvent.MAKING_POLICY_GREEDY) == 14
+    assert q_S_A.epsilon == 0.0
+
 
 def test_iterate_value_q_pi_multi_threaded():
 

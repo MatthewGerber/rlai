@@ -297,7 +297,8 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
 
         :param agent: Agent whose policy should be improved.
         :param states: States to improve, or None for all states.
-        :param epsilon: Epsilon.
+        :param epsilon: Total probability mass to divide across all actions for a state, resulting in an epsilon-greedy
+        policy. Must be >= 0.0 if given. Pass None to generate a purely greedy policy.
         :param event: Event that triggered the improvement.
         :return: Number of states improved.
         """
@@ -308,11 +309,6 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
             epsilon=epsilon,
             event=event
         )
-
-        if epsilon is None:
-            epsilon = 0.0
-
-        self.epsilon = epsilon
 
         # if we have pending experience, then fit the model and reset the data.
         if self.experience_pending:
@@ -363,14 +359,12 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
 
         X = self.feature_extractor.extract(states, actions, for_fitting)
 
-        # if no formula, then use result directly.
+        # if no formula, then the feature extraction result must be a numpy.ndarray to be used directly.
         if self.formula is None:
-            if isinstance(X, pd.DataFrame):
-                X = X.to_numpy()
-            elif not isinstance(X, np.ndarray):  # pragma no cover
+            if not isinstance(X, np.ndarray):  # pragma no cover
                 raise ValueError('Expected feature extractor to return a numpy.ndarray if not a pandas.DataFrame')
 
-        # use formula with dataframe only
+        # formulas only work with dataframes
         elif isinstance(X, pd.DataFrame):
             X = dmatrix(self.formula, X)
 

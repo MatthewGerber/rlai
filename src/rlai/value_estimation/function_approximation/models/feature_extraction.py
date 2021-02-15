@@ -61,7 +61,8 @@ class FeatureExtractor(ABC):
         :param states: States.
         :param actions: Actions.
         :param for_fitting: Whether the extracted features will be used for fitting (True) or prediction (False).
-        :return: State-feature pandas.DataFrame or numpy.ndarray.
+        :return: State-feature pandas.DataFrame or numpy.ndarray. The former is only valid with Patsy-style formula
+        designs.
         """
 
     @staticmethod
@@ -226,14 +227,14 @@ class StateActionIdentityFeatureExtractor(FeatureExtractor):
             states: List[MdpState],
             actions: List[Action],
             for_fitting: bool
-    ) -> Union[pd.DataFrame, np.ndarray]:
+    ) -> pd.DataFrame:
         """
         Extract features for state-action pairs.
 
         :param states: States.
         :param actions: Actions.
         :param for_fitting: Whether the extracted features will be used for fitting (True) or prediction (False).
-        :return: State-feature pandas.DataFrame or numpy.ndarray.
+        :return: State-feature pandas.DataFrame.
         """
 
         self.check_state_and_action_lists(states, actions)

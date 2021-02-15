@@ -1,8 +1,7 @@
 from argparse import ArgumentParser
-from typing import List, Tuple, Optional, Union
+from typing import List, Tuple, Optional
 
 import numpy as np
-import pandas as pd
 from numpy.random import RandomState
 
 from rlai.actions import Action
@@ -252,14 +251,14 @@ class GridworldFeatureExtractor(StateActionInteractionFeatureExtractor):
             states: List[MdpState],
             actions: List[Action],
             for_fitting: bool
-    ) -> Union[pd.DataFrame, np.ndarray]:
+    ) -> np.ndarray:
         """
         Extract features for state-action pairs.
 
         :param states: States.
         :param actions: Actions.
         :param for_fitting: Whether the extracted features will be used for fitting (True) or prediction (False).
-        :return: State-feature pandas.DataFrame or numpy.ndarray.
+        :return: State-feature numpy.ndarray.
         """
 
         self.check_state_and_action_lists(states, actions)
