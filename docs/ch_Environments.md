@@ -14,7 +14,7 @@ Environment for the mancala game. This is a simple game with many rule variation
     A couple hours of Monte Carlo optimization explores more than 1 million states when playing against an equiprobable
     random opponent.
 ```
-### [rlai.environments.openai_gym.Gym](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/openai_gym.py#L61)
+### [rlai.environments.openai_gym.Gym](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/openai_gym.py#L63)
 ```
 Generalized Gym environment. Any OpenAI Gym environment can be executed by supplying the appropriate identifier.
 ```

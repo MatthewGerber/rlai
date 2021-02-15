@@ -17,7 +17,7 @@ State-action transitions are prioritized based on the degree to which learning u
 ```
 A stochastic environment model.
 ```
-### [rlai.environments.mdp.TrajectorySamplingMdpPlanningEnvironment](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/mdp.py#L530)
+### [rlai.environments.mdp.TrajectorySamplingMdpPlanningEnvironment](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/mdp.py#L560)
 ```
 State-action transitions are selected by the agent based on the agent's policy, and the selected transitions are
     explored during planning.

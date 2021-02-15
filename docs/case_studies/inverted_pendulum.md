@@ -155,3 +155,44 @@ middle). The episode ends after the maximum number of time steps is reached, rat
 {% include youtubePlayer.html id="E76S7YTDoek" %}
 
 Also note that the control obtained here is much tighter than achieved with tabular methods above.
+
+### Discussion
+As noted above, obtaining an agent that performs well usually involves significant experimentation, and the parameter
+selection above is no exception. It is worth mentioning a few points along the way that seemed to be important.
+
+#### Nonlinear Feature Space
+The cart-pole environment has four continuous state variables:  position, velocity, pole angle, and pole angular 
+velocity. The feature extractor for this environment uses both the 
+[raw and squared versions](https://github.com/MatthewGerber/rlai/blob/36b755098e75dd1222a802933075db2ab889b29c/src/rlai/environments/openai_gym.py#L438-L441)
+of these state variables.
+
+#### Feature Contexts
+I struggled for a while with the features described above. The agent simply could not learn a useful state-action value 
+function. Then it occurred to me that a linear increase in any of those variables (whether raw or squared) could have 
+different implications for the value function depending on the context in which they occurred. For example, the value
+of moving the cart to the left when the pole is tilted slightly to the left depends on the pole's angular velocity. If
+the pole is already swinging back to upright, then moving the cart left might be unnecessary or even harmful. If the 
+pole is swinging left, then moving the cart left is probably a good idea. More generally, the value of a particular
+action vis-a-vis a state variable depends on the context, that is, on the other state variables. The approach taken 
+here is to form statistical interactions of the state variables with a small set of 
+[contexts](https://github.com/MatthewGerber/rlai/blob/36b755098e75dd1222a802933075db2ab889b29c/src/rlai/environments/openai_gym.py#L519) 
+that differentiate the state-action values. When fitting the model, the state variables are 
+[interacted](https://github.com/MatthewGerber/rlai/blob/36b755098e75dd1222a802933075db2ab889b29c/src/rlai/environments/openai_gym.py#L455) 
+with these contexts, essentially forming a one-hot-context encoding of the state variables. Interpreted another way, the 
+model learns a separate set of parameters for each context. The one-hot-context encoding is further 
+[interacted](https://github.com/MatthewGerber/rlai/blob/36b755098e75dd1222a802933075db2ab889b29c/src/rlai/environments/openai_gym.py#L457-L459)
+with the action space to produce the final one-hot-action-context form of the state-action value function used here.
+
+#### Nonstantionary Feature Scaling
+All features are [scaled](https://github.com/MatthewGerber/rlai/blob/36b755098e75dd1222a802933075db2ab889b29c/src/rlai/environments/openai_gym.py#L443)
+to address step-size issues when using state variables on different scales. These issues are covered nicely in an
+[article](https://towardsdatascience.com/gradient-descent-the-learning-rate-and-the-importance-of-feature-scaling-6c0b416596e1)
+by Daniel Godoy at Towards Data Science; however, one thing he does not cover is nonstationary state spaces. As the 
+agent's policy evolves, the distribution (e.g., mean and variance) of the resulting state variables will change. If 
+this distribution is used to scale the state variables (e.g., with scikit-learn's 
+[`StandardScaler`](https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html), as Daniel suggests)
+then the distribution will need to adapt over time in order to accurately reflect the system's state distribution. The
+approach taken in `rlai` is to extend `StandardScaler` with 
+[recency-weighting](https://github.com/MatthewGerber/rlai/blob/36b755098e75dd1222a802933075db2ab889b29c/src/rlai/value_estimation/function_approximation/models/feature_extraction.py#L323).
+A history of observed state values is retained, and the scaler is refit periodically with the weight on each observation
+decreasing exponentially with age.

@@ -37,7 +37,7 @@ Perform Monte Carlo evaluation of an agent's policy within an environment, retur
     :return: 2-tuple of (1) set of only those states that were evaluated, and (2) the average reward obtained per
     episode.
 ```
-### [rlai.gpi.monte_carlo.iteration.iterate_value_q_pi](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/monte_carlo/iteration.py#L20)
+### [rlai.gpi.monte_carlo.iteration.iterate_value_q_pi](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/monte_carlo/iteration.py#L19)
 ```
 Run Monte Carlo value iteration on an agent using state-action value estimates. This iteration function operates
     over rewards obtained at the end of episodes, so it is only appropriate for episodic tasks.

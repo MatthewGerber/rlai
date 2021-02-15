@@ -40,3 +40,9 @@ function approximation.
 
 ![sgd-instrumentation](jupyterlab-diag.png)
 
+The left plot above shows per-iteration averages of return (green), model loss (red), and step size (blue). The right
+plot shows the same variables for a single iteration, so that each time step is visible. The JupyterLab interface allows
+interactive manipulation of these plots (e.g., zoom/pan) and selection of specific iterations to inspect in the right
+plot. Plots like these assist with diagnosing problems in the learning parameterization, such as unstable returns and
+nondecreasing losses.
+

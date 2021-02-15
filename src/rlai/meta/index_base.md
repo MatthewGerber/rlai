@@ -48,7 +48,9 @@ Looking for a place to dig in? Below are a few ideas organized by area of intere
   memory, and reward performance with a nonparametric approach like 
   [KNN regression](https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsRegressor.html).
   
-Feel free to submit issues and pull requests.
+* Feel free to [ask questions](https://github.com/MatthewGerber/rlai/discussions), 
+  [submit issues](https://github.com/MatthewGerber/rlai/issues), and 
+  [submit pull requests](https://github.com/MatthewGerber/rlai/pulls).
   
 # Features
 * Diagnostic and interpretation tools:  Diagnostic and interpretation tools become critical as the environment and agent 
