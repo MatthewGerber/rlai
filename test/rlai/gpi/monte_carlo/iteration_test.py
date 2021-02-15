@@ -110,7 +110,7 @@ def test_off_policy_monte_carlo():
     assert tabular_pi_legacy_eq(mdp_agent.pi, pi_fixture) and tabular_estimator_legacy_eq(q_S_A, q_S_A_fixture)
 
 
-def test_off_policy_monte_carlo_with_function_approximationo():
+def test_off_policy_monte_carlo_with_function_approximation():
 
     random_state = RandomState(12345)
 
