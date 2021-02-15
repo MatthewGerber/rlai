@@ -245,7 +245,6 @@ class Gym(MdpEnvironment):
             # not be valid on the current os. warn about permission errors and skip video saving.
             except PermissionError as ex:
                 warnings.warn(f'Permission error when initializing OpenAI Gym monitor. Videos will not be saved. Error:  {ex}')
-                raise ex
 
         gym_native.seed(self.random_state.randint(1000))
 

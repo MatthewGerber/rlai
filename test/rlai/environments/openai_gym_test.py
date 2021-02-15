@@ -77,6 +77,5 @@ def test_unimplemented_feature_names():
 
 def test_video_directory_permisson_error():
 
-    # attempt to use directory off root to raise permission error
-    with pytest.raises(PermissionError):
-        Gym(RandomState(), None, 'CartPole-v0', render_every_nth_episode=1, video_directory=os.path.abspath(f'{os.sep}test'))
+    # attempt to use directory off root to raise permission error. should be caught and warned about.
+    Gym(RandomState(), None, 'CartPole-v0', render_every_nth_episode=1, video_directory=os.path.abspath(f'{os.sep}test'))
