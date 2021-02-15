@@ -9,7 +9,6 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
 from rlai.agents.mdp import MdpAgent
-from rlai.environments.openai_gym import Gym
 
 # plotting data and objects
 _iteration_ax: Optional[plt.Axes] = None

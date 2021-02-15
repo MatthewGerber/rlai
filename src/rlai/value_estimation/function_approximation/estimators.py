@@ -367,7 +367,7 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         if self.formula is None:
             if isinstance(X, pd.DataFrame):
                 X = X.to_numpy()
-            elif not isinstance(X, np.ndarray):
+            elif not isinstance(X, np.ndarray):  # pragma no cover
                 raise ValueError('Expected feature extractor to return a numpy.ndarray if not a pandas.DataFrame')
 
         # use formula with dataframe only
@@ -383,7 +383,7 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
     def plot(
             self,
             final: bool,
-            pdf: PdfPages
+            pdf: Optional[PdfPages]
     ) -> Optional[plt.Figure]:
         """
         Plot the estimator. If called from the main thread, then the rendering schedule will be checked and a new plot
@@ -393,7 +393,7 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         redraw the plot with the latest data.
 
         :param final: Whether or not this is the final time plot will be called.
-        :param pdf: PDF for plots.
+        :param pdf: PDF for plots, or None for no PDF.
         :return: Matplotlib figure, if one was generated and not plotting to PDF.
         """
 

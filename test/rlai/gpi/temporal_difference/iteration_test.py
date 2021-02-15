@@ -1,8 +1,10 @@
 import os
 import pickle
+import shlex
 import tempfile
 import time
-from threading import Thread
+from threading import Thread, Event
+from typing import Optional
 
 import numpy as np
 import pytest
@@ -15,6 +17,7 @@ from rlai.gpi.temporal_difference.evaluation import Mode
 from rlai.gpi.temporal_difference.iteration import iterate_value_q_pi
 from rlai.gpi.utils import update_policy_iteration_plot, plot_policy_iteration
 from rlai.planning.environment_models import StochasticEnvironmentModel
+from rlai.runners.trainer import run
 from rlai.utils import RunThreadManager
 from rlai.value_estimation.function_approximation.estimators import ApproximateStateActionValueEstimator
 from rlai.value_estimation.function_approximation.models.feature_extraction import (
@@ -528,6 +531,54 @@ def test_iterate_value_q_pi_multi_threaded():
 
     thread_manager.abort = True
     run_thread.join()
+
+
+def test_iterate_value_q_pi_func_approx_multi_threaded():
+
+    thread_manager = RunThreadManager(True)
+
+    train_args_wait_event = Event()
+
+    q_S_A: Optional[ApproximateStateActionValueEstimator] = None
+
+    def train_args_callback(
+            train_args
+    ):
+        nonlocal q_S_A
+        q_S_A = train_args['q_S_A']
+        train_args_wait_event.set()
+
+    cmd = f'--random-seed 12345 --agent rlai.agents.mdp.StochasticMdpAgent --gamma 1 --environment rlai.environments.gridworld.Gridworld --id example_4_1 --T 25 --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode SARSA --num-improvements 10 --num-episodes-per-improvement 10 --epsilon 0.05 --q-S-A rlai.value_estimation.function_approximation.estimators.ApproximateStateActionValueEstimator --function-approximation-model rlai.value_estimation.function_approximation.models.sklearn.SKLearnSGD --plot-model --feature-extractor rlai.environments.gridworld.GridworldFeatureExtractor --make-final-policy-greedy True'
+    args = shlex.split(cmd)
+
+    def train_thread_target():
+        run(
+            args=args,
+            thread_manager=thread_manager,
+            train_function_args_callback=train_args_callback
+        )
+
+    train_thread = Thread(target=train_thread_target)
+    train_thread.start()
+
+    train_args_wait_event.wait()
+
+    # premature update should do nothing
+    assert q_S_A.update_plot(-1) is None
+
+    time.sleep(1)
+    assert q_S_A.plot(True, None) is not None
+
+    # should be allowed to update plot from non-main thread
+    def bad_update():
+        with pytest.raises(ValueError, match='Can only update plot on main thread.'):
+            q_S_A.update_plot(-1)
+
+    bad_thread = Thread(target=bad_update)
+    bad_thread.start()
+    bad_thread.join()
+
+    q_S_A.update_plot(-1)
 
 
 def test_q_learning_iterate_value_q_pi_function_approximation_policy_ne():
