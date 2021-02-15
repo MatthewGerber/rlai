@@ -104,7 +104,6 @@ def test_run_thread_manager_initially_blocked():
 
     t = threading.Thread(target=thread_target)
     t.start()
-
     t.join()
 
     assert not wait_return
