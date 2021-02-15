@@ -1,5 +1,6 @@
 import math
 import os
+import warnings
 from argparse import ArgumentParser
 from itertools import product
 from typing import List, Tuple, Optional, Union, Dict
@@ -232,12 +233,19 @@ class Gym(MdpEnvironment):
 
         # save videos via wrapper
         if self.render_every_nth_episode is not None and self.video_directory is not None:
-            gym_native = gym.wrappers.Monitor(
-                env=gym_native,
-                directory=os.path.expanduser(self.video_directory),
-                video_callable=lambda episode_id: episode_id % self.render_every_nth_episode == 0,
-                force=self.force
-            )
+            try:
+                gym_native = gym.wrappers.Monitor(
+                    env=gym_native,
+                    directory=os.path.expanduser(self.video_directory),
+                    video_callable=lambda episode_id: episode_id % self.render_every_nth_episode == 0,
+                    force=self.force
+                )
+
+            # pickled checkpoints can come from another os where the video directory is valid, but the directory might
+            # not be valid on the current os. warn about permission errors and skip video saving.
+            except PermissionError as ex:
+                warnings.warn(f'Permission error when initializing OpenAI Gym monitor. Videos will not be saved. Error:  {ex}')
+                raise ex
 
         gym_native.seed(self.random_state.randint(1000))
 
