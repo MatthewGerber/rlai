@@ -73,3 +73,9 @@ def test_unimplemented_feature_names():
     cartpole_fex = CartpoleFeatureExtractor(cartpole_environment)
 
     assert cartpole_fex.get_feature_names() is None
+
+
+def test_video_directory_permisson_error():
+
+    # attempt to use directory off root to raise permission error. should be caught and warned about.
+    Gym(RandomState(), None, 'CartPole-v0', render_every_nth_episode=1, video_directory=os.path.abspath(f'{os.sep}test'))

@@ -177,7 +177,7 @@ class StateActionValueEstimator(ABC):
             self,
             agent: MdpAgent,
             states: Optional[Iterable[MdpState]],
-            epsilon: float,
+            epsilon: Optional[float],
             event: PolicyImprovementEvent
     ):
         """
@@ -185,10 +185,18 @@ class StateActionValueEstimator(ABC):
 
         :param agent: Agent whose policy should be improved.
         :param states: States to improve, or None for all states.
-        :param epsilon: Epsilon.
+        :param epsilon: Total probability mass to divide across all actions for a state, resulting in an epsilon-greedy
+        policy. Must be >= 0.0 if given. Pass None to generate a purely greedy policy.
         :param event: Event that triggered the improvement.
         :return: Number of states improved.
         """
+
+        if epsilon is None:
+            epsilon = 0.0
+        elif epsilon < 0.0:
+            raise ValueError('Epsilon must be >= 0')
+
+        self.epsilon = epsilon
 
         if event == PolicyImprovementEvent.FINISHED_EVALUATION:
             self.evaluation_policy_improvement_count += 1
@@ -198,7 +206,7 @@ class StateActionValueEstimator(ABC):
     def plot(
             self,
             final: bool,
-            pdf: PdfPages
+            pdf: Optional[PdfPages]
     ) -> Optional[plt.Figure]:
         """
         Plot the estimator. If called from the main thread, then the rendering schedule will be checked and a new plot
@@ -208,7 +216,7 @@ class StateActionValueEstimator(ABC):
         redraw the plot with the latest data.
 
         :param final: Whether or not this is the final time plot will be called.
-        :param pdf: PDF for plots.
+        :param pdf: PDF for plots, or None for no PDF.
         :return: Matplotlib figure, if one was generated and not plotting to PDF.
         """
 

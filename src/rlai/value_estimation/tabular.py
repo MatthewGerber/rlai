@@ -311,7 +311,7 @@ class TabularStateActionValueEstimator(StateActionValueEstimator):
             self,
             agent: MdpAgent,
             states: Optional[Iterable[MdpState]],
-            epsilon: float,
+            epsilon: Optional[float],
             event: PolicyImprovementEvent
     ) -> int:
         """
@@ -319,7 +319,8 @@ class TabularStateActionValueEstimator(StateActionValueEstimator):
 
         :param agent: Agent whose policy should be improved.
         :param states: States to improve, or None for all states.
-        :param epsilon: Epsilon.
+        :param epsilon: Total probability mass to divide across all actions for a state, resulting in an epsilon-greedy
+        policy. Must be >= 0.0 if given. Pass None to generate a purely greedy policy.
         :param event: Event that triggered the improvement.
         :return: Number of states improved.
         """
@@ -330,11 +331,6 @@ class TabularStateActionValueEstimator(StateActionValueEstimator):
             epsilon=epsilon,
             event=event
         )
-
-        if epsilon is None:
-            epsilon = 0.0
-
-        self.epsilon = epsilon
 
         q_pi = {
             s: {

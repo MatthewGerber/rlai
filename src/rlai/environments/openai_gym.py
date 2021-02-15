@@ -1,13 +1,15 @@
 import math
 import os
+import warnings
 from argparse import ArgumentParser
 from itertools import product
-from typing import List, Tuple, Optional, Union
+from typing import List, Tuple, Optional, Union, Dict
 
 import gym
 import numpy as np
-import pandas as pd
+from gym.envs.registration import EnvSpec
 from gym.spaces import Discrete, Box
+from gym.wrappers import TimeLimit
 from numpy.random import RandomState
 
 from rlai.actions import Action, DiscretizedAction
@@ -212,6 +214,41 @@ class Gym(MdpEnvironment):
 
         self.gym_native.close()
 
+    def init_gym_native(
+            self
+    ) -> Union[EnvSpec, TimeLimit]:
+        """
+        Initialize the native Gym environment object.
+
+        :return: Either a native Gym environment or a wrapped native Gym environment.
+        """
+
+        gym_native = gym.make(
+            id=self.gym_id
+        )
+
+        # the native gym object uses the max value, so set it to something crazy huge if we're not given a T.
+        gym_native._max_episode_steps = 999999999999 if self.T is None else self.T
+
+        # save videos via wrapper
+        if self.render_every_nth_episode is not None and self.video_directory is not None:
+            try:
+                gym_native = gym.wrappers.Monitor(
+                    env=gym_native,
+                    directory=os.path.expanduser(self.video_directory),
+                    video_callable=lambda episode_id: episode_id % self.render_every_nth_episode == 0,
+                    force=self.force
+                )
+
+            # pickled checkpoints can come from another os where the video directory is valid, but the directory might
+            # not be valid on the current os. warn about permission errors and skip video saving.
+            except PermissionError as ex:
+                warnings.warn(f'Permission error when initializing OpenAI Gym monitor. Videos will not be saved. Error:  {ex}')
+
+        gym_native.seed(self.random_state.randint(1000))
+
+        return gym_native
+
     def __init__(
             self,
             random_state: RandomState,
@@ -243,40 +280,29 @@ class Gym(MdpEnvironment):
             T=T
         )
 
-        self.gym_native = gym.make(
-            id=gym_id
-        )
+        self.gym_id = gym_id
+        self.continuous_action_discretization_resolution = continuous_action_discretization_resolution
 
-        # the native gym object uses the max value, so set it to something crazy huge if we're not given a T.
-        self.gym_native._max_episode_steps = 999999999999 if self.T is None else self.T
-
-        if continuous_action_discretization_resolution is not None and not isinstance(self.gym_native.action_space, Box):
-            raise ValueError('Continuous-action discretization is only valid for Box action-space environments.')
-
-        # set up rendering...either display-only or saved videos
+        # set up rendering...either display-only or saved videos via wrapper
         self.render_every_nth_episode = render_every_nth_episode
         self.display_only_rendering = False
         self.render_current_episode = False
+        self.video_directory = video_directory
         if self.render_every_nth_episode is not None:
 
             if self.render_every_nth_episode <= 0:
                 raise ValueError('render_every_nth_episode must be > 0 if provided.')
 
             # display-only if we don't have a video directory
-            if video_directory is None:
+            if self.video_directory is None:
                 self.display_only_rendering = True
                 self.render_current_episode = True
 
-            # saved videos via wrapper
-            else:
-                self.gym_native = gym.wrappers.Monitor(
-                    env=self.gym_native,
-                    directory=os.path.expanduser(video_directory),
-                    video_callable=lambda episode_id: episode_id % self.render_every_nth_episode == 0,
-                    force=force
-                )
+        self.force = force
+        self.gym_native = self.init_gym_native()
 
-        self.gym_native.seed(random_state.randint(1000))
+        if self.continuous_action_discretization_resolution is not None and not isinstance(self.gym_native.action_space, Box):
+            raise ValueError('Continuous-action discretization is only valid for Box action-space environments.')
 
         # action space is already discrete. initialize n actions from it.
         if isinstance(self.gym_native.action_space, Discrete):
@@ -295,7 +321,7 @@ class Gym(MdpEnvironment):
             # continuous n-dimensional action space with identical bounds on each dimension
             if len(box.shape) == 1:
                 action_discretizations = [
-                    np.linspace(low, high, math.ceil((high - low) / continuous_action_discretization_resolution))
+                    np.linspace(low, high, math.ceil((high - low) / self.continuous_action_discretization_resolution))
                     for low, high in zip(box.low, box.high)
                 ]
             else:  # pragma no cover
@@ -311,6 +337,36 @@ class Gym(MdpEnvironment):
 
         else:  # pragma no cover
             raise ValueError(f'Unknown Gym action space type:  {type(self.gym_native.action_space)}')
+
+    def __getstate__(
+            self
+    ) -> Dict:
+        """
+        Get state dictionary for pickling.
+
+        :return: State dictionary.
+        """
+
+        state_dict = dict(self.__dict__)
+
+        # the native gym environment cannot be pickled. blank it out.
+        state_dict['gym_native'] = None
+
+        return state_dict
+
+    def __setstate__(
+            self,
+            state
+    ):
+        """
+        Set the state dictionary.
+
+        :param state: State dictionary.
+        """
+
+        self.__dict__ = state
+
+        self.gym_native = self.init_gym_native()
 
 
 @rl_text(chapter='Feature Extractors', page=1)
@@ -367,14 +423,14 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
             states: List[MdpState],
             actions: List[Action],
             for_fitting: bool
-    ) -> Union[pd.DataFrame, np.ndarray]:
+    ) -> np.ndarray:
         """
         Extract features for state-action pairs.
 
         :param states: States.
         :param actions: Actions.
         :param for_fitting: Whether the extracted features will be used for fitting (True) or prediction (False).
-        :return: State-feature pandas.DataFrame or numpy.ndarray.
+        :return: State-feature numpy.ndarray.
         """
 
         self.check_state_and_action_lists(states, actions)

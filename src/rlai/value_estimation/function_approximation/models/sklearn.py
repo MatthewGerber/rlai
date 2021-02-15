@@ -165,7 +165,7 @@ class SKLearnSGD(FunctionApproximationModel):
         :param weight: Weight.
         """
 
-        # TODO:  Add more here (e.g., put max(y) in the exponent for some base we expose)
+        # TODO:  Add more here? (e.g., put max(y) in the exponent for some base we expose)
         if self.scale_eta0_for_y:
             eta0_scalar = np.abs(np.array(y)).max()
             self.model.eta0 = self.base_eta0 / eta0_scalar
@@ -462,7 +462,7 @@ class SKLearnSGD(FunctionApproximationModel):
         self.model = SGDRegressor(**kwargs)
         self.base_eta0 = self.model.eta0
 
-        self.plot_iteration = 0
+        # plotting data (update __getstate__ below when changing these attributes)
         self.iteration_y_values: Dict[int, List[float]] = {}
         self.y_averager = IncrementalSampleAverager()
         self.y_averages: List[float] = []
@@ -472,7 +472,10 @@ class SKLearnSGD(FunctionApproximationModel):
         self.iteration_eta0_values: Dict[int, List[float]] = {}
         self.eta0_averager = IncrementalSampleAverager()
         self.eta0_averages: List[float] = []
+        self.plot_iteration = 0  # number of policy improvement iterations that have been plotted
+        self.plot_data_lock = threading.Lock()  # plotting data is read/written from multiple threads
 
+        # plotting objects
         self.iteration_ax = None
         self.iteration_return_line = None
         self.iteration_loss_line = None
@@ -483,7 +486,6 @@ class SKLearnSGD(FunctionApproximationModel):
         self.time_step_loss_line = None
         self.time_step_eta0_ax = None
         self.time_step_eta0_line = None
-        self.plot_data_lock = threading.Lock()
 
     def __eq__(
             self,
@@ -520,10 +522,49 @@ class SKLearnSGD(FunctionApproximationModel):
         :return: Dictionary.
         """
 
-        d = dict(self.__dict__)
+        state_dict = dict(self.__dict__)
+
+        # clear other memory intensive attributes
+        state_dict['plot_iteration'] = 0
+        state_dict['iteration_y_values'] = {}
+        state_dict['y_averager'] = IncrementalSampleAverager()
+        state_dict['y_averages'] = []
+        state_dict['iteration_loss_values'] = {}
+        state_dict['loss_averager'] = IncrementalSampleAverager()
+        state_dict['loss_averages'] = []
+        state_dict['iteration_eta0_values'] = {}
+        state_dict['eta0_averager'] = IncrementalSampleAverager()
+        state_dict['eta0_averages'] = []
+
+        # debatable whether plotting axes and lines should be pickled. the lines can contain a good deal of data, and
+        # neither makes much sense to pickle without the above data
+        state_dict['iteration_ax'] = None
+        state_dict['iteration_return_line'] = None
+        state_dict['iteration_loss_line'] = None
+        state_dict['iteration_eta0_ax'] = None
+        state_dict['iteration_eta0_line'] = None
+        state_dict['time_step_ax'] = None
+        state_dict['time_step_return_line'] = None
+        state_dict['time_step_loss_line'] = None
+        state_dict['time_step_eta0_ax'] = None
+        state_dict['time_step_eta0_line'] = None
 
         # the plot data lock cannot be pickled
-        if 'plot_data_lock' in d:
-            del d['plot_data_lock']
+        state_dict['plot_data_lock'] = None
 
-        return d
+        return state_dict
+
+    def __setstate__(
+            self,
+            state
+    ):
+        """
+        Set the unpickled state for the current instance.
+
+        :param state: Unpickled state.
+        """
+
+        self.__dict__ = state
+
+        # initialize new lock, which couldn't be pickled
+        self.plot_data_lock = threading.Lock()

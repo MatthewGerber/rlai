@@ -22,8 +22,8 @@ def improve_policy_with_q_pi(
 
     :param agent: Agent.
     :param q_pi: State-action value estimates for the agent's policy.
-    :param epsilon: Total probability mass to spread across all actions, resulting in an epsilon-greedy policy. Must
-    be >= 0 if provided.
+    :param epsilon: Total probability mass to divide across all actions for a state, resulting in an epsilon-greedy
+    policy. Must be >= 0.0 if given. Pass None to generate a purely greedy policy.
     :return: Number of states in which the policy was improved.
     """
 

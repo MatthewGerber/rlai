@@ -9,8 +9,8 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
 from rlai.agents.mdp import MdpAgent
-from rlai.environments.openai_gym import Gym
 
+# plotting data and objects
 _iteration_ax: Optional[plt.Axes] = None
 _iteration_average_reward: Optional[List[int]] = None
 _iteration_average_reward_line: Optional[plt.Line2D] = None
@@ -25,6 +25,7 @@ _time_ax: Optional[plt.Axes] = None
 _elapsed_seconds_average_rewards: Optional[Dict[int, List[float]]] = None
 _elapsed_seconds_average_reward_line: Optional[plt.Line2D] = None
 
+# the above can be read/written from multiple threads. use lock.
 _plot_data_lock = threading.Lock()
 
 
@@ -193,28 +194,6 @@ def resume_from_checkpoint(
         resume_args = pickle.load(checkpoint_file)
     print('.done')
 
-    # because the native gym environments cannot be pickled, we only retain a string identifier for the native gym
-    # object as the value of `environment.gym_native`. the only way to resume such an environment is for the caller to
-    # pass in an instantiated gym environment as a new argument value. the id of this object must match the id in the
-    # resume args's environment.gym_native. if it does match, then grab the native gym environment and use it in the
-    # resume args.
-    resume_environment = resume_args.get('environment')
-    if isinstance(resume_environment, Gym):
-
-        passed_environment = new_args.get('environment')
-        if passed_environment is None:
-            raise ValueError('No environment passed when resuming an assumed OpenAI Gym environment.')
-
-        passed_environment: Gym
-
-        passed_id = passed_environment.gym_native.spec.id
-        if passed_id != resume_environment.gym_native:
-            raise ValueError(f'Attempted to resume Gym environment {resume_environment.gym_native}, but passed environment is {passed_id}')
-
-        resume_environment.gym_native = passed_environment.gym_native
-
-        del new_args['environment']
-
     if new_args is not None:
         resume_args.update({
             arg: v
@@ -227,6 +206,7 @@ def resume_from_checkpoint(
 
     resume_function(**resume_args)
 
-    resume_environment.close()
+    # some environments (e.g., openai gym) hold resources that need to be released
+    resume_args['environment'].close()
 
     return resume_args['agent']

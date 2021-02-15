@@ -6,8 +6,7 @@ from typing import Optional, Union
 from matplotlib.backends.backend_pdf import PdfPages
 
 from rlai.agents.mdp import MdpAgent
-from rlai.environments.mdp import MdpEnvironment, MdpPlanningEnvironment, PrioritizedSweepingMdpPlanningEnvironment
-from rlai.environments.openai_gym import Gym
+from rlai.environments.mdp import MdpEnvironment, MdpPlanningEnvironment
 from rlai.gpi import PolicyImprovementEvent
 from rlai.gpi.temporal_difference.evaluation import evaluate_q_pi, Mode
 from rlai.gpi.utils import plot_policy_iteration
@@ -163,16 +162,6 @@ def iterate_value_q_pi(
 
         if num_improvements_per_checkpoint is not None and i % num_improvements_per_checkpoint == 0:
 
-            # gym environments cannot be pickled, so just save the native id so that we can resume it later.
-            gym_native = None
-            if isinstance(environment, Gym):
-                gym_native = environment.gym_native
-                environment.gym_native = environment.gym_native.spec.id
-
-            # priority queues cannot be pickled since they contain thread locks
-            if isinstance(planning_environment, PrioritizedSweepingMdpPlanningEnvironment):
-                planning_environment.state_action_priority = None
-
             resume_args = {
                 'agent': agent,
                 'environment': environment,
@@ -194,9 +183,6 @@ def iterate_value_q_pi(
 
             with open(checkpoint_path, 'wb') as checkpoint_file:
                 pickle.dump(resume_args, checkpoint_file)
-
-            if gym_native is not None:
-                environment.gym_native = gym_native
 
     print(f'Value iteration of q_pi terminated after {i} iteration(s).')
 
