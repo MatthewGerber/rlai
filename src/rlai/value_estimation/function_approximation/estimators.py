@@ -423,7 +423,7 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
             model: FunctionApproximationModel,
             feature_extractor: FeatureExtractor,
             formula: Optional[str],
-            plot_model: Optional[bool],
+            plot_model: bool,
             plot_model_per_improvements: Optional[int],
             plot_model_bins: Optional[int]
     ):
@@ -450,8 +450,9 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         overhead with each call to the formula parser. A faster alternative is to avoid formula specification (pass
         None here) and return the feature matrix directly from the feature extractor as a numpy.ndarray.
         :param plot_model: Whether or not to plot the model.
-        :param plot_model_per_improvements: Number of policy improvements between between plots.
-        :param plot_model_bins: Number of plotting bins, or None for no binning.
+        :param plot_model_per_improvements: Number of policy improvements between between plots of the model. Only used
+        if `plot_model` is True. Pass None to only plot the model at the end.
+        :param plot_model_bins: Number of plotting bins. Only used if `plot_model` is True. Pass None for no binning.
         """
 
         super().__init__(

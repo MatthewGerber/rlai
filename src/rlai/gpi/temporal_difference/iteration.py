@@ -64,6 +64,8 @@ def iterate_value_q_pi(
     :param pdf_save_path: Path where a PDF of all plots is to be saved, or None for no PDF.
     """
 
+    # TODO:  Remove epsilon argument from here and MC. It's already in q_S_A.
+
     if thread_manager is None:
         thread_manager = RunThreadManager(True)
 

@@ -101,7 +101,7 @@ presents training with hyperparameters values that generate a high-performance a
 manual experiementation was required. A later section will show what happens when these values are changed.
 
 ```
-rlai train --agent rlai.agents.mdp.StochasticMdpAgent --gamma 0.95 --environment rlai.environments.openai_gym.Gym --gym-id CartPole-v1 --render-every-nth-episode 100 --video-directory ~/Desktop/cartpole_videos --force --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode SARSA --num-improvements 15000 --num-episodes-per-improvement 1 --num-updates-per-improvement 1 --epsilon 0.2 --q-S-A rlai.value_estimation.function_approximation.estimators.ApproximateStateActionValueEstimator --function-approximation-model rlai.value_estimation.function_approximation.models.sklearn.SKLearnSGD --loss squared_loss --sgd-alpha 0.0 --learning-rate constant --eta0 0.0001 --feature-extractor rlai.environments.openai_gym.CartpoleFeatureExtractor --make-final-policy-greedy True --num-improvements-per-plot 50 --num-improvements-per-checkpoint 50 --checkpoint-path ~/Desktop/cartpole_checkpoint.pickle --save-agent-path ~/Desktop/cartpole_agent.pickle
+rlai train --agent rlai.agents.mdp.StochasticMdpAgent --gamma 0.95 --environment rlai.environments.openai_gym.Gym --gym-id CartPole-v1 --render-every-nth-episode 100 --video-directory ~/Desktop/cartpole_videos --force --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode SARSA --num-improvements 15000 --num-episodes-per-improvement 1 --num-updates-per-improvement 1 --epsilon 0.2 --q-S-A rlai.value_estimation.function_approximation.estimators.ApproximateStateActionValueEstimator --function-approximation-model rlai.value_estimation.function_approximation.models.sklearn.SKLearnSGD --loss squared_loss --sgd-alpha 0.0 --learning-rate constant --eta0 0.0001 --feature-extractor rlai.environments.openai_gym.CartpoleFeatureExtractor --make-final-policy-greedy True --num-improvements-per-plot 100 --num-improvements-per-checkpoint 100 --checkpoint-path ~/Desktop/cartpole_checkpoint.pickle --save-agent-path ~/Desktop/cartpole_agent.pickle
 ```
 
 Arguments are explained below (many explanations are given above and not duplicated here).
@@ -142,8 +142,8 @@ scikit-learn's stochastic gradient descent. Documentation for the model and its 
 
 #### Other Parameters
 * `--make-final-policy-greedy True`
-* `--num-improvements-per-plot 50`
-* `--num-improvements-per-checkpoint 50`
+* `--num-improvements-per-plot 100`
+* `--num-improvements-per-checkpoint 100`
 * `--checkpoint-path ~/Desktop/cartpole_checkpoint.pickle`
 * `--save-agent-path ~/Desktop/cartpole_agent.pickle`
   
