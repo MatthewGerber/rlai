@@ -461,17 +461,6 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
 
         return X
 
-    def get_feature_names(
-            self
-    ) -> Optional[List[str]]:
-        """
-        Not implemented.
-
-        :return: Will always return None.
-        """
-
-        return None
-
     def __init__(
             self,
             environment: Gym

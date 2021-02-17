@@ -100,8 +100,7 @@ def run(
             train_function_args['q_S_A'], unparsed_args = estimator_class.init_from_arguments(
                 unparsed_args,
                 random_state=random_state,
-                environment=train_function_args['environment'],
-                epsilon=train_function_args['epsilon']
+                environment=train_function_args['environment']
             )
 
     agent = None
@@ -292,12 +291,6 @@ def get_argument_parser_for_train_function(
         '--alpha',
         type=float,
         help='Step size.'
-    )
-
-    filter_add_argument(
-        '--epsilon',
-        type=float,
-        help='Total probability mass to allocate across all policy actions.'
     )
 
     filter_add_argument(

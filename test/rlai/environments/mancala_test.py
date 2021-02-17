@@ -32,9 +32,7 @@ def test_learn():
         )
     )
 
-    epsilon = 0.05
-
-    q_S_A = TabularStateActionValueEstimator(mancala, epsilon, None)
+    q_S_A = TabularStateActionValueEstimator(mancala, 0.05, None)
 
     p1 = StochasticMdpAgent(
         'player 1',
@@ -51,7 +49,6 @@ def test_learn():
         num_improvements=3,
         num_episodes_per_improvement=100,
         update_upon_every_visit=False,
-        epsilon=epsilon,
         planning_environment=None,
         make_final_policy_greedy=False,
         q_S_A=q_S_A,
@@ -89,9 +86,7 @@ def test_learn():
         )
     )
 
-    epsilon = 0.05
-
-    q_S_A = TabularStateActionValueEstimator(mancala, epsilon, None)
+    q_S_A = TabularStateActionValueEstimator(mancala, 0.05, None)
 
     no_checkpoint_p1 = StochasticMdpAgent(
         'player 1',
@@ -106,7 +101,6 @@ def test_learn():
         num_improvements=5,
         num_episodes_per_improvement=100,
         update_upon_every_visit=False,
-        epsilon=epsilon,
         planning_environment=None,
         make_final_policy_greedy=False,
         q_S_A=q_S_A

@@ -28,9 +28,7 @@ def test_iterate_value_q_pi():
 
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
 
-    epsilon = 0.1
-
-    q_S_A = TabularStateActionValueEstimator(mdp_environment, epsilon, None)
+    q_S_A = TabularStateActionValueEstimator(mdp_environment, 0.1, None)
 
     mdp_agent = StochasticMdpAgent(
         'test',
@@ -45,7 +43,6 @@ def test_iterate_value_q_pi():
         num_improvements=3000,
         num_episodes_per_improvement=1,
         update_upon_every_visit=False,
-        epsilon=epsilon,
         planning_environment=None,
         make_final_policy_greedy=False,
         q_S_A=q_S_A
@@ -67,9 +64,7 @@ def test_off_policy_monte_carlo():
 
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
 
-    epsilon = 0.0
-
-    q_S_A = TabularStateActionValueEstimator(mdp_environment, epsilon, None)
+    q_S_A = TabularStateActionValueEstimator(mdp_environment, 0.0, None)
 
     # target agent
     mdp_agent = StochasticMdpAgent(
@@ -93,7 +88,6 @@ def test_off_policy_monte_carlo():
         num_improvements=100,
         num_episodes_per_improvement=1,
         update_upon_every_visit=True,
-        epsilon=epsilon,
         planning_environment=None,
         make_final_policy_greedy=False,
         q_S_A=q_S_A,
@@ -116,11 +110,9 @@ def test_off_policy_monte_carlo_with_function_approximation():
 
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
 
-    epsilon = 0.05
-
     q_S_A = ApproximateStateActionValueEstimator(
         mdp_environment,
-        epsilon,
+        0.05,
         SKLearnSGD(random_state=random_state, scale_eta0_for_y=False),
         GridworldFeatureExtractor(mdp_environment),
         None,
@@ -151,7 +143,6 @@ def test_off_policy_monte_carlo_with_function_approximation():
         num_improvements=100,
         num_episodes_per_improvement=1,
         update_upon_every_visit=True,
-        epsilon=epsilon,
         planning_environment=None,
         make_final_policy_greedy=False,
         q_S_A=q_S_A,
@@ -169,8 +160,8 @@ def test_off_policy_monte_carlo_with_function_approximation():
     assert str(mdp_agent.pi.estimator[mdp_environment.SS[5]][mdp_environment.SS[5].AA[1]]).startswith('-1.4524')
 
     # make greedy
-    assert mdp_agent.pi.estimator.epsilon == 0.05
-    assert q_S_A.improve_policy(mdp_agent, None, None, PolicyImprovementEvent.MAKING_POLICY_GREEDY) == -1
+    q_S_A.epsilon = 0.0
+    assert q_S_A.improve_policy(mdp_agent, None, PolicyImprovementEvent.MAKING_POLICY_GREEDY) == -1
     assert mdp_agent.pi.estimator.epsilon == 0.0
 
 
@@ -180,9 +171,7 @@ def test_invalid_iterate_value_q_pi():
 
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
 
-    epsilon = 0.0
-
-    q_S_A = TabularStateActionValueEstimator(mdp_environment, epsilon, None)
+    q_S_A = TabularStateActionValueEstimator(mdp_environment, 0.0, None)
 
     # target agent
     mdp_agent = StochasticMdpAgent(
@@ -207,7 +196,6 @@ def test_invalid_iterate_value_q_pi():
             num_improvements=100,
             num_episodes_per_improvement=1,
             update_upon_every_visit=True,
-            epsilon=epsilon,
             planning_environment=TrajectorySamplingMdpPlanningEnvironment('foo', random_state, StochasticEnvironmentModel(), 100, None),
             make_final_policy_greedy=False,
             q_S_A=q_S_A,
@@ -215,13 +203,13 @@ def test_invalid_iterate_value_q_pi():
         )
 
     # test warning...no off-policy agent with epsilon=0.0
+    q_S_A.epsilon = 0.0
     iterate_value_q_pi(
         agent=mdp_agent,
         environment=mdp_environment,
         num_improvements=100,
         num_episodes_per_improvement=1,
         update_upon_every_visit=True,
-        epsilon=0.0,
         planning_environment=None,
         make_final_policy_greedy=False,
         q_S_A=q_S_A,
@@ -235,9 +223,7 @@ def test_iterate_value_q_pi_with_pdf():
 
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
 
-    epsilon = 0.1
-
-    q_S_A = TabularStateActionValueEstimator(mdp_environment, epsilon, None)
+    q_S_A = TabularStateActionValueEstimator(mdp_environment, 0.1, None)
 
     mdp_agent = StochasticMdpAgent(
         'test',
@@ -252,7 +238,6 @@ def test_iterate_value_q_pi_with_pdf():
         num_improvements=3000,
         num_episodes_per_improvement=1,
         update_upon_every_visit=False,
-        epsilon=epsilon,
         planning_environment=None,
         make_final_policy_greedy=False,
         q_S_A=q_S_A,
@@ -261,10 +246,11 @@ def test_iterate_value_q_pi_with_pdf():
     )
 
     with pytest.raises(ValueError, match='Epsilon must be >= 0'):
-        q_S_A.improve_policy(mdp_agent, states=None, epsilon=-1.0, event=PolicyImprovementEvent.MAKING_POLICY_GREEDY)
+        q_S_A.epsilon = -1.0
+        q_S_A.improve_policy(mdp_agent, states=None, event=PolicyImprovementEvent.MAKING_POLICY_GREEDY)
 
-    assert q_S_A.improve_policy(mdp_agent, None, None, PolicyImprovementEvent.MAKING_POLICY_GREEDY) == 14
-    assert q_S_A.epsilon == 0.0
+    q_S_A.epsilon = 0.0
+    assert q_S_A.improve_policy(mdp_agent, None, PolicyImprovementEvent.MAKING_POLICY_GREEDY) == 14
 
 
 def test_iterate_value_q_pi_multi_threaded():
@@ -276,9 +262,7 @@ def test_iterate_value_q_pi_multi_threaded():
 
         mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
 
-        epsilon = 0.1
-
-        q_S_A = TabularStateActionValueEstimator(mdp_environment, epsilon, None)
+        q_S_A = TabularStateActionValueEstimator(mdp_environment, 0.1, None)
 
         mdp_agent = StochasticMdpAgent(
             'test',
@@ -293,7 +277,6 @@ def test_iterate_value_q_pi_multi_threaded():
             num_improvements=1000000,
             num_episodes_per_improvement=10,
             update_upon_every_visit=False,
-            epsilon=epsilon,
             planning_environment=None,
             make_final_policy_greedy=False,
             q_S_A=q_S_A,

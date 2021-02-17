@@ -124,7 +124,15 @@ class StateActionValueEstimator(ABC):
         :return: Argument parser.
         """
 
-        return get_base_argument_parser()
+        parser = get_base_argument_parser()
+
+        parser.add_argument(
+            '--epsilon',
+            type=float,
+            help='Total probability mass to spread across all actions. Omit or pass 0.0 to produce a purely greedy agent.'
+        )
+
+        return parser
 
     @classmethod
     @abstractmethod
@@ -132,8 +140,7 @@ class StateActionValueEstimator(ABC):
             cls,
             args: List[str],
             random_state: RandomState,
-            environment: MdpEnvironment,
-            epsilon: float
+            environment: MdpEnvironment
     ) -> Tuple[Any, List[str]]:
         """
         Initialize a state-action value estimator from arguments.
@@ -141,7 +148,6 @@ class StateActionValueEstimator(ABC):
         :param args: Arguments.
         :param random_state: Random state.
         :param environment: Environment.
-        :param epsilon: Epsilon.
         :return: 2-tuple of a state-action value estimator and a list of unparsed arguments.
         """
 
@@ -177,7 +183,6 @@ class StateActionValueEstimator(ABC):
             self,
             agent: MdpAgent,
             states: Optional[Iterable[MdpState]],
-            epsilon: Optional[float],
             event: PolicyImprovementEvent
     ):
         """
@@ -185,18 +190,9 @@ class StateActionValueEstimator(ABC):
 
         :param agent: Agent whose policy should be improved.
         :param states: States to improve, or None for all states.
-        :param epsilon: Total probability mass to divide across all actions for a state, resulting in an epsilon-greedy
-        policy. Must be >= 0.0 if given. Pass None to generate a purely greedy policy.
         :param event: Event that triggered the improvement.
         :return: Number of states improved.
         """
-
-        if epsilon is None:
-            epsilon = 0.0
-        elif epsilon < 0.0:
-            raise ValueError('Epsilon must be >= 0')
-
-        self.epsilon = epsilon
 
         if event == PolicyImprovementEvent.FINISHED_EVALUATION:
             self.evaluation_policy_improvement_count += 1
@@ -245,6 +241,8 @@ class StateActionValueEstimator(ABC):
 
         if epsilon is None:
             epsilon = 0.0
+        elif epsilon < 0.0:
+            raise ValueError('epsilon must be >= 0')
 
         self.epsilon = epsilon
 

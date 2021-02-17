@@ -34,7 +34,6 @@ def test_evaluate_q_pi_invalid_n_steps():
             alpha=0.1,
             mode=Mode.Q_LEARNING,
             n_steps=-1,
-            epsilon=epsilon,
             planning_environment=None,
             q_S_A=q_S_A
         )

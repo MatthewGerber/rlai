@@ -248,8 +248,7 @@ class TabularStateActionValueEstimator(StateActionValueEstimator):
             cls,
             args: List[str],
             random_state: RandomState,
-            environment: MdpEnvironment,
-            epsilon: float
+            environment: MdpEnvironment
     ) -> Tuple[StateActionValueEstimator, List[str]]:
         """
         Initialize a state-action value estimator from arguments.
@@ -257,7 +256,6 @@ class TabularStateActionValueEstimator(StateActionValueEstimator):
         :param args: Arguments.
         :param random_state: Random state.
         :param environment: Environment.
-        :param epsilon: Epsilon.
         :return: 2-tuple of a state-action value estimator and a list of unparsed arguments.
         """
 
@@ -265,7 +263,6 @@ class TabularStateActionValueEstimator(StateActionValueEstimator):
 
         estimator = TabularStateActionValueEstimator(
             environment=environment,
-            epsilon=epsilon,
             **vars(parsed_args)
         )
 
@@ -311,7 +308,6 @@ class TabularStateActionValueEstimator(StateActionValueEstimator):
             self,
             agent: MdpAgent,
             states: Optional[Iterable[MdpState]],
-            epsilon: Optional[float],
             event: PolicyImprovementEvent
     ) -> int:
         """
@@ -319,8 +315,6 @@ class TabularStateActionValueEstimator(StateActionValueEstimator):
 
         :param agent: Agent whose policy should be improved.
         :param states: States to improve, or None for all states.
-        :param epsilon: Total probability mass to divide across all actions for a state, resulting in an epsilon-greedy
-        policy. Must be >= 0.0 if given. Pass None to generate a purely greedy policy.
         :param event: Event that triggered the improvement.
         :return: Number of states improved.
         """
@@ -328,7 +322,6 @@ class TabularStateActionValueEstimator(StateActionValueEstimator):
         super().improve_policy(
             agent=agent,
             states=states,
-            epsilon=epsilon,
             event=event
         )
 

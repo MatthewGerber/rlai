@@ -82,7 +82,6 @@ class FeatureExtractor(ABC):
         if num_states != num_actions:
             raise ValueError(f'Expected {num_states} actions but got {num_actions}')
 
-    @abstractmethod
     def get_feature_names(
             self
     ) -> List[str]:
@@ -252,6 +251,7 @@ class StateActionIdentityFeatureExtractor(FeatureExtractor):
 
         :return: List of feature names.
         """
+
         return ['s', 'a']
 
     def __init__(

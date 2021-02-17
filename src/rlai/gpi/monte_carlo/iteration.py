@@ -23,7 +23,6 @@ def iterate_value_q_pi(
         num_improvements: int,
         num_episodes_per_improvement: int,
         update_upon_every_visit: bool,
-        epsilon: Optional[float],
         planning_environment: Optional[MdpPlanningEnvironment],
         make_final_policy_greedy: bool,
         q_S_A: StateActionValueEstimator,
@@ -44,8 +43,6 @@ def iterate_value_q_pi(
     :param num_episodes_per_improvement: Number of policy evaluation episodes to execute for each iteration of
     improvement. Passing `1` will result in the Monte Carlo ES (Exploring Starts) algorithm.
     :param update_upon_every_visit: See `rlai.gpi.monte_carlo.evaluation.evaluate_q_pi`.
-    :param epsilon: Total probability mass to spread across all actions, resulting in an epsilon-greedy policy. Must
-    be >= 0 if provided.
     :param planning_environment: Not support. Will raise exception if passed.
     :param make_final_policy_greedy: Whether or not to make the agent's final policy greedy with respect to the q-values
     that have been learned, regardless of the value of epsilon used to estimate the q-values.
@@ -68,7 +65,7 @@ def iterate_value_q_pi(
     if planning_environment is not None:
         raise ValueError('Planning environments are not currently supported for Monte Carlo iteration.')
 
-    if (epsilon is None or epsilon == 0.0) and off_policy_agent is None:
+    if (q_S_A.epsilon is None or q_S_A.epsilon == 0.0) and off_policy_agent is None:
         warnings.warn('epsilon is 0.0 and there is no off-policy agent. Exploration and convergence not guaranteed. Consider passing epsilon > 0 or a soft off-policy agent to maintain exploration.')
 
     if checkpoint_path is not None:
@@ -106,7 +103,6 @@ def iterate_value_q_pi(
         num_states_improved = q_S_A.improve_policy(
             agent=agent,
             states=evaluated_states,
-            epsilon=epsilon,
             event=PolicyImprovementEvent.FINISHED_EVALUATION
         )
 
@@ -133,7 +129,6 @@ def iterate_value_q_pi(
                 'num_improvements': num_improvements - i,
                 'num_episodes_per_improvement': num_episodes_per_improvement,
                 'update_upon_every_visit': update_upon_every_visit,
-                'epsilon': epsilon,
                 'planning_environment': planning_environment,
                 'make_final_policy_greedy': make_final_policy_greedy,
                 'q_S_A': q_S_A,
@@ -150,10 +145,10 @@ def iterate_value_q_pi(
     print(f'Value iteration of q_pi terminated after {i} iteration(s).')
 
     if make_final_policy_greedy:
+        q_S_A.epsilon = 0.0
         q_S_A.improve_policy(
             agent=agent,
             states=None,
-            epsilon=0.0,
             event=PolicyImprovementEvent.MAKING_POLICY_GREEDY
         )
 
