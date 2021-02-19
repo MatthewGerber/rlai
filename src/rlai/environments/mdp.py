@@ -30,11 +30,12 @@ class MdpEnvironment(Environment, ABC):
     def reset_for_new_run(
             self,
             agent: MdpAgent
-    ) -> State:
+    ) -> MdpState:
         """
         Reset the the environment to a random nonterminal state, if any are specified, or to None.
 
         :param agent: Agent used to generate on-the-fly state identifiers.
+        :return: Initial state.
         """
 
         super().reset_for_new_run(agent)
