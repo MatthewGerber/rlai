@@ -1,57 +1,91 @@
 import threading
+from abc import ABC, abstractmethod
 from functools import partial
-from typing import List, Tuple, Optional
+from typing import Tuple, Optional, Any, Dict
 
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from numpy.random import RandomState
 
 from rlai.actions import Action
 from rlai.agents import Agent
 from rlai.agents.mdp import MdpAgent
 from rlai.environments.mdp import MdpEnvironment
+from rlai.meta import rl_text
 from rlai.rewards import Reward
 from rlai.states.mdp import MdpState
 
 
-class RestMdpEnvironment(MdpEnvironment):
+@rl_text(chapter='Environments', page=1)
+class RestMdpEnvironment(MdpEnvironment, ABC):
+    """
+    An MDP environment served up via calls to REST entpoints.
+    """
 
-    @classmethod
-    def init_from_arguments(
-            cls,
-            args: List[str],
-            random_state: RandomState
-    ) -> Tuple[MdpEnvironment, List[str]]:
+    @staticmethod
+    def rest_reset_for_new_run(
+            self
+    ) -> str:
+        """
+        Reset the environment for a new run.
 
-        return RestMdpEnvironment('test', random_state, None), args
+        :param self: Reference to the environment. The current function is called by Flask with no arguments, which is
+        why we set up a partial function, pass it the environment, and mark the current function static.
+        :return: Empty string.
+        """
+
+        self.state = self.init_state_from_rest_request_dict(request.json, False)
+        self.reset_event.set()
+
+        return ""
+
+    @abstractmethod
+    def init_state_from_rest_request_dict(
+            self,
+            rest_request_dict: Dict[Any, Any],
+            terminal: bool
+    ) -> MdpState:
+        """
+        Initialize a state from its REST request dictionary.
+
+        :param rest_request_dict: REST request dictionary.
+        :param terminal: Whether or not the state is terminal.
+        :return: State.
+        """
 
     def reset_for_new_run(
             self,
             agent: MdpAgent
     ) -> MdpState:
 
-        self.state_reward_event.wait()
-        self.state_reward_event.clear()
+        self.reset_event.wait()
+        self.reset_event.clear()
 
         return self.state
 
     @staticmethod
-    def get_action(
-            self_ref
+    def rest_get_action(
+            self
     ):
-        self_ref.action_event.wait()
-        self_ref.action_event.clear()
+        self.action_event.wait()
+        self.action_event.clear()
 
         return jsonify(
-            action=self_ref.action.i
+            action=self.action.name,
+            value=1.0
         )
 
     @staticmethod
-    def set_state(
-            self_ref
+    def rest_set_state(
+            self
     ):
-        self_ref.state = MdpState(1234, [Action(1), Action(2), Action(3)], False)
-        self_ref.reward = Reward(None, 1.0)
-        self_ref.state_reward_event.set()
+        dead = request.json['dead']
+        win = request.json['win']
+        terminal = dead or win
+        reward = 1.0 if win else 0.0
+
+        self.state = self.init_state_from_rest_request_dict(request.json, terminal=terminal)
+        self.reward = Reward(None, reward)
+        self.state_reward_event.set()
 
         return ""
 
@@ -91,28 +125,35 @@ class RestMdpEnvironment(MdpEnvironment):
             T=T
         )
 
+        self.flask_app = Flask(__name__)
+
+        self.reset_event = threading.Event()
+        self.reset_event.clear()
+        self.flask_app.add_url_rule(
+            rule='/reset-for-new-run',
+            endpoint='reset-for-new-run',
+            view_func=partial(self.rest_reset_for_new_run, self=self),
+            methods=['PUT']
+        )
+
         self.action: Optional[Action] = None
         self.action_event = threading.Event()
         self.action_event.clear()
+        self.flask_app.add_url_rule(
+            rule='/get-action',
+            endpoint='get-action',
+            view_func=partial(self.rest_get_action, self=self),
+            methods=['GET']
+        )
 
         self.state: Optional[MdpState] = None
         self.reward: Optional[Reward] = None
         self.state_reward_event = threading.Event()
         self.state_reward_event.clear()
-
-        self.flask_app = Flask(__name__)
-
-        self.flask_app.add_url_rule(
-            rule='/get-action',
-            endpoint='get-action',
-            view_func=partial(self.get_action, self_ref=self),
-            methods=['GET']
-        )
-
         self.flask_app.add_url_rule(
             rule='/set-state',
             endpoint='set-state',
-            view_func=partial(self.set_state, self_ref=self),
+            view_func=partial(self.rest_set_state, self=self),
             methods=['PUT']
         )
 
