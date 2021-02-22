@@ -1,3 +1,4 @@
+import logging
 import threading
 from abc import ABC, abstractmethod
 from functools import partial
@@ -164,5 +165,8 @@ class RestMdpEnvironment(MdpEnvironment, ABC):
                 'use_reloader': False
             }
         )
+
+        # log = logging.getLogger('werkzeug')
+        # log.disabled = True
 
         self.flask_thread.start()
