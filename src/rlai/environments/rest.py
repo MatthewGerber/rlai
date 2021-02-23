@@ -1,6 +1,6 @@
-import logging
 import threading
 from abc import ABC, abstractmethod
+from argparse import ArgumentParser
 from functools import partial
 from typing import Tuple, Optional, Any, Dict
 
@@ -21,6 +21,37 @@ class RestMdpEnvironment(MdpEnvironment, ABC):
     """
     An MDP environment served up via calls to REST entpoints.
     """
+
+    @classmethod
+    def get_argument_parser(
+            cls,
+    ) -> ArgumentParser:
+        """
+        Get argument parser.
+
+        :return: Argument parser.
+        """
+
+        parser = ArgumentParser(
+            parents=[super().get_argument_parser()],
+            allow_abbrev=False,
+            add_help=False
+        )
+
+        parser.add_argument(
+            '--port',
+            type=int,
+            default=54321,
+            help='Port to serve REST endpoints on.'
+        )
+
+        parser.add_argument(
+            '--logging',
+            action='store_true',
+            help='Whether or not to print Flask logging messages to console.'
+        )
+
+        return parser
 
     @staticmethod
     def rest_reset_for_new_run(
@@ -141,6 +172,8 @@ class RestMdpEnvironment(MdpEnvironment, ABC):
             name: str,
             random_state: RandomState,
             T: Optional[int],
+            port: int,
+            logging: bool
     ):
         """
         Initialize the MDP environment.
@@ -148,6 +181,8 @@ class RestMdpEnvironment(MdpEnvironment, ABC):
         :param name: Name.
         :param random_state: Random state.
         :param T: Maximum number of steps to run, or None for no limit.
+        :param port: Port to serve REST endpoints on.
+        :param logging: Whether or not to print Flask logging messages to console.
         """
 
         super().__init__(
@@ -200,6 +235,7 @@ class RestMdpEnvironment(MdpEnvironment, ABC):
         )
 
         # disable noisy logging
+        # import logging
         # log = logging.getLogger('werkzeug')
         # log.disabled = True
 
