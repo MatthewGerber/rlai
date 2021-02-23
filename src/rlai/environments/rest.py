@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from functools import partial
 from typing import Tuple, Optional, Any, Dict
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, Response
 from numpy.random import RandomState
 
 from rlai.actions import Action
@@ -30,65 +30,83 @@ class RestMdpEnvironment(MdpEnvironment, ABC):
         Reset the environment for a new run.
 
         :param self: Reference to the environment. The current function is called by Flask with no arguments, which is
-        why we set up a partial function, pass it the environment, and mark the current function static.
+        why we set up a partial function, pass it the environment, and mark the current function static. If the
+        function is not marked static, then the self instance and the partial argument both get passed.
         :return: Empty string.
         """
 
-        self.state = self.init_state_from_rest_request_dict(request.json, False)
-        self.reset_event.set()
+        self.state, _ = self.init_state_from_rest_put_dict(request.json)
+        self.client_reset_for_new_run.set()
+
+        return ""
+
+    @staticmethod
+    def rest_get_action(
+            self
+    ) -> Response:
+        """
+        Get the local environment's next action, to be used in advancing the calling environment.
+
+        :param self: Reference to the environment. The current function is called by Flask with no arguments, which is
+        why we set up a partial function, pass it the environment, and mark the current function static. If the
+        function is not marked static, then the self instance and the partial argument both get passed.
+        :return: Response containing the action to be used to advance the calling environment.
+        """
+
+        # wait for the server to set the action
+        self.server_set_action.wait()
+        self.server_set_action.clear()
+
+        return jsonify(
+            action=self.action.__dict__
+        )
+
+    @staticmethod
+    def rest_set_state(
+            self
+    ) -> str:
+        """
+        Set the local environment's next state, which resulted from the action returned to the calling environment.
+
+        :param self: Reference to the environment. The current function is called by Flask with no arguments, which is
+        why we set up a partial function, pass it the environment, and mark the current function static. If the
+        function is not marked static, then the self instance and the partial argument both get passed.
+        :return: Empty string.
+        """
+
+        self.state, self.reward = self.init_state_from_rest_put_dict(request.json)
+        self.client_set_state_and_reward.set()
 
         return ""
 
     @abstractmethod
-    def init_state_from_rest_request_dict(
+    def init_state_from_rest_put_dict(
             self,
-            rest_request_dict: Dict[Any, Any],
-            terminal: bool
-    ) -> MdpState:
+            rest_request_dict: Dict[Any, Any]
+    ) -> Tuple[MdpState, Reward]:
         """
-        Initialize a state from its REST request dictionary.
+        Initialize a state from the dictionary provided by the REST PUT (e.g., for setting and resetting the state).
 
-        :param rest_request_dict: REST request dictionary.
-        :param terminal: Whether or not the state is terminal.
-        :return: State.
+        :param rest_request_dict: REST PUT dictionary.
+        :return: 2-tuple of the state and reward.
         """
 
     def reset_for_new_run(
             self,
             agent: MdpAgent
     ) -> MdpState:
+        """
+        Reset the environment for a new run.
 
-        self.reset_event.wait()
-        self.reset_event.clear()
+        :param agent: Agent.
+        :return: Initial state.
+        """
+
+        # wait for the client to reset
+        self.client_reset_for_new_run.wait()
+        self.client_reset_for_new_run.clear()
 
         return self.state
-
-    @staticmethod
-    def rest_get_action(
-            self
-    ):
-        self.action_event.wait()
-        self.action_event.clear()
-
-        return jsonify(
-            action=self.action.name,
-            value=1.0
-        )
-
-    @staticmethod
-    def rest_set_state(
-            self
-    ):
-        dead = request.json['dead']
-        win = request.json['win']
-        terminal = dead or win
-        reward = 1.0 if win else 0.0
-
-        self.state = self.init_state_from_rest_request_dict(request.json, terminal=terminal)
-        self.reward = Reward(None, reward)
-        self.state_reward_event.set()
-
-        return ""
 
     def advance(
             self,
@@ -97,12 +115,24 @@ class RestMdpEnvironment(MdpEnvironment, ABC):
             a: Action,
             agent: Agent
     ) -> Tuple[MdpState, Reward]:
+        """
+        Advance the simulation environment by setting the action for the client to retrieve and waiting for the client
+        to send the updated state back.
 
+        :param state: Current state.
+        :param t: Current time step.
+        :param a: Action for the client environment to take.
+        :param agent: Agent.
+        :return: Next state and reward.
+        """
+
+        # set action for client to retrieve and signal event
         self.action = a
-        self.action_event.set()
+        self.server_set_action.set()
 
-        self.state_reward_event.wait()
-        self.state_reward_event.clear()
+        # wait for the client to reply
+        self.client_set_state_and_reward.wait()
+        self.client_set_state_and_reward.clear()
 
         return self.state, self.reward
 
@@ -128,8 +158,10 @@ class RestMdpEnvironment(MdpEnvironment, ABC):
 
         self.flask_app = Flask(__name__)
 
-        self.reset_event = threading.Event()
-        self.reset_event.clear()
+        # set up REST endpoints
+
+        self.client_reset_for_new_run = threading.Event()
+        self.client_reset_for_new_run.clear()
         self.flask_app.add_url_rule(
             rule='/reset-for-new-run',
             endpoint='reset-for-new-run',
@@ -138,8 +170,8 @@ class RestMdpEnvironment(MdpEnvironment, ABC):
         )
 
         self.action: Optional[Action] = None
-        self.action_event = threading.Event()
-        self.action_event.clear()
+        self.server_set_action = threading.Event()
+        self.server_set_action.clear()
         self.flask_app.add_url_rule(
             rule='/get-action',
             endpoint='get-action',
@@ -149,8 +181,8 @@ class RestMdpEnvironment(MdpEnvironment, ABC):
 
         self.state: Optional[MdpState] = None
         self.reward: Optional[Reward] = None
-        self.state_reward_event = threading.Event()
-        self.state_reward_event.clear()
+        self.client_set_state_and_reward = threading.Event()
+        self.client_set_state_and_reward.clear()
         self.flask_app.add_url_rule(
             rule='/set-state',
             endpoint='set-state',
@@ -158,6 +190,7 @@ class RestMdpEnvironment(MdpEnvironment, ABC):
             methods=['PUT']
         )
 
+        # run flask server in separate thread
         self.flask_thread = threading.Thread(
             target=self.flask_app.run,
             kwargs={
@@ -166,6 +199,7 @@ class RestMdpEnvironment(MdpEnvironment, ABC):
             }
         )
 
+        # disable noisy logging
         # log = logging.getLogger('werkzeug')
         # log.disabled = True
 
