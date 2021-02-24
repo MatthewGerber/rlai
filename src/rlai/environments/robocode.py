@@ -75,20 +75,44 @@ class RobocodeEnvironment(RestMdpEnvironment):
         :return: 2-tuple of the state and reward.
         """
 
-        # TODO:  process "events" entry
-        dead = rest_request_dict['dead']
-        win = rest_request_dict['win']
-        terminal = dead or win
+        # process all events that came through with the put
+        dead = False
+        won = False
+        bullet_power_hit_others = 0
+        bullet_power_hit_self = 0
+        for event_wrapper in rest_request_dict['events']:
+            event = event_wrapper['event']
+            event_type = event_wrapper['type']
+            if event_type == 'DeathEvent':
+                dead = True
+            elif event_type == 'WinEvent':
+                won = True
+            elif event_type == 'BulletHitEvent':
+                bullet_power_hit_others += event['bullet']['power']
+            elif event_type == 'HitByBulletEvent':
+                bullet_power_hit_self += event['bullet']['power']
 
+        # the round terminates either with death or victory -- it's a harsh world out there.
+        terminal = dead or won
+
+        # initialize the state
         state = RobocodeState(
             **rest_request_dict['state'],
             actions=self.robot_actions,
             terminal=terminal
         )
 
+        # reward structure
+        if dead:
+            reward_value = -100.0
+        elif won:
+            reward_value = 100.0
+        else:
+            reward_value = bullet_power_hit_others - bullet_power_hit_self
+
         reward = Reward(
             i=None,
-            r=1.0 if win else 0.0
+            r=reward_value
         )
 
         return state, reward
@@ -151,9 +175,6 @@ class RobocodeState(MdpState):
             width: float,
             x: float,
             y: float,
-            scanned_robot_event: Dict[Any, Any],
-            dead: bool,
-            win: bool,
             actions: List[Action],
             terminal: bool
     ):
@@ -179,9 +200,6 @@ class RobocodeState(MdpState):
         :param width: Robot width (pixels).
         :param x: Robot x position.
         :param y: Robot y position.
-        :param scanned_robot_event: Event information for scanning of another robot.
-        :param dead: Whether or not the robot is dead.
-        :param win: Whether or not the robot has won.
         :param actions: List of actions that can be taken.
         :param terminal: Whether or not the state is terminal.
         """
@@ -211,9 +229,6 @@ class RobocodeState(MdpState):
         self.width = width
         self.x = x
         self.y = y
-        self.scanned_robot_event = scanned_robot_event
-        self.dead = dead
-        self.win = win
 
 
 @rl_text(chapter='Feature Extractors', page=1)

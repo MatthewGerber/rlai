@@ -2,7 +2,10 @@ from typing import Optional
 
 import numpy as np
 
+from rlai.meta import rl_text
 
+
+@rl_text(chapter='Actions', page=1)
 class Action:
     """
     Base class for all actions.
@@ -71,6 +74,7 @@ class Action:
         return self.i != other.i
 
 
+@rl_text(chapter='Actions', page=1)
 class DiscretizedAction(Action):
     """
     Action that is derived from discretizing an n-dimensional continuous action space.
