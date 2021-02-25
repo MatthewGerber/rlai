@@ -527,6 +527,7 @@ class FeatureContext:
         :param pole_left_of_vertical: Left of vertical.
         :param pole_rotating_left: Rotating left.
         """
+
         self.cart_left_of_center = cart_left_of_center
         self.cart_moving_left = cart_moving_left
         self.pole_left_of_vertical = pole_left_of_vertical

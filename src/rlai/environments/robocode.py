@@ -1,5 +1,6 @@
 from argparse import ArgumentParser
-from typing import List, Union, Tuple, Dict, Any, Optional
+from itertools import product
+from typing import List, Tuple, Dict, Any, Optional
 
 import numpy as np
 from numpy.random import RandomState
@@ -12,6 +13,8 @@ from rlai.rewards import Reward
 from rlai.states.mdp import MdpState
 from rlai.utils import parse_arguments
 from rlai.value_estimation.function_approximation.models import StateActionInteractionFeatureExtractor
+from rlai.value_estimation.function_approximation.models.feature_extraction import NonstationaryFeatureScaler, \
+    OneHotCategoricalFeatureInteracter
 
 
 @rl_text(chapter='Environments', page=1)
@@ -66,38 +69,37 @@ class RobocodeEnvironment(RestMdpEnvironment):
 
     def init_state_from_rest_put_dict(
             self,
-            rest_request_dict: Dict[Any, Any]
+            rest_put_dict: Dict[Any, Any]
     ) -> Tuple[MdpState, Reward]:
         """
         Initialize a state from the dictionary provided by the REST PUT (e.g., for setting and resetting the state).
 
-        :param rest_request_dict: REST PUT dictionary.
+        :param rest_put_dict: REST PUT dictionary.
         :return: 2-tuple of the state and reward.
         """
 
-        # process all events that came through with the put
-        dead = False
-        won = False
-        bullet_power_hit_others = 0
-        bullet_power_hit_self = 0
-        for event_wrapper in rest_request_dict['events']:
-            event = event_wrapper['event']
-            event_type = event_wrapper['type']
-            if event_type == 'DeathEvent':
-                dead = True
-            elif event_type == 'WinEvent':
-                won = True
-            elif event_type == 'BulletHitEvent':
-                bullet_power_hit_others += event['bullet']['power']
-            elif event_type == 'HitByBulletEvent':
-                bullet_power_hit_self += event['bullet']['power']
+        event_type_events: Dict[str, List[Dict]] = rest_put_dict['events']
+
+        dead = len(event_type_events.get('DeathEvent', [])) > 0
+        won = len(event_type_events.get('WinEvent', [])) > 0
+
+        bullet_power_hit_self = sum([
+            bullet_event['bullet']['power']
+            for bullet_event in event_type_events.get('BulletHitEvent', [])
+        ])
+
+        bullet_power_hit_others = sum([
+            bullet_event['bullet']['power']
+            for bullet_event in event_type_events.get('HitByBulletEvent', [])
+        ])
 
         # the round terminates either with death or victory -- it's a harsh world out there.
         terminal = dead or won
 
         # initialize the state
         state = RobocodeState(
-            **rest_request_dict['state'],
+            **rest_put_dict['state'],
+            events=event_type_events,
             actions=self.robot_actions,
             terminal=terminal
         )
@@ -141,10 +143,21 @@ class RobocodeEnvironment(RestMdpEnvironment):
             logging=logging
         )
 
+        action_name_action_value_list = [
+            ('ahead', 25.0),
+            ('back', 25.0),
+            ('turnLeft', 5.0),
+            ('turnRight', 5.0),
+            ('turnRadarLeft', 5.0),
+            ('turnRadarRight', 5.0),
+            ('turnGunLeft', 5.0),
+            ('turnGunRight', 5.0),
+            ('fire', 1.0)
+        ]
+
         self.robot_actions = [
-            RobocodeAction(0, 'ahead', 50.0),
-            RobocodeAction(1, 'back', 50.0),
-            RobocodeAction(2, 'fire', 1.0)
+            RobocodeAction(i, action_name, action_value)
+            for i, (action_name, action_value) in enumerate(action_name_action_value_list)
         ]
 
 
@@ -175,6 +188,7 @@ class RobocodeState(MdpState):
             width: float,
             x: float,
             y: float,
+            events: Dict[str, List[Dict]],
             actions: List[Action],
             terminal: bool
     ):
@@ -200,6 +214,7 @@ class RobocodeState(MdpState):
         :param width: Robot width (pixels).
         :param x: Robot x position.
         :param y: Robot y position.
+        :param events: List of events sent to the robot since the previous time the state was set.
         :param actions: List of actions that can be taken.
         :param terminal: Whether or not the state is terminal.
         """
@@ -229,6 +244,7 @@ class RobocodeState(MdpState):
         self.width = width
         self.x = x
         self.y = y
+        self.events = events
 
 
 @rl_text(chapter='Feature Extractors', page=1)
@@ -238,25 +254,115 @@ class RobocodeFeatureExtractor(StateActionInteractionFeatureExtractor):
     """
 
     @classmethod
+    def get_argument_parser(
+            cls
+    ) -> ArgumentParser:
+        """
+        Get argument parser.
+
+        :return: Argument parser.
+        """
+
+        parser = ArgumentParser(
+            prog=f'{cls.__module__}.{cls.__name__}',
+            parents=[super().get_argument_parser()],
+            allow_abbrev=False,
+            add_help=False
+        )
+
+        return parser
+
+    @classmethod
     def init_from_arguments(
             cls,
             args: List[str],
-            environment: MdpEnvironment
+            environment: RobocodeEnvironment
     ) -> Tuple[StateActionInteractionFeatureExtractor, List[str]]:
+        """
+        Initialize a feature extractor from arguments.
 
-        return RobocodeFeatureExtractor(environment, [Action(1), Action(2), Action(3)]), args
+        :param args: Arguments.
+        :param environment: Environment.
+        :return: 2-tuple of a feature extractor and a list of unparsed arguments.
+        """
+
+        parsed_args, unparsed_args = parse_arguments(cls, args)
+
+        fex = RobocodeFeatureExtractor(
+            environment=environment
+        )
+
+        return fex, unparsed_args
 
     def extract(
             self,
-            states: List[MdpState],
+            states: List[RobocodeState],
             actions: List[Action],
             for_fitting: bool
-    ) -> Union[np.ndarray]:
+    ) -> np.ndarray:
+        """
+        Extract features for state-action pairs.
 
-        return np.array([
-            [1, 2, 3]
-            for a in actions
+        :param states: States.
+        :param actions: Actions.
+        :param for_fitting: Whether the extracted features will be used for fitting (True) or prediction (False).
+        :return: State-feature numpy.ndarray.
+        """
+
+        self.check_state_and_action_lists(states, actions)
+
+        X = np.array([
+            [
+                state.radar_heading - state.gun_heading
+            ]
+            for state in states
         ])
+
+        contexts = [
+            FeatureContext(
+                scanned_robot=len(state.events.get('ScannedRobotEvent', [])) > 0
+            )
+            for state in states
+        ]
+
+        X = self.context_interacter.interact(X, contexts)
+
+        X = self.feature_scaler.scale_features(X, for_fitting)
+
+        X = self.interact(
+            state_features=X,
+            actions=actions
+        )
+
+        return X
+
+    def __init__(
+            self,
+            environment: RobocodeEnvironment
+    ):
+        """
+        Initialize the feature extractor.
+
+        :param environment: Environment.
+        """
+
+        super().__init__(
+            environment=environment,
+            actions=environment.robot_actions
+        )
+
+        self.contexts = [
+            FeatureContext(*context_bools)
+            for context_bools in product([True, False])
+        ]
+
+        self.context_interacter = OneHotCategoricalFeatureInteracter(self.contexts)
+
+        self.feature_scaler = NonstationaryFeatureScaler(
+            num_observations_refit_feature_scaler=2000,
+            refit_history_length=100000,
+            refit_weight_decay=0.99999
+        )
 
 
 @rl_text(chapter='Actions', page=1)
@@ -285,3 +391,74 @@ class RobocodeAction(Action):
         )
 
         self.value = value
+
+
+class FeatureContext:
+    """
+    Categorical context within with a feature explains an outcome independently of its explanation in another context.
+    This works quite similarly to traditional categorical interactions, except that they are specified programmatically
+    by this class.
+    """
+
+    def __init__(
+            self,
+            scanned_robot: bool
+    ):
+        """
+        Initialize the context.
+
+        :param scanned_robot: Scanned a robot.
+        """
+
+        self.scanned_robot = scanned_robot
+        self.id = str(self)
+
+    def __eq__(
+            self,
+            other
+    ) -> bool:
+        """
+        Check equality.
+
+        :param other: Other context.
+        :return: True if equal and False otherwise.
+        """
+
+        other: FeatureContext
+
+        return self.id == other.id
+
+    def __ne__(
+            self,
+            other
+    ) -> bool:
+        """
+        Check inequality.
+
+        :param other: Other context.
+        :return: True if unequal and False otherwise.
+        """
+
+        return not (self == other)
+
+    def __hash__(
+            self
+    ) -> int:
+        """
+        Get hash code.
+
+        :return: Hash code.
+        """
+
+        return hash(self.id)
+
+    def __str__(
+            self
+    ) -> str:
+        """
+        Get string.
+
+        :return: String.
+        """
+
+        return f'{self.scanned_robot}'
