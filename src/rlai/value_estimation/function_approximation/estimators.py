@@ -307,7 +307,10 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         if self.experience_pending:
 
             X = self.get_X(self.experience_states, self.experience_actions, True)
-            self.model.fit(X, self.experience_values, self.weights)
+
+            # feature extractor might return None if extracted result would be invalid
+            if X is not None:
+                self.model.fit(X, self.experience_values, self.weights)
 
             self.experience_states.clear()
             self.experience_actions.clear()
@@ -333,6 +336,10 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         # replicate the state for each action to evaluate each state-action pair
         X = self.get_X([state] * len(actions), actions, False)
 
+        # feature extractor might return None if extracted result would be invalid
+        if X is None:
+            return np.repeat(0.0, len(actions))
+
         return self.model.evaluate(X)
 
     def get_X(
@@ -351,6 +358,10 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         """
 
         X = self.feature_extractor.extract(states, actions, for_fitting)
+
+        # feature extractor might be unable to extract features
+        if X is None:
+            return None
 
         # if no formula, then the feature extraction result must be a numpy.ndarray to be used directly.
         if self.formula is None:

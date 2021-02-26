@@ -1,3 +1,4 @@
+import math
 from argparse import ArgumentParser
 from itertools import product
 from typing import List, Tuple, Dict, Any, Optional
@@ -67,7 +68,7 @@ class RobocodeEnvironment(RestMdpEnvironment):
 
         return robocode, unparsed_args
 
-    def init_state_from_rest_put_dict(
+    def extract_state_and_reward_from_put_request(
             self,
             rest_put_dict: Dict[Any, Any]
     ) -> Tuple[MdpState, Reward]:
@@ -83,16 +84,6 @@ class RobocodeEnvironment(RestMdpEnvironment):
         dead = len(event_type_events.get('DeathEvent', [])) > 0
         won = len(event_type_events.get('WinEvent', [])) > 0
 
-        bullet_power_hit_self = sum([
-            bullet_event['bullet']['power']
-            for bullet_event in event_type_events.get('BulletHitEvent', [])
-        ])
-
-        bullet_power_hit_others = sum([
-            bullet_event['bullet']['power']
-            for bullet_event in event_type_events.get('HitByBulletEvent', [])
-        ])
-
         # the round terminates either with death or victory -- it's a harsh world out there.
         terminal = dead or won
 
@@ -105,12 +96,23 @@ class RobocodeEnvironment(RestMdpEnvironment):
         )
 
         # reward structure
-        if dead:
-            reward_value = -100.0
-        elif won:
-            reward_value = 100.0
-        else:
-            reward_value = bullet_power_hit_others - bullet_power_hit_self
+
+        bullet_power_hit_others = sum([
+            bullet_event['bullet']['power']
+            for bullet_event in event_type_events.get('BulletHitEvent', [])
+        ])
+
+        bullet_power_hit_self = sum([
+            bullet_event['bullet']['power']
+            for bullet_event in event_type_events.get('HitByBulletEvent', [])
+        ])
+
+        # if dead:
+        #     reward_value = -100.0
+        # elif won:
+        #     reward_value = 100.0
+        # else:
+        reward_value = bullet_power_hit_others - bullet_power_hit_self
 
         reward = Reward(
             i=None,
@@ -124,7 +126,7 @@ class RobocodeEnvironment(RestMdpEnvironment):
             random_state: RandomState,
             T: Optional[int],
             port: int,
-            logging: bool
+            rest_verbose: bool
     ):
         """
         Initialize the MDP environment.
@@ -132,7 +134,7 @@ class RobocodeEnvironment(RestMdpEnvironment):
         :param random_state: Random state.
         :param T: Maximum number of steps to run, or None for no limit.
         :param port: Port to serve REST endpoints on.
-        :param logging: Whether or not to print Flask logging messages to console.
+        :param rest_verbose: Whether or not to print Flask logging messages to console.
         """
 
         super().__init__(
@@ -140,16 +142,16 @@ class RobocodeEnvironment(RestMdpEnvironment):
             random_state=random_state,
             T=T,
             port=port,
-            logging=logging
+            rest_verbose=rest_verbose
         )
 
         action_name_action_value_list = [
-            ('ahead', 25.0),
-            ('back', 25.0),
-            ('turnLeft', 5.0),
-            ('turnRight', 5.0),
+            # ('ahead', 25.0),
+            # ('back', 25.0),
+            # ('turnLeft', 5.0),
+            # ('turnRight', 5.0),
             ('turnRadarLeft', 5.0),
-            ('turnRadarRight', 5.0),
+            # ('turnRadarRight', 5.0),
             ('turnGunLeft', 5.0),
             ('turnGunRight', 5.0),
             ('fire', 1.0)
@@ -311,21 +313,32 @@ class RobocodeFeatureExtractor(StateActionInteractionFeatureExtractor):
 
         self.check_state_and_action_lists(states, actions)
 
+        self.most_recent_scanned_robot = next((
+            state.events['ScannedRobotEvent'][0]
+            for state in states
+            if 'ScannedRobotEvent' in state.events
+        ), self.most_recent_scanned_robot)
+
+        if self.most_recent_scanned_robot is None:
+            return None
+
+        bearing_from_self = math.degrees(self.most_recent_scanned_robot['bearing'])
+
         X = np.array([
             [
-                state.radar_heading - state.gun_heading
+                state.gun_heading - self.normalize(state.heading + bearing_from_self)
             ]
             for state in states
         ])
 
-        contexts = [
-            FeatureContext(
-                scanned_robot=len(state.events.get('ScannedRobotEvent', [])) > 0
-            )
-            for state in states
-        ]
-
-        X = self.context_interacter.interact(X, contexts)
+        # contexts = [
+        #     FeatureContext(
+        #         scanned_robot=scanned_robot_event is not None
+        #     )
+        #     for state, scanned_robot_event in zip(states, scanned_robot_events)
+        # ]
+        #
+        # X = self.context_interacter.interact(X, contexts)
 
         X = self.feature_scaler.scale_features(X, for_fitting)
 
@@ -335,6 +348,18 @@ class RobocodeFeatureExtractor(StateActionInteractionFeatureExtractor):
         )
 
         return X
+
+    @staticmethod
+    def normalize(
+            degrees: float
+    ) -> float:
+
+        if degrees > 360:
+            degrees -= 360
+        elif degrees < 0:
+            degrees += 360
+
+        return degrees
 
     def __init__(
             self,
@@ -363,6 +388,8 @@ class RobocodeFeatureExtractor(StateActionInteractionFeatureExtractor):
             refit_history_length=100000,
             refit_weight_decay=0.99999
         )
+
+        self.most_recent_scanned_robot = None
 
 
 @rl_text(chapter='Actions', page=1)

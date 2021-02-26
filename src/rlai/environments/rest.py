@@ -1,3 +1,4 @@
+import logging
 import threading
 from abc import ABC, abstractmethod
 from argparse import ArgumentParser
@@ -46,9 +47,9 @@ class RestMdpEnvironment(MdpEnvironment, ABC):
         )
 
         parser.add_argument(
-            '--logging',
+            '--rest-verbose',
             action='store_true',
-            help='Whether or not to print Flask logging messages to console.'
+            help='Whether or not to print REST logging messages to console.'
         )
 
         return parser
@@ -66,7 +67,7 @@ class RestMdpEnvironment(MdpEnvironment, ABC):
         :return: Empty string.
         """
 
-        self.state, _ = self.init_state_from_rest_put_dict(request.json)
+        self.state, _ = self.extract_state_and_reward_from_put_request(request.json)
         self.client_reset_for_new_run.set()
 
         return ""
@@ -105,13 +106,13 @@ class RestMdpEnvironment(MdpEnvironment, ABC):
         :return: Empty string.
         """
 
-        self.state, self.reward = self.init_state_from_rest_put_dict(request.json)
+        self.state, self.reward = self.extract_state_and_reward_from_put_request(request.json)
         self.client_set_state_and_reward.set()
 
         return ""
 
     @abstractmethod
-    def init_state_from_rest_put_dict(
+    def extract_state_and_reward_from_put_request(
             self,
             rest_request_dict: Dict[Any, Any]
     ) -> Tuple[MdpState, Reward]:
@@ -173,7 +174,7 @@ class RestMdpEnvironment(MdpEnvironment, ABC):
             random_state: RandomState,
             T: Optional[int],
             port: int,
-            logging: bool
+            rest_verbose: bool
     ):
         """
         Initialize the MDP environment.
@@ -182,7 +183,7 @@ class RestMdpEnvironment(MdpEnvironment, ABC):
         :param random_state: Random state.
         :param T: Maximum number of steps to run, or None for no limit.
         :param port: Port to serve REST endpoints on.
-        :param logging: Whether or not to print Flask logging messages to console.
+        :param rest_verbose: Whether or not to print Flask logging messages to console.
         """
 
         super().__init__(
@@ -229,14 +230,13 @@ class RestMdpEnvironment(MdpEnvironment, ABC):
         self.flask_thread = threading.Thread(
             target=self.flask_app.run,
             kwargs={
-                'port': 12345,
+                'port': port,
                 'use_reloader': False
             }
         )
 
-        # disable noisy logging
-        # import logging
-        # log = logging.getLogger('werkzeug')
-        # log.disabled = True
+        if not rest_verbose:
+            log = logging.getLogger('werkzeug')
+            log.disabled = True
 
         self.flask_thread.start()
