@@ -229,14 +229,14 @@ class Mancala(MdpEnvironment):
         # pick and sow from pocket
         picked_pocket = self.board[a.i]
         go_again = self.sow_and_capture(picked_pocket)
-        next_state = MancalaState(
+        self.state = MancalaState(
             mancala=self,
             agent_to_sense_state=agent if go_again else self.player_2
         )
 
         # check for termination
         next_reward = self.r_none
-        if next_state.terminal:
+        if self.state.terminal:
             next_reward = self.get_terminal_reward()
 
         # if the agent (player 1) does not get to go again, let the environmental agent take its turn(s)
@@ -244,7 +244,7 @@ class Mancala(MdpEnvironment):
 
             while True:
 
-                self.player_2.sense(next_state, t)
+                self.player_2.sense(self.state, t)
 
                 # if the environmental agent is human, then render the board for them to see.
                 if isinstance(self.player_2, Human):
@@ -253,13 +253,13 @@ class Mancala(MdpEnvironment):
                 p2_a = self.player_2.act(t)
                 picked_pocket = self.board[p2_a.i]
                 go_again = self.sow_and_capture(picked_pocket)
-                next_state = MancalaState(
+                self.state = MancalaState(
                     mancala=self,
                     agent_to_sense_state=self.player_2 if go_again else agent
                 )
 
                 # check for termination
-                if next_state.terminal:
+                if self.state.terminal:
                     next_reward = self.get_terminal_reward()
                     break
 
@@ -267,7 +267,7 @@ class Mancala(MdpEnvironment):
                 elif not go_again:
                     break
 
-        return next_state, next_reward
+        return self.state, next_reward
 
     def reset_for_new_run(
             self,

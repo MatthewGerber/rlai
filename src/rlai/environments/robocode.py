@@ -8,21 +8,23 @@ from numpy.random import RandomState
 
 from rlai.actions import Action
 from rlai.environments.mdp import MdpEnvironment
-from rlai.environments.rest import RestMdpEnvironment
+from rlai.environments.network import TcpMdpEnvironment
 from rlai.meta import rl_text
 from rlai.rewards import Reward
 from rlai.states.mdp import MdpState
 from rlai.utils import parse_arguments
 from rlai.value_estimation.function_approximation.models import StateActionInteractionFeatureExtractor
-from rlai.value_estimation.function_approximation.models.feature_extraction import NonstationaryFeatureScaler, \
+from rlai.value_estimation.function_approximation.models.feature_extraction import (
+    NonstationaryFeatureScaler,
     OneHotCategoricalFeatureInteracter
+)
 
 
 @rl_text(chapter='Environments', page=1)
-class RobocodeEnvironment(RestMdpEnvironment):
+class RobocodeEnvironment(TcpMdpEnvironment):
     """
     Robocode environment binding to the official Java implementation. The Java implementation runs alongside the current
-    environment, and a specialized robot implementation on the Java side makes REST calls to the present Python class to
+    environment, and a specialized robot implementation on the Java side makes TCP calls to the present Python class to
     exchange action and state information.
     """
 
@@ -68,18 +70,18 @@ class RobocodeEnvironment(RestMdpEnvironment):
 
         return robocode, unparsed_args
 
-    def extract_state_and_reward_from_put_request(
+    def extract_state_and_reward_from_client_dict(
             self,
-            rest_put_dict: Dict[Any, Any]
+            client_dict: Dict[Any, Any]
     ) -> Tuple[MdpState, Reward]:
         """
-        Initialize a state from the dictionary provided by the REST PUT (e.g., for setting and resetting the state).
+        Extract the state and reward from a client dict.
 
-        :param rest_put_dict: REST PUT dictionary.
+        :param client_dict: Client dictionary.
         :return: 2-tuple of the state and reward.
         """
 
-        event_type_events: Dict[str, List[Dict]] = rest_put_dict['events']
+        event_type_events: Dict[str, List[Dict]] = client_dict['events']
 
         dead = len(event_type_events.get('DeathEvent', [])) > 0
         won = len(event_type_events.get('WinEvent', [])) > 0
@@ -89,7 +91,7 @@ class RobocodeEnvironment(RestMdpEnvironment):
 
         # initialize the state
         state = RobocodeState(
-            **rest_put_dict['state'],
+            **client_dict['state'],
             events=event_type_events,
             actions=self.robot_actions,
             terminal=terminal
@@ -125,8 +127,7 @@ class RobocodeEnvironment(RestMdpEnvironment):
             self,
             random_state: RandomState,
             T: Optional[int],
-            port: int,
-            rest_verbose: bool
+            port: int
     ):
         """
         Initialize the MDP environment.
@@ -134,15 +135,13 @@ class RobocodeEnvironment(RestMdpEnvironment):
         :param random_state: Random state.
         :param T: Maximum number of steps to run, or None for no limit.
         :param port: Port to serve REST endpoints on.
-        :param rest_verbose: Whether or not to print Flask logging messages to console.
         """
 
         super().__init__(
             name='robocode',
             random_state=random_state,
             T=T,
-            port=port,
-            rest_verbose=rest_verbose
+            port=port
         )
 
         action_name_action_value_list = [

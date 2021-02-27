@@ -196,13 +196,13 @@ class ModelBasedMdpEnvironment(MdpEnvironment, ABC):
         ])
 
         # sample next state and reward
-        next_state, next_reward = sample_list_item(
+        self.state, next_reward = sample_list_item(
             x=s_prime_rewards,
             probs=probs,
             random_state=self.random_state
         )
 
-        return next_state, next_reward
+        return self.state, next_reward
 
     def __init__(
             self,
@@ -414,13 +414,13 @@ class PrioritizedSweepingMdpPlanningEnvironment(MdpPlanningEnvironment):
         if planning_state is None:
             planning_state = state
             planning_a = a
-            next_state = copy(state)
-            next_state.terminal = True
+            self.state = copy(state)
+            self.state.terminal = True
             r = 0.0
         else:
 
             # sample next state and reward from model
-            next_state, r = self.model.sample_next_state_and_reward(planning_state, planning_a, self.random_state)
+            self.state, r = self.model.sample_next_state_and_reward(planning_state, planning_a, self.random_state)
 
             # add predecessors into priority queue
             for pred_state, pred_action, r in self.get_predecessor_state_action_rewards(planning_state):
@@ -428,7 +428,7 @@ class PrioritizedSweepingMdpPlanningEnvironment(MdpPlanningEnvironment):
                 priority = -abs(target_value - self.q_S_A[pred_state][pred_action].get_value())
                 self.add_state_action_priority(pred_state, pred_action, priority)
 
-        return (planning_state, planning_a, next_state), Reward(None, r)
+        return (planning_state, planning_a, self.state), Reward(None, r)
 
     def get_predecessor_state_action_rewards(
             self,
@@ -630,9 +630,9 @@ class TrajectorySamplingMdpPlanningEnvironment(MdpPlanningEnvironment):
             a = self.model.sample_action(state, self.random_state)
 
         # sample next state and reward from model
-        next_state, r = self.model.sample_next_state_and_reward(state, a, self.random_state)
+        self.state, r = self.model.sample_next_state_and_reward(state, a, self.random_state)
 
-        return (state, a, next_state), Reward(None, r)
+        return (state, a, self.state), Reward(None, r)
 
     def __init__(
             self,
