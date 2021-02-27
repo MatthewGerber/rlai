@@ -325,7 +325,7 @@ class RobocodeFeatureExtractor(StateActionInteractionFeatureExtractor):
 
         X = np.array([
             [
-                state.gun_heading - self.normalize(state.heading + bearing_from_self)
+                int(state.gun_heading - self.normalize(state.heading + bearing_from_self) < 0)  # gun heading is counterclockwise from enemy's angle
             ]
             for state in states
         ])

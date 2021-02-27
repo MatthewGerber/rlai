@@ -57,8 +57,24 @@ class TcpMdpEnvironment(MdpEnvironment, ABC):
         :return: Initial state.
         """
 
-        state_dict = json.loads(self.read_from_client())
-        self.state, _ = self.extract_state_and_reward_from_client_dict(state_dict)
+        try:
+
+            print('Waiting for client to connect and reset environment...', end='')
+            self.server_connection, client_address = self.server_socket.accept()
+            print(f'client connected:  {client_address}')
+
+            state_dict = json.loads(self.read_from_client())
+            self.state, _ = self.extract_state_and_reward_from_client_dict(state_dict)
+
+        except Exception as ex:
+
+            print(f'Exception while client was connecting to reset environment:  {ex}')
+
+            # self.state will be None if this is our very first reset. not much we can do in that case (the caller will
+            # fail upon receipt of None). if this is a subsequent reset, then we'll have a state, and so we can set it
+            # terminal and the caller will skip the iteration.
+            if self.state is not None:
+                self.state.terminal = True
 
         return self.state
 
@@ -80,12 +96,21 @@ class TcpMdpEnvironment(MdpEnvironment, ABC):
         :return: Next state and reward.
         """
 
-        # write action to client
-        self.write_to_client(json.dumps(a.__dict__))
+        try:
 
-        # read state/reward response
-        next_state_dict = json.loads(self.read_from_client())
-        self.state, reward = self.extract_state_and_reward_from_client_dict(next_state_dict)
+            # write action to client
+            self.write_to_client(json.dumps(a.__dict__))
+
+            # read state/reward response
+            next_state_dict = json.loads(self.read_from_client())
+            self.state, reward = self.extract_state_and_reward_from_client_dict(next_state_dict)
+
+        except Exception as ex:
+
+            # terminate episode and return zero reward
+            print(f'Exception while advancing networked environment:  {ex}')
+            self.state.terminal = True
+            reward = Reward(None, 0.0)
 
         return self.state, reward
 
@@ -157,8 +182,5 @@ class TcpMdpEnvironment(MdpEnvironment, ABC):
 
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_socket.bind(('127.0.0.1', port))
-
-        print('Listening for client...', end='')
         self.server_socket.listen()
-        self.server_connection, client_address = self.server_socket.accept()
-        print(f'client connected:  {client_address}')
+        self.server_connection = None
