@@ -5,8 +5,8 @@ import tempfile
 from typing import Dict, List
 
 import pytest
-from numpy.testing import assert_array_equal
 from numpy.random import RandomState
+from numpy.testing import assert_allclose
 
 from rlai.agents.mdp import StochasticMdpAgent
 from rlai.policies.tabular import TabularPolicy
@@ -57,7 +57,7 @@ def test_run():
 
             assert monitor.cumulative_reward == monitor_fixture.cumulative_reward
 
-            assert_array_equal(
+            assert_allclose(
                 [
                     monitor.t_count_optimal_action[t]
                     for t in sorted(monitor.t_count_optimal_action)
@@ -68,7 +68,7 @@ def test_run():
                 ]
             )
 
-            assert_array_equal(
+            assert_allclose(
                 [
                     monitor.t_average_reward[t].get_value()
                     for t in sorted(monitor.t_average_reward)
@@ -79,7 +79,7 @@ def test_run():
                 ]
             )
 
-            assert_array_equal(
+            assert_allclose(
                 [
                     monitor.t_average_cumulative_reward[t].get_value()
                     for t in sorted(monitor.t_average_cumulative_reward)
