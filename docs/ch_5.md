@@ -48,8 +48,6 @@ Run Monte Carlo value iteration on an agent using state-action value estimates. 
     :param num_episodes_per_improvement: Number of policy evaluation episodes to execute for each iteration of
     improvement. Passing `1` will result in the Monte Carlo ES (Exploring Starts) algorithm.
     :param update_upon_every_visit: See `rlai.gpi.monte_carlo.evaluation.evaluate_q_pi`.
-    :param epsilon: Total probability mass to spread across all actions, resulting in an epsilon-greedy policy. Must
-    be >= 0 if provided.
     :param planning_environment: Not support. Will raise exception if passed.
     :param make_final_policy_greedy: Whether or not to make the agent's final policy greedy with respect to the q-values
     that have been learned, regardless of the value of epsilon used to estimate the q-values.

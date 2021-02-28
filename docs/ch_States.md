@@ -7,6 +7,10 @@ State of the mancala game. In charge of representing the entirety of the game st
 ```
 State of a Gym environment.
 ```
+### [rlai.environments.robocode.RobocodeState](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/robocode.py#L175)
+```
+State of Robocode battle.
+```
 ### [rlai.states.State](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/states.py#L8)
 ```
 State.
