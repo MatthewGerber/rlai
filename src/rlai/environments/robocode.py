@@ -23,9 +23,9 @@ from rlai.value_estimation.function_approximation.models.feature_extraction impo
 @rl_text(chapter='Environments', page=1)
 class RobocodeEnvironment(TcpMdpEnvironment):
     """
-    Robocode environment binding to the official Java implementation. The Java implementation runs alongside the current
-    environment, and a specialized robot implementation on the Java side makes TCP calls to the present Python class to
-    exchange action and state information.
+    Robocode environment. The official Java implementation of Robocode runs alongside the current environment, and a
+    specialized robot implementation on the Java side makes TCP calls to the present Python class to exchange action and
+    state information.
     """
 
     @classmethod
@@ -83,10 +83,9 @@ class RobocodeEnvironment(TcpMdpEnvironment):
 
         event_type_events: Dict[str, List[Dict]] = client_dict['events']
 
+        # the round terminates either with death or victory -- it's a harsh world out there.
         dead = len(event_type_events.get('DeathEvent', [])) > 0
         won = len(event_type_events.get('WinEvent', [])) > 0
-
-        # the round terminates either with death or victory -- it's a harsh world out there.
         terminal = dead or won
 
         # initialize the state
@@ -104,22 +103,30 @@ class RobocodeEnvironment(TcpMdpEnvironment):
             for bullet_event in event_type_events.get('BulletHitEvent', [])
         ])
 
-        bullet_power_hit_self = sum([
-            bullet_event['bullet']['power']
-            for bullet_event in event_type_events.get('HitByBulletEvent', [])
-        ])
+        # bullet_power_hit_self = sum([
+        #     bullet_event['bullet']['power']
+        #     for bullet_event in event_type_events.get('HitByBulletEvent', [])
+        # ])
 
         # if dead:
         #     reward_value = -100.0
         # elif won:
         #     reward_value = 100.0
         # else:
-        reward_value = bullet_power_hit_others - bullet_power_hit_self
+
+        # if self.previous_state is None:
+        #     energy_gain = 0.0
+        # else:
+        #     energy_gain = state.energy - self.previous_state.energy
+
+        reward_value = bullet_power_hit_others
 
         reward = Reward(
             i=None,
             r=reward_value
         )
+
+        self.previous_state = state
 
         return state, reward
 
@@ -130,7 +137,7 @@ class RobocodeEnvironment(TcpMdpEnvironment):
             port: int
     ):
         """
-        Initialize the MDP environment.
+        Initialize the Robocode environment.
 
         :param random_state: Random state.
         :param T: Maximum number of steps to run, or None for no limit.
@@ -160,6 +167,8 @@ class RobocodeEnvironment(TcpMdpEnvironment):
             RobocodeAction(i, action_name, action_value)
             for i, (action_name, action_value) in enumerate(action_name_action_value_list)
         ]
+
+        self.previous_state: Optional[RobocodeState] = None
 
 
 @rl_text(chapter='States', page=1)
@@ -312,6 +321,8 @@ class RobocodeFeatureExtractor(StateActionInteractionFeatureExtractor):
 
         self.check_state_and_action_lists(states, actions)
 
+        # update the most recent scanned robot event, which is our best estimate as to where the enemy roboot is
+        # located.
         self.most_recent_scanned_robot = next((
             state.events['ScannedRobotEvent'][0]
             for state in states
@@ -321,11 +332,17 @@ class RobocodeFeatureExtractor(StateActionInteractionFeatureExtractor):
         if self.most_recent_scanned_robot is None:
             return None
 
+        # bearing is relative to our heading
         bearing_from_self = math.degrees(self.most_recent_scanned_robot['bearing'])
 
         X = np.array([
             [
-                int(state.gun_heading - self.normalize(state.heading + bearing_from_self) < 0)  # gun heading is counterclockwise from enemy's angle
+                # indicator variable that is 1 if the gun's current heading (w.r.t to us) is counterclockwise from the
+                # enemy robot's bearing (w.r.t. us).
+                int(state.gun_heading - self.normalize(state.heading + bearing_from_self) < 0),
+
+                # sqrt(abs) the difference as a measure of how close the gun is to pointing at the enemy.
+                # math.sqrt(abs(state.gun_heading - self.normalize(state.heading + bearing_from_self) < 0))
             ]
             for state in states
         ])

@@ -18,7 +18,8 @@ from rlai.states.mdp import MdpState
 @rl_text(chapter='Environments', page=1)
 class TcpMdpEnvironment(MdpEnvironment, ABC):
     """
-    An MDP environment served over a TCP connection.
+    An MDP environment served over a TCP connection from an external source (e.g., a simulation environment running as
+    a separate program).
     """
 
     @classmethod
