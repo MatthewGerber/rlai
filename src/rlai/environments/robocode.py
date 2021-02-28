@@ -330,7 +330,10 @@ class RobocodeFeatureExtractor(StateActionInteractionFeatureExtractor):
         ), self.most_recent_scanned_robot)
 
         if self.most_recent_scanned_robot is None:
-            return None
+            return np.array([
+                []
+                for _ in range(len(states))
+            ])
 
         # bearing is relative to our heading
         bearing_from_self = math.degrees(self.most_recent_scanned_robot['bearing'])

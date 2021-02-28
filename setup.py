@@ -27,10 +27,7 @@ INSTALL_REQUIREMENTS = [
     'jupyterlab==3.0.6',
     'ipython==7.19.0',
     'ipympl==0.6.3',
-    'tornado==6.1.0',
-
-    # rest api requirements
-    'Flask==1.1.2'
+    'tornado==6.1.0'
 ]
 
 TEST_REQUIREMENTS = [
