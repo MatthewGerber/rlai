@@ -16,7 +16,9 @@ local network-based exchange of state and action information.
   
 The purpose of this case study is to explore the use of `rlai` for learning robot policies.
 
-## Installing and Configuring Robocode.
+## (Under Construction) -- The latest code can be seen [here](https://github.com/MatthewGerber/rlai/blob/master/src/rlai/environments/robocode.py). Notes below.
+
+## Installing and Configuring Robocode
 
 1. Download the Robocode installer [here](https://sourceforge.net/projects/robocode/files/latest/download).
 1. Run the installer. The installation directory will be `ROBO` in the following steps.
@@ -26,5 +28,3 @@ The purpose of this case study is to explore the use of `rlai` for learning robo
    you have installed) can execute arbitrary code on your machine. As a safety precaution, start with a fresh Robocode
    installation and do not install any robots except for the official `rlai` robot.
 1. Start Robocode and import the `rlai` robot.
-
-## (Under Construction)

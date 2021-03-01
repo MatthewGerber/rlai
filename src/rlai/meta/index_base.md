@@ -15,7 +15,7 @@ The gridworld and other simple environments (e.g., gambler's problem) are used t
 implement, and test algorithmic concepts. Sutton and Barto do a nice job of explaining how reinforcement learning works
 for these environments. Below is a list of environments that are not covered in as much detail (e.g., the mountain car)
 or are not covered at all (e.g., Robocode). They are more difficult to train agents for and are instructive for 
-understanding how agents are parameterized and trained.
+understanding how agents are parameterized and rewarded.
 
 * Robocode:  A simulation-based robot programming game with a dynamically rich environment, multi-agent teaming, and a 
   large user community. Read more [here](https://matthewgerber.github.io/rlai/case_studies/robocode.html).
