@@ -165,14 +165,14 @@ class Gym(MdpEnvironment):
         if self.render_current_episode:
             self.gym_native.render()
 
-        next_state = GymState(
+        self.state = GymState(
             environment=self,
             observation=observation,
             terminal=done,
             agent=agent
         )
 
-        return next_state, Reward(i=None, r=reward)
+        return self.state, Reward(i=None, r=reward)
 
     def reset_for_new_run(
             self,
@@ -527,6 +527,7 @@ class FeatureContext:
         :param pole_left_of_vertical: Left of vertical.
         :param pole_rotating_left: Rotating left.
         """
+
         self.cart_left_of_center = cart_left_of_center
         self.cart_moving_left = cart_moving_left
         self.pole_left_of_vertical = pole_left_of_vertical

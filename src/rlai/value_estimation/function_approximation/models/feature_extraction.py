@@ -61,7 +61,7 @@ class FeatureExtractor(ABC):
         :param states: States.
         :param actions: Actions.
         :param for_fitting: Whether the extracted features will be used for fitting (True) or prediction (False).
-        :return: State-feature pandas.DataFrame or numpy.ndarray. The former is only valid with Patsy-style formula
+        :return: State-feature pandas.DataFrame, numpy.ndarray. A DataFrame is only valid with Patsy-style formula
         designs.
         """
 

@@ -10,6 +10,21 @@ some.
 examples covered; however, such implementations do not necessarily lead to reusable and extensible code that is 
 generally applicable beyond such examples. The approach taken here should be generally applicable well beyond the text.
 
+# Case Studies
+The gridworld and other simple environments (e.g., gambler's problem) are used throughout the package to develop, 
+implement, and test algorithmic concepts. Sutton and Barto do a nice job of explaining how reinforcement learning works
+for these environments. Below is a list of environments that are not covered in as much detail (e.g., the mountain car)
+or are not covered at all (e.g., Robocode). They are more difficult to train agents for and are instructive for 
+understanding how agents are parameterized and trained.
+
+* Robocode:  A simulation-based robot programming game with a dynamically rich environment, multi-agent teaming, and a 
+  large user community. Read more [here](https://matthewgerber.github.io/rlai/case_studies/robocode.html).
+  
+* OpenAI Gym:  A collection of standard control problems. Select from the examples below.
+  * [Inverted Pendulum](https://matthewgerber.github.io/rlai/case_studies/inverted_pendulum.html)
+  * [Acrobot](https://matthewgerber.github.io/rlai/case_studies/acrobot.html)
+  * [Mountain Car](https://matthewgerber.github.io/rlai/case_studies/mountain_car.html)
+  
 # Quick Start
 For single-click access to a graphical interface for `rlai`, please click below:
 
@@ -57,17 +72,6 @@ Looking for a place to dig in? Below are a few ideas organized by area of intere
   increase in complexity (e.g., from tabular methods in small, discrete-space gridworlds to value function approximation 
   methods in large, continuous-space control problems). Such tools can be found 
   [here](model_diagnostics_and_interpretation.md).
-
-# Case Studies
-The gridworld and other simple environments (e.g., gambler's problem) are used throughout the package to develop, 
-implement, and test algorithmic concepts. Sutton and Barto do a nice job of explaining how reinforcement learning works
-for these environments. Below is a list of environments that are not covered in as much detail. They are more difficult
-to train agents for and are instructive for understanding how agents are parameterized.
- 
-* OpenAI Gym
-  * [Inverted Pendulum](https://matthewgerber.github.io/rlai/case_studies/inverted_pendulum.html)
-  * [Acrobot](https://matthewgerber.github.io/rlai/case_studies/acrobot.html)
-  * [Mountain Car](https://matthewgerber.github.io/rlai/case_studies/mountain_car.html)
 
 # Figures
 A list of figures can be found [here](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/figures). Most of these 

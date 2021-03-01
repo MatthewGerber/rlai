@@ -307,7 +307,10 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         if self.experience_pending:
 
             X = self.get_X(self.experience_states, self.experience_actions, True)
-            self.model.fit(X, self.experience_values, self.weights)
+
+            # feature extractors may return a matrix with no columns if extraction was not possible
+            if X.shape[1] > 0:
+                self.model.fit(X, self.experience_values, self.weights)
 
             self.experience_states.clear()
             self.experience_actions.clear()
@@ -330,8 +333,12 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         :return: Numpy array of evaluation results (state-action values).
         """
 
-        # replicate the state for each action to evaluate each state-action pair
+        # replicate the state for each action, in order to evaluate each state-action pair.
         X = self.get_X([state] * len(actions), actions, False)
+
+        # feature extractors may return a matrix with no columns if extraction was not possible
+        if X.shape[1] == 0:
+            return np.repeat(0.0, len(actions))
 
         return self.model.evaluate(X)
 

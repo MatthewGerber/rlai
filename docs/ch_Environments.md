@@ -14,7 +14,18 @@ Environment for the mancala game. This is a simple game with many rule variation
     A couple hours of Monte Carlo optimization explores more than 1 million states when playing against an equiprobable
     random opponent.
 ```
+### [rlai.environments.network.TcpMdpEnvironment](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/network.py#L19)
+```
+An MDP environment served over a TCP connection from an external source (e.g., a simulation environment running as
+    a separate program).
+```
 ### [rlai.environments.openai_gym.Gym](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/openai_gym.py#L63)
 ```
 Generalized Gym environment. Any OpenAI Gym environment can be executed by supplying the appropriate identifier.
+```
+### [rlai.environments.robocode.RobocodeEnvironment](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/robocode.py#L24)
+```
+Robocode environment. The official Java implementation of Robocode runs alongside the current environment, and a
+    specialized robot implementation on the Java side makes TCP calls to the present Python class to exchange action and
+    state information.
 ```
