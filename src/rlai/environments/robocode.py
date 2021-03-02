@@ -98,28 +98,38 @@ class RobocodeEnvironment(TcpMdpEnvironment):
 
         # reward structure
 
-        bullet_power_hit_others = sum([
-            bullet_event['bullet']['power']
-            for bullet_event in event_type_events.get('BulletHitEvent', [])
-        ])
-
+        # ... don't get hit
         # bullet_power_hit_self = sum([
         #     bullet_event['bullet']['power']
         #     for bullet_event in event_type_events.get('HitByBulletEvent', [])
         # ])
 
+        # ... death seems bad, and victories good.
         # if dead:
         #     reward_value = -100.0
         # elif won:
         #     reward_value = 100.0
         # else:
 
+        # ... probably a bad idea here, since energy loss can be recovered upon bullet impact, which is good.
         # if self.previous_state is None:
-        #     energy_gain = 0.0
+        #     reward_value = 0.0
         # else:
-        #     energy_gain = state.energy - self.previous_state.energy
+        #     reward_value = state.energy - self.previous_state.energy
 
-        reward_value = bullet_power_hit_others
+        # ... hit others
+        bullet_power_hit_others = sum([
+            bullet_event['bullet']['power']
+            for bullet_event in event_type_events.get('BulletHitEvent', [])
+        ])
+
+        # ... don't miss
+        bullet_power_missed = sum([
+            bullet_event['bullet']['power']
+            for bullet_event in event_type_events.get('BulletMissedEvent', [])
+        ])
+
+        reward_value = bullet_power_hit_others - bullet_power_missed
 
         reward = Reward(
             i=None,
@@ -321,7 +331,7 @@ class RobocodeFeatureExtractor(StateActionInteractionFeatureExtractor):
 
         self.check_state_and_action_lists(states, actions)
 
-        # update the most recent scanned robot event, which is our best estimate as to where the enemy roboot is
+        # update the most recent scanned robot event, which is our best estimate as to where the enemy robot is
         # located.
         self.most_recent_scanned_robot = next((
             state.events['ScannedRobotEvent'][0]
@@ -329,23 +339,33 @@ class RobocodeFeatureExtractor(StateActionInteractionFeatureExtractor):
             if 'ScannedRobotEvent' in state.events
         ), self.most_recent_scanned_robot)
 
-        if self.most_recent_scanned_robot is None:
-            return np.array([
-                []
-                for _ in range(len(states))
-            ])
+        # if self.most_recent_scanned_robot is None:
+        #     return np.array([
+        #         []
+        #         for _ in range(len(states))
+        #     ])
 
         # bearing is relative to our heading
-        bearing_from_self = math.degrees(self.most_recent_scanned_robot['bearing'])
+        if self.most_recent_scanned_robot is None:
+            bearing_from_self = None
+        else:
+            bearing_from_self = math.degrees(self.most_recent_scanned_robot['bearing'])
 
         X = np.array([
             [
-                # indicator variable that is 1 if the gun's current heading (w.r.t to us) is counterclockwise from the
-                # enemy robot's bearing (w.r.t. us).
-                int(state.gun_heading - self.normalize(state.heading + bearing_from_self) < 0),
+                # provide a constant, so that each action has its own intercept term
+                1.0,
 
-                # sqrt(abs) the difference as a measure of how close the gun is to pointing at the enemy.
-                # math.sqrt(abs(state.gun_heading - self.normalize(state.heading + bearing_from_self) < 0))
+                # indicator as to whether or not we have a bearing on the enemy
+                1.0 if bearing_from_self is None else 0.0,
+
+                # indicator variable that is 1 if the gun's current heading (w.r.t to us) is counterclockwise from the
+                # enemy robot's bearing (w.r.t. us). zero if no enemy has been scanned.
+                0.0 if bearing_from_self is None else int(state.gun_heading - self.normalize(state.heading + bearing_from_self) < 0),
+
+                # sqrt(abs) the difference as a measure of how close the gun is to pointing at the enemy. zero if no
+                # enemy has been scanned.
+                0.0 if bearing_from_self is None else math.sqrt(abs(state.gun_heading - self.normalize(state.heading + bearing_from_self) < 0))
             ]
             for state in states
         ])
