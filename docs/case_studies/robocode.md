@@ -20,12 +20,11 @@ The purpose of this case study is to explore the use of `rlai` for learning robo
 
 1. Download the Robocode installer 
    [here](https://github.com/MatthewGerber/robocode/raw/master/build/robocode-rlai-setup.jar). Note that this is a 
-   customized build of Robocode containing a few tweaks to make it compatible with `rlai`. Most importantly, this 
-   build disables the Robocode security manager. Because Robocode is designed to run robots downloaded from the 
-   Internet, the Robocode security manager is normally in place to prevent execution of harmful code. Therefore, you 
-   should only download the installer from the link above, and you should not import any robots into this version of
-   Robocode. The specialized robot that integrates with `rlai` has already been included, so there is nothing else to
-   download.
+   customized build of Robocode containing a few tweaks to make it compatible with `rlai`. It provides robots with 
+   elevated permissions, particularly those related to TCP (socket) communication with the localhost (127.0.0.1) and
+   reflection. These permissions are needed to communicate with the `rlai` server, and in general they do not pose much
+   of a security risk; however, it is probably a good idea to avoid importing other robots into this installation of
+   Robocode.
 1. Run the Robocode installer. Install to a directory such as `robocode_rlai`.
 
 ## Training a Robocode Agent
