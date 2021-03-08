@@ -9,17 +9,22 @@ class Reward:
     def __init__(
             self,
             i: Optional[int],
-            r: float
+            r: float,
+            shift_steps: Optional[int] = None
     ):
         """
         Initialize the reward.
 
         :param i: Identifier for the reward.
         :param r: Reward value.
+        :param shift_steps: Number of steps to shift reward when updating value functions. A negative value shifts the
+        reward to be farther in the past, and a positive value shifts the reward to be more recent. Pass None for no
+        shifting.
         """
 
         self.i = i
         self.r = r
+        self.shift_steps = shift_steps
 
     def __str__(
             self

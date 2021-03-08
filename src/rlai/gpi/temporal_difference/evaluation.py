@@ -137,11 +137,21 @@ def evaluate_q_pi(
                 earliest_t = max(0, curr_t - n_steps + 1)
                 prior_t_values = range(earliest_t, curr_t + 1)
 
+            # if the reward is shifted, then truncate the t values to only include those within the shifted intervanl.
+            discount_start_t = curr_t
+            if next_reward.shift_steps is not None and next_reward.shift_steps != 0:
+                discount_start_t = curr_t + next_reward.shift_steps
+                prior_t_values = [
+                    prior_t_value
+                    for prior_t_value in prior_t_values
+                    if prior_t_value <= discount_start_t
+                ]
+
             # pass reward to prior state-action values, discounting based on time step differences (the reward should
             # not be discounted for the current time step).
             for t in prior_t_values:
                 state, a, g = t_state_a_g[t]
-                discount = agent.gamma ** (curr_t - t)
+                discount = agent.gamma ** (discount_start_t - t)
                 t_state_a_g[t] = (state, a, g + discount * next_reward.r)
 
             # get the next state's bootstrapped value and next action, based on the bootstrapping mode. note that the
@@ -180,8 +190,8 @@ def evaluate_q_pi(
         # flush out the remaining n-step updates. if we terminated because we reached a terminal state, then all next-
         # state values for the updates are zero. if instead we terminated because we reached the maximum number of time
         # steps, then use the bootstrapped next-state value instead. this is an important distinction because these
-        # value can be dramatically different, and when discounting is not using (or is very small), the resulting
-        # value estimates can be correspondingly different.
+        # value can be dramatically different, and when discounting is not used (or is very small), the resulting value
+        # estimates can be correspondingly different.
         if curr_state.terminal:
             next_state_q_s_a = 0.0
 

@@ -65,7 +65,7 @@ class TcpMdpEnvironment(MdpEnvironment, ABC):
             print(f'client connected:  {client_address}')
 
             state_dict = json.loads(self.read_from_client())
-            self.state, _ = self.extract_state_and_reward_from_client_dict(state_dict)
+            self.state, _ = self.extract_state_and_reward_from_client_dict(state_dict, 0)
 
         except Exception as ex:
 
@@ -104,12 +104,13 @@ class TcpMdpEnvironment(MdpEnvironment, ABC):
 
             # read state/reward response
             next_state_dict = json.loads(self.read_from_client())
-            self.state, reward = self.extract_state_and_reward_from_client_dict(next_state_dict)
+            self.state, reward = self.extract_state_and_reward_from_client_dict(next_state_dict, t)
 
         except Exception as ex:
 
-            # terminate episode and return zero reward
             print(f'Exception while advancing networked environment:  {ex}')
+
+            # terminate episode and return zero reward
             self.state.terminal = True
             reward = Reward(None, 0.0)
 
@@ -118,12 +119,14 @@ class TcpMdpEnvironment(MdpEnvironment, ABC):
     @abstractmethod
     def extract_state_and_reward_from_client_dict(
             self,
-            client_dict: Dict[Any, Any]
+            client_dict: Dict[Any, Any],
+            t: int
     ) -> Tuple[MdpState, Reward]:
         """
         Extract the state and reward from a client dict.
 
         :param client_dict: Client dictionary.
+        :param t: Current time step.
         :return: 2-tuple of the state and reward.
         """
 

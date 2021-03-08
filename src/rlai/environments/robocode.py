@@ -72,12 +72,14 @@ class RobocodeEnvironment(TcpMdpEnvironment):
 
     def extract_state_and_reward_from_client_dict(
             self,
-            client_dict: Dict[Any, Any]
+            client_dict: Dict[Any, Any],
+            t: int
     ) -> Tuple[MdpState, Reward]:
         """
         Extract the state and reward from a client dict.
 
         :param client_dict: Client dictionary.
+        :param t: Current time step.
         :return: 2-tuple of the state and reward.
         """
 
@@ -95,6 +97,15 @@ class RobocodeEnvironment(TcpMdpEnvironment):
             actions=self.robot_actions,
             terminal=terminal
         )
+
+        # hang on to bullet firing events. add rlai step to each event.
+        self.bullet_id_fired_event.update({
+            bullet_fired_event['bullet']['bulletId']: {
+                **bullet_fired_event,
+                'step': t
+            }
+            for bullet_fired_event in event_type_events.get('BulletFiredEvent', [])
+        })
 
         # reward structure
 
@@ -118,22 +129,40 @@ class RobocodeEnvironment(TcpMdpEnvironment):
         #     reward_value = state.energy - self.previous_state.energy
 
         # ... hit others
+        bullet_hit_events = event_type_events.get('BulletHitEvent', [])
         bullet_power_hit_others = sum([
             bullet_event['bullet']['power']
-            for bullet_event in event_type_events.get('BulletHitEvent', [])
+            for bullet_event in bullet_hit_events
         ])
 
         # ... don't miss
+        bullet_missed_events = event_type_events.get('BulletMissedEvent', [])
         bullet_power_missed = sum([
             bullet_event['bullet']['power']
-            for bullet_event in event_type_events.get('BulletMissedEvent', [])
+            for bullet_event in bullet_missed_events
         ])
 
         reward_value = bullet_power_hit_others - bullet_power_missed
 
+        # delay to most recent event of either kind
+        if len(bullet_hit_events) + len(bullet_missed_events) == 0:
+            reward_shift_steps = 0
+        else:
+            reward_shift_steps = max([
+                self.bullet_id_fired_event[bullet_event['bullet']['bulletId']]['step']
+                for bullet_event in bullet_hit_events + bullet_missed_events
+            ]) - t
+
+        # clear bullet firing event for any bullet that hit another robot, missed, or hit another bullet.
+        [
+            self.bullet_id_fired_event.pop(bullet_event['bullet']['bulletId'])
+            for bullet_event in bullet_hit_events + bullet_missed_events + event_type_events.get('BulletHitBulletEvent', [])
+        ]
+
         reward = Reward(
             i=None,
-            r=reward_value
+            r=reward_value,
+            shift_steps=reward_shift_steps
         )
 
         self.previous_state = state
@@ -179,6 +208,7 @@ class RobocodeEnvironment(TcpMdpEnvironment):
         ]
 
         self.previous_state: Optional[RobocodeState] = None
+        self.bullet_id_fired_event: Dict[str, Dict] = {}
 
 
 @rl_text(chapter='States', page=1)
@@ -353,7 +383,7 @@ class RobocodeFeatureExtractor(StateActionInteractionFeatureExtractor):
 
         X = np.array([
             [
-                # provide a constant, so that each action has its own intercept term
+                # provide a constant, so that each action has its own intercept term.
                 1.0,
 
                 # indicator as to whether or not we have a bearing on the enemy
