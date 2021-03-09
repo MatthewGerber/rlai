@@ -11,7 +11,7 @@ from numpy.random import RandomState
 
 from rlai.meta import rl_text
 from rlai.runners.monitor import Monitor
-from rlai.utils import load_class
+from rlai.utils import load_class, get_base_argument_parser
 
 
 @rl_text(chapter='Training and Running Agents', page=1)
@@ -24,52 +24,7 @@ def run(
     :param args: Arguments.
     """
 
-    parser = ArgumentParser(
-        description='Run an agent within an environment. This does not support learning (e.g., monte carlo or temporal difference). See trainer.py for such methods.',
-        allow_abbrev=False
-    )
-
-    parser.add_argument(
-        '--n-runs',
-        type=int,
-        help='Number of runs.'
-    )
-
-    parser.add_argument(
-        '--pdf-save-path',
-        type=str,
-        help='Path where a PDF of all plots is to be saved.'
-    )
-
-    parser.add_argument(
-        '--figure-name',
-        type=str,
-        help='Name for figure that is generated.'
-    )
-
-    parser.add_argument(
-        '--environment',
-        type=str,
-        help='Fully-qualified type name of environment.'
-    )
-
-    parser.add_argument(
-        '--agent',
-        type=str,
-        help='Either (1) the fully-qualified type name of agent, or (2) a path to a pickled agent.'
-    )
-
-    parser.add_argument(
-        '--random-seed',
-        type=int,
-        help='Random seed. Omit to generate an arbitrary random seed.'
-    )
-
-    parser.add_argument(
-        '--plot',
-        action='store_true',
-        help='Pass this flag to plot rewards.'
-    )
+    parser = get_argument_parser_for_run()
 
     parsed_args, unparsed_args = parser.parse_known_args(args)
 
@@ -190,6 +145,63 @@ def run(
             pdf.close()
 
     return monitors
+
+
+def get_argument_parser_for_run() -> ArgumentParser:
+    """
+    Get argument parser for the run function.
+
+    :return: Argument parser.
+    """
+
+    parser = get_base_argument_parser(
+        prog='rlai run',
+        description='Run an agent within an environment. This does not support learning (e.g., monte carlo or temporal difference). See trainer.py for such methods.'
+    )
+
+    parser.add_argument(
+        '--n-runs',
+        type=int,
+        help='Number of runs.'
+    )
+
+    parser.add_argument(
+        '--pdf-save-path',
+        type=str,
+        help='Path where a PDF of all plots is to be saved.'
+    )
+
+    parser.add_argument(
+        '--figure-name',
+        type=str,
+        help='Name for figure that is generated.'
+    )
+
+    parser.add_argument(
+        '--environment',
+        type=str,
+        help='Fully-qualified type name of environment.'
+    )
+
+    parser.add_argument(
+        '--agent',
+        type=str,
+        help='Either (1) the fully-qualified type name of agent, or (2) a path to a pickled agent.'
+    )
+
+    parser.add_argument(
+        '--random-seed',
+        type=int,
+        help='Random seed. Omit to generate an arbitrary random seed.'
+    )
+
+    parser.add_argument(
+        '--plot',
+        action='store_true',
+        help='Pass this flag to plot rewards.'
+    )
+
+    return parser
 
 
 if __name__ == '__main__':  # pragma no cover
