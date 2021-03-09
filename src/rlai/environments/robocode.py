@@ -363,17 +363,11 @@ class RobocodeFeatureExtractor(StateActionInteractionFeatureExtractor):
 
         # update the most recent scanned robot event, which is our best estimate as to where the enemy robot is
         # located.
-        self.most_recent_scanned_robot = next((
+        self.most_recent_scanned_robot: Dict = next((
             state.events['ScannedRobotEvent'][0]
             for state in states
             if 'ScannedRobotEvent' in state.events
         ), self.most_recent_scanned_robot)
-
-        # if self.most_recent_scanned_robot is None:
-        #     return np.array([
-        #         []
-        #         for _ in range(len(states))
-        #     ])
 
         # bearing is relative to our heading
         if self.most_recent_scanned_robot is None:
