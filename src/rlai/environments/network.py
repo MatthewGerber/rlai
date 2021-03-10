@@ -114,6 +114,13 @@ class TcpMdpEnvironment(MdpEnvironment, ABC):
             self.state.terminal = True
             reward = Reward(None, 0.0)
 
+        # close the socket if the state is terminal
+        if self.state.terminal:
+            try:
+                self.server_connection.close()
+            except Exception as ex:
+                print(f'Exception while closing socket upon episode termination:  {ex}')
+
         return self.state, reward
 
     @abstractmethod
@@ -160,7 +167,11 @@ class TcpMdpEnvironment(MdpEnvironment, ABC):
         Close the environment.
         """
 
-        self.server_socket.close()
+        try:
+            self.server_connection.close()
+            self.server_socket.close()
+        except Exception as ex:
+            print(f'Exception while closing TCP environment:  {ex}')
 
     def __init__(
             self,
@@ -187,4 +198,4 @@ class TcpMdpEnvironment(MdpEnvironment, ABC):
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_socket.bind(('127.0.0.1', port))
         self.server_socket.listen()
-        self.server_connection = None
+        self.server_connection: socket = None
