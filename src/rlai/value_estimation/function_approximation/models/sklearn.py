@@ -241,12 +241,12 @@ class SKLearnSGD(FunctionApproximationModel):
         :return: DataFrame (#features, #actions).
         """
 
-        if isinstance(feature_extractor, StateActionInteractionFeatureExtractor):
+        # not all feature extractors return names. bail if the given one does not.
+        feature_names = feature_extractor.get_feature_names()
+        if feature_names is None:
+            return None
 
-            # not all feature extractors return names. bail if the given one does not.
-            feature_names = feature_extractor.get_feature_names()
-            if feature_names is None:
-                return None
+        if isinstance(feature_extractor, StateActionInteractionFeatureExtractor):
 
             # get (#features, #actions) array of coefficients, along with feature names.
             num_actions = len(feature_extractor.actions)
@@ -310,7 +310,7 @@ class SKLearnSGD(FunctionApproximationModel):
         with self.plot_data_lock:
 
             # collect average values for the current policy improvement iteration and reset the averagers. the
-            # individual y, loss, and eta0 values have already been collected (during the calls to fit).
+            # individual y, loss, and eta0 values have already been collected during the calls to fit.
             if self.y_averager.n > 0:
                 self.y_averages.append(self.y_averager.get_value())
                 self.y_averager.reset()
@@ -335,33 +335,33 @@ class SKLearnSGD(FunctionApproximationModel):
                 # noinspection PyTypeChecker
                 fig, axs = plt.subplots(nrows=1, ncols=2, sharey=True, figsize=(13, 6.5))
 
-                # returns and losses per iteration
+                # plot average return and loss per iteration
                 self.iteration_ax = axs[0]
                 iterations = list(range(1, len(self.y_averages) + 1))
-                self.iteration_return_line, = self.iteration_ax.plot(iterations, self.y_averages, linewidth=0.75, color='darkgreen', label='Obtained')
-                self.iteration_loss_line, = self.iteration_ax.plot(iterations, self.loss_averages, linewidth=0.75, color='red', label='Loss')
+                self.iteration_return_line, = self.iteration_ax.plot(iterations, self.y_averages, linewidth=0.75, color='darkgreen', label='Obtained (avg./iter.)')
+                self.iteration_loss_line, = self.iteration_ax.plot(iterations, self.loss_averages, linewidth=0.75, color='red', label='Loss (avg./iter.)')
                 self.iteration_ax.set_xlabel('Policy improvement iteration')
-                self.iteration_ax.set_ylabel('Average discounted return (G)')
+                self.iteration_ax.set_ylabel('Return (G)')
                 self.iteration_ax.legend(loc='upper left')
 
-                # twin-x step size
+                # plot twin-x for average step size per iteration
                 self.iteration_eta0_ax = self.iteration_ax.twinx()
-                self.iteration_eta0_line, = self.iteration_eta0_ax.plot(iterations, self.eta0_averages, linewidth=0.75, color='blue', label='Step size (eta0)')
+                self.iteration_eta0_line, = self.iteration_eta0_ax.plot(iterations, self.eta0_averages, linewidth=0.75, color='blue', label='Step size (eta0, avg./iter.)')
                 self.iteration_eta0_ax.set_yscale('log')
                 self.iteration_eta0_ax.legend(loc='upper right')
 
-                # plot values for all time steps of the most recent plot iteration. there might not yet be any data in
-                # the current iteration, so watch out.
+                # plot return and loss per time step of the most recent plot iteration. there might not yet be any data
+                # in the current iteration, so watch out.
                 self.time_step_ax = axs[1]
                 y_values = self.iteration_y_values.get(self.plot_iteration, [])
                 time_steps = list(range(1, len(y_values) + 1))
                 self.time_step_return_line, = self.time_step_ax.plot(time_steps, y_values, linewidth=0.75, color='darkgreen', label='Obtained')
                 self.time_step_loss_line, = self.time_step_ax.plot(time_steps, self.iteration_loss_values.get(self.plot_iteration, []), linewidth=0.75, color='red', label='Loss')
                 self.time_step_ax.set_xlabel(f'Time step (iteration {self.plot_iteration})')
-                self.iteration_ax.set_ylabel('Average discounted return (G)')
+                self.iteration_ax.set_ylabel('Return (G)')
                 self.time_step_ax.legend(loc='upper left')
 
-                # twin-x step size
+                # plot twin-x for step size per time step of the most recent plot iteration.
                 self.time_step_eta0_ax = self.time_step_ax.twinx()
                 self.time_step_eta0_line, = self.time_step_eta0_ax.plot(time_steps, self.iteration_eta0_values.get(self.plot_iteration, []), linewidth=0.75, color='blue', label='Step size (eta0)')
                 self.time_step_eta0_ax.set_yscale('log')

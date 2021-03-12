@@ -1,6 +1,5 @@
 import math
 from argparse import ArgumentParser
-from itertools import product
 from typing import List, Tuple, Dict, Any, Optional
 
 import numpy as np
@@ -13,10 +12,9 @@ from rlai.meta import rl_text
 from rlai.rewards import Reward
 from rlai.states.mdp import MdpState
 from rlai.utils import parse_arguments
-from rlai.value_estimation.function_approximation.models import StateActionInteractionFeatureExtractor
 from rlai.value_estimation.function_approximation.models.feature_extraction import (
     NonstationaryFeatureScaler,
-    OneHotCategoricalFeatureInteracter
+    FeatureExtractor
 )
 
 
@@ -144,7 +142,7 @@ class RobocodeEnvironment(TcpMdpEnvironment):
 
         reward_value = bullet_power_hit_others - bullet_power_missed
 
-        # delay to most recent event of either kind
+        # delay to most recent bullet event of either kind (hit or missed)
         if len(bullet_hit_events) + len(bullet_missed_events) == 0:
             reward_shift_steps = 0
         else:
@@ -298,7 +296,7 @@ class RobocodeState(MdpState):
 
 
 @rl_text(chapter='Feature Extractors', page=1)
-class RobocodeFeatureExtractor(StateActionInteractionFeatureExtractor):
+class RobocodeFeatureExtractor(FeatureExtractor):
     """
     Robocode feature extractor.
     """
@@ -327,7 +325,7 @@ class RobocodeFeatureExtractor(StateActionInteractionFeatureExtractor):
             cls,
             args: List[str],
             environment: RobocodeEnvironment
-    ) -> Tuple[StateActionInteractionFeatureExtractor, List[str]]:
+    ) -> Tuple[FeatureExtractor, List[str]]:
         """
         Initialize a feature extractor from arguments.
 
@@ -376,41 +374,93 @@ class RobocodeFeatureExtractor(StateActionInteractionFeatureExtractor):
             bearing_from_self = math.degrees(self.most_recent_scanned_robot['bearing'])
 
         X = np.array([
+
             [
-                # provide a constant, so that each action has its own intercept term.
-                1.0,
-
-                # indicator as to whether or not we have a bearing on the enemy
-                1.0 if bearing_from_self is None else 0.0,
-
-                # indicator variable that is 1 if the gun's current heading (w.r.t to us) is counterclockwise from the
-                # enemy robot's bearing (w.r.t. us). zero if no enemy has been scanned.
-                0.0 if bearing_from_self is None else int(state.gun_heading - self.normalize(state.heading + bearing_from_self) < 0),
-
-                # sqrt(abs) the difference as a measure of how close the gun is to pointing at the enemy. zero if no
-                # enemy has been scanned.
-                0.0 if bearing_from_self is None else math.sqrt(abs(state.gun_heading - self.normalize(state.heading + bearing_from_self) < 0))
+                feature_value
+                for action_to_extract in self.actions
+                for feature_value in self.get_feature_values(state, action, action_to_extract, bearing_from_self)
             ]
-            for state in states
-        ])
 
-        # contexts = [
-        #     FeatureContext(
-        #         scanned_robot=scanned_robot_event is not None
-        #     )
-        #     for state, scanned_robot_event in zip(states, scanned_robot_events)
-        # ]
-        #
-        # X = self.context_interacter.interact(X, contexts)
+            for state, action in zip(states, actions)
+        ])
 
         X = self.feature_scaler.scale_features(X, for_fitting)
 
-        X = self.interact(
-            state_features=X,
-            actions=actions
-        )
-
         return X
+
+    def get_feature_values(
+            self,
+            state: RobocodeState,
+            action: Action,
+            action_to_extract: Action,
+            bearing_from_self: Optional[float]
+    ) -> List[float]:
+        """
+        Get feature values for a state-action pair, coded one-hot for a particular action to extract.
+
+        :param state: State.
+        :param action: Action.
+        :param action_to_extract: Action to one-hot.
+        :param bearing_from_self: Bearing of enemy from self, or None if no enemy has been scanned yet.
+        :return: List of floating-point feature values.
+        """
+
+        if action_to_extract.name.startswith('turnRadar'):
+
+            if action == action_to_extract:
+                feature_values = [
+
+                    # provide a constant, so that each action has its own intercept term.
+                    1.0,
+
+                    # indicator as to whether or not we have a bearing on the enemy
+                    0.0 if bearing_from_self is None else 1.0
+
+                ]
+            else:
+                feature_values = [0.0, 0.0]
+
+        elif action_to_extract.name.startswith('turnGun'):
+
+            if action == action_to_extract:
+                feature_values = [
+
+                    # provide a constant, so that each action has its own intercept term.
+                    1.0,
+
+                    # indicator as to whether or not we have a bearing on the enemy
+                    0.0 if bearing_from_self is None else 1.0,
+
+                    # indicator variable that is 1 if the gun's current heading (w.r.t to us) is counterclockwise from the
+                    # enemy robot's bearing (w.r.t. us). zero if no enemy has been scanned.
+                    0.0 if bearing_from_self is None else int(state.gun_heading - self.normalize(state.heading + bearing_from_self) < 0)
+
+                ]
+            else:
+                feature_values = [0.0, 0.0, 0.0]
+
+        elif action_to_extract.name == 'fire':
+
+            if action == action_to_extract:
+                feature_values = [
+
+                    # provide a constant, so that each action has its own intercept term.
+                    1.0,
+
+                    # indicator as to whether or not we have a bearing on the enemy
+                    0.0 if bearing_from_self is None else 1.0,
+
+                    # sqrt(abs) the difference as a measure of how close the gun is to pointing at the enemy. zero if no
+                    # enemy has been scanned.
+                    0.0 if bearing_from_self is None else math.sqrt(abs(state.gun_heading - self.normalize(state.heading + bearing_from_self)))
+
+                ]
+            else:
+                feature_values = [0.0, 0.0, 0.0]
+        else:
+            raise ValueError(f'Unknown action:  {action.name}')
+
+        return feature_values
 
     @staticmethod
     def normalize(
@@ -435,24 +485,16 @@ class RobocodeFeatureExtractor(StateActionInteractionFeatureExtractor):
         """
 
         super().__init__(
-            environment=environment,
-            actions=environment.robot_actions
+            environment=environment
         )
 
-        self.contexts = [
-            FeatureContext(*context_bools)
-            for context_bools in product([True, False])
-        ]
-
-        self.context_interacter = OneHotCategoricalFeatureInteracter(self.contexts)
-
+        self.actions = environment.robot_actions
+        self.most_recent_scanned_robot = None
         self.feature_scaler = NonstationaryFeatureScaler(
             num_observations_refit_feature_scaler=2000,
             refit_history_length=100000,
             refit_weight_decay=0.99999
         )
-
-        self.most_recent_scanned_robot = None
 
 
 @rl_text(chapter='Actions', page=1)
@@ -481,74 +523,3 @@ class RobocodeAction(Action):
         )
 
         self.value = value
-
-
-class FeatureContext:
-    """
-    Categorical context within with a feature explains an outcome independently of its explanation in another context.
-    This works quite similarly to traditional categorical interactions, except that they are specified programmatically
-    by this class.
-    """
-
-    def __init__(
-            self,
-            scanned_robot: bool
-    ):
-        """
-        Initialize the context.
-
-        :param scanned_robot: Scanned a robot.
-        """
-
-        self.scanned_robot = scanned_robot
-        self.id = str(self)
-
-    def __eq__(
-            self,
-            other
-    ) -> bool:
-        """
-        Check equality.
-
-        :param other: Other context.
-        :return: True if equal and False otherwise.
-        """
-
-        other: FeatureContext
-
-        return self.id == other.id
-
-    def __ne__(
-            self,
-            other
-    ) -> bool:
-        """
-        Check inequality.
-
-        :param other: Other context.
-        :return: True if unequal and False otherwise.
-        """
-
-        return not (self == other)
-
-    def __hash__(
-            self
-    ) -> int:
-        """
-        Get hash code.
-
-        :return: Hash code.
-        """
-
-        return hash(self.id)
-
-    def __str__(
-            self
-    ) -> str:
-        """
-        Get string.
-
-        :return: String.
-        """
-
-        return f'{self.scanned_robot}'
