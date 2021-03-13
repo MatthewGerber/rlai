@@ -466,11 +466,20 @@ class RobocodeFeatureExtractor(FeatureExtractor):
     def normalize(
             degrees: float
     ) -> float:
+        """
+        Normalizee degress to be [0, 360].
+
+        :param degrees: Degrees.
+        :return: Normalized degrees.
+        """
 
         if degrees > 360:
             degrees -= 360
         elif degrees < 0:
             degrees += 360
+
+        if degrees < 0 or degrees > 360:
+            raise ValueError(f'Failed to normalize degrees:  {degrees}')
 
         return degrees
 
