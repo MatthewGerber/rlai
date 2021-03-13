@@ -50,7 +50,7 @@ change all of these. In order to restart training, you will need to first restar
 restart the `rlai` environment by killing the command (if using the CLI) or by restarting the JupyterLab kernel. This
 is a bit tedious but is required to reset the state of each.
 
-## Radar-Driven Aiming
+## Radar-Driven Aiming (commit [here](https://github.com/MatthewGerber/rlai/tree/537b0653f17ef84c35ccfd2f67e07d5bde7b3d61))
 
 The following `rlai` command will achieve basic radar-driven aiming capabilities.
 

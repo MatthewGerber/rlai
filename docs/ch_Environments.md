@@ -23,7 +23,7 @@ An MDP environment served over a TCP connection from an external source (e.g., a
 ```
 Generalized Gym environment. Any OpenAI Gym environment can be executed by supplying the appropriate identifier.
 ```
-### [rlai.environments.robocode.RobocodeEnvironment](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/robocode.py#L24)
+### [rlai.environments.robocode.RobocodeEnvironment](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/robocode.py#L22)
 ```
 Robocode environment. The official Java implementation of Robocode runs alongside the current environment, and a
     specialized robot implementation on the Java side makes TCP calls to the present Python class to exchange action and
