@@ -94,9 +94,11 @@ Running the policy generated above generates the following Robocode battle:
 
 {% include youtubePlayer.html id="JjW7j6NXZxA" %}
 
-It is clear that the agent has developed a tactic of not firing while rotating the radar at the start of the round to 
-obtain a bearing on the opponent. Once a bearing is obtained, the gun is rotated accordingly and firing begins when
-aim is sufficiently accurate. All ELOs are satisfied.
+In the video, the game rate is being manually adjusted to highlight early segments of the first few rounds and then 
+speed through the rest of the battle (see the slider at the bottom). It is clear that the agent has developed a tactic 
+of holding fire at the start of each round while rotating the radar to obtain a bearing on the opponent. Once a bearing 
+is obtained, the gun is rotated accordingly and firing begins when the gun's aim is sufficiently close. All ELOs seem to 
+be satisfied by this approach.
 
 ## Radar-Driven Aiming Against a Mobile Opponent (TBD)
 
