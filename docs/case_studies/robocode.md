@@ -55,28 +55,29 @@ The reward signal at each time step is defined as the sum of bullet power that h
 bullet power that has missed the opponent.
 
 ### State Features
-The following state features are defined per action. Following each feature, a brief explanation is given for the 
-expected learning outcome.
+The following state features are defined per action. A brief explanation is given for the expected learning outcome
+(ELO) of each feature.
 
 * Action 1:  Turn radar left
-  * **Feature 1:  Has bearing on opponent (binary)** Rotate radar when `false` and not rotate when `true`.
+  * **Feature 1 - Opponent bearing exists (binary)** _ELO_:  Rotate radar left when `false` and do not rotate radar when 
+    `true`.
     
 * Action 2:  Turn gun left/right
-  * **Feature 1:  Has bearing on opponent (binary)** Keep gun stationary when `false` and rotate gun when `true`.
-  * **Feature 2:  Gun is counterclockwise from opponent (binary)** Rotate gun clockwise when `true` and counterclockwise when `false`.
+  * **Feature 1 - Has bearing on opponent (binary)** _ELO_:  Keep gun stationary when `false` and rotate gun when `true`.
+  * **Feature 2 - Gun is counterclockwise from opponent (binary)** _ELO_:  Rotate gun clockwise when `true` and counterclockwise when `false`.
     
 * Action 3:  Fire
-  * **Feature 1:  Has bearing on opponent (binary)** Do not fire when `false` and consider firing when `true`.
-  * **Feature 2:  Square root of degree deviation from gun to opponent (continuous)** Only fire gun when sufficiently well aimed.
+  * **Feature 1 - Has bearing on opponent (binary)** _ELO_:  Do not fire when `false` and consider firing when `true`.
+  * **Feature 2 - Square root of degree deviation from gun to opponent (continuous)** _ELO_:  Only fire gun when sufficiently well aimed.
 
 ### Learning Model
 Key model parameters are listed below:
 
-* SARSA n-step:  100
-* Discount (gamma):  0.99
-* Exploration (epsilon):  0.2
-* Stochastic gradient descent with 0.001 step size
-* Number of training Robocode rounds:  30
+* SARSA state-action value estimation (n-step=100)
+* Discounted (gamma=0.99)
+* Epsilon greedy (epsilon=0.2)
+* Stochastic gradient descent (step size=0.001)
+* Number of Robocode training rounds:  30
 
 The full training command with all parameters is listed below:
 
@@ -84,15 +85,19 @@ The full training command with all parameters is listed below:
 rlai train --random-seed 12345 --agent rlai.agents.mdp.StochasticMdpAgent --gamma 0.99 --environment rlai.environments.robocode.RobocodeEnvironment --port 54321 --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode SARSA --n-steps 100 --num-improvements 1000 --num-episodes-per-improvement 1 --num-updates-per-improvement 1 --make-final-policy-greedy True --num-improvements-per-plot 5 --save-agent-path ~/Desktop/robot_agent.pickle --q-S-A rlai.value_estimation.function_approximation.estimators.ApproximateStateActionValueEstimator --epsilon 0.2 --plot-model --plot-model-per-improvements 5 --function-approximation-model rlai.value_estimation.function_approximation.models.sklearn.SKLearnSGD --loss squared_loss --sgd-alpha 0.0 --learning-rate constant --eta0 0.001 --feature-extractor rlai.environments.robocode.RobocodeFeatureExtractor
 ```
 
-Running this command in the [JupyterLab notebook](../jupyterlab_guide.md) (load `robocode-aiming`) is shown below.
+Running this training command in the [JupyterLab notebook](../jupyterlab_guide.md) is shown below:
 
-{% include youtubePlayer.html id="YosGGUuudMk" %}
+{% include youtubePlayer.html id="_WVdr3EaWQ8" %}
 
 ### Results
+Running the policy generated above generates the following Robocode battle:
 
-Running the agent trained per above results in the following Robocode battle:
+{% include youtubePlayer.html id="JjW7j6NXZxA" %}
 
+It is clear that the agent has developed a tactic of not firing while rotating the radar at the start of the round to 
+obtain a bearing on the opponent. Once a bearing is obtained, the gun is rotated accordingly and firing begins when
+aim is sufficiently accurate. All ELOs are satisfied.
 
-In the final round of the video, it is clear that the agent has developed a tactic of rotating the radar quickly at the
-start of the round to obtain a bearing on the opponent. Once a bearing is obtained, the gun is rotated accordingly and 
-radar rotation slows.
+## Radar-Driven Aiming Against a Mobile Opponent (TBD)
+
+## Evasive Movement (TBD)
