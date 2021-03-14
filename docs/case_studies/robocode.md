@@ -45,7 +45,7 @@ The following sections explore the development of a RL robot for Robocode. The a
 focuses on developing particular skills, rather than addressing the entire behavior policy at once. Each section links
 to a GitHub commit marking the code and configurations that were used.
 
-## Radar-Driven Aiming Against a Stationary Opponent ([GitHub Commit](https://github.com/MatthewGerber/rlai/tree/537b0653f17ef84c35ccfd2f67e07d5bde7b3d61))
+## Radar-Driven Aiming Against a Stationary Opponent ([GitHub](https://github.com/MatthewGerber/rlai/tree/204da60f432ece551e12cdfa0435ff1dbf6fc6af))
 This section develops radar-driven aiming against a stationary opponent. The RL robot is also stationary, but is allowed
 to rotate both its radar (to obtain bearings on the opponent) and its gun (to orient the gun with respect to the
 opponent's bearing).
