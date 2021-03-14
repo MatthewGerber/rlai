@@ -53,9 +53,9 @@ class Agent(ABC):
             state: State
     ):
         """
-        Reset the agent to a state prior to any learning.
+        Reset the agent for a new run.
 
-        :param state: New state.
+        :param state: Initial state.
         """
 
         self.most_recent_action = None
@@ -129,7 +129,6 @@ class Agent(ABC):
 
         :param r: Reward.
         """
-        pass
 
     def __init__(
             self,

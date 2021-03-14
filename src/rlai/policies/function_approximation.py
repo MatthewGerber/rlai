@@ -14,6 +14,20 @@ class FunctionApproximationPolicy(Policy):
     like agent.pi[state]), which returns an action-probability dictionary.
     """
 
+    def reset_for_new_run(
+            self,
+            state: MdpState
+    ):
+        """
+        Reset the policy for a new run.
+
+        :param state: Initial state.
+        """
+
+        super().reset_for_new_run(state)
+
+        self.estimator.reset_for_new_run(state)
+
     def format_state_action_probs(
             self,
             states: List[MdpState]

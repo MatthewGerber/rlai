@@ -48,6 +48,16 @@ class FeatureExtractor(ABC):
         :return: 2-tuple of a feature extractor and a list of unparsed arguments.
         """
 
+    def reset_for_new_run(
+            self,
+            state: MdpState
+    ):
+        """
+        Reset the feature extractor for a new run.
+
+        :param state: Initial state.
+        """
+
     @abstractmethod
     def extract(
             self,

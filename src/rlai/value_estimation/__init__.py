@@ -161,6 +161,16 @@ class StateActionValueEstimator(ABC):
         :return: Policy.
         """
 
+    def reset_for_new_run(
+            self,
+            state: MdpState
+    ):
+        """
+        Reset the estimator for a new run.
+
+        :param state: Initial state.
+        """
+
     def initialize(
             self,
             state: MdpState,
