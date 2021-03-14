@@ -14,6 +14,16 @@ class Policy(ABC):
     Base policy class.
     """
 
+    def reset_for_new_run(
+            self,
+            state: MdpState
+    ):
+        """
+        Reset the policy for a new run.
+
+        :param state: Initial state.
+        """
+
     def get_state_i(
             self,
             state_descriptor: Union[str, np.ndarray]

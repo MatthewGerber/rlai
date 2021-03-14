@@ -253,6 +253,20 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
 
         return FunctionApproximationPolicy(self)
 
+    def reset_for_new_run(
+            self,
+            state: MdpState
+    ):
+        """
+        Reset the estimator for a new run.
+
+        :param state: Initial state.
+        """
+
+        super().reset_for_new_run(state)
+
+        self.feature_extractor.reset_for_new_run(state)
+
     def add_sample(
             self,
             state: MdpState,

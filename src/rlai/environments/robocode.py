@@ -21,9 +21,9 @@ from rlai.value_estimation.function_approximation.models.feature_extraction impo
 @rl_text(chapter='Environments', page=1)
 class RobocodeEnvironment(TcpMdpEnvironment):
     """
-    Robocode environment. The official Java implementation of Robocode runs alongside the current environment, and a
-    specialized robot implementation on the Java side makes TCP calls to the present Python class to exchange action and
-    state information.
+    Robocode environment. The Java implementation of Robocode runs alongside the current environment, and a specialized
+    robot implementation on the Java side makes TCP calls to the present Python class to exchange action and state
+    information.
     """
 
     @classmethod
@@ -342,6 +342,20 @@ class RobocodeFeatureExtractor(FeatureExtractor):
 
         return fex, unparsed_args
 
+    def reset_for_new_run(
+            self,
+            state: MdpState
+    ):
+        """
+        Reset the feature extractor for a new run.
+
+        :param state: Initial state.
+        """
+
+        super().reset_for_new_run(state)
+
+        self.most_recent_scanned_robot = None
+
     def extract(
             self,
             states: List[RobocodeState],
@@ -359,13 +373,7 @@ class RobocodeFeatureExtractor(FeatureExtractor):
 
         self.check_state_and_action_lists(states, actions)
 
-        # update the most recent scanned robot event, which is our best estimate as to where the enemy robot is
-        # located.
-        self.most_recent_scanned_robot: Dict = next((
-            state.events['ScannedRobotEvent'][0]
-            for state in states
-            if 'ScannedRobotEvent' in state.events
-        ), self.most_recent_scanned_robot)
+        self.set_most_recent_scanned_robot(states)
 
         # bearing is relative to our heading
         if self.most_recent_scanned_robot is None:
@@ -387,6 +395,30 @@ class RobocodeFeatureExtractor(FeatureExtractor):
         X = self.feature_scaler.scale_features(X, for_fitting)
 
         return X
+
+    def set_most_recent_scanned_robot(
+            self,
+            states: List[RobocodeState]
+    ):
+        """
+        Set the most recent scanned robot from a list of states. Will leave the most recent scanned robot field
+        unchanged if none of the states contain a scanned robot.
+
+        :param states: States.
+        """
+
+        self.most_recent_scanned_robot: Dict = next((
+
+            # take the final element of the list, which should be the most recent event.
+            state.events['ScannedRobotEvent'][-1]
+
+            # reverse in case multiple states are given
+            for state in reversed(states)
+
+            # events might not contain scanned robot events
+            if 'ScannedRobotEvent' in state.events
+
+        ), self.most_recent_scanned_robot)
 
     def get_feature_values(
             self,

@@ -122,6 +122,20 @@ class StochasticMdpAgent(MdpAgent):
 
         return agents, unparsed_args
 
+    def reset_for_new_run(
+            self,
+            state: MdpState
+    ):
+        """
+        Reset the agent for a new run.
+
+        :param state: Initial state.
+        """
+
+        super().reset_for_new_run(state)
+
+        self.pi.reset_for_new_run(state)
+
     def __act__(
             self,
             t: int
