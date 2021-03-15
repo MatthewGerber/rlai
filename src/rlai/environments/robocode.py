@@ -194,7 +194,7 @@ class RobocodeEnvironment(TcpMdpEnvironment):
             # ('turnLeft', 5.0),
             # ('turnRight', 5.0),
             ('turnRadarLeft', 5.0),
-            # ('turnRadarRight', 5.0),
+            ('turnRadarRight', 5.0),
             ('turnGunLeft', 5.0),
             ('turnGunRight', 5.0),
             ('fire', 1.0)
@@ -463,9 +463,13 @@ class RobocodeFeatureExtractor(FeatureExtractor):
                     # indicator as to whether or not we have a bearing on the enemy
                     0.0 if bearing_from_self is None else 1.0,
 
-                    # indicator variable that is 1 if the gun's current heading (w.r.t to us) is counterclockwise from the
-                    # enemy robot's bearing (w.r.t. us). zero if no enemy has been scanned.
-                    0.0 if bearing_from_self is None else int(state.gun_heading - self.normalize(state.heading + bearing_from_self) < 0)
+                    # indicator variable that is -1 if the gun's current heading (0 degrees being due north) is
+                    # counterclockwise from the enemy robot's bearing w.r.t us (0 degrees being due north), +1 if
+                    # clockwise, and zero if no enemy has been scanned.
+                    0.0 if bearing_from_self is None else -1 + 2 * int(self.get_shortest_degree_change(
+                        state.gun_heading,
+                        self.normalize(state.heading + bearing_from_self)
+                    ) < 0.0)
 
                 ]
             else:
@@ -493,6 +497,36 @@ class RobocodeFeatureExtractor(FeatureExtractor):
             raise ValueError(f'Unknown action:  {action.name}')
 
         return feature_values
+
+    @staticmethod
+    def get_shortest_degree_change(
+            from_heading: float,
+            to_heading: float
+    ) -> float:
+        """
+        Get the shortest degree change from a heading to another heading.
+
+        :param from_heading: From heading (degrees [0, 360]).
+        :param to_heading: To heading (degrees [0, 360]).
+        :return: Shortest degree change (degrees, [-180, 180]).
+        """
+
+        # clockwise change is always positive, and counterclockwise change is always negative.
+
+        if to_heading > from_heading:
+            clockwise_change = to_heading - from_heading
+            counterclockwise_change = clockwise_change - 360.0
+        elif from_heading > to_heading:
+            counterclockwise_change = to_heading - from_heading
+            clockwise_change = counterclockwise_change + 360.0
+        else:
+            clockwise_change = 0.0
+            counterclockwise_change = 0.0
+
+        if abs(clockwise_change) < abs(counterclockwise_change):
+            return clockwise_change
+        else:
+            return counterclockwise_change
 
     @staticmethod
     def normalize(
