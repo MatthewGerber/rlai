@@ -486,21 +486,23 @@ class RobocodeFeatureExtractor(FeatureExtractor):
             if action == action_to_extract:
                 feature_values = [
 
-                    # provide a constant, so that each action has its own intercept term.
+                    # intercept
                     1.0,
 
-                    # indicator as to whether or not we have a bearing on the enemy
+                    # indicator (0.0/1.0):  do we have a bearing on the enemy?
                     0.0 if bearing_from_self is None else 1.0,
 
-                    state.bullet_power_missed_since_previous_hit,
+                    # how much bullet power has missed since the previous hit?
+                    math.sqrt(state.bullet_power_missed_since_previous_hit),
 
-                    # indicator variable that is -1 if the radar's current heading (0 degrees being due north) is
-                    # counterclockwise from the enemy robot's bearing w.r.t us (0 degrees being due north), +1 if
-                    # clockwise, and zero if no enemy has been scanned.
-                    0.0 if bearing_from_self is None else -1 + 2 * int(self.get_shortest_degree_change(
+                    # indicator (-1/+1):  is the radar's current heading clockwise from the enemy? this is 0.0 if no
+                    # enemy has been scanned.
+                    0.0 if bearing_from_self is None else
+                    -1.0 if self.is_clockwise_move(
                         state.radar_heading,
                         self.normalize(state.heading + bearing_from_self)
-                    ) < 0.0)
+                    ) else
+                    1.0
 
                 ]
             else:
@@ -511,19 +513,20 @@ class RobocodeFeatureExtractor(FeatureExtractor):
             if action == action_to_extract:
                 feature_values = [
 
-                    # provide a constant, so that each action has its own intercept term.
+                    # interceept
                     1.0,
 
-                    # indicator as to whether or not we have a bearing on the enemy
+                    # indicator (0.0/1.0):  do we have a bearing on the enemy?
                     0.0 if bearing_from_self is None else 1.0,
 
-                    # indicator variable that is -1 if the gun's current heading (0 degrees being due north) is
-                    # counterclockwise from the enemy robot's bearing w.r.t us (0 degrees being due north), +1 if
-                    # clockwise, and zero if no enemy has been scanned.
-                    0.0 if bearing_from_self is None else -1 + 2 * int(self.get_shortest_degree_change(
+                    # indicator (-1/+1):  is the gun's current heading clockwise from the enemy? this is 0.0 if no
+                    # enemy has been scanned.
+                    0.0 if bearing_from_self is None else
+                    -1.0 if self.is_clockwise_move(
                         state.gun_heading,
                         self.normalize(state.heading + bearing_from_self)
-                    ) < 0.0)
+                    ) else
+                    1.0
 
                 ]
             else:
@@ -534,15 +537,16 @@ class RobocodeFeatureExtractor(FeatureExtractor):
             if action == action_to_extract:
                 feature_values = [
 
-                    # provide a constant, so that each action has its own intercept term.
+                    # intercept
                     1.0,
 
-                    # indicator as to whether or not we have a bearing on the enemy
+                    # indicator (0.0/1.0):  do we have a bearing on the enemy?
                     0.0 if bearing_from_self is None else 1.0,
 
                     # sqrt(abs) the difference as a measure of how close the gun is to pointing at the enemy. zero if no
                     # enemy has been scanned.
-                    0.0 if bearing_from_self is None else math.sqrt(abs(state.gun_heading - self.normalize(state.heading + bearing_from_self)))
+                    0.0 if bearing_from_self is None else
+                    math.sqrt(abs(state.gun_heading - self.normalize(state.heading + bearing_from_self)))
 
                 ]
             else:
@@ -553,26 +557,43 @@ class RobocodeFeatureExtractor(FeatureExtractor):
 
         return feature_values
 
-    @staticmethod
+    @classmethod
+    def is_clockwise_move(
+            cls,
+            start_heading: float,
+            end_heading: float
+    ) -> bool:
+        """
+        Check whether moving from one heading to another would be a clockwise movement.
+
+        :param start_heading: Start heading (degrees [0, 360]).
+        :param end_heading: End heading (degrees [0, 360]).
+        :return: True if moving from `start_heading` to `end_heading` would move in the clockwise direction.
+        """
+
+        return cls.get_shortest_degree_change(start_heading, end_heading) > 0.0
+
+    @classmethod
     def get_shortest_degree_change(
-            from_heading: float,
-            to_heading: float
+            cls,
+            start_heading: float,
+            end_heading: float
     ) -> float:
         """
-        Get the shortest degree change from a heading to another heading.
+        Get the shortest degree change to go from one heading to another.
 
-        :param from_heading: From heading (degrees [0, 360]).
-        :param to_heading: To heading (degrees [0, 360]).
-        :return: Shortest degree change (degrees, [-180, 180]).
+        :param start_heading: Start heading (degrees [0, 360]).
+        :param end_heading: End heading (degrees [0, 360]).
+        :return: Shortest degree change to move from `start_heading` to `end_heading` (degrees, [-180, 180]).
         """
 
         # clockwise change is always positive, and counterclockwise change is always negative.
 
-        if to_heading > from_heading:
-            clockwise_change = to_heading - from_heading
+        if end_heading > start_heading:
+            clockwise_change = end_heading - start_heading
             counterclockwise_change = clockwise_change - 360.0
-        elif from_heading > to_heading:
-            counterclockwise_change = to_heading - from_heading
+        elif start_heading > end_heading:
+            counterclockwise_change = end_heading - start_heading
             clockwise_change = counterclockwise_change + 360.0
         else:
             clockwise_change = 0.0
