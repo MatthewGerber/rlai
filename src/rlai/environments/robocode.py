@@ -6,6 +6,7 @@ import numpy as np
 from numpy.random import RandomState
 
 from rlai.actions import Action
+from rlai.agents.mdp import MdpAgent
 from rlai.environments.mdp import MdpEnvironment
 from rlai.environments.network import TcpMdpEnvironment
 from rlai.meta import rl_text
@@ -68,6 +69,24 @@ class RobocodeEnvironment(TcpMdpEnvironment):
 
         return robocode, unparsed_args
 
+    def reset_for_new_run(
+            self,
+            agent: MdpAgent
+    ) -> MdpState:
+        """
+        Reset the environment for a new run.
+
+        :param agent: Agent.
+        :return: Initial state.
+        """
+
+        initial_statee = super().reset_for_new_run(agent)
+
+        self.previous_state = None
+        self.bullet_id_fired_event.clear()
+
+        return initial_statee
+
     def extract_state_and_reward_from_client_dict(
             self,
             client_dict: Dict[Any, Any],
@@ -83,6 +102,28 @@ class RobocodeEnvironment(TcpMdpEnvironment):
 
         event_type_events: Dict[str, List[Dict]] = client_dict['events']
 
+        # sum up bullet power that hit others
+        bullet_hit_events = event_type_events.get('BulletHitEvent', [])
+        bullet_power_hit_others = sum([
+            bullet_event['bullet']['power']
+            for bullet_event in bullet_hit_events
+        ])
+
+        # sum up bullet power that missed others
+        bullet_missed_events = event_type_events.get('BulletMissedEvent', [])
+        bullet_power_missed = sum([
+            bullet_event['bullet']['power']
+            for bullet_event in bullet_missed_events
+        ])
+
+        # keep track of how much bullet power has missed the opponent since we last recorded a hit
+        if self.previous_state is None:
+            bullet_power_missed_since_previous_hit = 0.0
+        elif bullet_power_hit_others > 0.0:
+            bullet_power_missed_since_previous_hit = 0.0
+        else:
+            bullet_power_missed_since_previous_hit = self.previous_state.bullet_power_missed_since_previous_hit + bullet_power_missed
+
         # the round terminates either with death or victory -- it's a harsh world out there.
         dead = len(event_type_events.get('DeathEvent', [])) > 0
         won = len(event_type_events.get('WinEvent', [])) > 0
@@ -91,12 +132,15 @@ class RobocodeEnvironment(TcpMdpEnvironment):
         # initialize the state
         state = RobocodeState(
             **client_dict['state'],
+            bullet_power_hit_others=bullet_power_hit_others,
+            bullet_power_missed=bullet_power_missed,
+            bullet_power_missed_since_previous_hit=bullet_power_missed_since_previous_hit,
             events=event_type_events,
-            actions=self.robot_actions,
+            AA=self.robot_actions,
             terminal=terminal
         )
 
-        # hang on to bullet firing events. add rlai step to each event.
+        # hang on to bullet firing events so that we can assign reward to them later. add the rlai step to each event.
         self.bullet_id_fired_event.update({
             bullet_fired_event['bullet']['bulletId']: {
                 **bullet_fired_event,
@@ -105,7 +149,7 @@ class RobocodeEnvironment(TcpMdpEnvironment):
             for bullet_fired_event in event_type_events.get('BulletFiredEvent', [])
         })
 
-        # reward structure
+        # old attempts at reward structure
 
         # ... don't get hit
         # bullet_power_hit_self = sum([
@@ -126,23 +170,10 @@ class RobocodeEnvironment(TcpMdpEnvironment):
         # else:
         #     reward_value = state.energy - self.previous_state.energy
 
-        # ... hit others
-        bullet_hit_events = event_type_events.get('BulletHitEvent', [])
-        bullet_power_hit_others = sum([
-            bullet_event['bullet']['power']
-            for bullet_event in bullet_hit_events
-        ])
-
-        # ... don't miss
-        bullet_missed_events = event_type_events.get('BulletMissedEvent', [])
-        bullet_power_missed = sum([
-            bullet_event['bullet']['power']
-            for bullet_event in bullet_missed_events
-        ])
-
+        # hit others and don't miss
         reward_value = bullet_power_hit_others - bullet_power_missed
 
-        # delay to most recent bullet event of either kind (hit or missed)
+        # shift the reward backward in time, to the time of the most recent bullet event of either kind (hit or missed).
         if len(bullet_hit_events) + len(bullet_missed_events) == 0:
             reward_shift_steps = 0
         else:
@@ -236,8 +267,11 @@ class RobocodeState(MdpState):
             width: float,
             x: float,
             y: float,
+            bullet_power_hit_others: float,
+            bullet_power_missed: float,
+            bullet_power_missed_since_previous_hit: float,
             events: Dict[str, List[Dict]],
-            actions: List[Action],
+            AA: List[Action],
             terminal: bool
     ):
         """
@@ -263,13 +297,13 @@ class RobocodeState(MdpState):
         :param x: Robot x position.
         :param y: Robot y position.
         :param events: List of events sent to the robot since the previous time the state was set.
-        :param actions: List of actions that can be taken.
+        :param AA: List of actions that can be taken.
         :param terminal: Whether or not the state is terminal.
         """
 
         super().__init__(
             i=None,
-            AA=actions,
+            AA=AA,
             terminal=terminal
         )
 
@@ -292,6 +326,9 @@ class RobocodeState(MdpState):
         self.width = width
         self.x = x
         self.y = y
+        self.bullet_power_hit_others = bullet_power_hit_others
+        self.bullet_power_missed = bullet_power_missed
+        self.bullet_power_missed_since_previous_hit = bullet_power_missed_since_previous_hit
         self.events = events
 
 
@@ -375,20 +412,27 @@ class RobocodeFeatureExtractor(FeatureExtractor):
 
         self.set_most_recent_scanned_robot(states)
 
-        # bearing is relative to our heading
+        # bearing is relative to our heading, so degrees from north to opponent would be our heading plus this value.
         if self.most_recent_scanned_robot is None:
-            bearing_from_self = None
+            bearing_from_self_to_opponent = None
         else:
-            bearing_from_self = math.degrees(self.most_recent_scanned_robot['bearing'])
+            bearing_from_self_to_opponent = math.degrees(self.most_recent_scanned_robot['bearing'])
 
         X = np.array([
 
             [
                 feature_value
-                for action_to_extract in self.actions
-                for feature_value in self.get_feature_values(state, action, action_to_extract, bearing_from_self)
+
+                # extract each possible action for the current state. only the action that is paired with the current
+                # state will have nonzero values. this is essentially forming one-hot-action interaction terms between
+                # the state features and the categorical actions.
+                for action_to_extract in state.AA
+
+                # extract feature values
+                for feature_value in self.get_feature_values(state, action, action_to_extract, bearing_from_self_to_opponent)
             ]
 
+            # the state and actions come to us in pairs
             for state, action in zip(states, actions)
         ])
 
@@ -432,7 +476,7 @@ class RobocodeFeatureExtractor(FeatureExtractor):
 
         :param state: State.
         :param action: Action.
-        :param action_to_extract: Action to one-hot.
+        :param action_to_extract: Action to one-hot encode.
         :param bearing_from_self: Bearing of enemy from self, or None if no enemy has been scanned yet.
         :return: List of floating-point feature values.
         """
@@ -446,11 +490,21 @@ class RobocodeFeatureExtractor(FeatureExtractor):
                     1.0,
 
                     # indicator as to whether or not we have a bearing on the enemy
-                    0.0 if bearing_from_self is None else 1.0
+                    0.0 if bearing_from_self is None else 1.0,
+
+                    state.bullet_power_missed_since_previous_hit,
+
+                    # indicator variable that is -1 if the radar's current heading (0 degrees being due north) is
+                    # counterclockwise from the enemy robot's bearing w.r.t us (0 degrees being due north), +1 if
+                    # clockwise, and zero if no enemy has been scanned.
+                    0.0 if bearing_from_self is None else -1 + 2 * int(self.get_shortest_degree_change(
+                        state.radar_heading,
+                        self.normalize(state.heading + bearing_from_self)
+                    ) < 0.0)
 
                 ]
             else:
-                feature_values = [0.0, 0.0]
+                feature_values = [0.0, 0.0, 0.0, 0.0]
 
         elif action_to_extract.name.startswith('turnGun'):
 
@@ -493,6 +547,7 @@ class RobocodeFeatureExtractor(FeatureExtractor):
                 ]
             else:
                 feature_values = [0.0, 0.0, 0.0]
+
         else:
             raise ValueError(f'Unknown action:  {action.name}')
 
@@ -563,7 +618,6 @@ class RobocodeFeatureExtractor(FeatureExtractor):
             environment=environment
         )
 
-        self.actions = environment.robot_actions
         self.most_recent_scanned_robot = None
         self.feature_scaler = NonstationaryFeatureScaler(
             num_observations_refit_feature_scaler=2000,
