@@ -103,3 +103,5 @@ be satisfied by this approach.
 ## Radar-Driven Aiming Against a Mobile Opponent (TBD)
 
 ## Evasive Movement (TBD)
+
+## Continuous Control (TBD)

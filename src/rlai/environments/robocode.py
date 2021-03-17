@@ -6,6 +6,7 @@ import numpy as np
 from numpy.random import RandomState
 
 from rlai.actions import Action
+from rlai.agents.mdp import MdpAgent
 from rlai.environments.mdp import MdpEnvironment
 from rlai.environments.network import TcpMdpEnvironment
 from rlai.meta import rl_text
@@ -68,6 +69,24 @@ class RobocodeEnvironment(TcpMdpEnvironment):
 
         return robocode, unparsed_args
 
+    def reset_for_new_run(
+            self,
+            agent: MdpAgent
+    ) -> MdpState:
+        """
+        Reset the environment for a new run.
+
+        :param agent: Agent.
+        :return: Initial state.
+        """
+
+        initial_state = super().reset_for_new_run(agent)
+
+        self.previous_state = None
+        self.bullet_id_fired_event.clear()
+
+        return initial_state
+
     def extract_state_and_reward_from_client_dict(
             self,
             client_dict: Dict[Any, Any],
@@ -83,6 +102,28 @@ class RobocodeEnvironment(TcpMdpEnvironment):
 
         event_type_events: Dict[str, List[Dict]] = client_dict['events']
 
+        # sum up bullet power that hit others
+        bullet_hit_events = event_type_events.get('BulletHitEvent', [])
+        bullet_power_hit_others = sum([
+            bullet_event['bullet']['power']
+            for bullet_event in bullet_hit_events
+        ])
+
+        # sum up bullet power that missed others
+        bullet_missed_events = event_type_events.get('BulletMissedEvent', [])
+        bullet_power_missed = sum([
+            bullet_event['bullet']['power']
+            for bullet_event in bullet_missed_events
+        ])
+
+        # keep track of how much bullet power has missed the opponent since we last recorded a hit
+        if self.previous_state is None:
+            bullet_power_missed_since_previous_hit = 0.0
+        elif bullet_power_hit_others > 0.0:
+            bullet_power_missed_since_previous_hit = 0.0
+        else:
+            bullet_power_missed_since_previous_hit = self.previous_state.bullet_power_missed_since_previous_hit + bullet_power_missed
+
         # the round terminates either with death or victory -- it's a harsh world out there.
         dead = len(event_type_events.get('DeathEvent', [])) > 0
         won = len(event_type_events.get('WinEvent', [])) > 0
@@ -91,12 +132,18 @@ class RobocodeEnvironment(TcpMdpEnvironment):
         # initialize the state
         state = RobocodeState(
             **client_dict['state'],
+            bullet_power_hit_others=bullet_power_hit_others,
+            bullet_power_missed=bullet_power_missed,
+            bullet_power_missed_since_previous_hit=bullet_power_missed_since_previous_hit,
             events=event_type_events,
-            actions=self.robot_actions,
+            AA=self.robot_actions,
             terminal=terminal
         )
 
-        # hang on to bullet firing events. add rlai step to each event.
+        # hang on to bullet firing events so that we can assign rewards to their time steps later on when they hit or
+        # miss. add the evaluation time step to each event (the bullet events have times associated with them, but
+        # those are robocode turns and there isn't always a perfect 1:1 between robocode turns and evaluation time
+        # steps.
         self.bullet_id_fired_event.update({
             bullet_fired_event['bullet']['bulletId']: {
                 **bullet_fired_event,
@@ -105,7 +152,7 @@ class RobocodeEnvironment(TcpMdpEnvironment):
             for bullet_fired_event in event_type_events.get('BulletFiredEvent', [])
         })
 
-        # reward structure
+        # old attempts at reward structure
 
         # ... don't get hit
         # bullet_power_hit_self = sum([
@@ -126,23 +173,11 @@ class RobocodeEnvironment(TcpMdpEnvironment):
         # else:
         #     reward_value = state.energy - self.previous_state.energy
 
-        # ... hit others
-        bullet_hit_events = event_type_events.get('BulletHitEvent', [])
-        bullet_power_hit_others = sum([
-            bullet_event['bullet']['power']
-            for bullet_event in bullet_hit_events
-        ])
-
-        # ... don't miss
-        bullet_missed_events = event_type_events.get('BulletMissedEvent', [])
-        bullet_power_missed = sum([
-            bullet_event['bullet']['power']
-            for bullet_event in bullet_missed_events
-        ])
-
+        # hit others and don't miss
         reward_value = bullet_power_hit_others - bullet_power_missed
 
-        # delay to most recent bullet event of either kind (hit or missed)
+        # shift the reward backward in time, to the evaluation time step of the most recent bullet event (of either
+        # kind, hit or missed).
         if len(bullet_hit_events) + len(bullet_missed_events) == 0:
             reward_shift_steps = 0
         else:
@@ -194,7 +229,7 @@ class RobocodeEnvironment(TcpMdpEnvironment):
             # ('turnLeft', 5.0),
             # ('turnRight', 5.0),
             ('turnRadarLeft', 5.0),
-            # ('turnRadarRight', 5.0),
+            ('turnRadarRight', 5.0),
             ('turnGunLeft', 5.0),
             ('turnGunRight', 5.0),
             ('fire', 1.0)
@@ -236,8 +271,11 @@ class RobocodeState(MdpState):
             width: float,
             x: float,
             y: float,
+            bullet_power_hit_others: float,
+            bullet_power_missed: float,
+            bullet_power_missed_since_previous_hit: float,
             events: Dict[str, List[Dict]],
-            actions: List[Action],
+            AA: List[Action],
             terminal: bool
     ):
         """
@@ -263,13 +301,13 @@ class RobocodeState(MdpState):
         :param x: Robot x position.
         :param y: Robot y position.
         :param events: List of events sent to the robot since the previous time the state was set.
-        :param actions: List of actions that can be taken.
+        :param AA: List of actions that can be taken.
         :param terminal: Whether or not the state is terminal.
         """
 
         super().__init__(
             i=None,
-            AA=actions,
+            AA=AA,
             terminal=terminal
         )
 
@@ -292,6 +330,9 @@ class RobocodeState(MdpState):
         self.width = width
         self.x = x
         self.y = y
+        self.bullet_power_hit_others = bullet_power_hit_others
+        self.bullet_power_missed = bullet_power_missed
+        self.bullet_power_missed_since_previous_hit = bullet_power_missed_since_previous_hit
         self.events = events
 
 
@@ -375,20 +416,27 @@ class RobocodeFeatureExtractor(FeatureExtractor):
 
         self.set_most_recent_scanned_robot(states)
 
-        # bearing is relative to our heading
+        # bearing is relative to our heading, so degrees from north to opponent would be our heading plus this value.
         if self.most_recent_scanned_robot is None:
-            bearing_from_self = None
+            enemy_bearing_from_self = None
         else:
-            bearing_from_self = math.degrees(self.most_recent_scanned_robot['bearing'])
+            enemy_bearing_from_self = math.degrees(self.most_recent_scanned_robot['bearing'])
 
         X = np.array([
 
             [
                 feature_value
-                for action_to_extract in self.actions
-                for feature_value in self.get_feature_values(state, action, action_to_extract, bearing_from_self)
+
+                # extract each possible action for the current state. only the action that is paired with the current
+                # state will have nonzero values. this is essentially forming one-hot-action interaction terms between
+                # the state features and the categorical actions.
+                for action_to_extract in state.AA
+
+                # extract feature values
+                for feature_value in self.get_feature_values(state, action, action_to_extract, enemy_bearing_from_self)
             ]
 
+            # the state and actions come to us in pairs
             for state, action in zip(states, actions)
         ])
 
@@ -425,15 +473,15 @@ class RobocodeFeatureExtractor(FeatureExtractor):
             state: RobocodeState,
             action: Action,
             action_to_extract: Action,
-            bearing_from_self: Optional[float]
+            enemy_bearing_from_self: Optional[float]
     ) -> List[float]:
         """
         Get feature values for a state-action pair, coded one-hot for a particular action to extract.
 
         :param state: State.
         :param action: Action.
-        :param action_to_extract: Action to one-hot.
-        :param bearing_from_self: Bearing of enemy from self, or None if no enemy has been scanned yet.
+        :param action_to_extract: Action to one-hot encode.
+        :param enemy_bearing_from_self: Bearing of enemy from self, or None if no enemy has been scanned yet.
         :return: List of floating-point feature values.
         """
 
@@ -442,30 +490,47 @@ class RobocodeFeatureExtractor(FeatureExtractor):
             if action == action_to_extract:
                 feature_values = [
 
-                    # provide a constant, so that each action has its own intercept term.
+                    # intercept
                     1.0,
 
-                    # indicator as to whether or not we have a bearing on the enemy
-                    0.0 if bearing_from_self is None else 1.0
+                    # indicator (0/1):  we have a bearing on the enemy
+                    0.0 if enemy_bearing_from_self is None else 1.0,
+
+                    # bullet power that has missed since the previous hit
+                    state.bullet_power_missed_since_previous_hit,
+
+                    # indicator (-1/+1):  the radar's current heading is counterclockwise (-1) or clockwise (+1) from
+                    # the enemy. this is 0 if no enemy has been scanned.
+                    0.0 if enemy_bearing_from_self is None else
+                    -1.0 if self.is_clockwise_move(
+                        state.radar_heading,
+                        self.normalize(state.heading + enemy_bearing_from_self)
+                    ) else
+                    1.0
 
                 ]
             else:
-                feature_values = [0.0, 0.0]
+                feature_values = [0.0, 0.0, 0.0, 0.0]
 
         elif action_to_extract.name.startswith('turnGun'):
 
             if action == action_to_extract:
                 feature_values = [
 
-                    # provide a constant, so that each action has its own intercept term.
+                    # interceept
                     1.0,
 
-                    # indicator as to whether or not we have a bearing on the enemy
-                    0.0 if bearing_from_self is None else 1.0,
+                    # indicator (0/1):  we have a bearing on the enemy
+                    0.0 if enemy_bearing_from_self is None else 1.0,
 
-                    # indicator variable that is 1 if the gun's current heading (w.r.t to us) is counterclockwise from the
-                    # enemy robot's bearing (w.r.t. us). zero if no enemy has been scanned.
-                    0.0 if bearing_from_self is None else int(state.gun_heading - self.normalize(state.heading + bearing_from_self) < 0)
+                    # indicator (-1/+1):  the radar's current heading is counterclockwise (-1) or clockwise (+1) from
+                    # the enemy. this is 0 if no enemy has been scanned.
+                    0.0 if enemy_bearing_from_self is None else
+                    -1.0 if self.is_clockwise_move(
+                        state.gun_heading,
+                        self.normalize(state.heading + enemy_bearing_from_self)
+                    ) else
+                    1.0
 
                 ]
             else:
@@ -476,23 +541,72 @@ class RobocodeFeatureExtractor(FeatureExtractor):
             if action == action_to_extract:
                 feature_values = [
 
-                    # provide a constant, so that each action has its own intercept term.
+                    # intercept
                     1.0,
 
-                    # indicator as to whether or not we have a bearing on the enemy
-                    0.0 if bearing_from_self is None else 1.0,
+                    # indicator (0/1):  we have a bearing on the enemy
+                    0.0 if enemy_bearing_from_self is None else 1.0,
 
                     # sqrt(abs) the difference as a measure of how close the gun is to pointing at the enemy. zero if no
                     # enemy has been scanned.
-                    0.0 if bearing_from_self is None else math.sqrt(abs(state.gun_heading - self.normalize(state.heading + bearing_from_self)))
+                    0.0 if enemy_bearing_from_self is None else
+                    math.sqrt(abs(state.gun_heading - self.normalize(state.heading + enemy_bearing_from_self)))
 
                 ]
             else:
                 feature_values = [0.0, 0.0, 0.0]
+
         else:
             raise ValueError(f'Unknown action:  {action.name}')
 
         return feature_values
+
+    @classmethod
+    def is_clockwise_move(
+            cls,
+            start_heading: float,
+            end_heading: float
+    ) -> bool:
+        """
+        Check whether moving from one heading to another would be a clockwise movement.
+
+        :param start_heading: Start heading (degrees [0, 360]).
+        :param end_heading: End heading (degrees [0, 360]).
+        :return: True if moving from `start_heading` to `end_heading` would move in the clockwise direction.
+        """
+
+        return cls.get_shortest_degree_change(start_heading, end_heading) > 0.0
+
+    @classmethod
+    def get_shortest_degree_change(
+            cls,
+            start_heading: float,
+            end_heading: float
+    ) -> float:
+        """
+        Get the shortest degree change to go from one heading to another.
+
+        :param start_heading: Start heading (degrees [0, 360]).
+        :param end_heading: End heading (degrees [0, 360]).
+        :return: Shortest degree change to move from `start_heading` to `end_heading` (degrees, [-180, 180]).
+        """
+
+        # clockwise change is always positive, and counterclockwise change is always negative.
+
+        if end_heading > start_heading:
+            clockwise_change = end_heading - start_heading
+            counterclockwise_change = clockwise_change - 360.0
+        elif start_heading > end_heading:
+            counterclockwise_change = end_heading - start_heading
+            clockwise_change = counterclockwise_change + 360.0
+        else:
+            clockwise_change = 0.0
+            counterclockwise_change = 0.0
+
+        if abs(clockwise_change) < abs(counterclockwise_change):
+            return clockwise_change
+        else:
+            return counterclockwise_change
 
     @staticmethod
     def normalize(
@@ -529,7 +643,6 @@ class RobocodeFeatureExtractor(FeatureExtractor):
             environment=environment
         )
 
-        self.actions = environment.robot_actions
         self.most_recent_scanned_robot = None
         self.feature_scaler = NonstationaryFeatureScaler(
             num_observations_refit_feature_scaler=2000,
