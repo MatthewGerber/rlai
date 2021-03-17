@@ -80,12 +80,12 @@ class RobocodeEnvironment(TcpMdpEnvironment):
         :return: Initial state.
         """
 
-        initial_statee = super().reset_for_new_run(agent)
+        initial_state = super().reset_for_new_run(agent)
 
         self.previous_state = None
         self.bullet_id_fired_event.clear()
 
-        return initial_statee
+        return initial_state
 
     def extract_state_and_reward_from_client_dict(
             self,
