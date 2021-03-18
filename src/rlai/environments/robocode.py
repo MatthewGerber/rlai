@@ -449,8 +449,7 @@ class RobocodeFeatureExtractor(FeatureExtractor):
             states: List[RobocodeState]
     ):
         """
-        Set the most recent scanned robot from a list of states. Will leave the most recent scanned robot field
-        unchanged if none of the states contain a scanned robot.
+        Set the most recent scanned robot from a list of states.
 
         :param states: States.
         """
@@ -466,7 +465,7 @@ class RobocodeFeatureExtractor(FeatureExtractor):
             # events might not contain scanned robot events
             if 'ScannedRobotEvent' in state.events
 
-        ), self.most_recent_scanned_robot)
+        ), None)
 
     def get_feature_values(
             self,
