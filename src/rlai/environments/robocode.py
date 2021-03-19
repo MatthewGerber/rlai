@@ -420,7 +420,8 @@ class RobocodeFeatureExtractor(FeatureExtractor):
         if self.most_recent_scanned_robot is None:
             enemy_bearing_from_self = None
         else:
-            enemy_bearing_from_self = math.degrees(self.most_recent_scanned_robot['bearing'])
+            # the bearing comes to us as [-180,180], whichever is closest. normalize to [0,360].
+            enemy_bearing_from_self = self.normalize(math.degrees(self.most_recent_scanned_robot['bearing']))
 
         X = np.array([
 
@@ -496,7 +497,7 @@ class RobocodeFeatureExtractor(FeatureExtractor):
                     0.0 if enemy_bearing_from_self is None else 1.0,
 
                     # bullet power that has missed since the previous hit
-                    state.bullet_power_missed_since_previous_hit,
+                    math.sqrt(state.bullet_power_missed_since_previous_hit),
 
                     # indicator (-1/+1):  the radar's current heading is counterclockwise (-1) or clockwise (+1) from
                     # the enemy. this is 0 if no enemy has been scanned.
@@ -516,11 +517,8 @@ class RobocodeFeatureExtractor(FeatureExtractor):
             if action == action_to_extract:
                 feature_values = [
 
-                    # interceept
+                    # intercept
                     1.0,
-
-                    # indicator (0/1):  we have a bearing on the enemy
-                    0.0 if enemy_bearing_from_self is None else 1.0,
 
                     # indicator (-1/+1):  the radar's current heading is counterclockwise (-1) or clockwise (+1) from
                     # the enemy. this is 0 if no enemy has been scanned.
@@ -533,27 +531,26 @@ class RobocodeFeatureExtractor(FeatureExtractor):
 
                 ]
             else:
-                feature_values = [0.0, 0.0, 0.0]
+                feature_values = [0.0, 0.0]
 
         elif action_to_extract.name == 'fire':
 
             if action == action_to_extract:
                 feature_values = [
 
-                    # intercept
                     1.0,
 
-                    # indicator (0/1):  we have a bearing on the enemy
-                    0.0 if enemy_bearing_from_self is None else 1.0,
-
-                    # sqrt(abs) the difference as a measure of how close the gun is to pointing at the enemy. zero if no
-                    # enemy has been scanned.
-                    0.0 if enemy_bearing_from_self is None else
-                    math.sqrt(abs(state.gun_heading - self.normalize(state.heading + enemy_bearing_from_self)))
+                    math.sqrt(abs(
+                        180 if enemy_bearing_from_self is None else
+                        self.get_shortest_degree_change(
+                            state.gun_heading,
+                            self.normalize(state.heading + enemy_bearing_from_self)
+                        )
+                    ))
 
                 ]
             else:
-                feature_values = [0.0, 0.0, 0.0]
+                feature_values = [0.0, 0.0]
 
         else:
             raise ValueError(f'Unknown action:  {action.name}')
@@ -644,7 +641,7 @@ class RobocodeFeatureExtractor(FeatureExtractor):
 
         self.most_recent_scanned_robot = None
         self.feature_scaler = NonstationaryFeatureScaler(
-            num_observations_refit_feature_scaler=2000,
+            num_observations_refit_feature_scaler=200000000,
             refit_history_length=100000,
             refit_weight_decay=0.99999
         )
