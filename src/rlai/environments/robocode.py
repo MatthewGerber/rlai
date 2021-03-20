@@ -14,7 +14,6 @@ from rlai.rewards import Reward
 from rlai.states.mdp import MdpState
 from rlai.utils import parse_arguments
 from rlai.value_estimation.function_approximation.models.feature_extraction import (
-    NonstationaryFeatureScaler,
     FeatureExtractor
 )
 
@@ -419,9 +418,11 @@ class RobocodeFeatureExtractor(FeatureExtractor):
         # bearing is relative to our heading, so degrees from north to opponent would be our heading plus this value.
         if self.most_recent_scanned_robot is None:
             enemy_bearing_from_self = None
+            enemy_distance_from_self = None
         else:
             # the bearing comes to us as [-180,180], whichever is closest. normalize to [0,360].
             enemy_bearing_from_self = self.normalize(math.degrees(self.most_recent_scanned_robot['bearing']))
+            enemy_distance_from_self = self.most_recent_scanned_robot['distance']
 
         X = np.array([
 
@@ -434,14 +435,14 @@ class RobocodeFeatureExtractor(FeatureExtractor):
                 for action_to_extract in state.AA
 
                 # extract feature values
-                for feature_value in self.get_feature_values(state, action, action_to_extract, enemy_bearing_from_self)
+                for feature_value in self.get_feature_values(state, action, action_to_extract, enemy_bearing_from_self, enemy_distance_from_self)
             ]
 
             # the state and actions come to us in pairs
             for state, action in zip(states, actions)
         ])
 
-        X = self.feature_scaler.scale_features(X, for_fitting)
+        # X = self.feature_scaler.scale_features(X, for_fitting)
 
         return X
 
@@ -473,7 +474,8 @@ class RobocodeFeatureExtractor(FeatureExtractor):
             state: RobocodeState,
             action: Action,
             action_to_extract: Action,
-            enemy_bearing_from_self: Optional[float]
+            enemy_bearing_from_self: Optional[float],
+            enemy_distance_from_self: Optional[float]
     ) -> List[float]:
         """
         Get feature values for a state-action pair, coded one-hot for a particular action to extract.
@@ -481,7 +483,8 @@ class RobocodeFeatureExtractor(FeatureExtractor):
         :param state: State.
         :param action: Action.
         :param action_to_extract: Action to one-hot encode.
-        :param enemy_bearing_from_self: Bearing of enemy from self, or None if no enemy has been scanned yet.
+        :param enemy_bearing_from_self: Bearing of enemy from self, or None if no enemy has been scanned.
+        :param enemy_distance_from_self: Distance of enemy from self, or None if no enemy has been scanned.
         :return: List of floating-point feature values.
         """
 
@@ -497,20 +500,23 @@ class RobocodeFeatureExtractor(FeatureExtractor):
                     0.0 if enemy_bearing_from_self is None else 1.0,
 
                     # bullet power that has missed since the previous hit
-                    math.sqrt(state.bullet_power_missed_since_previous_hit),
+                    # math.sqrt(state.bullet_power_missed_since_previous_hit),
 
-                    # indicator (-1/+1):  the radar's current heading is counterclockwise (-1) or clockwise (+1) from
-                    # the enemy. this is 0 if no enemy has been scanned.
                     0.0 if enemy_bearing_from_self is None else
-                    -1.0 if self.is_clockwise_move(
-                        state.radar_heading,
-                        self.normalize(state.heading + enemy_bearing_from_self)
-                    ) else
-                    1.0
+                    self.sigmoid(
+                        self.get_lateral_distance(
+                            -self.get_shortest_degree_change(
+                                state.radar_heading,
+                                self.normalize(state.heading + enemy_bearing_from_self)
+                            ),
+                            enemy_distance_from_self
+                        ),
+                        20.0
+                    )
 
                 ]
             else:
-                feature_values = [0.0, 0.0, 0.0, 0.0]
+                feature_values = [0.0, 0.0, 0.0]
 
         elif action_to_extract.name.startswith('turnGun'):
 
@@ -522,11 +528,16 @@ class RobocodeFeatureExtractor(FeatureExtractor):
                     0.0 if enemy_bearing_from_self is None else 1.0,
 
                     0.0 if enemy_bearing_from_self is None else
-                    (1.0 / (1.0 + math.exp(-self.get_shortest_degree_change(
-                        state.gun_heading,
-                        self.normalize(state.heading + enemy_bearing_from_self)
-                    ) / 10.0))) - 0.5
-
+                    self.sigmoid(
+                        self.get_lateral_distance(
+                            -self.get_shortest_degree_change(
+                                state.gun_heading,
+                                self.normalize(state.heading + enemy_bearing_from_self)
+                            ),
+                            enemy_distance_from_self
+                        ),
+                        20.0
+                    )
                 ]
             else:
                 feature_values = [0.0, 0.0, 0.0]
@@ -541,11 +552,16 @@ class RobocodeFeatureExtractor(FeatureExtractor):
                     0.0 if enemy_bearing_from_self is None else 1.0,
 
                     0.0 if enemy_bearing_from_self is None else
-                    self.taper_at_zero(
-                        self.get_shortest_degree_change(
-                            state.gun_heading,
-                            self.normalize(state.heading + enemy_bearing_from_self)
-                        )
+                    self.funnel(
+                        self.get_lateral_distance(
+                            -self.get_shortest_degree_change(
+                                state.gun_heading,
+                                self.normalize(state.heading + enemy_bearing_from_self)
+                            ),
+                            enemy_distance_from_self
+                        ),
+                        True,
+                        20.0
                     )
                 ]
             else:
@@ -572,9 +588,8 @@ class RobocodeFeatureExtractor(FeatureExtractor):
 
         return cls.get_shortest_degree_change(start_heading, end_heading) > 0.0
 
-    @classmethod
+    @staticmethod
     def get_shortest_degree_change(
-            cls,
             start_heading: float,
             end_heading: float
     ) -> float:
@@ -604,17 +619,56 @@ class RobocodeFeatureExtractor(FeatureExtractor):
             return counterclockwise_change
 
     @staticmethod
-    def taper_at_zero(
-            x
+    def funnel(
+            x: float,
+            up: bool,
+            gradation: float
     ) -> float:
         """
-        Taper to minimum value at zero.
+        Funnel function.
 
         :param x: X value.
-        :return: Tapered value.
+        :param up: Whether to funnel up (True) or down (False).
+        :param gradation: Gradation of funnel.
+        :return: Funnel value.
         """
 
-        return (1.0 / (1.0 + math.exp(-abs(x)))) - 0.5
+        v = 4.0 * ((1.0 / (1.0 + np.exp(-abs(x / gradation)))) - 0.75)
+
+        if up:
+            v = -v
+
+        return v
+
+    @staticmethod
+    def sigmoid(
+            x: float,
+            gradation: float
+    ) -> float:
+
+        return 2.0 * ((1.0 / (1.0 + np.exp(-(x / gradation)))) - 0.5)
+
+    @staticmethod
+    def get_lateral_distance(
+            offset_degrees: float,
+            distance: float
+    ) -> float:
+        """
+        Get lateral distance to a target, at an offset degree and distance.
+
+        :param offset_degrees: Offset degree.
+        :param distance: Distance.
+        :return: Lateral distance
+        """
+
+        if offset_degrees <= -90:
+            lateral_distance = -np.inf
+        elif offset_degrees >= 90:
+            lateral_distance = np.inf
+        else:
+            lateral_distance = math.tan(math.radians(offset_degrees)) * distance
+
+        return lateral_distance
 
     @staticmethod
     def normalize(
@@ -652,11 +706,11 @@ class RobocodeFeatureExtractor(FeatureExtractor):
         )
 
         self.most_recent_scanned_robot = None
-        self.feature_scaler = NonstationaryFeatureScaler(
-            num_observations_refit_feature_scaler=10000,
-            refit_history_length=100000,
-            refit_weight_decay=0.99999
-        )
+        # self.feature_scaler = NonstationaryFeatureScaler(
+        #     num_observations_refit_feature_scaler=10000,
+        #     refit_history_length=100000,
+        #     refit_weight_decay=0.99999
+        # )
 
 
 @rl_text(chapter='Actions', page=1)
