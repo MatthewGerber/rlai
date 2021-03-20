@@ -525,7 +525,7 @@ class RobocodeFeatureExtractor(FeatureExtractor):
                     (1.0 / (1.0 + math.exp(-self.get_shortest_degree_change(
                         state.gun_heading,
                         self.normalize(state.heading + enemy_bearing_from_self)
-                    )))) - 0.5
+                    ) / 10.0))) - 0.5
 
                 ]
             else:
