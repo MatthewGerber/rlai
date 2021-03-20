@@ -517,21 +517,19 @@ class RobocodeFeatureExtractor(FeatureExtractor):
             if action == action_to_extract:
                 feature_values = [
 
-                    # intercept
                     1.0,
 
-                    # indicator (-1/+1):  the radar's current heading is counterclockwise (-1) or clockwise (+1) from
-                    # the enemy. this is 0 if no enemy has been scanned.
+                    0.0 if enemy_bearing_from_self is None else 1.0,
+
                     0.0 if enemy_bearing_from_self is None else
-                    -1.0 if self.is_clockwise_move(
+                    (1.0 / (1.0 + math.exp(-self.get_shortest_degree_change(
                         state.gun_heading,
                         self.normalize(state.heading + enemy_bearing_from_self)
-                    ) else
-                    1.0
+                    )))) - 0.5
 
                 ]
             else:
-                feature_values = [0.0, 0.0]
+                feature_values = [0.0, 0.0, 0.0]
 
         elif action_to_extract.name == 'fire':
 
@@ -540,20 +538,21 @@ class RobocodeFeatureExtractor(FeatureExtractor):
 
                     1.0,
 
-                    math.sqrt(abs(
-                        180 if enemy_bearing_from_self is None else
+                    0.0 if enemy_bearing_from_self is None else 1.0,
+
+                    0.0 if enemy_bearing_from_self is None else
+                    self.taper_at_zero(
                         self.get_shortest_degree_change(
                             state.gun_heading,
                             self.normalize(state.heading + enemy_bearing_from_self)
                         )
-                    ))
-
+                    )
                 ]
             else:
-                feature_values = [0.0, 0.0]
+                feature_values = [0.0, 0.0, 0.0]
 
         else:
-            raise ValueError(f'Unknown action:  {action.name}')
+            raise ValueError(f'Unknown action:  {action}')
 
         return feature_values
 
@@ -605,6 +604,19 @@ class RobocodeFeatureExtractor(FeatureExtractor):
             return counterclockwise_change
 
     @staticmethod
+    def taper_at_zero(
+            x
+    ) -> float:
+        """
+        Taper to minimum value at zero.
+
+        :param x: X value.
+        :return: Tapered value.
+        """
+
+        return (1.0 / (1.0 + math.exp(-abs(x)))) - 0.5
+
+    @staticmethod
     def normalize(
             degrees: float
     ) -> float:
@@ -641,7 +653,7 @@ class RobocodeFeatureExtractor(FeatureExtractor):
 
         self.most_recent_scanned_robot = None
         self.feature_scaler = NonstationaryFeatureScaler(
-            num_observations_refit_feature_scaler=200000000,
+            num_observations_refit_feature_scaler=10000,
             refit_history_length=100000,
             refit_weight_decay=0.99999
         )
