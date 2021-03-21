@@ -281,16 +281,19 @@ class GridworldFeatureExtractor(StateActionInteractionFeatureExtractor):
             actions=actions
         )
 
-    def get_feature_names(
+    def get_feature_action_names(
             self
-    ) -> List[str]:
+    ) -> Tuple[List[str], List[str]]:
         """
-        Get names of extracted features.
+        Get names of extracted features and actions.
 
-        :return: List of feature names.
+        :return: 2-tuple of (1) list of feature names and (2) list of action names.
         """
 
-        return ['from-top', 'from-bottom', 'from-left', 'from-right']
+        return (
+            ['from-top', 'from-bottom', 'from-left', 'from-right'],
+            [a.name for a in self.actions]
+        )
 
     def __init__(
             self,

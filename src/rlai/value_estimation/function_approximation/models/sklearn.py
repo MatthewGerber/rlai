@@ -15,9 +15,6 @@ from sklearn.linear_model import SGDRegressor
 from rlai.meta import rl_text
 from rlai.utils import parse_arguments, IncrementalSampleAverager, StdStreamTee
 from rlai.value_estimation.function_approximation.models import FunctionApproximationModel, FeatureExtractor
-from rlai.value_estimation.function_approximation.models.feature_extraction import (
-    StateActionInteractionFeatureExtractor
-)
 
 
 @rl_text(chapter=9, page=200)
@@ -242,37 +239,37 @@ class SKLearnSGD(FunctionApproximationModel):
         """
 
         # not all feature extractors return names. bail if the given one does not.
-        feature_names = feature_extractor.get_feature_names()
-        if feature_names is None:
+        feature_action_names = feature_extractor.get_feature_action_names()
+        if feature_action_names is None:
             return None
 
-        if isinstance(feature_extractor, StateActionInteractionFeatureExtractor):
+        feature_names, action_names = feature_action_names
 
-            # get (#features, #actions) array of coefficients, along with feature names.
-            num_actions = len(feature_extractor.actions)
-            coefficients = self.model.coef_.reshape((-1, num_actions), order='F')
+        if 'intercept' in feature_names:  # pragma no cover
+            raise ValueError('Feature extractors may not extract a feature named "intercept".')
 
-            # add intercept if we fit one
-            if self.model.fit_intercept:
-                coefficients = np.append(coefficients, [np.repeat(self.model.intercept_, num_actions)], axis=0)
-                feature_names.append('intercept')
+        # get (#features, #actions) array of coefficients, along with feature names.
+        num_actions = len(action_names)
+        coefficients = self.model.coef_.reshape((-1, num_actions), order='F')
 
-            # check feature extractor names against model dimensions
-            num_feature_names = len(feature_names)
-            num_dims = coefficients.shape[0]
-            if num_feature_names != num_dims:  # pragma no cover
-                raise ValueError(f'Number of feature names ({num_feature_names}) does not match number of dimensions ({num_dims}).')
+        # add intercept if we fit one
+        if self.model.fit_intercept:
+            coefficients = np.append(coefficients, [np.repeat(self.model.intercept_, num_actions)], axis=0)
+            feature_names.append('intercept')
 
-            # convert to dataframe with named columns
-            coefficients = pd.DataFrame(
-                data=coefficients,
-                columns=[a.name for a in feature_extractor.actions]
-            )
+        # check feature extractor names against model dimensions
+        num_feature_names = len(feature_names)
+        num_dims = coefficients.shape[0]
+        if num_feature_names != num_dims:  # pragma no cover
+            raise ValueError(f'Number of feature names ({num_feature_names}) does not match number of dimensions ({num_dims}).')
 
-            coefficients['feature_name'] = feature_names
+        # convert to dataframe with named columns
+        coefficients = pd.DataFrame(
+            data=coefficients,
+            columns=action_names
+        )
 
-        else:  # pragma no cover
-            raise ValueError(f'Unknown feature extractor type:  {type(feature_extractor)}')
+        coefficients['feature_name'] = feature_names
 
         return coefficients
 

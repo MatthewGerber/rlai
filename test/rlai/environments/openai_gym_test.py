@@ -69,7 +69,7 @@ def test_unimplemented_feature_names():
     cartpole_environment = Gym(RandomState(), None, 'CartPole-v0')
     cartpole_fex = CartpoleFeatureExtractor(cartpole_environment)
 
-    assert cartpole_fex.get_feature_names() is None
+    assert cartpole_fex.get_feature_action_names() is None
 
 
 def test_video_directory_permisson_error():

@@ -132,6 +132,8 @@ class FunctionApproximationModel(ABC):
 
         if plot_coefficients:
 
+            action_names = [col for col in feature_action_coefficients.columns if col != 'feature_name']
+
             if 'n' in feature_action_coefficients.columns:  # pragma no cover
                 raise ValueError('Feature extractor returned disallowed column:  n')
 
@@ -159,53 +161,47 @@ class FunctionApproximationModel(ABC):
                         for n in self.feature_action_coefficients.n
                     ]
 
-                if isinstance(feature_extractor, StateActionInteractionFeatureExtractor):
+                # set up plots
+                feature_names = self.feature_action_coefficients.feature_name.unique().tolist()
+                n_rows = len(feature_names)
+                n_cols = len(action_names)
+                fig, axs = plt.subplots(
+                    nrows=n_rows,
+                    ncols=n_cols,
+                    sharex='all',
+                    sharey='row',
+                    figsize=(3 * n_cols, 3 * n_rows)
+                )
 
-                    # set up plots
-                    feature_names = self.feature_action_coefficients.feature_name.unique().tolist()
-                    n_rows = len(feature_names)
-                    action_names = [a.name for a in feature_extractor.actions]
-                    n_cols = len(action_names)
-                    fig, axs = plt.subplots(
-                        nrows=n_rows,
-                        ncols=n_cols,
-                        sharex='all',
-                        sharey='row',
-                        figsize=(3 * n_cols, 3 * n_rows)
-                    )
+                # plot one row per feature and one column per action, with the the plots in the array being boxplots of
+                # coefficient values.
+                for i, feature_name in enumerate(feature_names):
+                    feature_df = self.feature_action_coefficients[self.feature_action_coefficients.feature_name == feature_name]
+                    boxplot_axs = axs[i, :]
+                    feature_df.boxplot(column=action_names, by='bin', ax=boxplot_axs)
+                    boxplot_axs[0].set_ylabel(f'w({feature_name})')
 
-                    # plot one row per feature and one column per action, with the the plots in the array being
-                    # boxplots of coefficient values.
-                    for i, feature_name in enumerate(feature_names):
-                        feature_df = self.feature_action_coefficients[self.feature_action_coefficients.feature_name == feature_name]
-                        boxplot_axs = axs[i, :]
-                        feature_df.boxplot(column=action_names, by='bin', ax=boxplot_axs)
-                        boxplot_axs[0].set_ylabel(f'w({feature_name})')
+                # reset labels and titles
+                for i, row in enumerate(axs):
+                    for ax in row:
 
-                    # reset labels and titles
-                    for i, row in enumerate(axs):
-                        for ax in row:
+                        if i < axs.shape[0] - 1:
+                            ax.set_xlabel('')
+                        else:
+                            ax.set_xlabel('Iteration' if num_improvement_bins is None else f'Bin of {improvements_per_bin} improvement(s)')
 
-                            if i < axs.shape[0] - 1:
-                                ax.set_xlabel('')
-                            else:
-                                ax.set_xlabel('Iteration' if num_improvement_bins is None else f'Bin of {improvements_per_bin} improvement(s)')
+                        if i > 0:
+                            ax.set_title('')
 
-                            if i > 0:
-                                ax.set_title('')
+                fig.suptitle('Model coefficients over iterations')
 
-                    fig.suptitle('Model coefficients over iterations')
+                plt.tight_layout()
 
-                    plt.tight_layout()
-
-                    if pdf is None:
-                        plt.show(block=False)
-                        return fig
-                    else:
-                        pdf.savefig()
-
-                else:  # pragma no cover
-                    raise ValueError(f'Unknown feature extractor type:  {type(feature_extractor)}')
+                if pdf is None:
+                    plt.show(block=False)
+                    return fig
+                else:
+                    pdf.savefig()
 
     def update_plot(
             self,

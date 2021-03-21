@@ -92,13 +92,13 @@ class FeatureExtractor(ABC):
         if num_states != num_actions:
             raise ValueError(f'Expected {num_states} actions but got {num_actions}')
 
-    def get_feature_names(
+    def get_feature_action_names(
             self
-    ) -> List[str]:
+    ) -> Tuple[List[str], List[str]]:
         """
-        Get names of extracted features.
+        Get names of extracted features and actions.
 
-        :return: List of feature names.
+        :return: 2-tuple of (1) list of feature names and (2) list of action names.
         """
 
     def __init__(
@@ -251,18 +251,7 @@ class StateActionIdentityFeatureExtractor(FeatureExtractor):
         return pd.DataFrame([
             (state.i, action.i)
             for state, action in zip(states, actions)
-        ], columns=self.get_feature_names())
-
-    def get_feature_names(
-            self
-    ) -> List[str]:
-        """
-        Get names of extracted features.
-
-        :return: List of feature names.
-        """
-
-        return ['s', 'a']
+        ], columns=['s', 'a'])
 
     def __init__(
             self,

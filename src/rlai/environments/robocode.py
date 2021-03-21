@@ -442,9 +442,21 @@ class RobocodeFeatureExtractor(FeatureExtractor):
             for state, action in zip(states, actions)
         ])
 
-        # X = self.feature_scaler.scale_features(X, for_fitting)
-
         return X
+
+    def get_feature_action_names(
+            self
+    ) -> Tuple[List[str], List[str]]:
+        """
+        Get names of extracted features and actions.
+
+        :return: 2-tuple of (1) list of feature names and (2) list of action names.
+        """
+
+        return (
+            ['action_intercept', 'has_enemy_bearing', 'aim_lock'],
+            [a.name for a in self.actions]
+        )
 
     def set_most_recent_scanned_robot(
             self,
@@ -499,9 +511,7 @@ class RobocodeFeatureExtractor(FeatureExtractor):
                     # indicator (0/1):  we have a bearing on the enemy
                     0.0 if enemy_bearing_from_self is None else 1.0,
 
-                    # bullet power that has missed since the previous hit
-                    # math.sqrt(state.bullet_power_missed_since_previous_hit),
-
+                    # squash lateral distance into [-1.0, 1.0]
                     0.0 if enemy_bearing_from_self is None else
                     self.sigmoid(
                         self.get_lateral_distance(
@@ -523,10 +533,13 @@ class RobocodeFeatureExtractor(FeatureExtractor):
             if action == action_to_extract:
                 feature_values = [
 
+                    # intercept
                     1.0,
 
+                    # indicator (0/1):  we have a bearing on the enemy
                     0.0 if enemy_bearing_from_self is None else 1.0,
 
+                    # squash lateral distance into [-1.0, 1.0]
                     0.0 if enemy_bearing_from_self is None else
                     self.sigmoid(
                         self.get_lateral_distance(
@@ -547,10 +560,13 @@ class RobocodeFeatureExtractor(FeatureExtractor):
             if action == action_to_extract:
                 feature_values = [
 
+                    # intercept
                     1.0,
 
+                    # indicator (0/1):  we have a bearing on the enemy
                     0.0 if enemy_bearing_from_self is None else 1.0,
 
+                    # funnel lateral distance to 0.0
                     0.0 if enemy_bearing_from_self is None else
                     self.funnel(
                         self.get_lateral_distance(
@@ -622,18 +638,18 @@ class RobocodeFeatureExtractor(FeatureExtractor):
     def funnel(
             x: float,
             up: bool,
-            gradation: float
+            scale: float
     ) -> float:
         """
-        Funnel function.
+        Impose funnel function on a value.
 
-        :param x: X value.
+        :param x: Value.
         :param up: Whether to funnel up (True) or down (False).
-        :param gradation: Gradation of funnel.
-        :return: Funnel value.
+        :param scale: Scale.
+        :return: Funnel value in [-1.0, 1.0].
         """
 
-        v = 4.0 * ((1.0 / (1.0 + np.exp(-abs(x / gradation)))) - 0.75)
+        v = 4.0 * ((1.0 / (1.0 + np.exp(-abs(x / scale)))) - 0.75)
 
         if up:
             v = -v
@@ -643,10 +659,17 @@ class RobocodeFeatureExtractor(FeatureExtractor):
     @staticmethod
     def sigmoid(
             x: float,
-            gradation: float
+            scale: float
     ) -> float:
+        """
+        Impose sigmoid function on a value.
 
-        return 2.0 * ((1.0 / (1.0 + np.exp(-(x / gradation)))) - 0.5)
+        :param x: Value.
+        :param scale: Scale.
+        :return: Sigmoid value in [-1.0, 1.0].
+        """
+
+        return 2.0 * ((1.0 / (1.0 + np.exp(-(x / scale)))) - 0.5)
 
     @staticmethod
     def get_lateral_distance(
@@ -705,12 +728,8 @@ class RobocodeFeatureExtractor(FeatureExtractor):
             environment=environment
         )
 
+        self.actions = environment.robot_actions
         self.most_recent_scanned_robot = None
-        # self.feature_scaler = NonstationaryFeatureScaler(
-        #     num_observations_refit_feature_scaler=10000,
-        #     refit_history_length=100000,
-        #     refit_weight_decay=0.99999
-        # )
 
 
 @rl_text(chapter='Actions', page=1)
