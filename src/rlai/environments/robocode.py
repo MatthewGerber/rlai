@@ -140,7 +140,7 @@ class RobocodeEnvironment(TcpMdpEnvironment):
         )
 
         # hang on to bullet firing events so that we can assign rewards to their time steps later on when they hit or
-        # miss. add the evaluation time step to each event (the bullet events have times associated with them, but
+        # miss. add the evaluation time step to each event. the bullet events have times associated with them, but
         # those are robocode turns and there isn't always a perfect 1:1 between robocode turns and evaluation time
         # steps.
         self.bullet_id_fired_event.update({
@@ -185,7 +185,8 @@ class RobocodeEnvironment(TcpMdpEnvironment):
                 for bullet_event in bullet_hit_events + bullet_missed_events
             ]) - t
 
-        # clear bullet firing event for any bullet that hit another robot, missed, or hit another bullet.
+        # clear bullet firing event for any bullet that hit another robot, missed, or hit another bullet. use list
+        # comprehension to vectorize (hopefully faster).
         [
             self.bullet_id_fired_event.pop(bullet_event['bullet']['bulletId'])
             for bullet_event in bullet_hit_events + bullet_missed_events + event_type_events.get('BulletHitBulletEvent', [])
@@ -415,12 +416,12 @@ class RobocodeFeatureExtractor(FeatureExtractor):
 
         self.set_most_recent_scanned_robot(states)
 
-        # bearing is relative to our heading, so degrees from north to opponent would be our heading plus this value.
         if self.most_recent_scanned_robot is None:
             enemy_bearing_from_self = None
             enemy_distance_from_self = None
         else:
-            # the bearing comes to us as [-180,180], whichever is closest. normalize to [0,360].
+            # the bearing comes to us as [-180,180], whichever is closest. normalize to [0,360]. this bearing is
+            # relative to our heading, so degrees from north to thee enemy would be our heading plus this value.
             enemy_bearing_from_self = self.normalize(math.degrees(self.most_recent_scanned_robot['bearing']))
             enemy_distance_from_self = self.most_recent_scanned_robot['distance']
 

@@ -1,4 +1,4 @@
-![robocode](./robocode.png)
+![robocode](robocode-figs/robocode.png)
 
 # Robocode
 Robocode is a programming game in which robot agents are programmed to operate in a simulated battle environment. Full
@@ -43,7 +43,15 @@ The purpose of this case study is to explore the use of `rlai` for learning robo
 # Development of a RL Robot for Robocode
 The following sections explore the development of a RL robot for Robocode. The approach taken here is incremental and
 focuses on developing particular skills, rather than addressing the entire behavior policy at once. Each section links
-to a GitHub commit marking the code and configurations that were used.
+to a GitHub commit marking the code and configurations that were used. The layout of each section is as follows:
+
+* Reward Signal:  Where we define the reward signal.
+* State Features:  Where we list the state features per action. A brief explanation is given for the expected learning 
+  outcome (ELO) of each feature. Each action has its own intercept term (constant), which quantifies the action's return 
+  when its variables are set to zero. Essentially, we are modeling each action's value as a linear function of 
+  (potentially nonlinear) features, independently of the other actions.
+* Learning Model:  Where we list other hyperparameters of the value function model.
+* Results:  Where we discuss results.
 
 ## Radar-Driven Aiming Against a Stationary Opponent ([GitHub](https://github.com/MatthewGerber/rlai/tree/204da60f432ece551e12cdfa0435ff1dbf6fc6af))
 This section develops radar-driven aiming against a stationary opponent. The RL robot is also stationary, but is allowed
@@ -55,18 +63,15 @@ The reward signal at each time step is defined as the sum of bullet power that h
 bullet power that has missed the opponent.
 
 ### State Features
-The following state features are defined per action. A brief explanation is given for the expected learning outcome
-(ELO) of each feature.
-
-* Action 1:  Turn radar left
+* Action 1:  Turn radar left 5 degrees
   * **Feature 1 - Opponent bearing exists (binary)** _ELO_:  Rotate radar left when `false` and do not rotate radar when 
     `true`.
     
-* Action 2:  Turn gun left/right
+* Actions 2/3:  Turn gun left/right 5 degrees
   * **Feature 1 - Has bearing on opponent (binary)** _ELO_:  Keep gun stationary when `false` and rotate gun when `true`.
   * **Feature 2 - Gun is counterclockwise from opponent (binary)** _ELO_:  Rotate gun clockwise when `true` and counterclockwise when `false`.
     
-* Action 3:  Fire
+* Action 4:  Fire
   * **Feature 1 - Has bearing on opponent (binary)** _ELO_:  Do not fire when `false` and consider firing when `true`.
   * **Feature 2 - Square root of degree deviation from gun to opponent (continuous)** _ELO_:  Only fire gun when sufficiently well aimed.
 
@@ -100,7 +105,63 @@ of holding fire at the start of each round while rotating the radar to obtain a 
 is obtained, the gun is rotated accordingly and firing begins when the gun's aim is sufficiently close. All ELOs seem to 
 be satisfied by this approach.
 
-## Radar-Driven Aiming Against a Mobile Opponent (TBD)
+## Radar-Driven Aiming Against a Mobile Opponent
+Primary challenges compared with previous:
+
+* Coordination of radar and gun rotation
+* Unreliability of enemy bearings
+
+### Reward Signal
+The reward signal at each time step is defined as the sum of bullet power that has hit the opponent, minus the sum of
+bullet power that has missed the opponent. One difficulty that arose in the current development iteration pertains to 
+reward delay and discounting. Many time steps elapse from the time a bullet is fired until it registers as a hit or 
+miss. It is likely that the robot will take many actions during these intervening time steps, but none of these actions
+can possibly influence the outcome of the previously fired bullet. If we take the usual approach of discounting the 
+bullet's reward starting at the time when it hits or misses, then it becomes difficult to construct an appropriate 
+discount. On one hand, we want the time step associated with the bullet firing to receive full credit for the subsequent
+hit or miss outcome. This would require us to eliminate discounting (i.e., `gamma=1.0`). On the other hand, we know that 
+actions intervening between the firing of the bullet and the bullet's hit or miss outcomee should receive no credit. 
+This would require us to discount entirely (i.e., `gamma=0.0`). In the usual discounting approach, we cannot 
+simultaneously assign full credit to the bullet firing action while also assigning zero credit to actions that intervene
+between firing and the bullet's outcome. The solution is to move away from the usual discounting approach. The 
+alternative taken here is shown below:
+
+![reward-shift](robocode-figs/robocode-time-shift.png)
+
+In this alternative, the hit or miss outcome is shifted without discounting to the time at which the bullet was fired.
+The usual discounting is applied starting at this time step and working backward through actions taken prior to firing.
+
+### State Features
+Each of the actions listed below has one feature indicating whether the enemy's bearing is known and one feature 
+quantifying the quality of the aim. As described in the introduction to this section, one cannot assume that the enemy's
+bearing will remain reliable after acquisition, since the enemy is moving. Whereas in the previous development iteration 
+the bearing was retained indefinitely after acquisition, here we only retain the enemy's bearing for the time step in 
+which it was acquired.
+
+* Action 1/2:  Turn radar left/right 5 degrees
+  * **Feature 1 - Opponent bearing exists (binary)** _ELO_:  Rotate radar left when `false` and do not rotate radar when 
+    `true`.
+    
+* Action 3/4:  Turn gun left/right 5 degrees
+  * **Feature 1 - Has bearing on opponent (binary)** _ELO_:  Keep gun stationary when `false` and rotate gun when `true`.
+  * **Feature 2 - Gun is counterclockwise from opponent (binary)** _ELO_:  Rotate gun clockwise when `true` and counterclockwise when `false`.
+    
+* Action 5:  Fire
+  * **Feature 1 - Has bearing on opponent (binary)** _ELO_:  Do not fire when `false` and consider firing when `true`.
+  * **Feature 2 - Square root of degree deviation from gun to opponent (continuous)** _ELO_:  Only fire gun when sufficiently well aimed.
+    
+### Learning Model
+Key model parameters are listed below:
+
+* SARSA state-action value estimation (n-step=500)
+* Discounted (gamma=0.9)
+* Epsilon greedy (epsilon=0.15)
+* Stochastic gradient descent (step size=0.001)
+* Number of Robocode training rounds:  100
+
+### Results
+
+Note speed increase:  No standardization needed
 
 ## Evasive Movement (TBD)
 
