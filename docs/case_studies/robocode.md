@@ -106,10 +106,10 @@ is obtained, the gun is rotated accordingly and firing begins when the gun's aim
 be satisfied by this approach.
 
 ## Radar-Driven Aiming Against a Mobile Opponent
-Primary challenges compared with previous:
+Compared with the preceding development iteration, a mobile opponent introduces the following challenges.
 
-* Coordination of radar and gun rotation
-* Unreliability of enemy bearings
+* Coordination of radar and gun rotation:  
+* Unreliability of enemy bearings:
 
 ### Reward Signal
 The reward signal at each time step is defined as the sum of bullet power that has hit the opponent, minus the sum of
@@ -132,23 +132,59 @@ In this alternative, the hit or miss outcome is shifted without discounting to t
 The usual discounting is applied starting at this time step and working backward through actions taken prior to firing.
 
 ### State Features
-Each of the actions listed below has one feature indicating whether the enemy's bearing is known and one feature 
-quantifying the quality of the aim. As described in the introduction to this section, one cannot assume that the enemy's
-bearing will remain reliable after acquisition, since the enemy is moving. Whereas in the previous development iteration 
-the bearing was retained indefinitely after acquisition, here we only retain the enemy's bearing for the time step in 
-which it was acquired.
+The actions below use two general concepts throughout.
+
+* Enemy bearing indicator:  This is a binary indication of whether the enemy's bearing is known. As described in the 
+  introduction to this section, one cannot assume (as in the previous development iteration) that the enemy's bearing 
+  will remain reliable after acquisition, since the enemy is moving. Here we only retain the enemy's bearing for the 
+  time step in which it was acquired. If in the next time step the radar has left the enemy, then all binary indications 
+  of the enemy's bearing will be `false`.
+* Aim quality via lateral distance:  Aiming the radar or gun usefully (i.e., in a way that will gain positive 
+  reward) requires an estimate of where the bullet will arrive in relation to the enemy position. A useful notion in 
+  this development iteration is that of lateral distance. This is depicted below:
+  
+  ![lateral-distance](robocode-figs/lateral-distance.png)
+
+  As shown in the figure, lateral distance is a measure of how far the bullet would be from the opponent given the gun's 
+  heading, the distance to the opponent, and instantaneous arrival of the bullet at its destination. Here, negative 
+  distances arrive to the left of the opponent and positive distances land to the right. Of course, the opponent is 
+  likely to be moving while the bullet is traveling, but setting this aside for now the lateral distance is a helpful 
+  measurement of aim quality. For gun heading values <= -90 degrees and >= 90, the lateral distance is defined to be 
+  negative infinity and positive infinity, respectively. We will need to transform lateral distance values in order to 
+  use them as state features, for at least two reasons. First, the finite distances are unbounded and are on different 
+  scales than other features. Feature scaling causes problems in the selection of the step size for stochastic gradient 
+  descent, which is used here. Second, infinite values cannot be used regardless of scaling considerations. The relevant 
+  transformations will be explained below.
 
 * Action 1/2:  Turn radar left/right 5 degrees
-  * **Feature 1 - Opponent bearing exists (binary)** _ELO_:  Rotate radar left when `false` and do not rotate radar when 
-    `true`.
+  * **Feature 1 - Opponent bearing exists (binary)** _ELO_:  Rotate radar either left or right when `false` and do not 
+    rotate radar when `true`.
+  * **Feature 2 - Signed squash of lateral distance** The lateral distance of from the radar distance to the opponent is 
+    transformed to be in [-1.0, 1.0] using the sigmoidal squashing function shown below:
+    
+    ![signed-squash](robocode-figs/sigmoidal-aim-quality.png)
+    
+    Dashed reference lines are drawn at -36 and +36, marking the width of Robocode robots. This transformation handles 
+    infinite negative and positive values, which converge to -1.0 and +1.0, respectively. _ELO_:  Rotate radar to the 
+    right when the squashed value is negative and to the left when the squashed value is positive.
     
 * Action 3/4:  Turn gun left/right 5 degrees
-  * **Feature 1 - Has bearing on opponent (binary)** _ELO_:  Keep gun stationary when `false` and rotate gun when `true`.
-  * **Feature 2 - Gun is counterclockwise from opponent (binary)** _ELO_:  Rotate gun clockwise when `true` and counterclockwise when `false`.
+  * **Feature 1 - Has bearing on opponent (binary)** _ELO_:  Keep gun stationary when `false` and rotate gun either left
+    or right when `true`.
+  * **Feature 2 - Signed squash of lateral distance** (same as for radar, see above).
     
 * Action 5:  Fire
   * **Feature 1 - Has bearing on opponent (binary)** _ELO_:  Do not fire when `false` and consider firing when `true`.
-  * **Feature 2 - Square root of degree deviation from gun to opponent (continuous)** _ELO_:  Only fire gun when sufficiently well aimed.
+  * **Feature 2 - Funneled lateral distance** For the purpose of deciding whether to fire, it might not help to 
+    distinguish left (negative) from right (positive) lateral distance. As such, the lateral distance is funneled as 
+    shown below:
+    
+    ![funnel](robocode-figs/funnel-aim-quality.png)
+    
+    _ELO_:  Only fire gun when sufficiently well aimed.
+    
+A useful consequence of transforming lateral distances as described above is that there is no need for an extra step of 
+feature standardization.
     
 ### Learning Model
 Key model parameters are listed below:
@@ -161,7 +197,6 @@ Key model parameters are listed below:
 
 ### Results
 
-Note speed increase:  No standardization needed
 
 ## Evasive Movement (TBD)
 
