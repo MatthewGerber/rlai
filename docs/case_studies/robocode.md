@@ -54,7 +54,9 @@ to a GitHub commit marking the code and configurations that were used. The layou
 * Results:  Where we discuss results.
 
 ## Radar-Driven Aiming Against a Stationary Opponent ([GitHub](https://github.com/MatthewGerber/rlai/tree/204da60f432ece551e12cdfa0435ff1dbf6fc6af))
-This section develops radar-driven aiming against a stationary opponent. The RL robot is also stationary, but is allowed
+
+### Introduction
+This section develops radar-driven aiming against a stationary opponent. The RL robot is also stationary but is allowed
 to rotate both its radar (to obtain bearings on the opponent) and its gun (to orient the gun with respect to the
 opponent's bearing).
 
@@ -105,11 +107,20 @@ of holding fire at the start of each round while rotating the radar to obtain a 
 is obtained, the gun is rotated accordingly and firing begins when the gun's aim is sufficiently close. All ELOs seem to 
 be satisfied by this approach.
 
-## Radar-Driven Aiming Against a Mobile Opponent
-Compared with the preceding development iteration, a mobile opponent introduces the following challenges.
+## Radar-Driven Aiming Against a Mobile Opponent ([GitHub](https://github.com/MatthewGerber/rlai/tree/bb019d78ff11f46cddc465cca718d014e0db203c))
 
-* Coordination of radar and gun rotation
-* Unreliability of enemy bearings
+### Introduction
+This section develops radar-driven aiming against a mobile opponent. The RL robot is stationary but is allowed to rotate 
+both its radar (to obtain bearings on the opponent) and its gun (to orient the gun with respect to the opponent's 
+bearing). A mobile opponent introduces the following challenges:
+
+* Unreliability of enemy bearings:  An enemy bearing obtained at time `t` is unlikely to be correct at time `t+1`.
+* Coordination of radar and gun rotation:  Enemy bearings are obtained by rotating the radar, which will need to be done 
+  frequently given the unreliability of enemy bearings. Run rotation will need to be coordinated with radar rotation in 
+  order to aim effectively.
+* Planning for bullet travel time:  Bullets travel at finite speed, so aiming at a mobile opponent will need to account 
+  for the enemy's velocity and distance from the gun.
+
 
 ### Reward Signal
 The reward signal at each time step is defined as the sum of bullet power that hit the opponent, minus the sum of
