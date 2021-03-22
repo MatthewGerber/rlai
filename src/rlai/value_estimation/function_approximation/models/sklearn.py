@@ -243,6 +243,10 @@ class SKLearnSGD(FunctionApproximationModel):
         if feature_action_names is None:
             return None
 
+        # model might not yet be fit and won't have a coefficients attribute in such cases
+        if not hasattr(self.model, 'coef_'):
+            return None
+
         feature_names, action_names = feature_action_names
 
         if 'intercept' in feature_names:  # pragma no cover
