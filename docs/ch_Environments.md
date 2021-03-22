@@ -25,7 +25,7 @@ Generalized Gym environment. Any OpenAI Gym environment can be executed by suppl
 ```
 ### [rlai.environments.robocode.RobocodeEnvironment](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/robocode.py#L22)
 ```
-Robocode environment. The official Java implementation of Robocode runs alongside the current environment, and a
-    specialized robot implementation on the Java side makes TCP calls to the present Python class to exchange action and
-    state information.
+Robocode environment. The Java implementation of Robocode runs alongside the current environment, and a specialized
+    robot implementation on the Java side makes TCP calls to the present Python class to exchange action and state
+    information.
 ```

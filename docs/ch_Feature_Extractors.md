@@ -11,11 +11,11 @@ A feature extractor for the OpenAI cartpole environment. This extractor, being b
     `StateActionInteractionFeatureExtractor`, directly extracts the fully interacted state-action feature matrix. It
     returns numpy.ndarray feature matrices, which are not compatible with the Patsy formula-based interface.
 ```
-### [rlai.environments.robocode.RobocodeFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/robocode.py#L299)
+### [rlai.environments.robocode.RobocodeFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/robocode.py#L340)
 ```
 Robocode feature extractor.
 ```
-### [rlai.value_estimation.function_approximation.models.feature_extraction.NonstationaryFeatureScaler](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/value_estimation/function_approximation/models/feature_extraction.py#L323)
+### [rlai.value_estimation.function_approximation.models.feature_extraction.NonstationaryFeatureScaler](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/value_estimation/function_approximation/models/feature_extraction.py#L322)
 ```
 It is common for function approximation models to require some sort of state-feature scaling in order to converge
     upon optimal solutions. For example, in stochastic gradient descent, the use of state features with different scales
@@ -28,11 +28,11 @@ It is common for function approximation models to require some sort of state-fea
     recent state-feature observations. Furthermore, it assigns weights to these observations that decay exponentially
     with the observation age.
 ```
-### [rlai.value_estimation.function_approximation.models.feature_extraction.OneHotCategoricalFeatureInteracter](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/value_estimation/function_approximation/models/feature_extraction.py#L273)
+### [rlai.value_estimation.function_approximation.models.feature_extraction.OneHotCategoricalFeatureInteracter](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/value_estimation/function_approximation/models/feature_extraction.py#L272)
 ```
 Feature interacter for one-hot encoded categorical values.
 ```
-### [rlai.value_estimation.function_approximation.models.feature_extraction.StateActionIdentityFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/value_estimation/function_approximation/models/feature_extraction.py#L170)
+### [rlai.value_estimation.function_approximation.models.feature_extraction.StateActionIdentityFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/value_estimation/function_approximation/models/feature_extraction.py#L180)
 ```
 Simple state/action identifier extractor. Generates features named "s" and "a" for each observation. The
     interpretation of the feature values (i.e., state and action identifiers) depends on the environment. The values
@@ -44,7 +44,7 @@ Simple state/action identifier extractor. Generates features named "s" and "a" f
     `rlai.value_estimation.function_approximation.statistical_learning.feature_extraction.gridworld.GridworldFeatureExtractor`
     for an example.
 ```
-### [rlai.value_estimation.function_approximation.models.feature_extraction.StateActionInteractionFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/value_estimation/function_approximation/models/feature_extraction.py#L106)
+### [rlai.value_estimation.function_approximation.models.feature_extraction.StateActionInteractionFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/value_estimation/function_approximation/models/feature_extraction.py#L116)
 ```
 A feature extractor that extracts features comprising the interaction (in a statistical modeling sense) of
     state features with categorical actions. Categorical actions are coded as one-hot vectors with length equal to the
