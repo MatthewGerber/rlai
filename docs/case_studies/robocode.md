@@ -244,11 +244,13 @@ The policy learned above produces the following Robocode battle:
 
 Having experimented with the features, model parameters, and learned policies obtained in this iteration, it appears 
 that most of the ELOs are satisfied. However, the radar was not expected to exhibit the behavior shown above, where it 
-rotates continuously. The training was performed several times, and this is always the successful policy that emerged. 
-Some sense can be made of this policy by considering the nature of the reward signal, which instructs the agent to 
-maximize bullet hits and minimize misses. This objective does not differentiate the policy shown above from a
-hypothetical alternative in which the radar remains fixated continuously on the opponent. If the reward were redesigned 
-to emphasize bullet hits per turn, then the policy demonstrated above would be inferior to the hypothetical alternative.
+rotates continuously. The radar was expected to stay fixated on the opponent, as this would provide the most up-to-date 
+bearings to the opponent. Training was performed several times, and this was always the successful policy that emerged. 
+What's going on? The answer likely lies in the specification of the reward signal, which instructs the agent to maximize
+bullet hits and minimize bullet misses. This objective does not differentiate the policy shown in the preceding video
+from an alternative in which the radar remains fixated continuously on the opponent. If the reward were redesigned to 
+emphasize bullet hits per turn, then the alternative (radar fixation) would likely be favored because it would enable 
+accurate, high-rate firing.
 
 Primary points of future development:
 
