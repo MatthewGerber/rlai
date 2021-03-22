@@ -108,8 +108,8 @@ be satisfied by this approach.
 ## Radar-Driven Aiming Against a Mobile Opponent
 Compared with the preceding development iteration, a mobile opponent introduces the following challenges.
 
-* Coordination of radar and gun rotation:  
-* Unreliability of enemy bearings:
+* Coordination of radar and gun rotation
+* Unreliability of enemy bearings
 
 ### Reward Signal
 The reward signal at each time step is defined as the sum of bullet power that hit the opponent, minus the sum of
