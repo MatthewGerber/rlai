@@ -153,8 +153,8 @@ The state features described in this section make heavy use of two general conce
 * Aim quality via lateral distance:  Aiming the radar or gun usefully (i.e., in a way that will gain positive 
   reward) requires an estimate of where the bullet will arrive in relation to the enemy position. A useful notion here 
   is that of lateral distance. This is depicted below:
-
-  <img alt="lateral-distance" src="./robocode-figs/lateral-distance.png" width="300">
+  
+  ![lateral-distance](robocode-figs/lateral-distance.png)
 
   As shown in the figure, lateral distance is a measure of how far the bullet would be from the opponent given the gun's 
   heading, the distance to the opponent, and instantaneous arrival of the bullet at its destination. Here, negative 
