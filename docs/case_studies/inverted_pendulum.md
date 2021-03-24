@@ -1,7 +1,8 @@
+# Inverted Pendulum
 * Content
 {:toc}
   
-# Inverted Pendulum
+# Introduction
 The inverted pendulum is also known as cart-pole balancing, where the goal is to keep a bottom-hinged pole balanced for
 as long as possible by moving a cart left or right. Imagine balancing a broom with the handle's end in your open palm. 
 You can read more about this environment [here](https://gym.openai.com/envs/CartPole-v1/). Below is an example of 
@@ -10,7 +11,7 @@ balance control.
 
 {% include youtubePlayer.html id="rGnf9CFwD7M" %}
 
-## Tabular State-Action Value Function
+# Tabular State-Action Value Function
 This section describes training and results for an agent using tabular methods for state-action value estimation. The
 primary challenge with this approach is to simultaneously (1) discretize the continuous state space to a sufficiently 
 fine resolution, thereby resolving state-action pairs sufficient for control, and (2) estimate the state-action value 
@@ -20,7 +21,7 @@ later section of this case study will eliminate discretization of the state spac
 state-action value function. This change will eliminate memory constraints, but it will introduce several new 
 challenges. First, the tabular approach...
 
-### Training
+## Training
 Train a control agent for the inverted pendulum environment with the following command.
 ```
 rlai train --agent rlai.agents.mdp.StochasticMdpAgent --continuous-state-discretization-resolution 0.1 --gamma 1 --environment rlai.environments.openai_gym.Gym --gym-id CartPole-v1 --render-every-nth-episode 5000 --video-directory ~/Desktop/cartpole_videos --force --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode Q_LEARNING --num-improvements 5000 --num-episodes-per-improvement 50 --T 1000 --epsilon 0.01 --q-S-A rlai.value_estimation.tabular.TabularStateActionValueEstimator --make-final-policy-greedy True --num-improvements-per-plot 100 --save-agent-path ~/Desktop/cartpole_agent.pickle
@@ -28,10 +29,10 @@ rlai train --agent rlai.agents.mdp.StochasticMdpAgent --continuous-state-discret
 
 Arguments are explained below.
 
-#### RLAI
+### RLAI
 * `train`:  Train the agent.
 
-#### Agent  
+### Agent  
 * `--agent rlai.agents.mdp.StochasticMdpAgent`:  Standard stochastic MDP agent. 
 * `--continuous-state-discretization-resolution 0.1`:  Discretize the continuous state space into discrete intervals 
   with resolution 0.1. The methods used here are for discrete-state problems, so some type of discretization of the 
@@ -39,14 +40,14 @@ Arguments are explained below.
 * `--gamma 1`:  No discount. All state-action pairs in the episode will receive equal credit for the total duration of 
   balancing achieved.
   
-#### Environment
+### Environment
 * `--environment rlai.environments.openai_gym.Gym`:  Environment class. 
 * `--gym-id CartPole-v1`:  OpenAI Gym environment identifier.
 * `--render-every-nth-episode 5000`:  Render a video every 5000 episodes (100 improvements).
 * `--video-directory ~/Desktop/cartpole_videos`:  Where to store rendered videos.
 * `--force`: Overwrite videos in the video directory.
   
-#### State-Action Value Iteration
+### State-Action Value Iteration
 * `--train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi`:  Run iterative temporal-differencing 
   on the agent's state-action value function. 
 * `--mode Q_LEARNING`:  Use q-learning to bootstrap the value of the next state-action pair. 
@@ -56,7 +57,7 @@ Arguments are explained below.
   can slow down learning in later iterations where the agent has developed a reasonable policy.
 * `--epsilon 0.01`:  Probability of behaving randomly at each time step.
   
-#### Other Parameters
+### Other Parameters
 * `--make-final-policy-greedy True`:  After all learning iterations, make the final policy greedy (i.e., `epsilon=0.0`).
 * `--num-improvements-per-plot 100`:  Plot training performance every 100 iterations.
 * `--save-agent-path ~/Desktop/cartpole_agent.pickle`:  Where to save the final agent.
@@ -72,14 +73,14 @@ that the agent would have continued to improve its policy given more time; howev
 quite satisfactory after 7 hours of wallclock training time. Note, however, that the value function estimator is 
 approaching 10^5 (100000) states for this relatively simple environment.
 
-### Results
+## Results
 The video below shows the trained agent controlling the inverted pendulum. Note how the agent actively controls both the 
 vertical balance of the pendulum (ideally upright) and the cart's horizontal position along the track (ideally in the 
 middle). The episode ends after the maximum number of time steps is reached, rather than due to a control failure.
 
 {% include youtubePlayer.html id="bnQFT31_WfI" %}
 
-## Parametric State-Action Value Function
+# Parametric State-Action Value Function
 As shown above, tabular methods present a conceptually straightforward approach to estimating state-action value 
 functions in continuous state-space environments. Practically, the estimation problem is complicated by the need for
 very large state spaces and accordingly long training times. This is akin to the challenges presented by nonparametric 
@@ -95,7 +96,7 @@ We will have far fewer parameters (e.g., 10^2) than the number of discretized in
 values from experience in the environment. There is nothing novel about this tradeoff; it is exactly the distinction 
 between parametric and nonparametric statistical learning methods.
 
-### Training
+## Training
 One of the most challenging aspects of parametric RL is selecting training hyperparameters (i.e., parameters of learning
 beyond those of the parametric form, such as step sizes). Very little scientific theory exists to guide a-priori 
 setting of hyperparameter values in arbitrary tasks. As a result, significant trial-and-error is usually involved, 
@@ -109,21 +110,21 @@ rlai train --agent rlai.agents.mdp.StochasticMdpAgent --gamma 0.95 --environment
 
 Arguments are explained below (many explanations are given above and not duplicated here).
 
-#### RLAI 
+### RLAI 
 * `train`:  Train the agent.
 
-#### Agent
+### Agent
 * `--agent rlai.agents.mdp.StochasticMdpAgent`
 * `--gamma 0.95`
 
-#### Environment
+### Environment
 * `--environment rlai.environments.openai_gym.Gym`
 * `--gym-id CartPole-v1`
 * `--render-every-nth-episode 100`
 * `--video-directory ~/Desktop/cartpole_videos`
 * `--force`
 
-#### State-Action Value Iteration
+### State-Action Value Iteration
 * `--train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi`
 * `--mode SARSA`
 * `--num-improvements 15000`
@@ -131,7 +132,7 @@ Arguments are explained below (many explanations are given above and not duplica
 * `--num-updates-per-improvement 1`
 * `--epsilon 0.2`
 
-#### State-Action Value Model
+### State-Action Value Model
 * `--q-S-A rlai.value_estimation.function_approximation.estimators.ApproximateStateActionValueEstimator`:  Use function 
 approximation.
 * `--function-approximation-model rlai.value_estimation.function_approximation.models.sklearn.SKLearnSGD`:  Use 
@@ -143,14 +144,14 @@ scikit-learn's stochastic gradient descent. Documentation for the model and its 
 * `--eta0 0.0001`
 * `--feature-extractor rlai.environments.openai_gym.CartpoleFeatureExtractor`:  Use the feature extractor specified.
 
-#### Other Parameters
+### Other Parameters
 * `--make-final-policy-greedy True`
 * `--num-improvements-per-plot 100`
 * `--num-improvements-per-checkpoint 100`
 * `--checkpoint-path ~/Desktop/cartpole_checkpoint.pickle`
 * `--save-agent-path ~/Desktop/cartpole_agent.pickle`
   
-### Results
+## Results
 The video below shows the trained agent controlling the inverted pendulum. Note how the agent actively controls both the 
 vertical balance of the pendulum (ideally upright) and the cart's horizontal position along the track (ideally in the 
 middle). The episode ends after the maximum number of time steps is reached, rather than due to a control failure.
@@ -159,17 +160,17 @@ middle). The episode ends after the maximum number of time steps is reached, rat
 
 Also note that the control obtained here is much tighter than achieved with tabular methods above.
 
-### Discussion
+## Discussion
 As noted above, obtaining an agent that performs well usually involves significant experimentation, and the parameter
 selection above is no exception. It is worth mentioning a few points along the way that seemed to be important.
 
-#### Nonlinear Feature Space
+### Nonlinear Feature Space
 The cart-pole environment has four continuous state variables:  position, velocity, pole angle, and pole angular 
 velocity. The feature extractor for this environment uses both the 
 [raw and squared versions](https://github.com/MatthewGerber/rlai/blob/36b755098e75dd1222a802933075db2ab889b29c/src/rlai/environments/openai_gym.py#L438-L441)
 of these state variables.
 
-#### Feature Contexts
+### Feature Contexts
 I struggled for a while with the features described above. The agent simply could not learn a useful state-action value 
 function. Then it occurred to me that a linear increase in any of those variables (whether raw or squared) could have 
 different implications for the value function depending on the context in which they occurred. For example, the value
@@ -186,7 +187,7 @@ model learns a separate set of parameters for each context. The one-hot-context 
 [interacted](https://github.com/MatthewGerber/rlai/blob/36b755098e75dd1222a802933075db2ab889b29c/src/rlai/environments/openai_gym.py#L457-L459)
 with the action space to produce the final one-hot-action-context form of the state-action value function used here.
 
-#### Nonstantionary Feature Scaling
+### Nonstantionary Feature Scaling
 All features are [scaled](https://github.com/MatthewGerber/rlai/blob/36b755098e75dd1222a802933075db2ab889b29c/src/rlai/environments/openai_gym.py#L443)
 to address step-size issues when using state variables on different scales. These issues are covered nicely in an
 [article](https://towardsdatascience.com/gradient-descent-the-learning-rate-and-the-importance-of-feature-scaling-6c0b416596e1)

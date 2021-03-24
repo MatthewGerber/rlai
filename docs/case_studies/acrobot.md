@@ -1,15 +1,15 @@
+# Acrobot
 * Content
 {:toc}
   
-# Acrobot
+# Introduction
 The acrobot is a two-joint, two-link mechanism, and the goal is to get the end of the mechanism to touch the horizontal 
 height marker. You can read more about this environment [here](https://gym.openai.com/envs/Acrobot-v1/). Below is an 
 example of running a random (untrained) agent in this environment. The episode takes quite a long time to terminate.
 
 {% include youtubePlayer.html id="ACst59L0RLQ" %}
 
-## Training
-
+# Training
 Train a control agent for the acrobot environment with the following command.
 ```
 rlai train --agent "rlai.agents.mdp.StochasticMdpAgent" --continuous-state-discretization-resolution 0.5 --gamma 0.9 --environment "rlai.environments.openai_gym.Gym" --gym-id "Acrobot-v1" --render-every-nth-episode 1000 --video-directory "~/Desktop/acrobat_videos" --train-function "rlai.gpi.temporal_difference.iteration.iterate_value_q_pi" --mode "Q_LEARNING" --num-improvements 10000 --num-episodes-per-improvement 10 --epsilon 0.05 --make-final-policy-greedy True --num-improvements-per-plot 100 --num-improvements-per-checkpoint 1000 --checkpoint-path "~/Desktop/acrobat_checkpoint.pickle" --save-agent-path "~/Desktop/acrobat_agent.pickle"
@@ -54,8 +54,7 @@ shows the same reward y-axis but along a time x-axis. Based on the learning traj
 subsequent improvement would be gained were the agent to continue improving its policy; as shown below, the results are 
 quite satisfactory after 1.25 hours of wallclock training time.
 
-## Results
-
+# Results
 The video below shows the trained agent controlling the acrobot. Note how the agent develops an oscillating movement to
 get the free-moving joint progressively higher. After achieving sufficient height of the free-moving joint, it appears 
 that the agent is waiting for random dynamics to swing the end of the mechanism up to the goal line. It is difficult to

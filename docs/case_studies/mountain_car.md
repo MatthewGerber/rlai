@@ -1,7 +1,8 @@
+# Mountain Car
 * Content
 {:toc}
   
-# Mountain Car
+# Introduction
 The mountain car is not sufficiently powerful to climb the hill directly, but must instead develop a strategy based on 
 the surrounding slopes. You can read more about this environment [here](https://gym.openai.com/envs/MountainCar-v0/). 
 Below is an example of running a random (untrained) agent in this environment. The episode takes quite a long time to 
@@ -9,8 +10,7 @@ terminate.
 
 {% include youtubePlayer.html id="fnB_84YAW08" %}
 
-## Training
-
+# Training
 Train a control agent for the mountain car environment with the following command.
 ```
 rlai train --agent "rlai.agents.mdp.StochasticMdpAgent" --continuous-state-discretization-resolution 0.005 --gamma 0.95 --environment "rlai.environments.openai_gym.Gym" --gym-id "MountainCar-v0" --render-every-nth-episode 1000 --video-directory "~/Desktop/mountaincar_videos" --train-function "rlai.gpi.temporal_difference.iteration.iterate_value_q_pi" --mode "Q_LEARNING" --num-improvements 10000 --num-episodes-per-improvement 1 --epsilon 0.01 --make-final-policy-greedy True --num-improvements-per-plot 100 --num-improvements-per-checkpoint 100 --checkpoint-path "~/Desktop/mountaincar_checkpoint.pickle" --save-agent-path "~/Desktop/mountaincar_agent.pickle"
@@ -55,8 +55,7 @@ shows the same reward y-axis but along a time x-axis. Based on the learning traj
 subsequent improvement would be gained were the agent to continue improving its policy; as shown below, the results are 
 quite satisfactory after 30 minutes of wallclock training time.
 
-## Results
-
+# Results
 The video below shows the trained agent controlling the car. Note how the agent develops an oscillating movement.
 
 {% include youtubePlayer.html id="qjVdoYYnriA" %}

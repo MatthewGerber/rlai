@@ -1,8 +1,8 @@
+# JupyterLab RLAI
 * Content
 {:toc}
   
-# Using RLAI from the JupyterLab Interface
-
+# Introduction
 A companion JupyterLab notebook is provided to ease the use of RLAI. The goal of the interface is to assist with the 
 composition, execution, and real-time inspection of RLAI commands. The primary composer interface is show below:
 
@@ -25,7 +25,7 @@ For single-click access to the notebook, please click below:
 Note that Binder notebooks are hosted for free by sponsors who donate computational infrastructure. Limitations are 
 placed on each notebook, so don't expect the Binder interface to support heavy workloads.
 
-## Local Installation
+# Local Installation
 In addition to installing the core RLAI package, you will need to further 
 install the `jupyter` extra. This can be done with pip via 
 `pip install rlai[jupyter]`. Following installation, there are a few additional
