@@ -1,11 +1,11 @@
-# Using `rlai` from the JupyterLab Interface
+# Using RLAI from the JupyterLab Interface
 
-A companion JupyterLab notebook is provided to ease the use of `rlai`. The goal of the interface is to assist with the 
-composition, execution, and real-time inspection of `rlai` commands. The primary composer interface is show below:
+A companion JupyterLab notebook is provided to ease the use of RLAI. The goal of the interface is to assist with the 
+composition, execution, and real-time inspection of RLAI commands. The primary composer interface is show below:
 
 ![jupyterlab](jupyterlab-composer.png)
 
-The notebook provides controls for starting, pausing, and resuming the execution of `rlai` commands. All plots are
+The notebook provides controls for starting, pausing, and resuming the execution of RLAI commands. All plots are
 interactive and support zooming, panning, and axis rescaling. An example is shown below:
 
 ![jupyterlab-running](jupyterlab-running.png)
@@ -23,7 +23,7 @@ Note that Binder notebooks are hosted for free by sponsors who donate computatio
 placed on each notebook, so don't expect the Binder interface to support heavy workloads.
 
 ## Local Installation
-In addition to installing the core `rlai` package, you will need to further 
+In addition to installing the core RLAI package, you will need to further 
 install the `jupyter` extra. This can be done with pip via 
 `pip install rlai[jupyter]`. Following installation, there are a few additional
 steps required to get the notebook up and running.

@@ -192,7 +192,7 @@ agent's policy evolves, the distribution (e.g., mean and variance) of the result
 this distribution is used to scale the state variables (e.g., with scikit-learn's 
 [`StandardScaler`](https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html), as Daniel suggests)
 then the distribution will need to adapt over time in order to accurately reflect the system's state distribution. The
-approach taken in `rlai` is to extend `StandardScaler` with 
+approach taken in RLAI is to extend `StandardScaler` with 
 [recency-weighting](https://github.com/MatthewGerber/rlai/blob/36b755098e75dd1222a802933075db2ab889b29c/src/rlai/value_estimation/function_approximation/models/feature_extraction.py#L323).
 A history of observed state values is retained, and the scaler is refit periodically with the weight on each observation
 decreasing exponentially with age.

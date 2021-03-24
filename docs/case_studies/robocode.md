@@ -1,5 +1,8 @@
 ![robocode](robocode-figs/robocode.png)
 
+* Content
+{:toc}
+
 # Robocode
 Robocode is a programming game in which robot agents are programmed to operate in a simulated battle environment. Full
 documentation about the game can be found [here](https://robowiki.net/wiki/Main_Page). Robocode has several features
@@ -12,32 +15,32 @@ that make it an appealing testbed for reinforcement learning:
   level lost or gained).
 * Multi-agent with teaming:  Robocode is inherently multi-agent. Teams can be formed, and team members can communicate
   by passing messages to each other.
-* Integration with `rlai`:  The architecture of Robocode lends itself to integration with `rlai` via local network-based 
+* Integration with RLAI:  The architecture of Robocode lends itself to integration with RLAI via local network-based 
   exchange of state and action information.
   
-The purpose of this case study is to explore the use of `rlai` for learning robot policies.
+The purpose of this case study is to explore the use of RLAI for learning robot policies.
 
 # Installing Robocode
 
 1. Download the Robocode installer 
    [here](https://github.com/MatthewGerber/robocode/raw/master/build/robocode-rlai-setup.jar). This is a customized 
-   build of Robocode that has been modified to make it compatible with `rlai`. This build provides robots with elevated 
+   build of Robocode that has been modified to make it compatible with RLAI. This build provides robots with elevated 
    permissions, particularly (1) permission to use TCP (socket) communication with the localhost (127.0.0.1) and (2)
    permission to perform reflection-based inspection of objects. These permissions are needed to communicate with the 
-   `rlai` server, and in general they do not pose much of a security risk; however, it is probably a good idea to avoid 
+   RLAI server, and in general they do not pose much of a security risk; however, it is probably a good idea to avoid 
    importing other robots into this installation of Robocode.
 1. Run the Robocode installer. Install to a directory such as `robocode_rlai`.
 
-# Running Robocode with `rlai`
+# Running Robocode with RLAI
 
-1. Start the Robocode `rlai` environment. This is most easily done using the 
+1. Start the Robocode RLAI environment. This is most easily done using the 
    [JupyterLab notebook](../jupyterlab_guide.md). There is already a configuration saved in the notebook that should 
    suffice as a demonstration of reinforcement learning with Robocode. Load the configuration and start it.
 1. Start Robocode from the directory into which you installed it above. Add a few robots as well as the `RlaiRobot`, 
    then begin the battle. If this is successful, then you will see the `RlaiRobot` moving, firing, etc. This is the 
    start of training, so the agent will likely appear random until its policy develops.
 1. In order to restart training with different parameters, you will need to first restart the Robocode application and 
-   then restart the `rlai` environment by killing the command (if using the CLI) or by restarting the JupyterLab kernel. 
+   then restart the RLAI environment by killing the command (if using the CLI) or by restarting the JupyterLab kernel. 
    This is a bit tedious but is required to reset the state of each.
 
 # Development of a RL Robot for Robocode
@@ -120,8 +123,7 @@ bearing). A mobile opponent introduces the following challenges:
   order to aim effectively.
 * Planning for bullet travel time:  Bullets travel at finite speed, so aiming at a mobile opponent will need to account 
   for the enemy's velocity and distance from the gun.
-
-
+  
 ### Reward Signal
 The reward signal at each time step is defined as the sum of bullet power that hit the opponent, minus the sum of
 bullet power that missed the opponent. One difficulty that arose in the current development iteration pertains to 
@@ -131,7 +133,7 @@ can possibly influence the outcome of the previously fired bullet. If we take th
 bullet's reward starting at the time when it hits or misses, then it becomes difficult to construct an appropriate 
 discount. On one hand, we want the time step associated with the bullet firing to receive full credit for the subsequent
 hit or miss outcome. This would require us to eliminate discounting (i.e., `gamma=1.0`). On the other hand, we know that 
-actions intervening between the firing of the bullet and the bullet's hit or miss outcomee should receive no credit. 
+actions intervening between the firing of the bullet and the bullet's hit or miss outcome should receive no credit. 
 This would require us to discount entirely (i.e., `gamma=0.0`). In the usual discounting approach, we cannot 
 simultaneously assign full credit to the bullet firing action while also assigning zero credit to actions that intervene
 between firing and the bullet's outcome. A solution is to move away from the usual discounting approach. The 

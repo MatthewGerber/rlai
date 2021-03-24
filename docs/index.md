@@ -26,7 +26,7 @@ understanding how agents are parameterized and rewarded.
   * [Mountain Car](https://matthewgerber.github.io/rlai/case_studies/mountain_car.html)
   
 # Quick Start
-For single-click access to a graphical interface for `rlai`, please click below:
+For single-click access to a graphical interface for RLAI, please click below:
 
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/MatthewGerber/rlai/HEAD?urlpath=lab/tree/jupyter/trainer.ipynb)
 
@@ -35,17 +35,17 @@ placed on each notebook, so don't expect the Binder interface to support heavy w
 alternatives.
 
 # Installation, Use, and Development
-The `rlai` code is distributed via [PyPI](https://pypi.org/project/rlai/) and can be installed with `pip install rlai`. 
+The RLAI code is distributed via [PyPI](https://pypi.org/project/rlai/) and can be installed with `pip install rlai`. 
 There are several ways to use the package.
 
-* Incorporate `rlai` into another project:  See the 
+* Incorporate RLAI into another project:  See the 
   [example repository](https://github.com/MatthewGerber/rlai-dependency-example) for how a project can be structured to 
-  consume the `rlai` package functionality within source code.
+  consume the RLAI package functionality within source code.
   
-* Use `rlai` directly
-    * Most of the `rlai` functionality is exposed via the companion JupyterLab notebook. See the 
+* Use RLAI directly
+    * Most of the RLAI functionality is exposed via the companion JupyterLab notebook. See the 
       [JupyterLab guide](jupyterlab_guide.md) for more information. 
-    * Using `rlai` from the command-line interface (CLI) is demonstrated in the case studies below and is also explored 
+    * Using RLAI from the command-line interface (CLI) is demonstrated in the case studies below and is also explored 
       in the [CLI guide](cli_guide.md).
 
 Looking for a place to dig in? Below are a few ideas organized by area of interest.
@@ -56,7 +56,7 @@ Looking for a place to dig in? Below are a few ideas organized by area of intere
   `--gym-id` with something else. Other changes might be needed depending on the environment, but Gym is particularly
   convenient.
 
-* Incorporate new statistical learning methods:  The `rlai` 
+* Incorporate new statistical learning methods:  The RLAI 
   [SKLearnSGD](https://github.com/MatthewGerber/rlai/blob/master/src/rlai/value_estimation/function_approximation/models/sklearn.py)
   module demonstrates how to use methods in scikit-learn (in this case stochastic gradient descent regression) to 
   approximate state-action value functions. This is just one approach, and it would be interesting to compare time, 
