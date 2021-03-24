@@ -1,3 +1,6 @@
+* Content
+{:toc}
+  
 # Mountain Car
 The mountain car is not sufficiently powerful to climb the hill directly, but must instead develop a strategy based on 
 the surrounding slopes. You can read more about this environment [here](https://gym.openai.com/envs/MountainCar-v0/). 

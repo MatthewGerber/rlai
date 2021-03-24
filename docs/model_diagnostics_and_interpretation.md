@@ -1,3 +1,6 @@
+* Content
+{:toc}
+  
 # Diagnostic and Interpretation Tools
 
 Diagnostic and interpretation tools are standard issue for statistical models, though they would seem to be less 

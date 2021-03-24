@@ -1,3 +1,6 @@
+* Content
+{:toc}
+  
 # Introduction
 This is an implementation of concepts and algorithms described in "Reinforcement Learning: An Introduction" (Sutton
 and Barto, 2018, 2nd edition). It is a work in progress, implemented with the following objectives in mind.

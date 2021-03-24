@@ -1,3 +1,6 @@
+* Content
+{:toc}
+  
 # Inverted Pendulum
 The inverted pendulum is also known as cart-pole balancing, where the goal is to keep a bottom-hinged pole balanced for
 as long as possible by moving a cart left or right. Imagine balancing a broom with the handle's end in your open palm. 

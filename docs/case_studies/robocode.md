@@ -1,9 +1,10 @@
-![robocode](robocode-figs/robocode.png)
-
 * Content
 {:toc}
 
 # Robocode
+
+![robocode](robocode-figs/robocode.png)
+
 Robocode is a programming game in which robot agents are programmed to operate in a simulated battle environment. Full
 documentation about the game can be found [here](https://robowiki.net/wiki/Main_Page). Robocode has several features
 that make it an appealing testbed for reinforcement learning:
