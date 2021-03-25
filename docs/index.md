@@ -21,13 +21,18 @@ for these environments. Below is a list of environments that are not covered in 
 or are not covered at all (e.g., Robocode). They are more difficult to train agents for and are instructive for 
 understanding how agents are parameterized and rewarded.
 
-* Robocode:  A simulation-based robot programming game with a dynamically rich environment, multi-agent teaming, and a 
-  large user community. Read more [here](https://matthewgerber.github.io/rlai/case_studies/robocode.html).
-  
-* OpenAI Gym:  A collection of standard control problems. Select from the examples below.
+## OpenAI Gym
+[OpenAI Gym](https://gym.openai.com) is a collection of environments that range from traditional control to advanced robotics. Case studies have
+been developed for the OpenAI Gym environment listed below:
+
   * [Inverted Pendulum](https://matthewgerber.github.io/rlai/case_studies/inverted_pendulum.html)
   * [Acrobot](https://matthewgerber.github.io/rlai/case_studies/acrobot.html)
   * [Mountain Car](https://matthewgerber.github.io/rlai/case_studies/mountain_car.html)
+
+## Robocode
+[Robocode](https://github.com/robo-code/robocode) is a simulation-based robotic combat programming game with a 
+dynamically rich environment, multi-agent teaming, and a large user community. Read more 
+[here](https://matthewgerber.github.io/rlai/case_studies/robocode.html).
   
 # Quick Start
 For single-click access to a graphical interface for RLAI, please click below:

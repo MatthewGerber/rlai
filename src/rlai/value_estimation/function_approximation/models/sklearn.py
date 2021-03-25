@@ -243,8 +243,9 @@ class SKLearnSGD(FunctionApproximationModel):
         if feature_action_names is None:
             return None
 
-        # model might not yet be fit and won't have a coefficients attribute in such cases
-        if not hasattr(self.model, 'coef_'):
+        # model might not yet be fit (e.g., if called from jupyter notebook) and won't have a coefficients attribute in
+        # such cases
+        if not hasattr(self.model, 'coef_'):  # pragma no cover
             return None
 
         feature_names, action_names = feature_action_names
@@ -499,7 +500,7 @@ class SKLearnSGD(FunctionApproximationModel):
         :return: True if equal and False otherwise.
         """
 
-        return np.array_equal(self.model.coef_, other.model.coef_) and self.model.intercept_ == other.model.intercept_
+        return np.array_equal(self.model.coef_, other.model.coef_) and np.array_equal(self.model.intercept_, other.model.intercept_)
 
     def __ne__(
             self,

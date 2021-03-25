@@ -351,7 +351,7 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         X = self.get_X([state] * len(actions), actions, False)
 
         # feature extractors may return a matrix with no columns if extraction was not possible
-        if X.shape[1] == 0:
+        if X.shape[1] == 0:  # pragma no cover
             return np.repeat(0.0, len(actions))
 
         return self.model.evaluate(X)

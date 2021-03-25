@@ -584,7 +584,7 @@ class RobocodeFeatureExtractor(FeatureExtractor):
             else:
                 feature_values = [0.0, 0.0, 0.0]
 
-        else:
+        else:  # pragma no cover
             raise ValueError(f'Unknown action:  {action}')
 
         return feature_values

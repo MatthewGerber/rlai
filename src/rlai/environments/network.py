@@ -67,7 +67,7 @@ class TcpMdpEnvironment(MdpEnvironment, ABC):
             state_dict = json.loads(self.read_from_client())
             self.state, _ = self.extract_state_and_reward_from_client_dict(state_dict, 0)
 
-        except Exception as ex:
+        except Exception as ex:  # pragma no cover
 
             print(f'Exception while client was connecting to reset environment:  {ex}')
 
@@ -106,7 +106,7 @@ class TcpMdpEnvironment(MdpEnvironment, ABC):
             next_state_dict = json.loads(self.read_from_client())
             self.state, reward = self.extract_state_and_reward_from_client_dict(next_state_dict, t)
 
-        except Exception as ex:
+        except Exception as ex:  # pragma no cover
 
             print(f'Exception while advancing networked environment:  {ex}')
 
@@ -118,7 +118,7 @@ class TcpMdpEnvironment(MdpEnvironment, ABC):
         if self.state.terminal:
             try:
                 self.server_connection.close()
-            except Exception as ex:
+            except Exception as ex:  # pragma no cover
                 print(f'Exception while closing socket upon episode termination:  {ex}')
 
         return self.state, reward
@@ -146,6 +146,13 @@ class TcpMdpEnvironment(MdpEnvironment, ABC):
         :return: Message string.
         """
 
+        # the following code can be used to store a state sequence for unit test fixture purposes.
+        # message = self.server_connection.recv(999999999).decode('utf-8')
+        # if not hasattr(self, 'state_sequence'):
+        #     self.state_sequence = []
+        # self.state_sequence.append(message)
+        # return message
+
         return self.server_connection.recv(999999999).decode('utf-8')
 
     def write_to_client(
@@ -170,7 +177,7 @@ class TcpMdpEnvironment(MdpEnvironment, ABC):
         try:
             self.server_connection.close()
             self.server_socket.close()
-        except Exception as ex:
+        except Exception as ex:  # pragma no cover
             print(f'Exception while closing TCP environment:  {ex}')
 
     def __init__(
