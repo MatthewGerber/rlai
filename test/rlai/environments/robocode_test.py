@@ -8,7 +8,7 @@ import time
 from threading import Thread
 
 import pytest
-
+import numpy as np
 from rlai.environments.robocode import RobocodeFeatureExtractor
 from rlai.runners.trainer import run
 
@@ -71,7 +71,8 @@ def test_learn():
     # with open(f'{os.path.dirname(__file__)}/fixtures/test_robocode.pickle', 'wb') as file:
     #     pickle.dump((robocode.state_sequence, mdp_agent.pi, q_S_A), file)
 
-    assert agent.pi == fixture_pi
+    assert np.allclose(agent.pi.estimator.model.model.coef_, fixture_q_S_A.model.model.coef_)
+    assert np.allclose(agent.pi.estimator.model.model.intercept_, fixture_q_S_A.model.model.intercept_)
 
 
 def test_feature_extractor():
