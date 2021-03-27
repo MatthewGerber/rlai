@@ -139,25 +139,59 @@ class RobocodeEnvironment(TcpMdpEnvironment):
             terminal=terminal
         )
 
-        # hang on to bullet firing events so that we can assign rewards to their time steps later on when they hit or
-        # miss. add the evaluation time step to each event. the bullet events have times associated with them, but
-        # those are robocode turns and there isn't always a perfect 1:1 between robocode turns and evaluation time
-        # steps.
-        self.bullet_id_fired_event.update({
-            bullet_fired_event['bullet']['bulletId']: {
-                **bullet_fired_event,
-                'step': t
-            }
-            for bullet_fired_event in event_type_events.get('BulletFiredEvent', [])
-        })
+        # don't get hit
+        bullet_power_hit_self = sum([
+            bullet_event['bullet']['power']
+            for bullet_event in event_type_events.get('HitByBulletEvent', [])
+        ])
 
-        # old attempts at reward structure
+        reward_value = -bullet_power_hit_self
+        reward_shift_steps = 0
 
-        # ... don't get hit
-        # bullet_power_hit_self = sum([
-        #     bullet_event['bullet']['power']
-        #     for bullet_event in event_type_events.get('HitByBulletEvent', [])
-        # ])
+        # # hit others and don't miss
+        # reward_value = bullet_power_hit_others - bullet_power_missed
+        #
+        # # hang on to bullet firing events so that we can assign rewards to their time steps later on when they hit or
+        # # miss. add the evaluation time step to each event. the bullet events have times associated with them, but
+        # # those are robocode turns and there isn't always a perfect 1:1 between robocode turns and evaluation time
+        # # steps.
+        # self.bullet_id_fired_event.update({
+        #     bullet_fired_event['bullet']['bulletId']: {
+        #         **bullet_fired_event,
+        #         'step': t
+        #     }
+        #     for bullet_fired_event in event_type_events.get('BulletFiredEvent', [])
+        # })
+        #
+        # # shift the reward backward in time, to the evaluation time step of the most recent bullet event (of either
+        # # kind, hit or missed).
+        # if len(bullet_hit_events) + len(bullet_missed_events) == 0:
+        #     reward_shift_steps = 0
+        # else:
+        #     reward_shift_steps = max([
+        #         self.bullet_id_fired_event[bullet_event['bullet']['bulletId']]['step']
+        #         for bullet_event in bullet_hit_events + bullet_missed_events
+        #     ]) - t
+        #
+        # # clear bullet firing event for any bullet that hit another robot, missed, or hit another bullet. use list
+        # # comprehension to vectorize (hopefully faster).
+        # [
+        #     self.bullet_id_fired_event.pop(bullet_event['bullet']['bulletId'])
+        #     for bullet_event in
+        #     bullet_hit_events + bullet_missed_events + event_type_events.get('BulletHitBulletEvent', [])
+        # ]
+
+        reward = Reward(
+            i=None,
+            r=reward_value,
+            shift_steps=reward_shift_steps
+        )
+
+        self.previous_state = state
+
+        return state, reward
+
+        # old/obsolete reward signals
 
         # ... death seems bad, and victories good.
         # if dead:
@@ -171,36 +205,6 @@ class RobocodeEnvironment(TcpMdpEnvironment):
         #     reward_value = 0.0
         # else:
         #     reward_value = state.energy - self.previous_state.energy
-
-        # hit others and don't miss
-        reward_value = bullet_power_hit_others - bullet_power_missed
-
-        # shift the reward backward in time, to the evaluation time step of the most recent bullet event (of either
-        # kind, hit or missed).
-        if len(bullet_hit_events) + len(bullet_missed_events) == 0:
-            reward_shift_steps = 0
-        else:
-            reward_shift_steps = max([
-                self.bullet_id_fired_event[bullet_event['bullet']['bulletId']]['step']
-                for bullet_event in bullet_hit_events + bullet_missed_events
-            ]) - t
-
-        # clear bullet firing event for any bullet that hit another robot, missed, or hit another bullet. use list
-        # comprehension to vectorize (hopefully faster).
-        [
-            self.bullet_id_fired_event.pop(bullet_event['bullet']['bulletId'])
-            for bullet_event in bullet_hit_events + bullet_missed_events + event_type_events.get('BulletHitBulletEvent', [])
-        ]
-
-        reward = Reward(
-            i=None,
-            r=reward_value,
-            shift_steps=reward_shift_steps
-        )
-
-        self.previous_state = state
-
-        return state, reward
 
     def __init__(
             self,
@@ -224,15 +228,15 @@ class RobocodeEnvironment(TcpMdpEnvironment):
         )
 
         action_name_action_value_list = [
-            # ('ahead', 25.0),
-            # ('back', 25.0),
-            # ('turnLeft', 5.0),
-            # ('turnRight', 5.0),
+            ('ahead', 25.0),
+            ('back', 25.0),
+            ('turnLeft', 10.0),
+            ('turnRight', 10.0),
             ('turnRadarLeft', 5.0),
             ('turnRadarRight', 5.0),
-            ('turnGunLeft', 5.0),
-            ('turnGunRight', 5.0),
-            ('fire', 1.0)
+            # ('turnGunLeft', 5.0),
+            # ('turnGunRight', 5.0),
+            # ('fire', 1.0)
         ]
 
         self.robot_actions = [
@@ -445,19 +449,19 @@ class RobocodeFeatureExtractor(FeatureExtractor):
 
         return X
 
-    def get_feature_action_names(
-            self
-    ) -> Tuple[List[str], List[str]]:
-        """
-        Get names of extracted features and actions.
-
-        :return: 2-tuple of (1) list of feature names and (2) list of action names.
-        """
-
-        return (
-            ['action_intercept', 'has_enemy_bearing', 'aim_lock'],
-            [a.name for a in self.actions]
-        )
+    # def get_feature_action_names(
+    #         self
+    # ) -> Tuple[List[str], List[str]]:
+    #     """
+    #     Get names of extracted features and actions.
+    #
+    #     :return: 2-tuple of (1) list of feature names and (2) list of action names.
+    #     """
+    #
+    #     return (
+    #         ['action_intercept', 'has_enemy_bearing', 'aim_lock'],
+    #         [a.name for a in self.actions]
+    #     )
 
     def set_most_recent_scanned_robot(
             self,
@@ -501,7 +505,75 @@ class RobocodeFeatureExtractor(FeatureExtractor):
         :return: List of floating-point feature values.
         """
 
-        if action_to_extract.name.startswith('turnRadar'):
+        if action_to_extract.name == 'ahead' or action_to_extract.name == 'back':
+
+            if action == action_to_extract:
+                feature_values = [
+
+                    # intercept
+                    1.0,
+
+                    # indicator (0/1):  we have a bearing on the enemy
+                    0.0 if enemy_bearing_from_self is None else 1.0,
+
+                    0.0 if enemy_bearing_from_self is None else
+                    self.funnel(
+                        self.get_shortest_degree_change(
+                            state.heading,
+                            self.normalize(enemy_bearing_from_self + 90.0)
+                        ),
+                        True,
+                        5.0
+                    ),
+
+                    0.0 if enemy_bearing_from_self is None else
+                    self.funnel(
+                        self.get_shortest_degree_change(
+                            state.heading,
+                            self.normalize(enemy_bearing_from_self - 90.0)
+                        ),
+                        True,
+                        5.0
+                    )
+
+                ]
+            else:
+                feature_values = [0.0, 0.0, 0.0, 0.0]
+
+        elif action_to_extract.name == 'turnLeft' or action_to_extract.name == 'turnRight':
+
+            if action == action_to_extract:
+                feature_values = [
+
+                    # intercept
+                    1.0,
+
+                    # indicator (0/1):  we have a bearing on the enemy
+                    0.0 if enemy_bearing_from_self is None else 1.0,
+
+                    0.0 if enemy_bearing_from_self is None else
+                    self.sigmoid(
+                        self.get_shortest_degree_change(
+                            state.heading,
+                            self.normalize(enemy_bearing_from_self + 90.0)
+                        ),
+                        10.0
+                    ),
+
+                    0.0 if enemy_bearing_from_self is None else
+                    self.sigmoid(
+                        self.get_shortest_degree_change(
+                            state.heading,
+                            self.normalize(enemy_bearing_from_self - 90.0)
+                        ),
+                        10.0
+                    )
+
+                ]
+            else:
+                feature_values = [0.0, 0.0, 0.0, 0.0]
+
+        elif action_to_extract.name.startswith('turnRadar'):
 
             if action == action_to_extract:
                 feature_values = [
