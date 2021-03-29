@@ -101,6 +101,12 @@ class RobocodeEnvironment(TcpMdpEnvironment):
 
         event_type_events: Dict[str, List[Dict]] = client_dict['events']
 
+        # bullet power that hit self
+        bullet_power_hit_self = sum([
+            bullet_event['bullet']['power']
+            for bullet_event in event_type_events.get('HitByBulletEvent', [])
+        ])
+
         # sum up bullet power that hit others
         bullet_hit_events = event_type_events.get('BulletHitEvent', [])
         bullet_power_hit_others = sum([
@@ -131,6 +137,7 @@ class RobocodeEnvironment(TcpMdpEnvironment):
         # initialize the state
         state = RobocodeState(
             **client_dict['state'],
+            bullet_power_hit_self=bullet_power_hit_self,
             bullet_power_hit_others=bullet_power_hit_others,
             bullet_power_missed=bullet_power_missed,
             bullet_power_missed_since_previous_hit=bullet_power_missed_since_previous_hit,
@@ -139,13 +146,7 @@ class RobocodeEnvironment(TcpMdpEnvironment):
             terminal=terminal
         )
 
-        # don't get hit
-        bullet_power_hit_self = sum([
-            bullet_event['bullet']['power']
-            for bullet_event in event_type_events.get('HitByBulletEvent', [])
-        ])
-
-        reward_value = -bullet_power_hit_self
+        reward_value = 1.0 if bullet_power_hit_self == 0.0 else -1.0
         reward_shift_steps = 0
 
         # # hit others and don't miss
@@ -275,6 +276,7 @@ class RobocodeState(MdpState):
             width: float,
             x: float,
             y: float,
+            bullet_power_hit_self: float,
             bullet_power_hit_others: float,
             bullet_power_missed: float,
             bullet_power_missed_since_previous_hit: float,
@@ -304,6 +306,10 @@ class RobocodeState(MdpState):
         :param width: Robot width (pixels).
         :param x: Robot x position.
         :param y: Robot y position.
+        :param bullet_power_hit_self: Bullet power that hit self.
+        :param bullet_power_hit_others: Bullet power that hit others.
+        :param bullet_power_missed: Bullet power that missed.
+        :param bullet_power_missed_since_previous_hit: Bullet power that has missed since previous hit.
         :param events: List of events sent to the robot since the previous time the state was set.
         :param AA: List of actions that can be taken.
         :param terminal: Whether or not the state is terminal.
@@ -334,6 +340,7 @@ class RobocodeState(MdpState):
         self.width = width
         self.x = x
         self.y = y
+        self.bullet_power_hit_self = bullet_power_hit_self
         self.bullet_power_hit_others = bullet_power_hit_others
         self.bullet_power_missed = bullet_power_missed
         self.bullet_power_missed_since_previous_hit = bullet_power_missed_since_previous_hit
@@ -516,29 +523,31 @@ class RobocodeFeatureExtractor(FeatureExtractor):
                     # indicator (0/1):  we have a bearing on the enemy
                     0.0 if enemy_bearing_from_self is None else 1.0,
 
+                    0.0 if state.bullet_power_hit_self == 0.0 else 1.0,
+
                     0.0 if enemy_bearing_from_self is None else
                     self.funnel(
                         self.get_shortest_degree_change(
                             state.heading,
-                            self.normalize(enemy_bearing_from_self + 90.0)
+                            self.normalize(state.heading + enemy_bearing_from_self + 90.0)
                         ),
                         True,
-                        5.0
+                        15.0
                     ),
 
                     0.0 if enemy_bearing_from_self is None else
                     self.funnel(
                         self.get_shortest_degree_change(
                             state.heading,
-                            self.normalize(enemy_bearing_from_self - 90.0)
+                            self.normalize(state.heading + enemy_bearing_from_self - 90.0)
                         ),
                         True,
-                        5.0
+                        15.0
                     )
 
                 ]
             else:
-                feature_values = [0.0, 0.0, 0.0, 0.0]
+                feature_values = [0.0, 0.0, 0.0, 0.0, 0.0]
 
         elif action_to_extract.name == 'turnLeft' or action_to_extract.name == 'turnRight':
 
@@ -551,27 +560,29 @@ class RobocodeFeatureExtractor(FeatureExtractor):
                     # indicator (0/1):  we have a bearing on the enemy
                     0.0 if enemy_bearing_from_self is None else 1.0,
 
+                    0.0 if state.bullet_power_hit_self == 0.0 else 1.0,
+
                     0.0 if enemy_bearing_from_self is None else
                     self.sigmoid(
                         self.get_shortest_degree_change(
                             state.heading,
-                            self.normalize(enemy_bearing_from_self + 90.0)
+                            self.normalize(state.heading + enemy_bearing_from_self + 90.0)
                         ),
-                        10.0
+                        15.0
                     ),
 
                     0.0 if enemy_bearing_from_self is None else
                     self.sigmoid(
                         self.get_shortest_degree_change(
                             state.heading,
-                            self.normalize(enemy_bearing_from_self - 90.0)
+                            self.normalize(state.heading + enemy_bearing_from_self - 90.0)
                         ),
-                        10.0
+                        15.0
                     )
 
                 ]
             else:
-                feature_values = [0.0, 0.0, 0.0, 0.0]
+                feature_values = [0.0, 0.0, 0.0, 0.0, 0.0]
 
         elif action_to_extract.name.startswith('turnRadar'):
 
@@ -777,10 +788,7 @@ class RobocodeFeatureExtractor(FeatureExtractor):
         :return: Normalized degrees.
         """
 
-        if degrees > 360:
-            degrees -= 360
-        elif degrees < 0:
-            degrees += 360
+        degrees = degrees % 360.0
 
         if degrees < 0 or degrees > 360:
             raise ValueError(f'Failed to normalize degrees:  {degrees}')
