@@ -1,6 +1,6 @@
 from abc import ABC
 from argparse import ArgumentParser
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Dict
 
 import numpy as np
 from numpy.random import RandomState
@@ -9,6 +9,7 @@ from rlai.actions import Action
 from rlai.agents import Agent
 from rlai.meta import rl_text
 from rlai.policies import Policy
+from rlai.rewards import Reward
 from rlai.states.mdp import MdpState
 from rlai.utils import sample_list_item, parse_arguments
 
@@ -42,6 +43,46 @@ class MdpAgent(Agent, ABC):
         )
 
         return parser
+
+    def shape_reward(
+            self,
+            curr_t: int,
+            reward: Reward,
+            n_steps: Optional[int],
+            t_state_a_g: Dict[int, Tuple[MdpState, Action, float]]
+    ) -> List[Tuple[int, float]]:
+        """
+        Shape a reward value that has been obtained. Reward shaping entails the calculation of time steps at which
+        returns should be updated along with weight associated with each. This function applies exponential discounting
+        based on the value of gamma specified in the current agent (the traditional shaping approach discussed by Sutton
+        and Barto). Subclasses are free to override the current function and shape rewards as needed for the task at
+        hand.
+
+        :param curr_t: Current time step.
+        :param reward: Reward obtained from the action taken at the current time step.
+        :param n_steps: Number of steps to use in n-step (bootstrapped) returns, or None for Monte Carlo returns (i.e.,
+        infinite steps and no bootstrapping).
+        :param t_state_a_g: Truncated return accumulator.
+        :return: List of time steps for which returns should be updated, along with weights.
+        """
+
+        # if n_steps is None, then get all prior time steps (equivalent to infinite n_steps, or monte carlo returns).
+        if n_steps is None:
+            return_t_weight = [
+                (t, self.gamma ** (curr_t - t))
+                for t in t_state_a_g.keys()
+            ]
+        else:
+            # in 1-step td, the earliest time step is the current time step; in 2-step, the earliest time step is the
+            # prior time step, etc. always update returns from the earliest time step through the current time step,
+            # inclusive.
+            earliest_t = max(0, curr_t - n_steps + 1)
+            return_t_weight = [
+                (t, self.gamma ** (curr_t - t))
+                for t in range(earliest_t, curr_t + 1)
+            ]
+
+        return return_t_weight
 
     def __init__(
             self,

@@ -124,38 +124,25 @@ def evaluate_q_pi(
             if planning_environment is not None:
                 planning_environment.model.update(curr_state, curr_a, next_state, next_reward)
 
-            # initialize the n-step, truncated return accumulator at the current time for the current state and action
+            # initialize the n-step, truncated return accumulator at the current time for the current state and action.
             t_state_a_g[curr_t] = (curr_state, curr_a, 0.0)
 
-            # get prior time steps for which truncated return g should be updated. if n_steps is None, then get all
-            # prior time steps (equivalent to infinite n_steps, or Monte Carlo).
-            if n_steps is None:
-                prior_t_values = list(t_state_a_g.keys())
-            else:
-                # in 1-step td, the earliest time step is the current time step; in 2-step, the earliest time step is
-                # the prior time step, etc. always update through the current time step.
-                earliest_t = max(0, curr_t - n_steps + 1)
-                prior_t_values = range(earliest_t, curr_t + 1)
+            # ask the agent to shape the reward, returning the time steps whose returns should be updated and the
+            # weight associated with each.
+            return_t_weight = agent.shape_reward(
+                curr_t=curr_t,
+                reward=next_reward,
+                n_steps=n_steps,
+                t_state_a_g=t_state_a_g
+            )
 
-            # if the reward is shifted, then truncate the t values to only include those within the shifted intervanl.
-            discount_start_t = curr_t
-            if next_reward.shift_steps is not None and next_reward.shift_steps != 0:
-                discount_start_t = curr_t + next_reward.shift_steps
-                prior_t_values = [
-                    prior_t_value
-                    for prior_t_value in prior_t_values
-                    if prior_t_value <= discount_start_t
-                ]
-
-            # pass reward to prior state-action values, discounting based on time step differences (the reward should
-            # not be discounted for the current time step).
-            for t in prior_t_values:
-                state, a, g = t_state_a_g[t]
-                discount = agent.gamma ** (discount_start_t - t)
-                t_state_a_g[t] = (state, a, g + discount * next_reward.r)
+            # update returns with given weights
+            for return_t, weight in return_t_weight:
+                state, a, g = t_state_a_g[return_t]
+                t_state_a_g[return_t] = (state, a, g + weight * next_reward.r)
 
             # get the next state's bootstrapped value and next action, based on the bootstrapping mode. note that the
-            # bootstrapped next state-action value is only used if we're performing n-step updates.
+            # bootstrapped next state-action value is only used if we're performing n-step updates below.
             next_state_q_s_a, next_a = get_bootstrapped_state_action_value(
                 state=next_state,
                 t=next_t,
@@ -276,7 +263,7 @@ def get_bootstrapped_state_action_value(
             else:
                 bootstrapped_s_a_value = 0.0
 
-        # if we're off-policy, then we won't yet have a next action. ask the agent for it now.
+        # if we're off-policy, then we won't yet have a next action. ask the agent for an action now.
         if next_a is None:
             next_a = agent.act(t)
 
@@ -325,6 +312,7 @@ def update_q_S_A(
         # the discount on the next state-action value is exponentiated to n_steps, as we're bootstrapping it starting
         # from the update_t. for n_steps==1, the discount applied to g will have been 1 (agent.gamma**0) and the
         # discount applied here to next_state_q_s_a will be agent.gamma.
+        raise ValueError('Need to call agent.shape_reward here')
         td_target = g + (agent.gamma ** n_steps) * next_state_q_s_a
 
         # initialize/get the value estimator for the state-action pair

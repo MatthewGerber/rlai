@@ -6,7 +6,7 @@ import numpy as np
 from numpy.random import RandomState
 
 from rlai.actions import Action
-from rlai.agents.mdp import MdpAgent
+from rlai.agents.mdp import MdpAgent, StochasticMdpAgent
 from rlai.environments.mdp import MdpEnvironment
 from rlai.environments.network import TcpMdpEnvironment
 from rlai.meta import rl_text
@@ -16,6 +16,37 @@ from rlai.utils import parse_arguments
 from rlai.value_estimation.function_approximation.models.feature_extraction import (
     FeatureExtractor
 )
+
+
+@rl_text(chapter='Rewards', page=1)
+class RobocodeReward(Reward):
+    """
+    Robocode reward.
+    """
+
+
+@rl_text(chapter='Agents', page=1)
+class RobocodeAgent(StochasticMdpAgent):
+    """
+    Robocode agent.
+    """
+
+    def shape_reward(
+            self,
+            curr_t: int,
+            reward: Reward,
+            n_steps: int,
+            t_state_a_g: Dict[int, Tuple[MdpState, Action, float]]
+    ):
+        # if the reward is shifted, then truncate the t values to only include those within the shifted intervanl.
+        discount_start_t = curr_t
+        if reward.shift_steps is not None and reward.shift_steps != 0:
+            discount_start_t = curr_t + reward.shift_steps
+            prior_t_values = [
+                prior_t_value
+                for prior_t_value in prior_t_values
+                if prior_t_value <= discount_start_t
+            ]
 
 
 @rl_text(chapter='Environments', page=1)
