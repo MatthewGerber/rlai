@@ -1,6 +1,6 @@
 from abc import ABC
 from argparse import ArgumentParser
-from typing import List, Tuple, Optional, Dict
+from typing import List, Tuple, Optional
 
 import numpy as np
 from numpy.random import RandomState
@@ -46,43 +46,42 @@ class MdpAgent(Agent, ABC):
 
     def shape_reward(
             self,
-            curr_t: int,
             reward: Reward,
-            n_steps: Optional[int],
-            t_state_a_g: Dict[int, Tuple[MdpState, Action, float]]
+            final_t: int,
+            n_steps: Optional[int]
     ) -> List[Tuple[int, float]]:
         """
         Shape a reward value that has been obtained. Reward shaping entails the calculation of time steps at which
-        returns should be updated along with weight associated with each. This function applies exponential discounting
-        based on the value of gamma specified in the current agent (the traditional shaping approach discussed by Sutton
-        and Barto). Subclasses are free to override the current function and shape rewards as needed for the task at
-        hand.
+        returns should be updated along with the weighted reward for each. This function applies exponential discounting
+        based on the value of gamma specified in the current agent (i.e., the traditional reward shaping approach
+        discussed by Sutton and Barto). Subclasses are free to override the current function and shape rewards as needed
+        for the task at hand.
 
-        :param curr_t: Current time step.
-        :param reward: Reward obtained from the action taken at the current time step.
+        :param reward: Obtained reward.
+        :param final_t: Final time step at which to shape reward value.
         :param n_steps: Number of steps to use in n-step (bootstrapped) returns, or None for Monte Carlo returns (i.e.,
         infinite steps and no bootstrapping).
-        :param t_state_a_g: Truncated return accumulator.
-        :return: List of time steps for which returns should be updated, along with weights.
+        :return: List of time steps for which returns should be updated, along with shaped rewards.
         """
 
-        # if n_steps is None, then get all prior time steps (equivalent to infinite n_steps, or monte carlo returns).
+        # if n_steps is None, then shape the reward all the way back to the start (equivalent to infinite n_steps, or
+        # monte carlo returns);
         if n_steps is None:
-            return_t_weight = [
-                (t, self.gamma ** (curr_t - t))
-                for t in t_state_a_g.keys()
-            ]
-        else:
-            # in 1-step td, the earliest time step is the current time step; in 2-step, the earliest time step is the
-            # prior time step, etc. always update returns from the earliest time step through the current time step,
-            # inclusive.
-            earliest_t = max(0, curr_t - n_steps + 1)
-            return_t_weight = [
-                (t, self.gamma ** (curr_t - t))
-                for t in range(earliest_t, curr_t + 1)
-            ]
+            earliest_t = 0
 
-        return return_t_weight
+        # otherwise, shape the reward for n-step updates.
+        else:
+            # in 1-step td, the earliest time step is the final time step; in 2-step, the earliest time step is the
+            # prior time step, etc.
+            earliest_t = max(0, final_t - n_steps + 1)
+
+        # shape reward from the earliest time step through the final time step, including both endpoints.
+        t_shaped_reward = [
+            (t, self.gamma ** (final_t - t) * reward.r)
+            for t in range(earliest_t, final_t + 1)
+        ]
+
+        return t_shaped_reward
 
     def __init__(
             self,

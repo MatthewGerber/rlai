@@ -128,18 +128,22 @@ def evaluate_q_pi(
             t_state_a_g[curr_t] = (curr_state, curr_a, 0.0)
 
             # ask the agent to shape the reward, returning the time steps whose returns should be updated and the
-            # weight associated with each.
-            return_t_weight = agent.shape_reward(
-                curr_t=curr_t,
+            # shaped reward associated with each.
+            t_shaped_reward = agent.shape_reward(
                 reward=next_reward,
-                n_steps=n_steps,
-                t_state_a_g=t_state_a_g
+                final_t=curr_t,
+                n_steps=n_steps
             )
 
-            # update returns with given weights
-            for return_t, weight in return_t_weight:
-                state, a, g = t_state_a_g[return_t]
-                t_state_a_g[return_t] = (state, a, g + weight * next_reward.r)
+            # update truncated return accumulators with shaped rewards
+            t_state_a_g.update({
+                return_t: (
+                    t_state_a_g[return_t][0],
+                    t_state_a_g[return_t][1],
+                    t_state_a_g[return_t][2] + shaped_reward
+                )
+                for return_t, shaped_reward in t_shaped_reward
+            })
 
             # get the next state's bootstrapped value and next action, based on the bootstrapping mode. note that the
             # bootstrapped next state-action value is only used if we're performing n-step updates below.
@@ -312,7 +316,6 @@ def update_q_S_A(
         # the discount on the next state-action value is exponentiated to n_steps, as we're bootstrapping it starting
         # from the update_t. for n_steps==1, the discount applied to g will have been 1 (agent.gamma**0) and the
         # discount applied here to next_state_q_s_a will be agent.gamma.
-        raise ValueError('Need to call agent.shape_reward here')
         td_target = g + (agent.gamma ** n_steps) * next_state_q_s_a
 
         # initialize/get the value estimator for the state-action pair

@@ -19,10 +19,44 @@ from rlai.value_estimation.function_approximation.models.feature_extraction impo
 
 
 @rl_text(chapter='Rewards', page=1)
-class RobocodeReward(Reward):
+class RobocodeAimingReward(Reward):
     """
-    Robocode reward.
+    Robocode aiming reward.
     """
+
+    def __init__(
+            self,
+            i,
+            r,
+            bullet_id_fired_event,
+            bullet_hit_events,
+            bullet_missed_events
+    ):
+        super().__init__(
+            i=i,
+            r=r
+        )
+
+        self.bullet_id_fired_event = bullet_id_fired_event
+        self.bullet_hit_events = bullet_hit_events
+        self.bullet_missed_events = bullet_missed_events
+
+
+@rl_text(chapter='Rewards', page=1)
+class RobocodeMovementReward(Reward):
+    """
+    Robocode movement reward.
+    """
+
+    def __init__(
+            self,
+            i,
+            r
+    ):
+        super().__init__(
+            i=i,
+            r=r
+        )
 
 
 @rl_text(chapter='Agents', page=1)
@@ -33,20 +67,28 @@ class RobocodeAgent(StochasticMdpAgent):
 
     def shape_reward(
             self,
-            curr_t: int,
             reward: Reward,
-            n_steps: int,
-            t_state_a_g: Dict[int, Tuple[MdpState, Action, float]]
-    ):
-        # if the reward is shifted, then truncate the t values to only include those within the shifted intervanl.
-        discount_start_t = curr_t
-        if reward.shift_steps is not None and reward.shift_steps != 0:
-            discount_start_t = curr_t + reward.shift_steps
-            prior_t_values = [
-                prior_t_value
-                for prior_t_value in prior_t_values
-                if prior_t_value <= discount_start_t
-            ]
+            final_t: int,
+            n_steps: int
+    ) -> List[Tuple[int, float]]:
+
+        # if we received an aiming reward, then shift the reward backward in time to the evaluation time step of the
+        # most recent bullet event (hit or missed).
+        if isinstance(reward, RobocodeAimingReward) and len(reward.bullet_hit_events) + len(reward.bullet_missed_events) > 0:
+            final_t = max([
+                reward.bullet_id_fired_event[bullet_event['bullet']['bulletId']]['step']
+                for bullet_event in reward.bullet_hit_events + reward.bullet_missed_events
+            ])
+
+        # standard shaping for movement
+        elif isinstance(reward, RobocodeMovementReward):
+            pass
+
+        return super().shape_reward(
+            reward=reward,
+            final_t=final_t,
+            n_steps=n_steps
+        )
 
 
 @rl_text(chapter='Environments', page=1)
@@ -177,9 +219,13 @@ class RobocodeEnvironment(TcpMdpEnvironment):
             terminal=terminal
         )
 
-        reward_value = 1.0 if bullet_power_hit_self == 0.0 else -1.0
-        reward_shift_steps = 0
+        # movement reward
+        reward = RobocodeMovementReward(
+            i=None,
+            r=1.0 if bullet_power_hit_self == 0.0 else -1.0
+        )
 
+        # # aiming reward
         # # hit others and don't miss
         # reward_value = bullet_power_hit_others - bullet_power_missed
         #
@@ -194,17 +240,7 @@ class RobocodeEnvironment(TcpMdpEnvironment):
         #     }
         #     for bullet_fired_event in event_type_events.get('BulletFiredEvent', [])
         # })
-        #
-        # # shift the reward backward in time, to the evaluation time step of the most recent bullet event (of either
-        # # kind, hit or missed).
-        # if len(bullet_hit_events) + len(bullet_missed_events) == 0:
-        #     reward_shift_steps = 0
-        # else:
-        #     reward_shift_steps = max([
-        #         self.bullet_id_fired_event[bullet_event['bullet']['bulletId']]['step']
-        #         for bullet_event in bullet_hit_events + bullet_missed_events
-        #     ]) - t
-        #
+        # 
         # # clear bullet firing event for any bullet that hit another robot, missed, or hit another bullet. use list
         # # comprehension to vectorize (hopefully faster).
         # [
@@ -212,14 +248,16 @@ class RobocodeEnvironment(TcpMdpEnvironment):
         #     for bullet_event in
         #     bullet_hit_events + bullet_missed_events + event_type_events.get('BulletHitBulletEvent', [])
         # ]
-
-        reward = Reward(
-            i=None,
-            r=reward_value,
-            shift_steps=reward_shift_steps
-        )
-
-        self.previous_state = state
+        #
+        # reward = RobocodeAimingReward(
+        #     i=None,
+        #     r=reward_value,
+        #     bullet_id_fired_event=self.bullet_id_fired_event,
+        #     bullet_hit_events=bullet_hit_events,
+        #     bullet_missed_events=bullet_missed_events
+        # )
+        #
+        # self.previous_state = state
 
         return state, reward
 
