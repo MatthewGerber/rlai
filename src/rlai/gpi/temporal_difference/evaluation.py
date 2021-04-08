@@ -146,12 +146,16 @@ def evaluate_q_pi(
 
             # update truncated return accumulators with shaped rewards
             t_state_a_g.update({
+
                 return_t: (
                     t_state_a_g[return_t][0],
                     t_state_a_g[return_t][1],
                     t_state_a_g[return_t][2] + shaped_reward
                 )
                 for return_t, shaped_reward in t_shaped_reward
+
+                # reward shapers might return invalid time steps. ignore these.
+                if return_t in t_state_a_g
             })
 
             # get the next state's bootstrapped value and next action, based on the bootstrapping mode. note that the

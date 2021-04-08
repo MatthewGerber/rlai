@@ -155,10 +155,16 @@ class RobocodeAgent(StochasticMdpAgent):
         # if we received an aiming reward, then shift the reward backward in time to the evaluation time step of the
         # most recent bullet event (hit or missed).
         if isinstance(reward, RobocodeAimingReward) and len(reward.bullet_hit_events) + len(reward.bullet_missed_events) > 0:
-            final_t = max([
+
+            shifted_final_t = max([
                 reward.bullet_id_fired_event[bullet_event['bullet']['bulletId']]['step']
                 for bullet_event in reward.bullet_hit_events + reward.bullet_missed_events
             ])
+
+            # also shift the value of first_t to maintain proper n-step update intervals
+            shift_amount = shifted_final_t - final_t
+            first_t = max(0, first_t + shift_amount)
+            final_t = shifted_final_t
 
         return super().shape_reward(
             reward=reward,
