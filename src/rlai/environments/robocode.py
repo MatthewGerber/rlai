@@ -6,16 +6,16 @@ import numpy as np
 from numpy.random import RandomState
 
 from rlai.actions import Action
+from rlai.agents import Agent
 from rlai.agents.mdp import MdpAgent, StochasticMdpAgent
 from rlai.environments.mdp import MdpEnvironment
 from rlai.environments.network import TcpMdpEnvironment
 from rlai.meta import rl_text
+from rlai.policies import Policy
 from rlai.rewards import Reward
 from rlai.states.mdp import MdpState
 from rlai.utils import parse_arguments
-from rlai.value_estimation.function_approximation.models.feature_extraction import (
-    FeatureExtractor
-)
+from rlai.value_estimation.function_approximation.models.feature_extraction import FeatureExtractor
 
 
 @rl_text(chapter='Rewards', page=1)
@@ -32,6 +32,16 @@ class RobocodeAimingReward(Reward):
             bullet_hit_events,
             bullet_missed_events
     ):
+        """
+        Initialize the reward.
+
+        :param i: Identifier for the reward.
+        :param r: Reward value.
+        :param bullet_id_fired_event: Bullet identifier firing events.
+        :param bullet_hit_events: Bullet hit events.
+        :param bullet_missed_events: Bullet missed events.
+        """
+
         super().__init__(
             i=i,
             r=r
@@ -53,6 +63,13 @@ class RobocodeMovementReward(Reward):
             i,
             r
     ):
+        """
+        Initialize the reward.
+
+        :param i: Identifier for the reward.
+        :param r: Reward value.
+        """
+
         super().__init__(
             i=i,
             r=r
@@ -65,12 +82,75 @@ class RobocodeAgent(StochasticMdpAgent):
     Robocode agent.
     """
 
+    @classmethod
+    def get_argument_parser(
+            cls
+    ) -> ArgumentParser:
+        """
+        Get argument parser.
+
+        :return: Argument parser.
+        """
+
+        parser = ArgumentParser(
+            prog=f'{cls.__module__}.{cls.__name__}',
+            parents=[super().get_argument_parser()],
+            allow_abbrev=False,
+            add_help=False
+        )
+
+        return parser
+
+    @classmethod
+    def init_from_arguments(
+            cls,
+            args: List[str],
+            random_state: RandomState,
+            pi: Optional[Policy]
+    ) -> Tuple[List[Agent], List[str]]:
+        """
+        Initialize a list of agents from arguments.
+
+        :param args: Arguments.
+        :param random_state: Random state.
+        :param pi: Policy.
+        :return: 2-tuple of a list of agents and a list of unparsed arguments.
+        """
+
+        parsed_args, unparsed_args = parse_arguments(cls, args)
+
+        agents = [
+            RobocodeAgent(
+                name=f'Robocode (gamma={parsed_args.gamma})',
+                random_state=random_state,
+                pi=pi,
+                **vars(parsed_args)
+            )
+        ]
+
+        return agents, unparsed_args
+
     def shape_reward(
             self,
             reward: Reward,
-            final_t: int,
-            n_steps: int
+            first_t: int,
+            final_t: int
     ) -> List[Tuple[int, float]]:
+        """
+        Shape a reward value that has been obtained. Reward shaping entails the calculation of time steps at which
+        returns should be updated along with the weighted reward for each. This function applies exponential discounting
+        based on the value of gamma specified in the current agent (i.e., the traditional reward shaping approach
+        discussed by Sutton and Barto). Subclasses are free to override the current function and shape rewards as needed
+        for the task at hand.
+
+        The current function overrides the super-class implementation to add time shifting of rewards related to gun
+        aiming.
+
+        :param reward: Obtained reward.
+        :param first_t: First time step at which to shape reward value.
+        :param final_t: Final time step at which to shape reward value.
+        :return: List of time steps for which returns should be updated, along with shaped rewards.
+        """
 
         # if we received an aiming reward, then shift the reward backward in time to the evaluation time step of the
         # most recent bullet event (hit or missed).
@@ -80,14 +160,33 @@ class RobocodeAgent(StochasticMdpAgent):
                 for bullet_event in reward.bullet_hit_events + reward.bullet_missed_events
             ])
 
-        # standard shaping for movement
-        elif isinstance(reward, RobocodeMovementReward):
-            pass
-
         return super().shape_reward(
             reward=reward,
-            final_t=final_t,
-            n_steps=n_steps
+            first_t=first_t,
+            final_t=final_t
+        )
+
+    def __init__(
+            self,
+            name: str,
+            random_state: RandomState,
+            pi: Policy,
+            gamma: float
+    ):
+        """
+        Initialize the agent.
+
+        :param name: Name of the agent.
+        :param random_state: Random state.
+        :param pi: Policy.
+        :param gamma: Discount.
+        """
+
+        super().__init__(
+            name=name,
+            random_state=random_state,
+            pi=pi,
+            gamma=gamma
         )
 
 
@@ -219,45 +318,37 @@ class RobocodeEnvironment(TcpMdpEnvironment):
             terminal=terminal
         )
 
-        # movement reward
-        reward = RobocodeMovementReward(
+        # # movement reward
+        # reward = RobocodeMovementReward(
+        #     i=None,
+        #     r=1.0 if bullet_power_hit_self == 0.0 else -1.0
+        # )
+
+        # aiming reward
+        # hit others and don't miss
+        reward_value = bullet_power_hit_others - bullet_power_missed
+
+        # store bullet firing events so that we can pull out information related to them at a later time step (e.g.,
+        # when they hit or miss). add the evaluation time step to each event. the bullet events have times associated
+        # with them that are provided by the robocode engine, but those are robocode turns and there isn't always a
+        # perfect 1:1 between robocode turns and evaluation time steps.
+        self.bullet_id_fired_event.update({
+            bullet_fired_event['bullet']['bulletId']: {
+                **bullet_fired_event,
+                'step': t
+            }
+            for bullet_fired_event in event_type_events.get('BulletFiredEvent', [])
+        })
+
+        reward = RobocodeAimingReward(
             i=None,
-            r=1.0 if bullet_power_hit_self == 0.0 else -1.0
+            r=reward_value,
+            bullet_id_fired_event=self.bullet_id_fired_event,
+            bullet_hit_events=bullet_hit_events,
+            bullet_missed_events=bullet_missed_events
         )
 
-        # # aiming reward
-        # # hit others and don't miss
-        # reward_value = bullet_power_hit_others - bullet_power_missed
-        #
-        # # hang on to bullet firing events so that we can assign rewards to their time steps later on when they hit or
-        # # miss. add the evaluation time step to each event. the bullet events have times associated with them, but
-        # # those are robocode turns and there isn't always a perfect 1:1 between robocode turns and evaluation time
-        # # steps.
-        # self.bullet_id_fired_event.update({
-        #     bullet_fired_event['bullet']['bulletId']: {
-        #         **bullet_fired_event,
-        #         'step': t
-        #     }
-        #     for bullet_fired_event in event_type_events.get('BulletFiredEvent', [])
-        # })
-        # 
-        # # clear bullet firing event for any bullet that hit another robot, missed, or hit another bullet. use list
-        # # comprehension to vectorize (hopefully faster).
-        # [
-        #     self.bullet_id_fired_event.pop(bullet_event['bullet']['bulletId'])
-        #     for bullet_event in
-        #     bullet_hit_events + bullet_missed_events + event_type_events.get('BulletHitBulletEvent', [])
-        # ]
-        #
-        # reward = RobocodeAimingReward(
-        #     i=None,
-        #     r=reward_value,
-        #     bullet_id_fired_event=self.bullet_id_fired_event,
-        #     bullet_hit_events=bullet_hit_events,
-        #     bullet_missed_events=bullet_missed_events
-        # )
-        #
-        # self.previous_state = state
+        self.previous_state = state
 
         return state, reward
 
@@ -298,15 +389,15 @@ class RobocodeEnvironment(TcpMdpEnvironment):
         )
 
         action_name_action_value_list = [
-            ('ahead', 25.0),
-            ('back', 25.0),
-            ('turnLeft', 10.0),
-            ('turnRight', 10.0),
+            # ('ahead', 25.0),
+            # ('back', 25.0),
+            # ('turnLeft', 10.0),
+            # ('turnRight', 10.0),
             ('turnRadarLeft', 5.0),
             ('turnRadarRight', 5.0),
-            # ('turnGunLeft', 5.0),
-            # ('turnGunRight', 5.0),
-            # ('fire', 1.0)
+            ('turnGunLeft', 5.0),
+            ('turnGunRight', 5.0),
+            ('fire', 1.0)
         ]
 
         self.robot_actions = [

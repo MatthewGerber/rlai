@@ -7,8 +7,8 @@ import tempfile
 import time
 from threading import Thread
 
-import pytest
 import numpy as np
+
 from rlai.environments.robocode import RobocodeFeatureExtractor
 from rlai.runners.trainer import run
 
@@ -60,7 +60,7 @@ def test_learn():
 
     # run training and load resulting agent
     agent_path = tempfile.NamedTemporaryFile(delete=False).name
-    cmd = f'--random-seed 12345 --agent rlai.agents.mdp.StochasticMdpAgent --gamma 0.9 --environment rlai.environments.robocode.RobocodeEnvironment --port {robocode_port} --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode SARSA --n-steps 100 --num-improvements 2 --num-episodes-per-improvement 1 --num-updates-per-improvement 1 --epsilon 0.15 --q-S-A rlai.value_estimation.function_approximation.estimators.ApproximateStateActionValueEstimator --plot-model --plot-model-bins 10 --plot-model-per-improvements 10 --function-approximation-model rlai.value_estimation.function_approximation.models.sklearn.SKLearnSGD --feature-extractor rlai.environments.robocode.RobocodeFeatureExtractor --make-final-policy-greedy True --num-improvements-per-plot 5 --save-agent-path {agent_path}'
+    cmd = f'--random-seed 12345 --agent rlai.environments.robocode.RobocodeAgent --gamma 0.9 --environment rlai.environments.robocode.RobocodeEnvironment --port {robocode_port} --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode SARSA --n-steps 100 --num-improvements 2 --num-episodes-per-improvement 1 --num-updates-per-improvement 1 --epsilon 0.15 --q-S-A rlai.value_estimation.function_approximation.estimators.ApproximateStateActionValueEstimator --plot-model --plot-model-bins 10 --plot-model-per-improvements 10 --function-approximation-model rlai.value_estimation.function_approximation.models.sklearn.SKLearnSGD --feature-extractor rlai.environments.robocode.RobocodeFeatureExtractor --make-final-policy-greedy True --num-improvements-per-plot 5 --save-agent-path {agent_path}'
     run(shlex.split(cmd))
     robocode_mock_thread.join()
     with open(agent_path, 'rb') as f:
@@ -85,6 +85,3 @@ def test_feature_extractor():
     assert RobocodeFeatureExtractor.get_shortest_degree_change(1, 1) == 0
     assert RobocodeFeatureExtractor.normalize(366) == 6
     assert RobocodeFeatureExtractor.normalize(-5) == 355
-
-    with pytest.raises(ValueError, match='Failed to normalize degrees'):
-        assert RobocodeFeatureExtractor.normalize(1000)

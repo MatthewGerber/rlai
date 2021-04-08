@@ -127,12 +127,21 @@ def evaluate_q_pi(
             # initialize the n-step, truncated return accumulator at the current time for the current state and action.
             t_state_a_g[curr_t] = (curr_state, curr_a, 0.0)
 
-            # ask the agent to shape the reward, returning the time steps whose returns should be updated and the
-            # shaped reward associated with each.
+            # ask the agent to shape the reward, returning the time steps whose returns should be updated and the shaped
+            # reward associated with each. if n_steps is None, then shape the reward all the way back to the start
+            # (equivalent to infinite n_steps, or monte carlo returns). if n_steps is not None, then shape the reward
+            # for n-step updates.
+            if n_steps is None:
+                first_t = 0
+            else:
+                # in 1-step td, the earliest time step is the final time step; in 2-step, the earliest time step is the
+                # prior time step, etc.
+                first_t = max(0, curr_t - n_steps + 1)
+
             t_shaped_reward = agent.shape_reward(
                 reward=next_reward,
-                final_t=curr_t,
-                n_steps=n_steps
+                first_t=first_t,
+                final_t=curr_t
             )
 
             # update truncated return accumulators with shaped rewards

@@ -47,8 +47,8 @@ class MdpAgent(Agent, ABC):
     def shape_reward(
             self,
             reward: Reward,
-            final_t: int,
-            n_steps: Optional[int]
+            first_t: int,
+            final_t: int
     ) -> List[Tuple[int, float]]:
         """
         Shape a reward value that has been obtained. Reward shaping entails the calculation of time steps at which
@@ -58,27 +58,15 @@ class MdpAgent(Agent, ABC):
         for the task at hand.
 
         :param reward: Obtained reward.
+        :param first_t: First time step at which to shape reward value.
         :param final_t: Final time step at which to shape reward value.
-        :param n_steps: Number of steps to use in n-step (bootstrapped) returns, or None for Monte Carlo returns (i.e.,
-        infinite steps and no bootstrapping).
         :return: List of time steps for which returns should be updated, along with shaped rewards.
         """
 
-        # if n_steps is None, then shape the reward all the way back to the start (equivalent to infinite n_steps, or
-        # monte carlo returns);
-        if n_steps is None:
-            earliest_t = 0
-
-        # otherwise, shape the reward for n-step updates.
-        else:
-            # in 1-step td, the earliest time step is the final time step; in 2-step, the earliest time step is the
-            # prior time step, etc.
-            earliest_t = max(0, final_t - n_steps + 1)
-
-        # shape reward from the earliest time step through the final time step, including both endpoints.
+        # shape reward from the first time step through the final time step, including both endpoints.
         t_shaped_reward = [
             (t, self.gamma ** (final_t - t) * reward.r)
-            for t in range(earliest_t, final_t + 1)
+            for t in range(first_t, final_t + 1)
         ]
 
         return t_shaped_reward
