@@ -324,35 +324,35 @@ class RobocodeEnvironment(TcpMdpEnvironment):
             terminal=terminal
         )
 
-        # movement reward
-        reward = RobocodeMovementReward(
-            i=None,
-            r=1.0 if bullet_power_hit_self == 0.0 else -100.0
-        )
-
-        # # aiming reward
-        # # hit others and don't miss
-        # reward_value = bullet_power_hit_others - bullet_power_missed
-        #
-        # # store bullet firing events so that we can pull out information related to them at a later time step (e.g.,
-        # # when they hit or miss). add the evaluation time step to each event. the bullet events have times associated
-        # # with them that are provided by the robocode engine, but those are robocode turns and there isn't always a
-        # # perfect 1:1 between robocode turns and evaluation time steps.
-        # self.bullet_id_fired_event.update({
-        #     bullet_fired_event['bullet']['bulletId']: {
-        #         **bullet_fired_event,
-        #         'step': t
-        #     }
-        #     for bullet_fired_event in event_type_events.get('BulletFiredEvent', [])
-        # })
-        #
-        # reward = RobocodeAimingReward(
+        # # movement reward
+        # reward = RobocodeMovementReward(
         #     i=None,
-        #     r=reward_value,
-        #     bullet_id_fired_event=self.bullet_id_fired_event,
-        #     bullet_hit_events=bullet_hit_events,
-        #     bullet_missed_events=bullet_missed_events
+        #     r=1.0 if bullet_power_hit_self == 0.0 else -100.0
         # )
+
+        # aiming reward
+        # hit others and don't miss
+        reward_value = bullet_power_hit_others - bullet_power_missed
+
+        # store bullet firing events so that we can pull out information related to them at a later time step (e.g.,
+        # when they hit or miss). add the evaluation time step to each event. the bullet events have times associated
+        # with them that are provided by the robocode engine, but those are robocode turns and there isn't always a
+        # perfect 1:1 between robocode turns and evaluation time steps.
+        self.bullet_id_fired_event.update({
+            bullet_fired_event['bullet']['bulletId']: {
+                **bullet_fired_event,
+                'step': t
+            }
+            for bullet_fired_event in event_type_events.get('BulletFiredEvent', [])
+        })
+
+        reward = RobocodeAimingReward(
+            i=None,
+            r=reward_value,
+            bullet_id_fired_event=self.bullet_id_fired_event,
+            bullet_hit_events=bullet_hit_events,
+            bullet_missed_events=bullet_missed_events
+        )
 
         self.previous_state = state
 
@@ -395,23 +395,23 @@ class RobocodeEnvironment(TcpMdpEnvironment):
         )
 
         # use the following actions for aiming training
-        # action_name_action_value_list = [
-        #     ('turnRadarLeft', 5.0),
-        #     ('turnRadarRight', 5.0),
-        #     ('turnGunLeft', 5.0),
-        #     ('turnGunRight', 5.0),
-        #     ('fire', 1.0)
-        # ]
+        action_name_action_value_list = [
+            ('turnRadarLeft', 5.0),
+            ('turnRadarRight', 5.0),
+            ('turnGunLeft', 5.0),
+            ('turnGunRight', 5.0),
+            ('fire', 1.0)
+        ]
 
         # use the following actions for movement training
-        action_name_action_value_list = [
-            ('ahead', 25.0),
-            ('back', 25.0),
-            ('turnLeft', 10.0),
-            ('turnRight', 10.0),
-            ('turnRadarLeft', 5.0),
-            ('turnRadarRight', 5.0)
-        ]
+        # action_name_action_value_list = [
+        #     ('ahead', 25.0),
+        #     ('back', 25.0),
+        #     ('turnLeft', 10.0),
+        #     ('turnRight', 10.0),
+        #     ('turnRadarLeft', 5.0),
+        #     ('turnRadarRight', 5.0)
+        # ]
 
         self.robot_actions = [
             RobocodeAction(i, action_name, action_value)
@@ -629,20 +629,19 @@ class RobocodeFeatureExtractor(FeatureExtractor):
 
         return X
 
-    # uncomment the following to generate coefficient plots for aiming training.
-    # def get_feature_action_names(
-    #         self
-    # ) -> Tuple[List[str], List[str]]:
-    #     """
-    #     Get names of extracted features and actions.
-    #
-    #     :return: 2-tuple of (1) list of feature names and (2) list of action names.
-    #     """
-    #
-    #     return (
-    #         ['action_intercept', 'has_enemy_bearing', 'aim_lock'],
-    #         [a.name for a in self.actions]
-    #     )
+    def get_feature_action_names(
+            self
+    ) -> Tuple[List[str], List[str]]:
+        """
+        Get names of extracted features and actions.
+
+        :return: 2-tuple of (1) list of feature names and (2) list of action names.
+        """
+
+        return (
+            ['action_intercept', 'has_enemy_bearing', 'aim_lock'],
+            [a.name for a in self.actions]
+        )
 
     def set_most_recent_scanned_robot(
             self,
