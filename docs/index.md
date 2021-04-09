@@ -13,27 +13,7 @@ some.
 1. **General-purpose design**:  The text provides concise pseudocode that is not difficult to implement for the
 examples covered; however, such implementations do not necessarily lead to reusable and extensible code that is 
 generally applicable beyond such examples. The approach taken here should be generally applicable well beyond the text.
-
-# Case Studies
-The gridworld and other simple environments (e.g., gambler's problem) are used throughout the package to develop, 
-implement, and test algorithmic concepts. Sutton and Barto do a nice job of explaining how reinforcement learning works
-for these environments. Below is a list of environments that are not covered in as much detail (e.g., the mountain car)
-or are not covered at all (e.g., Robocode). They are more difficult to train agents for and are instructive for 
-understanding how agents are parameterized and rewarded.
-
-## OpenAI Gym
-[OpenAI Gym](https://gym.openai.com) is a collection of environments that range from traditional control to advanced robotics. Case studies have
-been developed for the OpenAI Gym environment listed below:
-
-  * [Inverted Pendulum](https://matthewgerber.github.io/rlai/case_studies/inverted_pendulum.html)
-  * [Acrobot](https://matthewgerber.github.io/rlai/case_studies/acrobot.html)
-  * [Mountain Car](https://matthewgerber.github.io/rlai/case_studies/mountain_car.html)
-
-## Robocode
-[Robocode](https://github.com/robo-code/robocode) is a simulation-based robotic combat programming game with a 
-dynamically rich environment, multi-agent teaming, and a large user community. Read more 
-[here](https://matthewgerber.github.io/rlai/case_studies/robocode.html).
-  
+   
 # Quick Start
 For single-click access to a graphical interface for RLAI, please click below:
 
@@ -47,21 +27,20 @@ alternatives.
 The RLAI code is distributed via [PyPI](https://pypi.org/project/rlai/) and can be installed with `pip install rlai`. 
 There are several ways to use the package.
 
-* Incorporate RLAI into another project:  See the 
-  [example repository](https://github.com/MatthewGerber/rlai-dependency-example) for how a project can be structured to 
-  consume the RLAI package functionality within source code.
+* JupyterLab notebook:  Most of the RLAI functionality is exposed via the companion JupyterLab notebook. See the 
+  [JupyterLab guide](jupyterlab_guide.md) for more information.  
+
+* Package dependency:  See the [example repository](https://github.com/MatthewGerber/rlai-dependency-example) for how a 
+  project can be structured to consume the RLAI package functionality within source code.
   
-* Use RLAI directly
-    * Most of the RLAI functionality is exposed via the companion JupyterLab notebook. See the 
-      [JupyterLab guide](jupyterlab_guide.md) for more information. 
-    * Using RLAI from the command-line interface (CLI) is demonstrated in the case studies below and is also explored 
-      in the [CLI guide](cli_guide.md).
+* Command-line interface:  Using RLAI from the command-line interface (CLI) is demonstrated in the case studies below 
+  and is also explored in the [CLI guide](cli_guide.md).
 
 Looking for a place to dig in? Below are a few ideas organized by area of interest.
 
 * Explore new OpenAI Gym environments:  OpenAI Gym provides a wide range of interesting environments, and
   experimenting with them can be as simple as modifying an existing training command (e.g., the one for
-  [inverted pendulum](https://matthewgerber.github.io/rlai/case_studies/inverted_pendulum.html)), replacing the 
+  [inverted pendulum](https://matthewgerber.github.io/rlai/case_studies/inverted_pendulum.html)) and replacing the 
   `--gym-id` with something else. Other changes might be needed depending on the environment, but Gym is particularly
   convenient.
 
@@ -82,7 +61,27 @@ Looking for a place to dig in? Below are a few ideas organized by area of intere
   methods in large, continuous-space control problems). Such tools can be found 
   [here](model_diagnostics_and_interpretation.md).
 
-# Figures
+# Case Studies
+The gridworld and other simple environments (e.g., gambler's problem) are used throughout the package to develop, 
+implement, and test algorithmic concepts. Sutton and Barto do a nice job of explaining how reinforcement learning works
+for these environments. Below is a list of environments that are not covered in as much detail (e.g., the mountain car)
+or are not covered at all (e.g., Robocode). They are more difficult to train agents for and are instructive for 
+understanding how agents are parameterized and rewarded.
+
+## OpenAI Gym
+[OpenAI Gym](https://gym.openai.com) is a collection of environments that range from traditional control to advanced 
+robotics. Case studies have been developed for the OpenAI Gym environment listed below:
+
+* [Inverted Pendulum](https://matthewgerber.github.io/rlai/case_studies/inverted_pendulum.html)
+* [Acrobot](https://matthewgerber.github.io/rlai/case_studies/acrobot.html)
+* [Mountain Car](https://matthewgerber.github.io/rlai/case_studies/mountain_car.html)
+
+## Robocode
+[Robocode](https://github.com/robo-code/robocode) is a simulation-based robotic combat programming game with a 
+dynamically rich environment, multi-agent teaming, and a large user community. Read more 
+[here](https://matthewgerber.github.io/rlai/case_studies/robocode.html).
+
+# Figures from the Textbook
 A list of figures can be found [here](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/figures). Most of these 
 are reproductions of those shown in the Sutton and Barto text; however, even the reproductions typically provide detail 
 not shown in the text.
@@ -92,6 +91,7 @@ not shown in the text.
 ### [Agents](ch_Agents.md)
 ### [Environments](ch_Environments.md)
 ### [Feature Extractors](ch_Feature_Extractors.md)
+### [Rewards](ch_Rewards.md)
 ### [States](ch_States.md)
 ### [Training and Running Agents](ch_Training_and_Running_Agents.md)
 ### [Value Estimation](ch_Value_Estimation.md)
