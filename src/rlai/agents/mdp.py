@@ -9,6 +9,7 @@ from rlai.actions import Action
 from rlai.agents import Agent
 from rlai.meta import rl_text
 from rlai.policies import Policy
+from rlai.rewards import Reward
 from rlai.states.mdp import MdpState
 from rlai.utils import sample_list_item, parse_arguments
 
@@ -42,6 +43,33 @@ class MdpAgent(Agent, ABC):
         )
 
         return parser
+
+    def shape_reward(
+            self,
+            reward: Reward,
+            first_t: int,
+            final_t: int
+    ) -> List[Tuple[int, float]]:
+        """
+        Shape a reward value that has been obtained. Reward shaping entails the calculation of time steps at which
+        returns should be updated along with the weighted reward for each. This function applies exponential discounting
+        based on the value of gamma specified in the current agent (i.e., the traditional reward shaping approach
+        discussed by Sutton and Barto). Subclasses are free to override the current function and shape rewards as needed
+        for the task at hand.
+
+        :param reward: Obtained reward.
+        :param first_t: First time step at which to shape reward value.
+        :param final_t: Final time step at which to shape reward value.
+        :return: List of time steps for which returns should be updated, along with shaped rewards.
+        """
+
+        # shape reward from the first time step through the final time step, including both endpoints.
+        t_shaped_reward = [
+            (t, self.gamma ** (final_t - t) * reward.r)
+            for t in range(first_t, final_t + 1)
+        ]
+
+        return t_shaped_reward
 
     def __init__(
             self,

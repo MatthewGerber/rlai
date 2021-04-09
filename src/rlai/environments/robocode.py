@@ -6,16 +6,194 @@ import numpy as np
 from numpy.random import RandomState
 
 from rlai.actions import Action
-from rlai.agents.mdp import MdpAgent
+from rlai.agents import Agent
+from rlai.agents.mdp import MdpAgent, StochasticMdpAgent
 from rlai.environments.mdp import MdpEnvironment
 from rlai.environments.network import TcpMdpEnvironment
 from rlai.meta import rl_text
+from rlai.policies import Policy
 from rlai.rewards import Reward
 from rlai.states.mdp import MdpState
 from rlai.utils import parse_arguments
-from rlai.value_estimation.function_approximation.models.feature_extraction import (
-    FeatureExtractor
-)
+from rlai.value_estimation.function_approximation.models.feature_extraction import FeatureExtractor
+
+
+@rl_text(chapter='Rewards', page=1)
+class RobocodeAimingReward(Reward):
+    """
+    Robocode aiming reward.
+    """
+
+    def __init__(
+            self,
+            i,
+            r,
+            bullet_id_fired_event,
+            bullet_hit_events,
+            bullet_missed_events
+    ):
+        """
+        Initialize the reward.
+
+        :param i: Identifier for the reward.
+        :param r: Reward value.
+        :param bullet_id_fired_event: Bullet identifier firing events.
+        :param bullet_hit_events: Bullet hit events.
+        :param bullet_missed_events: Bullet missed events.
+        """
+
+        super().__init__(
+            i=i,
+            r=r
+        )
+
+        self.bullet_id_fired_event = bullet_id_fired_event
+        self.bullet_hit_events = bullet_hit_events
+        self.bullet_missed_events = bullet_missed_events
+
+
+@rl_text(chapter='Rewards', page=1)
+class RobocodeMovementReward(Reward):
+    """
+    Robocode movement reward.
+    """
+
+    def __init__(
+            self,
+            i,
+            r
+    ):
+        """
+        Initialize the reward.
+
+        :param i: Identifier for the reward.
+        :param r: Reward value.
+        """
+
+        super().__init__(
+            i=i,
+            r=r
+        )
+
+
+@rl_text(chapter='Agents', page=1)
+class RobocodeAgent(StochasticMdpAgent):
+    """
+    Robocode agent.
+    """
+
+    @classmethod
+    def get_argument_parser(
+            cls
+    ) -> ArgumentParser:
+        """
+        Get argument parser.
+
+        :return: Argument parser.
+        """
+
+        parser = ArgumentParser(
+            prog=f'{cls.__module__}.{cls.__name__}',
+            parents=[super().get_argument_parser()],
+            allow_abbrev=False,
+            add_help=False
+        )
+
+        return parser
+
+    @classmethod
+    def init_from_arguments(
+            cls,
+            args: List[str],
+            random_state: RandomState,
+            pi: Optional[Policy]
+    ) -> Tuple[List[Agent], List[str]]:
+        """
+        Initialize a list of agents from arguments.
+
+        :param args: Arguments.
+        :param random_state: Random state.
+        :param pi: Policy.
+        :return: 2-tuple of a list of agents and a list of unparsed arguments.
+        """
+
+        parsed_args, unparsed_args = parse_arguments(cls, args)
+
+        agents = [
+            RobocodeAgent(
+                name=f'Robocode (gamma={parsed_args.gamma})',
+                random_state=random_state,
+                pi=pi,
+                **vars(parsed_args)
+            )
+        ]
+
+        return agents, unparsed_args
+
+    def shape_reward(
+            self,
+            reward: Reward,
+            first_t: int,
+            final_t: int
+    ) -> List[Tuple[int, float]]:
+        """
+        Shape a reward value that has been obtained. Reward shaping entails the calculation of time steps at which
+        returns should be updated along with the weighted reward for each. This function applies exponential discounting
+        based on the value of gamma specified in the current agent (i.e., the traditional reward shaping approach
+        discussed by Sutton and Barto). Subclasses are free to override the current function and shape rewards as needed
+        for the task at hand.
+
+        The current function overrides the super-class implementation to add time shifting of rewards related to gun
+        aiming.
+
+        :param reward: Obtained reward.
+        :param first_t: First time step at which to shape reward value.
+        :param final_t: Final time step at which to shape reward value.
+        :return: List of time steps for which returns should be updated, along with shaped rewards.
+        """
+
+        # if we received an aiming reward, then shift the reward backward in time to the evaluation time step of the
+        # most recent bullet event (hit or missed).
+        if isinstance(reward, RobocodeAimingReward) and len(reward.bullet_hit_events) + len(reward.bullet_missed_events) > 0:
+
+            shifted_final_t = max([
+                reward.bullet_id_fired_event[bullet_event['bullet']['bulletId']]['step']
+                for bullet_event in reward.bullet_hit_events + reward.bullet_missed_events
+            ])
+
+            # also shift the value of first_t to maintain proper n-step update intervals
+            shift_amount = shifted_final_t - final_t
+            first_t = max(0, first_t + shift_amount)
+            final_t = shifted_final_t
+
+        return super().shape_reward(
+            reward=reward,
+            first_t=first_t,
+            final_t=final_t
+        )
+
+    def __init__(
+            self,
+            name: str,
+            random_state: RandomState,
+            pi: Policy,
+            gamma: float
+    ):
+        """
+        Initialize the agent.
+
+        :param name: Name of the agent.
+        :param random_state: Random state.
+        :param pi: Policy.
+        :param gamma: Discount.
+        """
+
+        super().__init__(
+            name=name,
+            random_state=random_state,
+            pi=pi,
+            gamma=gamma
+        )
 
 
 @rl_text(chapter='Environments', page=1)
@@ -101,6 +279,12 @@ class RobocodeEnvironment(TcpMdpEnvironment):
 
         event_type_events: Dict[str, List[Dict]] = client_dict['events']
 
+        # bullet power that hit self
+        bullet_power_hit_self = sum([
+            bullet_event['bullet']['power']
+            for bullet_event in event_type_events.get('HitByBulletEvent', [])
+        ])
+
         # sum up bullet power that hit others
         bullet_hit_events = event_type_events.get('BulletHitEvent', [])
         bullet_power_hit_others = sum([
@@ -131,6 +315,7 @@ class RobocodeEnvironment(TcpMdpEnvironment):
         # initialize the state
         state = RobocodeState(
             **client_dict['state'],
+            bullet_power_hit_self=bullet_power_hit_self,
             bullet_power_hit_others=bullet_power_hit_others,
             bullet_power_missed=bullet_power_missed,
             bullet_power_missed_since_previous_hit=bullet_power_missed_since_previous_hit,
@@ -139,10 +324,20 @@ class RobocodeEnvironment(TcpMdpEnvironment):
             terminal=terminal
         )
 
-        # hang on to bullet firing events so that we can assign rewards to their time steps later on when they hit or
-        # miss. add the evaluation time step to each event. the bullet events have times associated with them, but
-        # those are robocode turns and there isn't always a perfect 1:1 between robocode turns and evaluation time
-        # steps.
+        # # movement reward
+        # reward = RobocodeMovementReward(
+        #     i=None,
+        #     r=1.0 if bullet_power_hit_self == 0.0 else -100.0
+        # )
+
+        # aiming reward
+        # hit others and don't miss
+        reward_value = bullet_power_hit_others - bullet_power_missed
+
+        # store bullet firing events so that we can pull out information related to them at a later time step (e.g.,
+        # when they hit or miss). add the evaluation time step to each event. the bullet events have times associated
+        # with them that are provided by the robocode engine, but those are robocode turns and there isn't always a
+        # perfect 1:1 between robocode turns and evaluation time steps.
         self.bullet_id_fired_event.update({
             bullet_fired_event['bullet']['bulletId']: {
                 **bullet_fired_event,
@@ -151,13 +346,19 @@ class RobocodeEnvironment(TcpMdpEnvironment):
             for bullet_fired_event in event_type_events.get('BulletFiredEvent', [])
         })
 
-        # old attempts at reward structure
+        reward = RobocodeAimingReward(
+            i=None,
+            r=reward_value,
+            bullet_id_fired_event=self.bullet_id_fired_event,
+            bullet_hit_events=bullet_hit_events,
+            bullet_missed_events=bullet_missed_events
+        )
 
-        # ... don't get hit
-        # bullet_power_hit_self = sum([
-        #     bullet_event['bullet']['power']
-        #     for bullet_event in event_type_events.get('HitByBulletEvent', [])
-        # ])
+        self.previous_state = state
+
+        return state, reward
+
+        # old/obsolete reward signals
 
         # ... death seems bad, and victories good.
         # if dead:
@@ -171,36 +372,6 @@ class RobocodeEnvironment(TcpMdpEnvironment):
         #     reward_value = 0.0
         # else:
         #     reward_value = state.energy - self.previous_state.energy
-
-        # hit others and don't miss
-        reward_value = bullet_power_hit_others - bullet_power_missed
-
-        # shift the reward backward in time, to the evaluation time step of the most recent bullet event (of either
-        # kind, hit or missed).
-        if len(bullet_hit_events) + len(bullet_missed_events) == 0:
-            reward_shift_steps = 0
-        else:
-            reward_shift_steps = max([
-                self.bullet_id_fired_event[bullet_event['bullet']['bulletId']]['step']
-                for bullet_event in bullet_hit_events + bullet_missed_events
-            ]) - t
-
-        # clear bullet firing event for any bullet that hit another robot, missed, or hit another bullet. use list
-        # comprehension to vectorize (hopefully faster).
-        [
-            self.bullet_id_fired_event.pop(bullet_event['bullet']['bulletId'])
-            for bullet_event in bullet_hit_events + bullet_missed_events + event_type_events.get('BulletHitBulletEvent', [])
-        ]
-
-        reward = Reward(
-            i=None,
-            r=reward_value,
-            shift_steps=reward_shift_steps
-        )
-
-        self.previous_state = state
-
-        return state, reward
 
     def __init__(
             self,
@@ -223,17 +394,24 @@ class RobocodeEnvironment(TcpMdpEnvironment):
             port=port
         )
 
+        # use the following actions for aiming training
         action_name_action_value_list = [
-            # ('ahead', 25.0),
-            # ('back', 25.0),
-            # ('turnLeft', 5.0),
-            # ('turnRight', 5.0),
             ('turnRadarLeft', 5.0),
             ('turnRadarRight', 5.0),
             ('turnGunLeft', 5.0),
             ('turnGunRight', 5.0),
             ('fire', 1.0)
         ]
+
+        # use the following actions for movement training
+        # action_name_action_value_list = [
+        #     ('ahead', 25.0),
+        #     ('back', 25.0),
+        #     ('turnLeft', 10.0),
+        #     ('turnRight', 10.0),
+        #     ('turnRadarLeft', 5.0),
+        #     ('turnRadarRight', 5.0)
+        # ]
 
         self.robot_actions = [
             RobocodeAction(i, action_name, action_value)
@@ -271,6 +449,7 @@ class RobocodeState(MdpState):
             width: float,
             x: float,
             y: float,
+            bullet_power_hit_self: float,
             bullet_power_hit_others: float,
             bullet_power_missed: float,
             bullet_power_missed_since_previous_hit: float,
@@ -300,6 +479,10 @@ class RobocodeState(MdpState):
         :param width: Robot width (pixels).
         :param x: Robot x position.
         :param y: Robot y position.
+        :param bullet_power_hit_self: Bullet power that hit self.
+        :param bullet_power_hit_others: Bullet power that hit others.
+        :param bullet_power_missed: Bullet power that missed.
+        :param bullet_power_missed_since_previous_hit: Bullet power that has missed since previous hit.
         :param events: List of events sent to the robot since the previous time the state was set.
         :param AA: List of actions that can be taken.
         :param terminal: Whether or not the state is terminal.
@@ -330,6 +513,7 @@ class RobocodeState(MdpState):
         self.width = width
         self.x = x
         self.y = y
+        self.bullet_power_hit_self = bullet_power_hit_self
         self.bullet_power_hit_others = bullet_power_hit_others
         self.bullet_power_missed = bullet_power_missed
         self.bullet_power_missed_since_previous_hit = bullet_power_missed_since_previous_hit
@@ -501,7 +685,79 @@ class RobocodeFeatureExtractor(FeatureExtractor):
         :return: List of floating-point feature values.
         """
 
-        if action_to_extract.name.startswith('turnRadar'):
+        if action_to_extract.name == 'ahead' or action_to_extract.name == 'back':
+
+            if action == action_to_extract:
+                feature_values = [
+
+                    # intercept
+                    1.0,
+
+                    # indicator (0/1):  we have a bearing on the enemy
+                    0.0 if enemy_bearing_from_self is None else 1.0,
+
+                    0.0 if state.bullet_power_hit_self == 0.0 else 1.0,
+
+                    0.0 if enemy_bearing_from_self is None else
+                    self.funnel(
+                        self.get_shortest_degree_change(
+                            state.heading,
+                            self.normalize(state.heading + enemy_bearing_from_self + 90.0)
+                        ),
+                        True,
+                        15.0
+                    ),
+
+                    0.0 if enemy_bearing_from_self is None else
+                    self.funnel(
+                        self.get_shortest_degree_change(
+                            state.heading,
+                            self.normalize(state.heading + enemy_bearing_from_self - 90.0)
+                        ),
+                        True,
+                        15.0
+                    )
+
+                ]
+            else:
+                feature_values = [0.0, 0.0, 0.0, 0.0, 0.0]
+
+        elif action_to_extract.name == 'turnLeft' or action_to_extract.name == 'turnRight':
+
+            if action == action_to_extract:
+                feature_values = [
+
+                    # intercept
+                    1.0,
+
+                    # indicator (0/1):  we have a bearing on the enemy
+                    0.0 if enemy_bearing_from_self is None else 1.0,
+
+                    0.0 if state.bullet_power_hit_self == 0.0 else 1.0,
+
+                    0.0 if enemy_bearing_from_self is None else
+                    self.sigmoid(
+                        self.get_shortest_degree_change(
+                            state.heading,
+                            self.normalize(state.heading + enemy_bearing_from_self + 90.0)
+                        ),
+                        15.0
+                    ),
+
+                    0.0 if enemy_bearing_from_self is None else
+                    self.sigmoid(
+                        self.get_shortest_degree_change(
+                            state.heading,
+                            self.normalize(state.heading + enemy_bearing_from_self - 90.0)
+                        ),
+                        15.0
+                    )
+
+                ]
+            else:
+                feature_values = [0.0, 0.0, 0.0, 0.0, 0.0]
+
+        elif action_to_extract.name.startswith('turnRadar'):
 
             if action == action_to_extract:
                 feature_values = [
@@ -705,10 +961,7 @@ class RobocodeFeatureExtractor(FeatureExtractor):
         :return: Normalized degrees.
         """
 
-        if degrees > 360:
-            degrees -= 360
-        elif degrees < 0:
-            degrees += 360
+        degrees = degrees % 360.0
 
         if degrees < 0 or degrees > 360:
             raise ValueError(f'Failed to normalize degrees:  {degrees}')

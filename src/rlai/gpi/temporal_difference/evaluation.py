@@ -124,38 +124,42 @@ def evaluate_q_pi(
             if planning_environment is not None:
                 planning_environment.model.update(curr_state, curr_a, next_state, next_reward)
 
-            # initialize the n-step, truncated return accumulator at the current time for the current state and action
+            # initialize the n-step, truncated return accumulator at the current time for the current state and action.
             t_state_a_g[curr_t] = (curr_state, curr_a, 0.0)
 
-            # get prior time steps for which truncated return g should be updated. if n_steps is None, then get all
-            # prior time steps (equivalent to infinite n_steps, or Monte Carlo).
+            # ask the agent to shape the reward, returning the time steps whose returns should be updated and the shaped
+            # reward associated with each. if n_steps is None, then shape the reward all the way back to the start
+            # (equivalent to infinite n_steps, or monte carlo returns). if n_steps is not None, then shape the reward
+            # for n-step updates.
             if n_steps is None:
-                prior_t_values = list(t_state_a_g.keys())
+                first_t = 0
             else:
-                # in 1-step td, the earliest time step is the current time step; in 2-step, the earliest time step is
-                # the prior time step, etc. always update through the current time step.
-                earliest_t = max(0, curr_t - n_steps + 1)
-                prior_t_values = range(earliest_t, curr_t + 1)
+                # in 1-step td, the earliest time step is the final time step; in 2-step, the earliest time step is the
+                # prior time step, etc.
+                first_t = max(0, curr_t - n_steps + 1)
 
-            # if the reward is shifted, then truncate the t values to only include those within the shifted intervanl.
-            discount_start_t = curr_t
-            if next_reward.shift_steps is not None and next_reward.shift_steps != 0:
-                discount_start_t = curr_t + next_reward.shift_steps
-                prior_t_values = [
-                    prior_t_value
-                    for prior_t_value in prior_t_values
-                    if prior_t_value <= discount_start_t
-                ]
+            t_shaped_reward = agent.shape_reward(
+                reward=next_reward,
+                first_t=first_t,
+                final_t=curr_t
+            )
 
-            # pass reward to prior state-action values, discounting based on time step differences (the reward should
-            # not be discounted for the current time step).
-            for t in prior_t_values:
-                state, a, g = t_state_a_g[t]
-                discount = agent.gamma ** (discount_start_t - t)
-                t_state_a_g[t] = (state, a, g + discount * next_reward.r)
+            # update truncated return accumulators with shaped rewards
+            t_state_a_g.update({
+
+                return_t: (
+                    t_state_a_g[return_t][0],
+                    t_state_a_g[return_t][1],
+                    t_state_a_g[return_t][2] + shaped_reward
+                )
+                for return_t, shaped_reward in t_shaped_reward
+
+                # reward shapers might return invalid time steps. ignore these.
+                if return_t in t_state_a_g
+            })
 
             # get the next state's bootstrapped value and next action, based on the bootstrapping mode. note that the
-            # bootstrapped next state-action value is only used if we're performing n-step updates.
+            # bootstrapped next state-action value is only used if we're performing n-step updates below.
             next_state_q_s_a, next_a = get_bootstrapped_state_action_value(
                 state=next_state,
                 t=next_t,
@@ -276,7 +280,7 @@ def get_bootstrapped_state_action_value(
             else:
                 bootstrapped_s_a_value = 0.0
 
-        # if we're off-policy, then we won't yet have a next action. ask the agent for it now.
+        # if we're off-policy, then we won't yet have a next action. ask the agent for an action now.
         if next_a is None:
             next_a = agent.act(t)
 

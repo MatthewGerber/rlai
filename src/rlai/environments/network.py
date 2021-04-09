@@ -146,11 +146,13 @@ class TcpMdpEnvironment(MdpEnvironment, ABC):
         :return: Message string.
         """
 
-        # the following code can be used to store a state sequence for unit test fixture purposes.
+        # uncomment the following code to store a state sequence for unit test fixture purposes. also uncomment the bit
+        # of code in the close function.
         # message = self.server_connection.recv(999999999).decode('utf-8')
-        # if not hasattr(self, 'state_sequence'):
-        #     self.state_sequence = []
-        # self.state_sequence.append(message)
+        # if not hasattr(self, 'state_sequence_file'):
+        #     import os
+        #     self.state_sequence_file = open(os.path.expanduser('~/Desktop/state_sequence.txt'), 'w')
+        # self.state_sequence_file.write(message)
         # return message
 
         return self.server_connection.recv(999999999).decode('utf-8')
@@ -173,6 +175,9 @@ class TcpMdpEnvironment(MdpEnvironment, ABC):
         """
         Close the environment.
         """
+
+        # uncomment the following line to update the test fixture.
+        # self.state_sequence_file.close()
 
         try:
             self.server_connection.close()
