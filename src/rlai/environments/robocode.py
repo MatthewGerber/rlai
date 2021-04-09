@@ -327,7 +327,7 @@ class RobocodeEnvironment(TcpMdpEnvironment):
         # movement reward
         reward = RobocodeMovementReward(
             i=None,
-            r=1.0 if bullet_power_hit_self == 0.0 else -1.0
+            r=1.0 if bullet_power_hit_self == 0.0 else -100.0
         )
 
         # # aiming reward
@@ -394,6 +394,16 @@ class RobocodeEnvironment(TcpMdpEnvironment):
             port=port
         )
 
+        # use the following actions for aiming training
+        # action_name_action_value_list = [
+        #     ('turnRadarLeft', 5.0),
+        #     ('turnRadarRight', 5.0),
+        #     ('turnGunLeft', 5.0),
+        #     ('turnGunRight', 5.0),
+        #     ('fire', 1.0)
+        # ]
+
+        # use the following actions for movement training
         action_name_action_value_list = [
             ('ahead', 25.0),
             ('back', 25.0),
@@ -401,9 +411,6 @@ class RobocodeEnvironment(TcpMdpEnvironment):
             ('turnRight', 10.0),
             ('turnRadarLeft', 5.0),
             ('turnRadarRight', 5.0)
-            # ('turnGunLeft', 5.0),
-            # ('turnGunRight', 5.0),
-            # ('fire', 1.0)
         ]
 
         self.robot_actions = [

@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Run Aim FA" type="PythonConfigurationType" factoryName="Python" folderName="Robocode">
+  <configuration default="false" name="Run Move FA" type="PythonConfigurationType" factoryName="Python" folderName="Robocode">
     <module name="rl" />
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />
@@ -13,7 +13,7 @@
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
     <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/rlai/runners/agent_in_environment.py" />
-    <option name="PARAMETERS" value="--agent ../../../trained_agents/robocode/robot_agent_aim.pickle --environment rlai.environments.robocode.RobocodeEnvironment --n-runs 30 --plot" />
+    <option name="PARAMETERS" value="--agent ../../../trained_agents/robocode/robot_agent_move.pickle --environment rlai.environments.robocode.RobocodeEnvironment --n-runs 30 --plot" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />
