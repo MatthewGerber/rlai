@@ -629,6 +629,7 @@ class RobocodeFeatureExtractor(FeatureExtractor):
 
         return X
 
+    # uncomment the following to generate coefficient plots for aiming training.
     # def get_feature_action_names(
     #         self
     # ) -> Tuple[List[str], List[str]]:
