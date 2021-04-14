@@ -316,6 +316,7 @@ class RobocodeEnvironment(TcpMdpEnvironment):
         state = RobocodeState(
             **client_dict['state'],
             bullet_power_hit_self=bullet_power_hit_self,
+            bullet_power_hit_self_cumulative=bullet_power_hit_self + (0.0 if self.previous_state is None else self.previous_state.bullet_power_hit_self * 0.99),
             bullet_power_hit_others=bullet_power_hit_others,
             bullet_power_missed=bullet_power_missed,
             bullet_power_missed_since_previous_hit=bullet_power_missed_since_previous_hit,
@@ -324,35 +325,35 @@ class RobocodeEnvironment(TcpMdpEnvironment):
             terminal=terminal
         )
 
-        # # movement reward
-        # reward = RobocodeMovementReward(
-        #     i=None,
-        #     r=1.0 if bullet_power_hit_self == 0.0 else -100.0
-        # )
-
-        # aiming reward
-        # hit others and don't miss
-        reward_value = bullet_power_hit_others - bullet_power_missed
-
-        # store bullet firing events so that we can pull out information related to them at a later time step (e.g.,
-        # when they hit or miss). add the evaluation time step to each event. the bullet events have times associated
-        # with them that are provided by the robocode engine, but those are robocode turns and there isn't always a
-        # perfect 1:1 between robocode turns and evaluation time steps.
-        self.bullet_id_fired_event.update({
-            bullet_fired_event['bullet']['bulletId']: {
-                **bullet_fired_event,
-                'step': t
-            }
-            for bullet_fired_event in event_type_events.get('BulletFiredEvent', [])
-        })
-
-        reward = RobocodeAimingReward(
+        # movement reward
+        reward = RobocodeMovementReward(
             i=None,
-            r=reward_value,
-            bullet_id_fired_event=self.bullet_id_fired_event,
-            bullet_hit_events=bullet_hit_events,
-            bullet_missed_events=bullet_missed_events
+            r=1.0 if bullet_power_hit_self == 0.0 else -10.0
         )
+
+        # # aiming reward
+        # # hit others and don't miss
+        # reward_value = bullet_power_hit_others - bullet_power_missed
+        #
+        # # store bullet firing events so that we can pull out information related to them at a later time step (e.g.,
+        # # when they hit or miss). add the evaluation time step to each event. the bullet events have times associated
+        # # with them that are provided by the robocode engine, but those are robocode turns and there isn't always a
+        # # perfect 1:1 between robocode turns and evaluation time steps.
+        # self.bullet_id_fired_event.update({
+        #     bullet_fired_event['bullet']['bulletId']: {
+        #         **bullet_fired_event,
+        #         'step': t
+        #     }
+        #     for bullet_fired_event in event_type_events.get('BulletFiredEvent', [])
+        # })
+        #
+        # reward = RobocodeAimingReward(
+        #     i=None,
+        #     r=reward_value,
+        #     bullet_id_fired_event=self.bullet_id_fired_event,
+        #     bullet_hit_events=bullet_hit_events,
+        #     bullet_missed_events=bullet_missed_events
+        # )
 
         self.previous_state = state
 
@@ -395,23 +396,23 @@ class RobocodeEnvironment(TcpMdpEnvironment):
         )
 
         # use the following actions for aiming training
-        action_name_action_value_list = [
-            ('turnRadarLeft', 5.0),
-            ('turnRadarRight', 5.0),
-            ('turnGunLeft', 5.0),
-            ('turnGunRight', 5.0),
-            ('fire', 1.0)
-        ]
+        # action_name_action_value_list = [
+        #     ('turnRadarLeft', 5.0),
+        #     ('turnRadarRight', 5.0),
+        #     ('turnGunLeft', 5.0),
+        #     ('turnGunRight', 5.0),
+        #     ('fire', 1.0)
+        # ]
 
         # use the following actions for movement training
-        # action_name_action_value_list = [
-        #     ('ahead', 25.0),
-        #     ('back', 25.0),
-        #     ('turnLeft', 10.0),
-        #     ('turnRight', 10.0),
-        #     ('turnRadarLeft', 5.0),
-        #     ('turnRadarRight', 5.0)
-        # ]
+        action_name_action_value_list = [
+            ('ahead', 25.0),
+            ('back', 25.0),
+            ('turnLeft', 10.0),
+            ('turnRight', 10.0),
+            ('turnRadarLeft', 5.0),
+            ('turnRadarRight', 5.0)
+        ]
 
         self.robot_actions = [
             RobocodeAction(i, action_name, action_value)
@@ -450,6 +451,7 @@ class RobocodeState(MdpState):
             x: float,
             y: float,
             bullet_power_hit_self: float,
+            bullet_power_hit_self_cumulative: float,
             bullet_power_hit_others: float,
             bullet_power_missed: float,
             bullet_power_missed_since_previous_hit: float,
@@ -480,6 +482,7 @@ class RobocodeState(MdpState):
         :param x: Robot x position.
         :param y: Robot y position.
         :param bullet_power_hit_self: Bullet power that hit self.
+        :param bullet_power_hit_self_cumulative: Cumulative bullet power that hit self, including a discounted sum of prior values.
         :param bullet_power_hit_others: Bullet power that hit others.
         :param bullet_power_missed: Bullet power that missed.
         :param bullet_power_missed_since_previous_hit: Bullet power that has missed since previous hit.
@@ -514,6 +517,7 @@ class RobocodeState(MdpState):
         self.x = x
         self.y = y
         self.bullet_power_hit_self = bullet_power_hit_self
+        self.bullet_power_hit_self_cumulative = bullet_power_hit_self_cumulative
         self.bullet_power_hit_others = bullet_power_hit_others
         self.bullet_power_missed = bullet_power_missed
         self.bullet_power_missed_since_previous_hit = bullet_power_missed_since_previous_hit
@@ -629,19 +633,19 @@ class RobocodeFeatureExtractor(FeatureExtractor):
 
         return X
 
-    def get_feature_action_names(
-            self
-    ) -> Tuple[List[str], List[str]]:
-        """
-        Get names of extracted features and actions.
-
-        :return: 2-tuple of (1) list of feature names and (2) list of action names.
-        """
-
-        return (
-            ['action_intercept', 'has_enemy_bearing', 'aim_lock'],
-            [a.name for a in self.actions]
-        )
+    # def get_feature_action_names(
+    #         self
+    # ) -> Tuple[List[str], List[str]]:
+    #     """
+    #     Get names of extracted features and actions.
+    #
+    #     :return: 2-tuple of (1) list of feature names and (2) list of action names.
+    #     """
+    #
+    #     return (
+    #         ['action_intercept', 'has_enemy_bearing', 'aim_lock'],
+    #         [a.name for a in self.actions]
+    #     )
 
     def set_most_recent_scanned_robot(
             self,
@@ -696,7 +700,14 @@ class RobocodeFeatureExtractor(FeatureExtractor):
                     # indicator (0/1):  we have a bearing on the enemy
                     0.0 if enemy_bearing_from_self is None else 1.0,
 
-                    0.0 if state.bullet_power_hit_self == 0.0 else 1.0,
+                    # discounted cumulative bullet power
+                    state.bullet_power_hit_self_cumulative,
+
+                    # hit a wall with front of robot
+                    1.0 if any(-90 < e['bearing'] < 90 for e in state.events.get('HitWallEvent', [])) else 0.0,
+
+                    # hit a wall with back of robot
+                    1.0 if any(-90 > e['bearing'] > 90 for e in state.events.get('HitWallEvent', [])) else 0.0,
 
                     0.0 if enemy_bearing_from_self is None else
                     self.funnel(
@@ -720,7 +731,7 @@ class RobocodeFeatureExtractor(FeatureExtractor):
 
                 ]
             else:
-                feature_values = [0.0, 0.0, 0.0, 0.0, 0.0]
+                feature_values = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
         elif action_to_extract.name == 'turnLeft' or action_to_extract.name == 'turnRight':
 
@@ -733,8 +744,6 @@ class RobocodeFeatureExtractor(FeatureExtractor):
                     # indicator (0/1):  we have a bearing on the enemy
                     0.0 if enemy_bearing_from_self is None else 1.0,
 
-                    0.0 if state.bullet_power_hit_self == 0.0 else 1.0,
-
                     0.0 if enemy_bearing_from_self is None else
                     self.sigmoid(
                         self.get_shortest_degree_change(
@@ -755,7 +764,7 @@ class RobocodeFeatureExtractor(FeatureExtractor):
 
                 ]
             else:
-                feature_values = [0.0, 0.0, 0.0, 0.0, 0.0]
+                feature_values = [0.0, 0.0, 0.0, 0.0]
 
         elif action_to_extract.name.startswith('turnRadar'):
 
