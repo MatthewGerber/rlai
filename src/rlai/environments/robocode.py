@@ -703,11 +703,13 @@ class RobocodeFeatureExtractor(FeatureExtractor):
                     # discounted cumulative bullet power
                     state.bullet_power_hit_self_cumulative,
 
-                    # hit a wall with front of robot
+                    # hit a wall with front/back of robot
                     1.0 if any(-90 < e['bearing'] < 90 for e in state.events.get('HitWallEvent', [])) else 0.0,
-
-                    # hit a wall with back of robot
                     1.0 if any(-90 > e['bearing'] > 90 for e in state.events.get('HitWallEvent', [])) else 0.0,
+
+                    # hit a robot with front/back of robot
+                    1.0 if any(-90 < e['bearing'] < 90 for e in state.events.get('HitRobotEvent', [])) else 0.0,
+                    1.0 if any(-90 > e['bearing'] > 90 for e in state.events.get('HitRobotEvent', [])) else 0.0,
 
                     0.0 if enemy_bearing_from_self is None else
                     self.funnel(
@@ -731,7 +733,7 @@ class RobocodeFeatureExtractor(FeatureExtractor):
 
                 ]
             else:
-                feature_values = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+                feature_values = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
         elif action_to_extract.name == 'turnLeft' or action_to_extract.name == 'turnRight':
 
