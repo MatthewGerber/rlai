@@ -1,3 +1,4 @@
+import logging
 import math
 from typing import Optional, Dict, Tuple
 
@@ -227,7 +228,7 @@ def check_termination_criteria(
     if theta is None and num_iterations is None:
         raise ValueError('Either theta or num_iterations (or both) must be provided.')
 
-    print(f'Starting evaluation:  theta={theta}, num_iterations={num_iterations}')
+    logging.info(f'Starting evaluation (theta={theta}, num_iterations={num_iterations}).')
 
     return theta, num_iterations
 
@@ -255,10 +256,10 @@ def check_termination_conditions(
         completed_num_iterations = iterations_finished >= num_iterations
         num_iterations_per_print = int(num_iterations * 0.05)
         if num_iterations_per_print > 0 and iterations_finished % num_iterations_per_print == 0:
-            print(f'\tFinished {iterations_finished} iterations:  delta={delta}')
+            logging.info(f'Finished {iterations_finished} iterations:  delta={delta}')
 
     if below_theta or completed_num_iterations:
-        print(f'\tEvaluation completed:  iterations={iterations_finished}, delta={delta}\n')
+        logging.info(f'Evaluation completed:  iterations={iterations_finished}, delta={delta}')
         return True
     else:
         return False

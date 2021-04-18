@@ -1,3 +1,4 @@
+import logging
 import os
 import pickle
 import sys
@@ -153,7 +154,7 @@ def run(
 
             train_function_args['environment'].close()
 
-        print('Training complete.')
+        logging.info('Training complete.')
 
         # try to save agent
         if agent is None:  # pragma no cover

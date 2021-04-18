@@ -1,4 +1,5 @@
 import importlib
+import logging
 import threading
 from argparse import Namespace, ArgumentParser
 from importlib import import_module
@@ -239,6 +240,12 @@ def get_base_argument_parser(
         help='Pass this flag to print usage and argument descriptions.'
     )
 
+    parser.add_argument(
+        '--log',
+        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
+        help='Logging level.'
+    )
+
     return parser
 
 
@@ -263,12 +270,18 @@ def parse_arguments(
 
     parsed_args, unparsed_args = parser.parse_known_args(args)
 
+    # print help
     if parsed_args.help:
         parser.print_help()
         print()
         unparsed_args.append('--help')
 
     del parsed_args.help
+
+    # set logging level
+    if parsed_args.log is not None:
+        logging.getLogger().setLevel(parsed_args.log)
+    del parsed_args.log
 
     return parsed_args, unparsed_args
 

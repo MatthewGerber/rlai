@@ -1,4 +1,5 @@
 import enum
+import logging
 from functools import partial
 from typing import Dict, Set, Tuple, Optional
 
@@ -67,7 +68,7 @@ def evaluate_q_pi(
     if n_steps is not None and n_steps < 1:
         raise ValueError('The value of n_steps must be in range [1, inf], or None.')
 
-    print(f'Running temporal-difference evaluation of q_pi for {num_episodes} episode(s).')
+    logging.info(f'Running temporal-difference evaluation of q_pi for {num_episodes} episode(s).')
 
     evaluated_states = set()
 
@@ -219,7 +220,7 @@ def evaluate_q_pi(
 
         episodes_finished = episode_i + 1
         if episodes_finished % episodes_per_print == 0:
-            print(f'Finished {episodes_finished} of {num_episodes} episode(s).')
+            logging.info(f'Finished {episodes_finished} of {num_episodes} episode(s).')
 
     return evaluated_states, episode_reward_averager.get_value()
 

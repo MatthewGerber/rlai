@@ -1,4 +1,5 @@
 import json
+import logging
 import socket
 from abc import ABC, abstractmethod
 from argparse import ArgumentParser
@@ -60,16 +61,16 @@ class TcpMdpEnvironment(MdpEnvironment, ABC):
 
         try:
 
-            print('Waiting for client to connect and reset environment...', end='')
+            logging.info('Waiting for client to connect and reset environment...')
             self.server_connection, client_address = self.server_socket.accept()
-            print(f'client connected:  {client_address}')
+            logging.info(f'Client connected:  {client_address}')
 
             state_dict = json.loads(self.read_from_client())
             self.state, _ = self.extract_state_and_reward_from_client_dict(state_dict, 0)
 
         except Exception as ex:  # pragma no cover
 
-            print(f'Exception while client was connecting to reset environment:  {ex}')
+            logging.info(f'Exception while client was connecting to reset environment:  {ex}')
 
             # self.state will be None if this is our very first reset. not much we can do in that case (the caller will
             # fail upon receipt of None). if this is a subsequent reset, then we'll have a state, and so we can set it
@@ -108,7 +109,7 @@ class TcpMdpEnvironment(MdpEnvironment, ABC):
 
         except Exception as ex:  # pragma no cover
 
-            print(f'Exception while advancing networked environment:  {ex}')
+            logging.info(f'Exception while advancing networked environment:  {ex}')
 
             # terminate episode and return zero reward
             self.state.terminal = True
@@ -119,7 +120,7 @@ class TcpMdpEnvironment(MdpEnvironment, ABC):
             try:
                 self.server_connection.close()
             except Exception as ex:  # pragma no cover
-                print(f'Exception while closing socket upon episode termination:  {ex}')
+                logging.info(f'Exception while closing socket upon episode termination:  {ex}')
 
         return self.state, reward
 
@@ -183,7 +184,7 @@ class TcpMdpEnvironment(MdpEnvironment, ABC):
             self.server_connection.close()
             self.server_socket.close()
         except Exception as ex:  # pragma no cover
-            print(f'Exception while closing TCP environment:  {ex}')
+            logging.info(f'Exception while closing TCP environment:  {ex}')
 
     def __init__(
             self,

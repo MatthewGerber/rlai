@@ -1,3 +1,4 @@
+import logging
 import math
 from argparse import ArgumentParser
 from typing import List, Tuple, Dict, Any, Optional
@@ -312,11 +313,17 @@ class RobocodeEnvironment(TcpMdpEnvironment):
         won = len(event_type_events.get('WinEvent', [])) > 0
         terminal = dead or won
 
+        # update discounted cumulative power that we've been hit with
+        bullet_power_hit_self_cumulative = bullet_power_hit_self
+        if self.previous_state is not None:
+            turns_passed = client_dict['state']['time'] - self.previous_state.time
+            bullet_power_hit_self_cumulative += self.previous_state.bullet_power_hit_self_cumulative * (0.9 ** turns_passed)
+
         # initialize the state
         state = RobocodeState(
             **client_dict['state'],
             bullet_power_hit_self=bullet_power_hit_self,
-            bullet_power_hit_self_cumulative=bullet_power_hit_self + (0.0 if self.previous_state is None else self.previous_state.bullet_power_hit_self * 0.99),
+            bullet_power_hit_self_cumulative=bullet_power_hit_self_cumulative,
             bullet_power_hit_others=bullet_power_hit_others,
             bullet_power_missed=bullet_power_missed,
             bullet_power_missed_since_previous_hit=bullet_power_missed_since_previous_hit,
@@ -324,6 +331,8 @@ class RobocodeEnvironment(TcpMdpEnvironment):
             AA=self.robot_actions,
             terminal=terminal
         )
+
+        logging.debug(f'bullet_power_hit_self_cumulative:  {state.bullet_power_hit_self_cumulative}')
 
         # movement reward
         reward = RobocodeMovementReward(

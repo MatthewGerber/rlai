@@ -12,6 +12,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 from numpy.random import RandomState
 
 from rlai.meta import rl_text
+from rlai.utils import get_base_argument_parser
 from rlai.value_estimation.function_approximation.models.feature_extraction import (
     FeatureExtractor,
     StateActionInteractionFeatureExtractor
@@ -37,18 +38,7 @@ class FunctionApproximationModel(ABC):
         :return: Argument parser.
         """
 
-        parser = ArgumentParser(
-            allow_abbrev=False,
-            add_help=False
-        )
-
-        parser.add_argument(
-            '--help',
-            action='store_true',
-            help='Pass this flag to print usage and argument descriptions.'
-        )
-
-        return parser
+        return get_base_argument_parser()
 
     @classmethod
     @abstractmethod

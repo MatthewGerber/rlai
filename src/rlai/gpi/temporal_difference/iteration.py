@@ -1,3 +1,4 @@
+import logging
 import os
 import pickle
 from datetime import datetime
@@ -90,7 +91,7 @@ def iterate_value_q_pi(
         if thread_manager.abort:
             break
 
-        print(f'Value iteration {i + 1}:  ', end='')
+        logging.info(f'Value iteration {i + 1}')
 
         # interact with the environment and (optionally) build a model of the environment for planning purposes
         evaluated_states, average_reward = evaluate_q_pi(
@@ -123,7 +124,7 @@ def iterate_value_q_pi(
         # run planning through a recursive call to the iteration method, passing the planning environment as the
         # environment to interact with and disabling planning in the recursive call.
         if planning_environment is not None:
-            print(f'Running {planning_environment.num_planning_improvements_per_direct_improvement} planning improvement(s).')
+            logging.info(f'Running {planning_environment.num_planning_improvements_per_direct_improvement} planning improvement(s).')
             iterate_value_q_pi(
                 agent=agent,
                 environment=planning_environment,
@@ -141,7 +142,7 @@ def iterate_value_q_pi(
                 checkpoint_path=None,
                 pdf_save_path=None
             )
-            print('Finished planning.')
+            logging.info('Finished planning.')
 
         elapsed_seconds = int((datetime.now() - start_datetime).total_seconds())
         if elapsed_seconds not in elapsed_seconds_average_rewards:
@@ -177,7 +178,7 @@ def iterate_value_q_pi(
             with open(checkpoint_path, 'wb') as checkpoint_file:
                 pickle.dump(resume_args, checkpoint_file)
 
-    print(f'Value iteration of q_pi terminated after {i} iteration(s).')
+    logging.info(f'Value iteration of q_pi terminated after {i} iteration(s).')
 
     if make_final_policy_greedy:
         q_S_A.epsilon = 0.0

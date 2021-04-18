@@ -1,3 +1,4 @@
+import logging
 import os
 import pickle
 import warnings
@@ -88,7 +89,7 @@ def iterate_value_q_pi(
         if thread_manager.abort:
             break
 
-        print(f'Value iteration {i + 1}:  ', end='')
+        logging.info(f'Value iteration {i + 1}')
 
         evaluated_states, average_reward = evaluate_q_pi(
             agent=agent,
@@ -142,7 +143,7 @@ def iterate_value_q_pi(
             with open(checkpoint_path, 'wb') as checkpoint_file:
                 pickle.dump(resume_args, checkpoint_file)
 
-    print(f'Value iteration of q_pi terminated after {i} iteration(s).')
+    logging.info(f'Value iteration of q_pi terminated after {i} iteration(s).')
 
     if make_final_policy_greedy:
         q_S_A.epsilon = 0.0
