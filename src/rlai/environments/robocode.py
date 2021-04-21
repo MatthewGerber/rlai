@@ -712,13 +712,19 @@ class RobocodeFeatureExtractor(FeatureExtractor):
                     # discounted cumulative bullet power
                     state.bullet_power_hit_self_cumulative,
 
-                    # hit a wall with front/back of robot
-                    1.0 if any(-90 < e['bearing'] < 90 for e in state.events.get('HitWallEvent', [])) else 0.0,
-                    1.0 if any(-90 > e['bearing'] > 90 for e in state.events.get('HitWallEvent', [])) else 0.0,
+                    # we just hit a wall in the direction we're about to move
+                    1.0 if action.name == 'ahead' and any(-90 < e['bearing'] < 90 for e in state.events.get('HitWallEvent', [])) or
+                    action.name == 'back' and any(-90 > e['bearing'] > 90 for e in state.events.get('HitWallEvent', [])) else 0.0,
 
-                    # hit a robot with front/back of robot
-                    1.0 if any(-90 < e['bearing'] < 90 for e in state.events.get('HitRobotEvent', [])) else 0.0,
-                    1.0 if any(-90 > e['bearing'] > 90 for e in state.events.get('HitRobotEvent', [])) else 0.0,
+                    # we just hit a robot in the direction we're about to move
+                    1.0 if action.name == 'ahead' and any(-90 < e['bearing'] < 90 for e in state.events.get('HitRobotEvent', [])) or
+                    action.name == 'back' and any(-90 > e['bearing'] > 90 for e in state.events.get('HitRobotEvent', [])) else 0.0,
+
+                    # we have enough room to complete the move (allow 36.0 pixel buffer, since that's the size of the
+                    # robot). we could use a smaller buffer because the current location is measured from the center of
+                    # the robot, but this will do fine.
+                    1.0 if action.name == 'ahead' and action.value + 36.0 <= self.heading_distance_to_boundary(state.heading, state.x, state.y, state.battle_field_height, state.battle_field_width) or
+                    action.name == 'back' and action.value + 36.0 <= self.heading_distance_to_boundary(self.normalize(state.heading - 180.0), state.x, state.y, state.battle_field_height, state.battle_field_width) else 0.0,
 
                     0.0 if enemy_bearing_from_self is None else
                     self.funnel(
@@ -742,7 +748,7 @@ class RobocodeFeatureExtractor(FeatureExtractor):
 
                 ]
             else:
-                feature_values = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+                feature_values = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
         elif action_to_extract.name == 'turnLeft' or action_to_extract.name == 'turnRight':
 
@@ -969,6 +975,317 @@ class RobocodeFeatureExtractor(FeatureExtractor):
             lateral_distance = math.tan(math.radians(offset_degrees)) * distance
 
         return lateral_distance
+
+    @staticmethod
+    def compass_to_degrees(
+            heading: float
+    ) -> float:
+        """
+        Convert compass heading (0 @ north then clockwise) to standard trigonometric degrees (0 @ east and then
+        counterclockwise).
+
+        :param heading: Compass heading.
+        :return: Trigonometric degrees.
+        """
+
+        return RobocodeFeatureExtractor.normalize(90.0 - heading)
+
+    @staticmethod
+    def compass_to_radians(
+            heading: float
+    ) -> float:
+        """
+        Convert compass heading (0 @ north then clockwise) to standard trigonometric radians (0 @ east and then
+        counterclockwise).
+
+        :param heading: Compass heading.
+        :return: Trigonometric radians.
+        """
+
+        return math.radians(RobocodeFeatureExtractor.compass_to_degrees(heading))
+
+    @staticmethod
+    def compass_slope(
+            heading: float
+    ) -> float:
+        """
+        Get the slope of the compass heading.
+
+        :param heading: Compass heading.
+        :return: Slope.
+        """
+        
+        return math.tan(RobocodeFeatureExtractor.compass_to_radians(heading))
+
+    @staticmethod
+    def compass_y_intercept(
+            heading: float,
+            x: float,
+            y: float
+    ) -> float:
+        """
+        Get the y-intercept of the compass heading.
+
+        :param heading: Compass heading.
+        :param x: Current x position.
+        :param y: Current y position.
+        :return: The y-intercept.
+        """
+
+        return y - RobocodeFeatureExtractor.compass_slope(heading) * x
+
+    @staticmethod
+    def top_intersect_x(
+            heading: float,
+            x: float,
+            y: float,
+            height: float
+    ) -> float:
+        """
+        Get the x coordinate of the intersection of the compass heading with the top boundary.
+
+        :param heading: Compass heading.
+        :param x: Current x position.
+        :param y: Current y position.
+        :param height: Height of boundary.
+        :return: The x coordinate.
+        """
+
+        slope = RobocodeFeatureExtractor.compass_slope(heading)
+
+        # if slope is zero, then we'll never intersect the top. return infinity.
+        if slope == 0.0:
+            intersect_x = np.inf
+        else:
+            y_intercept = RobocodeFeatureExtractor.compass_y_intercept(heading, x, y)
+            intersect_x = (height - y_intercept) / slope
+
+        return intersect_x
+
+    @staticmethod
+    def bottom_intersect_x(
+            heading: float,
+            x: float,
+            y: float
+    ) -> float:
+        """
+        Get the x coordinate of the intersection of the compass heading with the bottom boundary.
+
+        :param heading: Compass heading.
+        :param x: Current x position.
+        :param y: Current y position.
+        :return: The x coordinate.
+        """
+
+        slope = RobocodeFeatureExtractor.compass_slope(heading)
+
+        # if slope is zero, then we'll never intersect the top. return infinity.
+        if slope == 0.0:
+            intersect_x = np.inf
+        else:
+            y_intercept = RobocodeFeatureExtractor.compass_y_intercept(heading, x, y)
+            intersect_x = -y_intercept / slope
+
+        return intersect_x
+
+    @staticmethod
+    def right_intersect_y(
+            heading: float,
+            x: float,
+            y: float,
+            width: float
+    ) -> float:
+        """
+        Get the y coordinate of the intersection of the compass heading with the right boundary.
+
+        :param heading: Compass heading.
+        :param x: Current x position.
+        :param y: Current y position.
+        :param width: Width of boundary.
+        :return: The y coordinate.
+        """
+
+        slope = RobocodeFeatureExtractor.compass_slope(heading)
+        y_intercept = RobocodeFeatureExtractor.compass_y_intercept(heading, x, y)
+
+        return slope * width + y_intercept
+
+    @staticmethod
+    def left_intersect_y(
+            heading: float,
+            x: float,
+            y: float
+    ) -> float:
+        """
+        Get the y coordinate of the intersection of the compass heading with the left boundary.
+
+        :param heading: Compass heading.
+        :param x: Current x position.
+        :param y: Current y position.
+        :return: The y coordinate.
+        """
+
+        return RobocodeFeatureExtractor.compass_y_intercept(heading, x, y)
+
+    @staticmethod
+    def euclidean_distance(
+            x_1: float,
+            y_1: float,
+            x_2: float,
+            y_2: float
+    ) -> float:
+        """
+        Get Euclidean distance between two points.
+
+        :param x_1: First point's x coordinate.
+        :param y_1: First point's y coordinate.
+        :param x_2: Second point's x coordinate.
+        :param y_2: Second point's y coordinate.
+        :return: Euclidean distance.
+        """
+
+        return math.sqrt((x_2 - x_1) ** 2.0 + (y_2 - y_1) ** 2.0)
+
+    @staticmethod
+    def heading_distance_to_top(
+            heading: float,
+            x: float,
+            y: float,
+            height: float
+    ) -> float:
+        """
+        Get heading distance to top boundary.
+
+        :param heading: Compass heading.
+        :param x: Current x position.
+        :param y: Current y position.
+        :param height: Height of boundary.
+        :return: Distance.
+        """
+
+        return RobocodeFeatureExtractor.euclidean_distance(
+            x,
+            y,
+            RobocodeFeatureExtractor.top_intersect_x(heading, x, y, height),
+            height
+        )
+
+    @staticmethod
+    def heading_distance_to_right(
+            heading: float,
+            x: float,
+            y: float,
+            width: float
+    ) -> float:
+        """
+        Get heading distance to top boundary.
+
+        :param heading: Compass heading.
+        :param x: Current x position.
+        :param y: Current y position.
+        :param width: Width of boundary.
+        :return: Distance.
+        """
+
+        return RobocodeFeatureExtractor.euclidean_distance(
+            x,
+            y,
+            width,
+            RobocodeFeatureExtractor.right_intersect_y(heading, x, y, width)
+        )
+
+    @staticmethod
+    def heading_distance_to_bottom(
+            heading: float,
+            x: float,
+            y: float
+    ) -> float:
+        """
+        Get heading distance to top boundary.
+
+        :param heading: Compass heading.
+        :param x: Current x position.
+        :param y: Current y position.
+        :return: Distance.
+        """
+
+        return RobocodeFeatureExtractor.euclidean_distance(
+            x,
+            y,
+            RobocodeFeatureExtractor.bottom_intersect_x(heading, x, y),
+            0.0
+        )
+
+    @staticmethod
+    def heading_distance_to_left(
+            heading: float,
+            x: float,
+            y: float
+    ) -> float:
+        """
+        Get heading distance to top boundary.
+
+        :param heading: Compass heading.
+        :param x: Current x position.
+        :param y: Current y position.
+        :return: Distance.
+        """
+
+        return RobocodeFeatureExtractor.euclidean_distance(
+            x,
+            y,
+            0.0,
+            RobocodeFeatureExtractor.left_intersect_y(heading, x, y)
+        )
+
+    @staticmethod
+    def heading_distance_to_boundary(
+            heading: float,
+            x: float,
+            y: float,
+            height: float,
+            width: float
+    ) -> float:
+        """
+        Get heading distance to top boundary.
+
+        :param heading: Compass heading.
+        :param x: Current x position.
+        :param y: Current y position.
+        :param height: Height of boundary.
+        :param width: Width of boundary.
+        :return: Distance.
+        """
+
+        degrees = RobocodeFeatureExtractor.compass_to_degrees(heading)
+        heading_quadrant = int(degrees / 90.0) + 1
+
+        if heading_quadrant == 1:
+            distance = min(
+                RobocodeFeatureExtractor.heading_distance_to_top(heading, x, y, height),
+                RobocodeFeatureExtractor.heading_distance_to_right(heading, x, y, width)
+            )
+        elif heading_quadrant == 2:
+            distance = min(
+                RobocodeFeatureExtractor.heading_distance_to_top(heading, x, y, height),
+                RobocodeFeatureExtractor.heading_distance_to_left(heading, x, y)
+            )
+        elif heading_quadrant == 3:
+            distance = min(
+                RobocodeFeatureExtractor.heading_distance_to_left(heading, x, y),
+                RobocodeFeatureExtractor.heading_distance_to_bottom(heading, x, y)
+            )
+        elif heading_quadrant == 4:
+            distance = min(
+                RobocodeFeatureExtractor.heading_distance_to_bottom(heading, x, y),
+                RobocodeFeatureExtractor.heading_distance_to_right(heading, x, y, width)
+            )
+        else:  # pragma no cover
+            raise ValueError(f'Invalid heading quadrant:  {heading_quadrant}')
+
+        logging.debug(f'Heading distance to boundary:  {distance}')
+
+        return distance
 
     @staticmethod
     def normalize(
