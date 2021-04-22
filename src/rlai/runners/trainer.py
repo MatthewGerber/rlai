@@ -165,7 +165,7 @@ def run(
             with open(os.path.expanduser(parsed_args.save_agent_path), 'wb') as f:
                 pickle.dump(agent, f)
 
-            print(f'Saved agent to {parsed_args.save_agent_path}')
+            logging.info(f'Saved agent to {parsed_args.save_agent_path}')
 
     return train_function_args.get('checkpoint_path'), parsed_args.save_agent_path
 

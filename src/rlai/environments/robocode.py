@@ -258,12 +258,13 @@ class RobocodeEnvironment(TcpMdpEnvironment):
         :return: Initial state.
         """
 
-        initial_state = super().reset_for_new_run(agent)
-
+        # the call to super().reset_for_new_run will eventually call extract_state_and_reward_from_client_dict, and this
+        # function depends on the following variables. reset them now, before the call happens, to ensure that the
+        # variables reflect the reset at the time they're used.
         self.previous_state = None
         self.bullet_id_fired_event.clear()
 
-        return initial_state
+        return super().reset_for_new_run(agent)
 
     def extract_state_and_reward_from_client_dict(
             self,
@@ -617,8 +618,8 @@ class RobocodeFeatureExtractor(FeatureExtractor):
             enemy_bearing_from_self = None
             enemy_distance_from_self = None
         else:
-            # the bearing comes to us as [-180,180], whichever is closest. normalize to [0,360]. this bearing is
-            # relative to our heading, so degrees from north to thee enemy would be our heading plus this value.
+            # the bearing comes to us in radians. normalize to [0,360]. this bearing is relative to our heading, so
+            # degrees from north to the enemy would be our heading plus this value.
             enemy_bearing_from_self = self.normalize(math.degrees(self.most_recent_scanned_robot['bearing']))
             enemy_distance_from_self = self.most_recent_scanned_robot['distance']
 
@@ -712,19 +713,15 @@ class RobocodeFeatureExtractor(FeatureExtractor):
                     # discounted cumulative bullet power
                     state.bullet_power_hit_self_cumulative,
 
-                    # we just hit a wall in the direction we're about to move
-                    1.0 if action.name == 'ahead' and any(-90 < e['bearing'] < 90 for e in state.events.get('HitWallEvent', [])) or
-                    action.name == 'back' and any(-90 > e['bearing'] > 90 for e in state.events.get('HitWallEvent', [])) else 0.0,
-
                     # we just hit a robot in the direction we're about to move
-                    1.0 if action.name == 'ahead' and any(-90 < e['bearing'] < 90 for e in state.events.get('HitRobotEvent', [])) or
-                    action.name == 'back' and any(-90 > e['bearing'] > 90 for e in state.events.get('HitRobotEvent', [])) else 0.0,
+                    1.0 if (action.name == 'ahead' and any(-90 < e['bearing'] < 90 for e in state.events.get('HitRobotEvent', []))) or
+                           (action.name == 'back' and any(-90 > e['bearing'] > 90 for e in state.events.get('HitRobotEvent', [])))
+                    else 0.0,
 
-                    # we have enough room to complete the move (allow 36.0 pixel buffer, since that's the size of the
-                    # robot). we could use a smaller buffer because the current location is measured from the center of
-                    # the robot, but this will do fine.
-                    1.0 if action.name == 'ahead' and action.value + 36.0 <= self.heading_distance_to_boundary(state.heading, state.x, state.y, state.battle_field_height, state.battle_field_width) or
-                    action.name == 'back' and action.value + 36.0 <= self.heading_distance_to_boundary(self.normalize(state.heading - 180.0), state.x, state.y, state.battle_field_height, state.battle_field_width) else 0.0,
+                    # we have enough room to complete the move, plus a buffer.
+                    1.0 if (action.name == 'ahead' and action.value + 100.0 <= self.heading_distance_to_boundary(state.heading, state.x, state.y, state.battle_field_height, state.battle_field_width)) or
+                           (action.name == 'back' and action.value + 100.0 <= self.heading_distance_to_boundary(self.normalize(state.heading - 180.0), state.x, state.y, state.battle_field_height, state.battle_field_width))
+                    else 0.0,
 
                     0.0 if enemy_bearing_from_self is None else
                     self.funnel(
@@ -748,7 +745,7 @@ class RobocodeFeatureExtractor(FeatureExtractor):
 
                 ]
             else:
-                feature_values = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+                feature_values = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
         elif action_to_extract.name == 'turnLeft' or action_to_extract.name == 'turnRight':
 

@@ -155,4 +155,4 @@ def iterate_value_q_pi(
 
     if pdf is not None:
         pdf.close()
-        print(f'PDF of plots is available at {pdf_save_path}')
+        logging.info(f'PDF of plots is available at {pdf_save_path}')
