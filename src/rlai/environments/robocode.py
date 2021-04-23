@@ -405,23 +405,23 @@ class RobocodeEnvironment(TcpMdpEnvironment):
             port=port
         )
 
-        # use the following actions for aiming training
+        # use the following actions for aiming
         # action_name_action_value_list = [
-        #     ('turnRadarLeft', 5.0),
-        #     ('turnRadarRight', 5.0),
-        #     ('turnGunLeft', 5.0),
-        #     ('turnGunRight', 5.0),
-        #     ('fire', 1.0)
+        #     (RobocodeAction.TURN_RADAR_LEFT, 5.0),
+        #     (RobocodeAction.TURN_RADAR_RIGHT, 5.0),
+        #     (RobocodeAction.TURN_GUN_LEFT, 5.0),
+        #     (RobocodeAction.TURN_GUN_RIGHT, 5.0),
+        #     (RobocodeAction.FIRE, 1.0)
         # ]
 
-        # use the following actions for movement training
+        # use the following actions for movement
         action_name_action_value_list = [
-            ('ahead', 25.0),
-            ('back', 25.0),
-            ('turnLeft', 10.0),
-            ('turnRight', 10.0),
-            ('turnRadarLeft', 5.0),
-            ('turnRadarRight', 5.0)
+            (RobocodeAction.AHEAD, 25.0),
+            (RobocodeAction.BACK, 25.0),
+            (RobocodeAction.TURN_LEFT, 10.0),
+            (RobocodeAction.TURN_RIGHT, 10.0),
+            (RobocodeAction.TURN_RADAR_LEFT, 5.0),
+            (RobocodeAction.TURN_RADAR_RIGHT, 5.0)
         ]
 
         self.robot_actions = [
@@ -699,7 +699,7 @@ class RobocodeFeatureExtractor(FeatureExtractor):
         :return: List of floating-point feature values.
         """
 
-        if action_to_extract.name == 'ahead' or action_to_extract.name == 'back':
+        if action_to_extract.name == RobocodeAction.AHEAD or action_to_extract.name == RobocodeAction.BACK:
 
             if action == action_to_extract:
                 feature_values = [
@@ -714,15 +714,21 @@ class RobocodeFeatureExtractor(FeatureExtractor):
                     state.bullet_power_hit_self_cumulative,
 
                     # we just hit a robot in the direction we're about to move
-                    1.0 if (action.name == 'ahead' and any(-90 < e['bearing'] < 90 for e in state.events.get('HitRobotEvent', []))) or
-                           (action.name == 'back' and any(-90 > e['bearing'] > 90 for e in state.events.get('HitRobotEvent', [])))
+                    1.0 if (action.name == RobocodeAction.AHEAD and any(-90 < e['bearing'] < 90 for e in state.events.get('HitRobotEvent', []))) or
+                           (action.name == RobocodeAction.BACK and any(-90 > e['bearing'] > 90 for e in state.events.get('HitRobotEvent', [])))
                     else 0.0,
 
                     # we have enough room to complete the move, plus a buffer.
-                    1.0 if (action.name == 'ahead' and action.value + 100.0 <= self.heading_distance_to_boundary(state.heading, state.x, state.y, state.battle_field_height, state.battle_field_width)) or
-                           (action.name == 'back' and action.value + 100.0 <= self.heading_distance_to_boundary(self.normalize(state.heading - 180.0), state.x, state.y, state.battle_field_height, state.battle_field_width))
+                    1.0 if (action.name == RobocodeAction.AHEAD and action.value + 100.0 <= self.heading_distance_to_boundary(state.heading, state.x, state.y, state.battle_field_height, state.battle_field_width)) or
+                           (action.name == RobocodeAction.BACK and action.value + 100.0 <= self.heading_distance_to_boundary(self.normalize(state.heading - 180.0), state.x, state.y, state.battle_field_height, state.battle_field_width))
                     else 0.0,
 
+                    # the move is in the direction of our velocity (accelerate) or opposed to it (deccelerate)
+                    1.0 if (action.name == RobocodeAction.AHEAD and state.velocity >= 0) or
+                           (action.name == RobocodeAction.BACK and state.velocity <= 0)
+                    else 0.0,
+
+                    # bearing is clockwise-orthogonal to enemy
                     0.0 if enemy_bearing_from_self is None else
                     self.funnel(
                         self.get_shortest_degree_change(
@@ -733,6 +739,7 @@ class RobocodeFeatureExtractor(FeatureExtractor):
                         15.0
                     ),
 
+                    # bearing is counterclockwise-orthogonal to enemy
                     0.0 if enemy_bearing_from_self is None else
                     self.funnel(
                         self.get_shortest_degree_change(
@@ -745,9 +752,9 @@ class RobocodeFeatureExtractor(FeatureExtractor):
 
                 ]
             else:
-                feature_values = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+                feature_values = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
-        elif action_to_extract.name == 'turnLeft' or action_to_extract.name == 'turnRight':
+        elif action_to_extract.name == RobocodeAction.TURN_LEFT or action_to_extract.name == RobocodeAction.TURN_RIGHT:
 
             if action == action_to_extract:
                 feature_values = [
@@ -835,7 +842,7 @@ class RobocodeFeatureExtractor(FeatureExtractor):
             else:
                 feature_values = [0.0, 0.0, 0.0]
 
-        elif action_to_extract.name == 'fire':
+        elif action_to_extract.name == RobocodeAction.FIRE:
 
             if action == action_to_extract:
                 feature_values = [
@@ -1325,6 +1332,16 @@ class RobocodeAction(Action):
     """
     Robocode action.
     """
+
+    AHEAD = 'ahead'
+    BACK = 'back'
+    TURN_LEFT = 'turnLeft'
+    TURN_RIGHT = 'turnRight'
+    TURN_RADAR_LEFT = 'turnRadarLeft'
+    TURN_RADAR_RIGHT = 'turnRadarRight'
+    TURN_GUN_LEFT = 'turnGunLeft'
+    TURN_GUN_RIGHT = 'turnGunRight'
+    FIRE = 'fire'
 
     def __init__(
             self,

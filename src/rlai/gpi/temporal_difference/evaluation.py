@@ -261,7 +261,7 @@ def get_bootstrapped_state_action_value(
         else:
 
             # SARSA:  agent determines the t-d target action as well as the episode's next action, which are the same
-            # (we're on-policy)
+            # (we're on-policy).
             if mode == Mode.SARSA:
                 td_target_a = next_a = agent.act(t)
 
