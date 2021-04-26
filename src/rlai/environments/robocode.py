@@ -320,6 +320,18 @@ class RobocodeEnvironment(TcpMdpEnvironment):
             turns_passed = client_dict['state']['time'] - self.previous_state.time
             bullet_power_hit_self_cumulative += self.previous_state.bullet_power_hit_self_cumulative * (0.9 ** turns_passed)
 
+        # get most recent prior state that was at a different location than the current state. if there is no previous
+        # state, then there is no such state.
+        if self.previous_state is None:
+            prior_state_different_location = None
+        # if the previous state's location differs from the current location, then the previous state is what we want.
+        elif self.previous_state.x != client_dict['state']['x'] or self.previous_state.y != client_dict['state']['y']:
+            prior_state_different_location = self.previous_state
+        # otherwise (if the previous and current state have the same location), then use the previous state's prior
+        # state.
+        else:
+            prior_state_different_location = self.previous_state.prior_state_different_location
+
         # initialize the state
         state = RobocodeState(
             **client_dict['state'],
@@ -329,6 +341,8 @@ class RobocodeEnvironment(TcpMdpEnvironment):
             bullet_power_missed=bullet_power_missed,
             bullet_power_missed_since_previous_hit=bullet_power_missed_since_previous_hit,
             events=event_type_events,
+            previous_state=self.previous_state,
+            prior_state_different_location=prior_state_different_location,
             AA=self.robot_actions,
             terminal=terminal
         )
@@ -466,6 +480,8 @@ class RobocodeState(MdpState):
             bullet_power_missed: float,
             bullet_power_missed_since_previous_hit: float,
             events: Dict[str, List[Dict]],
+            previous_state,
+            prior_state_different_location,
             AA: List[Action],
             terminal: bool
     ):
@@ -497,6 +513,8 @@ class RobocodeState(MdpState):
         :param bullet_power_missed: Bullet power that missed.
         :param bullet_power_missed_since_previous_hit: Bullet power that has missed since previous hit.
         :param events: List of events sent to the robot since the previous time the state was set.
+        :param previous_state: Previous state.
+        :param prior_state_different_location: Most recent prior state at a different location than the current state.
         :param AA: List of actions that can be taken.
         :param terminal: Whether or not the state is terminal.
         """
@@ -532,6 +550,8 @@ class RobocodeState(MdpState):
         self.bullet_power_missed = bullet_power_missed
         self.bullet_power_missed_since_previous_hit = bullet_power_missed_since_previous_hit
         self.events = events
+        self.previous_state: RobocodeState = previous_state
+        self.prior_state_different_location = prior_state_different_location
 
 
 @rl_text(chapter='Feature Extractors', page=1)
@@ -723,9 +743,20 @@ class RobocodeFeatureExtractor(FeatureExtractor):
                            (action.name == RobocodeAction.BACK and action.value + 100.0 <= self.heading_distance_to_boundary(self.normalize(state.heading - 180.0), state.x, state.y, state.battle_field_height, state.battle_field_width))
                     else 0.0,
 
-                    # the move is in the direction of our velocity (accelerate) or opposed to it (deccelerate)
-                    1.0 if (action.name == RobocodeAction.AHEAD and state.velocity >= 0) or
-                           (action.name == RobocodeAction.BACK and state.velocity <= 0)
+                    # the move will continue to take us farther from the most recent prior state whose location differs
+                    # from the current location. we use this most recent prior state rather than the directly previous
+                    # state because non-movement actions can intervene between movement and we don't want them to
+                    # interfere with the feature value (they'll have the same location as the current state).
+                    1.0 if state.prior_state_different_location is not None and RobocodeFeatureExtractor.euclidean_distance(
+                        state.prior_state_different_location.x,
+                        state.prior_state_different_location.y,
+                        *RobocodeFeatureExtractor.heading_destination(state.heading if action.name == RobocodeAction.AHEAD else RobocodeFeatureExtractor.normalize(state.heading - 180.0), state.x, state.y, action.value)
+                    ) > RobocodeFeatureExtractor.euclidean_distance(
+                        state.prior_state_different_location.x,
+                        state.prior_state_different_location.y,
+                        state.x,
+                        state.y
+                    )
                     else 0.0,
 
                     # bearing is clockwise-orthogonal to enemy
@@ -1290,6 +1321,30 @@ class RobocodeFeatureExtractor(FeatureExtractor):
         logging.debug(f'Heading distance to boundary:  {distance}')
 
         return distance
+
+    @staticmethod
+    def heading_destination(
+            heading: float,
+            current_x: float,
+            current_y: float,
+            distance: float
+    ) -> Tuple[float, float]:
+        """
+        Get destination coordinates along a heading after traversing a given distance.
+
+        :param heading: Current compass heading.
+        :param current_x: Current x location.
+        :param current_y: Current y location.
+        :param distance: Distance to traverse.
+        :return: 2-tuple of destination x-y coordinates.
+        """
+
+        radians = RobocodeFeatureExtractor.compass_to_radians(heading)
+
+        delta_x = math.cos(radians) * distance
+        delta_y = math.sin(radians) * distance
+
+        return current_x + delta_x, current_y + delta_y
 
     @staticmethod
     def normalize(

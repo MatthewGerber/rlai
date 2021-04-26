@@ -363,9 +363,8 @@ class TabularStateActionValueEstimator(StateActionValueEstimator):
             epsilon=epsilon
         )
 
-        self.SS = environment.SS
         self.continuous_state_discretization_resolution = continuous_state_discretization_resolution
-
+        self.SS = environment.SS
         self.q_S_A: Dict[MdpState, TabularActionValueEstimator] = {}
 
         # for completeness, initialize the estimator for all terminal states. these will not be updated during execution

@@ -40,7 +40,6 @@ class ApproximateValueEstimator(ValueEstimator):
         """
 
         self.estimator.add_sample(self.state, self.action, value, weight)
-
         self.estimator.update_count += 1
 
     def get_value(
@@ -222,6 +221,7 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
 
         parsed_args, unparsed_args = parse_arguments(cls, args)
 
+        # load model
         model_class = load_class(parsed_args.function_approximation_model)
         model, unparsed_args = model_class.init_from_arguments(
             unparsed_args,
@@ -229,10 +229,12 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         )
         del parsed_args.function_approximation_model
 
+        # load feature extractor
         feature_extractor_class = load_class(parsed_args.feature_extractor)
         fex, unparsed_args = feature_extractor_class.init_from_arguments(unparsed_args, environment)
         del parsed_args.feature_extractor
 
+        # initialize estimator
         estimator = ApproximateStateActionValueEstimator(
             environment=environment,
             model=model,

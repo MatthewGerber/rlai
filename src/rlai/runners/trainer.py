@@ -78,7 +78,7 @@ def run(
     else:
         train_function_args['planning_environment'] = None
 
-    # get training function and parse its arguments
+    # load training function and parse its arguments
     train_function = None
     if parsed_args.train_function is not None:
 
@@ -86,7 +86,7 @@ def run(
         train_function_arg_parser = get_argument_parser_for_train_function(parsed_args.train_function)
         parsed_train_function_args, unparsed_args = parse_arguments(train_function_arg_parser, unparsed_args)
 
-        # convert parsed boolean strings to bools
+        # convert parsed boolean strings to booleans
         if hasattr(parsed_train_function_args, 'update_upon_every_visit') and parsed_train_function_args.update_upon_every_visit is not None:
             parsed_train_function_args.update_upon_every_visit = parsed_train_function_args.update_upon_every_visit == 'True'
 
@@ -106,6 +106,7 @@ def run(
 
     agent = None
 
+    # load agent
     if parsed_args.agent is not None:
 
         agent_class = load_class(parsed_args.agent)
