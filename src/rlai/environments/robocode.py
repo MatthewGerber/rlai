@@ -671,10 +671,10 @@ class RobocodeFeatureExtractor(FeatureExtractor):
     #
     #     :return: 2-tuple of (1) list of feature names and (2) list of action names.
     #     """
-    #
+    # 
     #     return (
     #         ['action_intercept', 'has_enemy_bearing', 'aim_lock'],
-    #         [a.name for a in self.actions]
+    #         [a.name for a in self.robot_actions]
     #     )
 
     def set_most_recent_scanned_robot(
@@ -1378,7 +1378,7 @@ class RobocodeFeatureExtractor(FeatureExtractor):
             environment=environment
         )
 
-        self.actions = environment.robot_actions
+        self.robot_actions = environment.robot_actions
         self.most_recent_scanned_robot = None
 
 
