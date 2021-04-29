@@ -419,7 +419,7 @@ class RobocodeEnvironment(TcpMdpEnvironment):
             port=port
         )
 
-        # use the following actions for aiming
+        # # use the following actions for aiming
         # action_name_action_value_list = [
         #     (RobocodeAction.TURN_RADAR_LEFT, 5.0),
         #     (RobocodeAction.TURN_RADAR_RIGHT, 5.0),
@@ -553,6 +553,23 @@ class RobocodeState(MdpState):
         self.previous_state: RobocodeState = previous_state
         self.prior_state_different_location = prior_state_different_location
 
+    def __getstate__(
+            self
+    ) -> Dict:
+        """
+        Get state dictionary for pickling.
+
+        :return: State dictionary.
+        """
+
+        state_dict = dict(self.__dict__)
+
+        # don't pickle backreference to prior states, as pickling fails for such long recursion chains.
+        state_dict['previous_state'] = None
+        state_dict['prior_state_different_location'] = None
+
+        return state_dict
+
 
 @rl_text(chapter='Feature Extractors', page=1)
 class RobocodeFeatureExtractor(FeatureExtractor):
@@ -671,7 +688,7 @@ class RobocodeFeatureExtractor(FeatureExtractor):
     #
     #     :return: 2-tuple of (1) list of feature names and (2) list of action names.
     #     """
-    # 
+    #
     #     return (
     #         ['action_intercept', 'has_enemy_bearing', 'aim_lock'],
     #         [a.name for a in self.robot_actions]
