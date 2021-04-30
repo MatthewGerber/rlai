@@ -680,19 +680,86 @@ class RobocodeFeatureExtractor(FeatureExtractor):
 
         return X
 
-    # def get_feature_action_names(
-    #         self
-    # ) -> Tuple[List[str], List[str]]:
-    #     """
-    #     Get names of extracted features and actions.
-    #
-    #     :return: 2-tuple of (1) list of feature names and (2) list of action names.
-    #     """
-    #
-    #     return (
-    #         ['action_intercept', 'has_enemy_bearing', 'aim_lock'],
-    #         [a.name for a in self.robot_actions]
-    #     )
+    def get_action_feature_names(
+            self
+    ) -> Dict[str, List[str]]:
+        """
+        Get names of actions and their associated feature names.
+
+        :return: Dictionary of action names and their associated feature names.
+        """
+
+        return {
+            action.name:
+
+            [
+                f'{action.name}_intercept',
+                'enemy_bearing',
+                'hit_by_bullet_power',
+                'hit_robot',
+                'enough_room',
+                'continue_away',
+                'funnel_cw_ortho',
+                'funnel_ccw_ortho'
+            ] if action.name == RobocodeAction.AHEAD else
+
+            [
+                f'{action.name}_intercept',
+                'enemy_bearing',
+                'bullet_power_cum',
+                'hit_robot',
+                'enough_room',
+                'continue_away',
+                'funnel_cw_ortho',
+                'funnel_ccw_ortho'
+            ] if action.name == RobocodeAction.BACK else
+
+            [
+                f'{action.name}_intercept',
+                'enemy_bearing',
+                'sigmoid_cw_ortho',
+                'sigmoid_ccw_ortho'
+            ] if action.name == RobocodeAction.TURN_LEFT else
+
+            [
+                f'{action.name}_intercept',
+                'enemy_bearing',
+                'sigmoid_cw_ortho',
+                'sigmoid_ccw_ortho'
+            ] if action.name == RobocodeAction.TURN_RIGHT else
+
+            [
+                f'{action.name}_intercept',
+                'enemy_bearing',
+                'sigmoid_lat_dist'
+            ] if action.name == RobocodeAction.TURN_RADAR_LEFT else
+
+            [
+                f'{action.name}_intercept',
+                'enemy_bearing',
+                'sigmoid_lat_dist'
+            ] if action.name == RobocodeAction.TURN_RADAR_RIGHT else
+
+            [
+                f'{action.name}_intercept',
+                'enemy_bearing',
+                'sigmoid_lat_dist'
+            ] if action.name == RobocodeAction.TURN_GUN_LEFT else
+
+            [
+                f'{action.name}_intercept',
+                'enemy_bearing',
+                'sigmoid_lat_dist'
+            ] if action.name == RobocodeAction.TURN_GUN_RIGHT else
+
+            [
+                f'{action.name}_intercept',
+                'enemy_bearing',
+                'funnel_lat_dist'
+            ]
+
+            for action in self.robot_actions
+        }
 
     def set_most_recent_scanned_robot(
             self,

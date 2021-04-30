@@ -1,5 +1,5 @@
 from argparse import ArgumentParser
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Dict
 
 import numpy as np
 from numpy.random import RandomState
@@ -281,19 +281,19 @@ class GridworldFeatureExtractor(StateActionInteractionFeatureExtractor):
             actions=actions
         )
 
-    def get_feature_action_names(
+    def get_action_feature_names(
             self
-    ) -> Tuple[List[str], List[str]]:
+    ) -> Dict[str, List[str]]:
         """
-        Get names of extracted features and actions.
+        Get names of actions and their associated feature names.
 
-        :return: 2-tuple of (1) list of feature names and (2) list of action names.
+        :return: Dictionary of action names and their associated feature names.
         """
 
-        return (
-            ['from-top', 'from-bottom', 'from-left', 'from-right'],
-            [a.name for a in self.actions]
-        )
+        return {
+            a.name: ['from-top', 'from-bottom', 'from-left', 'from-right']
+            for a in self.actions
+        }
 
     def __init__(
             self,

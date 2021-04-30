@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from argparse import ArgumentParser
 from itertools import product
-from typing import List, Tuple, Any, Union, Optional
+from typing import List, Tuple, Any, Union, Optional, Dict
 
 import numpy as np
 import pandas as pd
@@ -92,13 +92,13 @@ class FeatureExtractor(ABC):
         if num_states != num_actions:
             raise ValueError(f'Expected {num_states} actions but got {num_actions}')
 
-    def get_feature_action_names(
+    def get_action_feature_names(
             self
-    ) -> Tuple[List[str], List[str]]:
+    ) -> Dict[str, List[str]]:
         """
-        Get names of extracted features and actions.
+        Get names of actions and their associated feature names.
 
-        :return: 2-tuple of (1) list of feature names and (2) list of action names.
+        :return: Dictionary of action names and their associated feature names.
         """
 
     def __init__(
