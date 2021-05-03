@@ -235,7 +235,7 @@ class SKLearnSGD(FunctionApproximationModel):
         coefficient value of the associated feature-action pair.
 
         :param feature_extractor: Feature extractor used to build the model.
-        :return: DataFrame (#features, #actions).
+        :return: DataFrame (#features, #actions). The DataFrame is indexed by feature name.
         """
 
         # not all feature extractors return action/feature names. bail if the given one does not.

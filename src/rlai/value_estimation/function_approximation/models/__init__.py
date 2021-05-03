@@ -18,8 +18,8 @@ from rlai.value_estimation.function_approximation.models.feature_extraction impo
     StateActionInteractionFeatureExtractor
 )
 
-MAX_PLOT_COEFFICIENTS = 10
-MAX_PLOT_ACTIONS = 10
+MAX_PLOT_COEFFICIENTS = 50
+MAX_PLOT_ACTIONS = 20
 
 
 @rl_text(chapter=9, page=197)
@@ -122,7 +122,8 @@ class FunctionApproximationModel(ABC):
 
         if plot_coefficients:
 
-            action_names = [col for col in feature_action_coefficients.columns if col != 'feature_name']
+            if 'feature_name' in feature_action_coefficients.columns:  # pragma no cover
+                raise ValueError('Feature extractor returned disallowed column:  feature_name')
 
             if 'n' in feature_action_coefficients.columns:  # pragma no cover
                 raise ValueError('Feature extractor returned disallowed column:  n')
@@ -130,8 +131,17 @@ class FunctionApproximationModel(ABC):
             if 'bin' in feature_action_coefficients.columns:  # pragma no cover
                 raise ValueError('Feature extractor returned disallowed column:  bin')
 
+            # get action names before adding other columns below
+            action_names = [col for col in feature_action_coefficients.columns if col != 'feature_name']
+
+            # pull index into column, as we'll have duplicate feature names after multiple appends below
+            feature_action_coefficients['feature_name'] = feature_action_coefficients.index
+            feature_action_coefficients.reset_index(drop=True, inplace=True)
+
+            # set policy improvement count for current coefficients
             feature_action_coefficients['n'] = policy_improvement_count - 1
 
+            # append to cumulative coefficients dataframe
             if self.feature_action_coefficients is None:
                 self.feature_action_coefficients = feature_action_coefficients
             else:
@@ -141,6 +151,7 @@ class FunctionApproximationModel(ABC):
 
                 plt.close('all')
 
+                # assign coefficients to bins
                 if num_improvement_bins is None:
                     improvements_per_bin = 1
                     self.feature_action_coefficients['bin'] = self.feature_action_coefficients.n
@@ -155,7 +166,7 @@ class FunctionApproximationModel(ABC):
                 feature_names = self.feature_action_coefficients.feature_name.unique().tolist()
                 n_rows = len(feature_names)
                 n_cols = len(action_names)
-                fig, axs = plt.subplots(
+                fig, boxplot_axs = plt.subplots(
                     nrows=n_rows,
                     ncols=n_cols,
                     sharex='all',
@@ -163,24 +174,33 @@ class FunctionApproximationModel(ABC):
                     figsize=(3 * n_cols, 3 * n_rows)
                 )
 
-                # plot one row per feature and one column per action, with the the plots in the array being boxplots of
-                # coefficient values.
+                # plot one row per feature and one column per action, with the plots in the array being boxplots of
+                # coefficient values within the bin. only plot actions (columns) that have non-nan values for the
+                # current feature (row).
                 for i, feature_name in enumerate(feature_names):
                     feature_df = self.feature_action_coefficients[self.feature_action_coefficients.feature_name == feature_name]
-                    boxplot_axs = axs[i, :]
-                    feature_df.boxplot(column=action_names, by='bin', ax=boxplot_axs)
-                    boxplot_axs[0].set_ylabel(f'w({feature_name})')
+                    for j, action_name in enumerate(action_names):
+                        if feature_df[action_name].notna().sum() > 0:
+                            feature_df.boxplot(column=action_name, by='bin', ax=boxplot_axs[i, j])
 
                 # reset labels and titles
-                for i, row in enumerate(axs):
-                    for ax in row:
+                for i, row in enumerate(boxplot_axs):
 
-                        if i < axs.shape[0] - 1:
+                    # y-label for each row is the feature name
+                    boxplot_axs[i, 0].set_ylabel(f'w({feature_names[i]})')
+
+                    for j, ax in enumerate(row):
+
+                        # only boxplots in the final row have x-labels
+                        if i < boxplot_axs.shape[0] - 1:
                             ax.set_xlabel('')
                         else:
                             ax.set_xlabel('Iteration' if num_improvement_bins is None else f'Bin of {improvements_per_bin} improvement(s)')
 
-                        if i > 0:
+                        # only boxplots in the first row have tiles (action names)
+                        if i == 0:
+                            ax.set_title(action_names[j])
+                        else:
                             ax.set_title('')
 
                 fig.suptitle('Model coefficients over iterations')
@@ -213,7 +233,8 @@ class FunctionApproximationModel(ABC):
         coefficient value of the associated feature-action pair.
 
         :param feature_extractor: Feature extractor used to build the model.
-        :return: DataFrame (#features, #actions), or None to omit plotting of feature-action coefficient boxplots.
+        :return: DataFrame (#features, #actions), or None to omit plotting of feature-action coefficient boxplots. The
+        DataFrame is indexed by feature name.
         """
 
     def __init__(

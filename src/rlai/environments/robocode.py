@@ -690,6 +690,7 @@ class RobocodeFeatureExtractor(FeatureExtractor):
         """
 
         return {
+
             action.name:
 
             [

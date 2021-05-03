@@ -404,7 +404,7 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
 
         :param final: Whether or not this is the final time plot will be called.
         :param pdf: PDF for plots, or None for no PDF.
-        :return: Matplotlib figure, if one was generated and not plotting to PDF.
+        :return: Matplotlib Figure, if one was generated and not plotting to PDF.
         """
 
         if self.plot_model:
