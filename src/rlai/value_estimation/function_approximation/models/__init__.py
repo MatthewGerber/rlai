@@ -3,7 +3,7 @@ import threading
 import warnings
 from abc import ABC, abstractmethod
 from argparse import ArgumentParser
-from typing import Tuple, List, Any, Optional
+from typing import Tuple, List, Any, Optional, Dict
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -269,3 +269,21 @@ class FunctionApproximationModel(ABC):
         :param other: Other model.
         :return: True if not equal and False otherwise.
         """
+
+    def __getstate__(
+            self
+    ) -> Dict:
+        """
+        Get state dictionary for pickling.
+
+        :return: State dictionary.
+        """
+
+        state_dict = dict(self.__dict__)
+
+        # don't pickle the history of feature action coefficients used for plotting, as they grow unbounded during
+        # training. the only known use case for saving them is to continue plotting after resumption; however, that's
+        # a pretty narrow use case and isn't worth the large amount of disk space that it takes.
+        state_dict['feature_action_coefficients'] = None
+
+        return state_dict
