@@ -256,11 +256,33 @@ accurate, high-rate firing.
 
 Primary points of future development:
 
-* Shift the aim quality feature for firing (i.e., the funnel's peak) left or right to compensate for the opponent's velocity and 
-distance from the gun.
+* Shift the aim quality feature for firing (i.e., the funnel's peak) left or right to compensate for the opponent's 
+  velocity and distance from the gun.
 * Redefine the reward to emphasize hits per turn.
 
-## Evasive Movement (3d4001a1aa62d3ee1f8a0819fc24bb618ea13a11)
+## Evasive Movement
+This section develops evasive movement against a stationary opponent who is actively tracking and firing. The RL robot 
+is mobile but is not allowed to rotate its gun or fire. Moving unarmed against a firing opponent introduces the 
+following challenges:
+
+* Obstacle avoidance:  Obstacles include boundary walls as well as the opponent robot. The RL robot will need tactics 
+  for avoiding obstacles and navigating away or around them when they are encountered. 
+* Bullet avoidance:  The RL agent will need to move such that it is difficult for the opponent to aim and fire 
+  effectively.  
+* Bullet escape:  The opponent will inevitably score bullet hits. Success will depend partly on how the RL agent
+  responds to bullet hits.
+
+### Introduction
+
+### Reward Signal
+
+### State Features
+
+### Learning Model and Training
+
+### Results
+
+{% include youtubePlayer.html id="JU24oD3JpgI" %}
 
 ## Integrated Aiming, Firing, and Movement (TBD)
 
