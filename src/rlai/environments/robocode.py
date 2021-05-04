@@ -349,16 +349,6 @@ class RobocodeEnvironment(TcpMdpEnvironment):
 
         logging.debug(f'bullet_power_hit_self_cumulative:  {state.bullet_power_hit_self_cumulative}')
 
-        # # movement reward
-        # reward = RobocodeMovementReward(
-        #     i=None,
-        #     r=1.0 if bullet_power_hit_self == 0.0 else -10.0
-        # )
-
-        # aiming reward
-        # hit others and don't miss
-        reward_value = bullet_power_hit_others - bullet_power_missed
-
         # store bullet firing events so that we can pull out information related to them at a later time step (e.g.,
         # when they hit or miss). add the evaluation time step to each event. the bullet events have times associated
         # with them that are provided by the robocode engine, but those are robocode turns and there isn't always a
@@ -371,13 +361,23 @@ class RobocodeEnvironment(TcpMdpEnvironment):
             for bullet_fired_event in event_type_events.get('BulletFiredEvent', [])
         })
 
-        reward = RobocodeAimingReward(
-            i=None,
-            r=reward_value,
-            bullet_id_fired_event=self.bullet_id_fired_event,
-            bullet_hit_events=bullet_hit_events,
-            bullet_missed_events=bullet_missed_events
-        )
+        # only issue a movement reward if we do not have an aiming reward. movement rewards are defined for every tick,
+        # but aiming rewards are only nonzero when a bullet hits or misses. as aiming rewards are rarer, be sure to use
+        # them whenever possible.
+        aiming_reward_value = bullet_power_hit_others - bullet_power_missed
+        if aiming_reward_value == 0:
+            reward = RobocodeMovementReward(
+                i=None,
+                r=1.0 if bullet_power_hit_self == 0.0 else -10.0
+            )
+        else:
+            reward = RobocodeAimingReward(
+                i=None,
+                r=aiming_reward_value,
+                bullet_id_fired_event=self.bullet_id_fired_event,
+                bullet_hit_events=bullet_hit_events,
+                bullet_missed_events=bullet_missed_events
+            )
 
         self.previous_state = state
 
@@ -404,24 +404,17 @@ class RobocodeEnvironment(TcpMdpEnvironment):
             port=port
         )
 
-        # use the following actions for aiming
         action_name_action_value_list = [
+            (RobocodeAction.AHEAD, 25.0),
+            (RobocodeAction.BACK, 25.0),
+            (RobocodeAction.TURN_LEFT, 10.0),
+            (RobocodeAction.TURN_RIGHT, 10.0),
             (RobocodeAction.TURN_RADAR_LEFT, 5.0),
             (RobocodeAction.TURN_RADAR_RIGHT, 5.0),
             (RobocodeAction.TURN_GUN_LEFT, 5.0),
             (RobocodeAction.TURN_GUN_RIGHT, 5.0),
             (RobocodeAction.FIRE, 1.0)
         ]
-
-        # # use the following actions for movement
-        # action_name_action_value_list = [
-        #     (RobocodeAction.AHEAD, 25.0),
-        #     (RobocodeAction.BACK, 25.0),
-        #     (RobocodeAction.TURN_LEFT, 10.0),
-        #     (RobocodeAction.TURN_RIGHT, 10.0),
-        #     (RobocodeAction.TURN_RADAR_LEFT, 5.0),
-        #     (RobocodeAction.TURN_RADAR_RIGHT, 5.0)
-        # ]
 
         self.robot_actions = [
             RobocodeAction(i, action_name, action_value)
