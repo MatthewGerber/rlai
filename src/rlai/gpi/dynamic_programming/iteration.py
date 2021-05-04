@@ -1,3 +1,4 @@
+import logging
 from typing import Dict, Optional
 
 from rlai.actions import Action
@@ -33,7 +34,7 @@ def iterate_policy_v_pi(
     i = 0
     while improving:
 
-        print(f'Policy iteration {i + 1}:  ', end='')
+        logging.info(f'Policy iteration {i + 1}')
 
         v_pi, _ = evaluate_v_pi(
             agent=agent,
@@ -52,7 +53,7 @@ def iterate_policy_v_pi(
 
         i += 1
 
-    print(f'Policy iteration terminated after {i} iteration(s).\n')
+    logging.info(f'Policy iteration terminated after {i} iteration(s).')
 
     return v_pi
 
@@ -80,7 +81,7 @@ def iterate_policy_q_pi(
     i = 0
     while improving:
 
-        print(f'Policy iteration {i + 1}:  ', end='')
+        logging.info(f'Policy iteration {i + 1}')
 
         q_pi, _ = evaluate_q_pi(
             agent=agent,
@@ -98,7 +99,7 @@ def iterate_policy_q_pi(
 
         i += 1
 
-    print(f'Policy iteration terminated after {i} iteration(s).\n')
+    logging.info(f'Policy iteration terminated after {i} iteration(s).')
 
     return q_pi
 
@@ -128,7 +129,7 @@ def iterate_value_v_pi(
     i = 0
     while True:
 
-        print(f'Value iteration {i + 1}:  ', end='')
+        logging.info(f'Value iteration {i + 1}')
 
         v_pi, delta = evaluate_v_pi(
             agent=agent,
@@ -150,7 +151,7 @@ def iterate_value_v_pi(
         if delta < theta:
             break
 
-    print(f'Value iteration of v_pi terminated after {i} iteration(s).')
+    logging.info(f'Value iteration of v_pi terminated after {i} iteration(s).')
 
     return v_pi
 
@@ -180,7 +181,7 @@ def iterate_value_q_pi(
     i = 0
     while True:
 
-        print(f'Value iteration {i + 1}:  ', end='')
+        logging.info(f'Value iteration {i + 1}')
 
         q_pi, delta = evaluate_q_pi(
             agent=agent,
@@ -201,6 +202,6 @@ def iterate_value_q_pi(
         if delta < theta:
             break
 
-    print(f'Value iteration of q_pi terminated after {i} iteration(s).')
+    logging.info(f'Value iteration of q_pi terminated after {i} iteration(s).')
 
     return q_pi

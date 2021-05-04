@@ -260,6 +260,8 @@ Primary points of future development:
 distance from the gun.
 * Redefine the reward to emphasize hits per turn.
 
-## Evasive Movement (TBD)
+## Evasive Movement (3d4001a1aa62d3ee1f8a0819fc24bb618ea13a11)
+
+## Integrated Aiming, Firing, and Movement (TBD)
 
 ## Continuous Control (TBD)

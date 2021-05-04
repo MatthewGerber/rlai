@@ -1,3 +1,4 @@
+import logging
 import os
 import pickle
 import statistics
@@ -189,10 +190,9 @@ def resume_from_checkpoint(
     :return: The updated agent.
     """
 
-    print('Reading checkpoint file to resume...', end='')
+    logging.info('Reading checkpoint file to resume.')
     with open(os.path.expanduser(checkpoint_path), 'rb') as checkpoint_file:
         resume_args = pickle.load(checkpoint_file)
-    print('.done')
 
     if new_args is not None:
         resume_args.update({

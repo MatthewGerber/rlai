@@ -1,3 +1,4 @@
+import logging
 import math
 import os
 import pickle
@@ -27,6 +28,11 @@ def run(
     parser = get_argument_parser_for_run()
 
     parsed_args, unparsed_args = parser.parse_known_args(args)
+
+    # set logging level
+    if parsed_args.log is not None:
+        logging.getLogger().setLevel(parsed_args.log)
+    del parsed_args.log
 
     if parsed_args.random_seed is None:
         random_state = RandomState()
@@ -77,7 +83,7 @@ def run(
     monitors = []
     for agent in agents:
 
-        print(f'Running {agent} agent in {environment} environment...')
+        logging.info(f'Running {agent} agent in {environment} environment.')
 
         monitor = Monitor()
         monitors.append(monitor)
@@ -97,7 +103,7 @@ def run(
             num_runs_finished = r + 1
             if (num_runs_finished % num_runs_per_print) == 0:
                 percent_done = 100 * (num_runs_finished / parsed_args.n_runs)
-                print(f'{percent_done:.0f}% complete (finished {num_runs_finished} of {parsed_args.n_runs} runs)...')
+                logging.info(f'{percent_done:.0f}% complete (finished {num_runs_finished} of {parsed_args.n_runs} runs).')
 
         if parsed_args.plot:
 
@@ -115,8 +121,6 @@ def run(
                 monitor.t_count_optimal_action[t] / parsed_args.n_runs
                 for t in sorted(monitor.t_count_optimal_action)
             ], linewidth=1, label=agent.name)
-
-        print()
 
     # finish plotting
     if parsed_args.plot:

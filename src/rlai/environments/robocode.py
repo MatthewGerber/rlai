@@ -1,3 +1,4 @@
+import logging
 import math
 from argparse import ArgumentParser
 from typing import List, Tuple, Dict, Any, Optional
@@ -257,12 +258,13 @@ class RobocodeEnvironment(TcpMdpEnvironment):
         :return: Initial state.
         """
 
-        initial_state = super().reset_for_new_run(agent)
-
+        # the call to super().reset_for_new_run will eventually call extract_state_and_reward_from_client_dict, and this
+        # function depends on the following variables. reset them now, before the call happens, to ensure that the
+        # variables reflect the reset at the time they're used.
         self.previous_state = None
         self.bullet_id_fired_event.clear()
 
-        return initial_state
+        return super().reset_for_new_run(agent)
 
     def extract_state_and_reward_from_client_dict(
             self,
@@ -312,27 +314,40 @@ class RobocodeEnvironment(TcpMdpEnvironment):
         won = len(event_type_events.get('WinEvent', [])) > 0
         terminal = dead or won
 
+        # update discounted cumulative power that we've been hit with
+        bullet_power_hit_self_cumulative = bullet_power_hit_self
+        if self.previous_state is not None:
+            turns_passed = client_dict['state']['time'] - self.previous_state.time
+            bullet_power_hit_self_cumulative += self.previous_state.bullet_power_hit_self_cumulative * (0.9 ** turns_passed)
+
+        # get most recent prior state that was at a different location than the current state. if there is no previous
+        # state, then there is no such state.
+        if self.previous_state is None:
+            prior_state_different_location = None
+        # if the previous state's location differs from the current location, then the previous state is what we want.
+        elif self.previous_state.x != client_dict['state']['x'] or self.previous_state.y != client_dict['state']['y']:
+            prior_state_different_location = self.previous_state
+        # otherwise (if the previous and current state have the same location), then use the previous state's prior
+        # state.
+        else:
+            prior_state_different_location = self.previous_state.prior_state_different_location
+
         # initialize the state
         state = RobocodeState(
             **client_dict['state'],
             bullet_power_hit_self=bullet_power_hit_self,
+            bullet_power_hit_self_cumulative=bullet_power_hit_self_cumulative,
             bullet_power_hit_others=bullet_power_hit_others,
             bullet_power_missed=bullet_power_missed,
             bullet_power_missed_since_previous_hit=bullet_power_missed_since_previous_hit,
             events=event_type_events,
+            previous_state=self.previous_state,
+            prior_state_different_location=prior_state_different_location,
             AA=self.robot_actions,
             terminal=terminal
         )
 
-        # # movement reward
-        # reward = RobocodeMovementReward(
-        #     i=None,
-        #     r=1.0 if bullet_power_hit_self == 0.0 else -100.0
-        # )
-
-        # aiming reward
-        # hit others and don't miss
-        reward_value = bullet_power_hit_others - bullet_power_missed
+        logging.debug(f'bullet_power_hit_self_cumulative:  {state.bullet_power_hit_self_cumulative}')
 
         # store bullet firing events so that we can pull out information related to them at a later time step (e.g.,
         # when they hit or miss). add the evaluation time step to each event. the bullet events have times associated
@@ -346,32 +361,27 @@ class RobocodeEnvironment(TcpMdpEnvironment):
             for bullet_fired_event in event_type_events.get('BulletFiredEvent', [])
         })
 
-        reward = RobocodeAimingReward(
-            i=None,
-            r=reward_value,
-            bullet_id_fired_event=self.bullet_id_fired_event,
-            bullet_hit_events=bullet_hit_events,
-            bullet_missed_events=bullet_missed_events
-        )
+        # only issue a movement reward if we do not have an aiming reward. movement rewards are defined for every tick,
+        # but aiming rewards are only nonzero when a bullet hits or misses. as aiming rewards are rarer, be sure to use
+        # them whenever possible.
+        aiming_reward_value = bullet_power_hit_others - bullet_power_missed
+        if aiming_reward_value == 0:
+            reward = RobocodeMovementReward(
+                i=None,
+                r=1.0 if bullet_power_hit_self == 0.0 else -10.0
+            )
+        else:
+            reward = RobocodeAimingReward(
+                i=None,
+                r=aiming_reward_value,
+                bullet_id_fired_event=self.bullet_id_fired_event,
+                bullet_hit_events=bullet_hit_events,
+                bullet_missed_events=bullet_missed_events
+            )
 
         self.previous_state = state
 
         return state, reward
-
-        # old/obsolete reward signals
-
-        # ... death seems bad, and victories good.
-        # if dead:
-        #     reward_value = -100.0
-        # elif won:
-        #     reward_value = 100.0
-        # else:
-
-        # ... probably a bad idea here, since energy loss can be recovered upon bullet impact, which is good.
-        # if self.previous_state is None:
-        #     reward_value = 0.0
-        # else:
-        #     reward_value = state.energy - self.previous_state.energy
 
     def __init__(
             self,
@@ -394,24 +404,17 @@ class RobocodeEnvironment(TcpMdpEnvironment):
             port=port
         )
 
-        # use the following actions for aiming training
         action_name_action_value_list = [
-            ('turnRadarLeft', 5.0),
-            ('turnRadarRight', 5.0),
-            ('turnGunLeft', 5.0),
-            ('turnGunRight', 5.0),
-            ('fire', 1.0)
+            (RobocodeAction.AHEAD, 25.0),
+            (RobocodeAction.BACK, 25.0),
+            (RobocodeAction.TURN_LEFT, 10.0),
+            (RobocodeAction.TURN_RIGHT, 10.0),
+            (RobocodeAction.TURN_RADAR_LEFT, 5.0),
+            (RobocodeAction.TURN_RADAR_RIGHT, 5.0),
+            (RobocodeAction.TURN_GUN_LEFT, 5.0),
+            (RobocodeAction.TURN_GUN_RIGHT, 5.0),
+            (RobocodeAction.FIRE, 1.0)
         ]
-
-        # use the following actions for movement training
-        # action_name_action_value_list = [
-        #     ('ahead', 25.0),
-        #     ('back', 25.0),
-        #     ('turnLeft', 10.0),
-        #     ('turnRight', 10.0),
-        #     ('turnRadarLeft', 5.0),
-        #     ('turnRadarRight', 5.0)
-        # ]
 
         self.robot_actions = [
             RobocodeAction(i, action_name, action_value)
@@ -450,10 +453,13 @@ class RobocodeState(MdpState):
             x: float,
             y: float,
             bullet_power_hit_self: float,
+            bullet_power_hit_self_cumulative: float,
             bullet_power_hit_others: float,
             bullet_power_missed: float,
             bullet_power_missed_since_previous_hit: float,
             events: Dict[str, List[Dict]],
+            previous_state,
+            prior_state_different_location,
             AA: List[Action],
             terminal: bool
     ):
@@ -480,10 +486,13 @@ class RobocodeState(MdpState):
         :param x: Robot x position.
         :param y: Robot y position.
         :param bullet_power_hit_self: Bullet power that hit self.
+        :param bullet_power_hit_self_cumulative: Cumulative bullet power that hit self, including a discounted sum of prior values.
         :param bullet_power_hit_others: Bullet power that hit others.
         :param bullet_power_missed: Bullet power that missed.
         :param bullet_power_missed_since_previous_hit: Bullet power that has missed since previous hit.
         :param events: List of events sent to the robot since the previous time the state was set.
+        :param previous_state: Previous state.
+        :param prior_state_different_location: Most recent prior state at a different location than the current state.
         :param AA: List of actions that can be taken.
         :param terminal: Whether or not the state is terminal.
         """
@@ -514,10 +523,30 @@ class RobocodeState(MdpState):
         self.x = x
         self.y = y
         self.bullet_power_hit_self = bullet_power_hit_self
+        self.bullet_power_hit_self_cumulative = bullet_power_hit_self_cumulative
         self.bullet_power_hit_others = bullet_power_hit_others
         self.bullet_power_missed = bullet_power_missed
         self.bullet_power_missed_since_previous_hit = bullet_power_missed_since_previous_hit
         self.events = events
+        self.previous_state: RobocodeState = previous_state
+        self.prior_state_different_location = prior_state_different_location
+
+    def __getstate__(
+            self
+    ) -> Dict:
+        """
+        Get state dictionary for pickling.
+
+        :return: State dictionary.
+        """
+
+        state_dict = dict(self.__dict__)
+
+        # don't pickle backreference to prior states, as pickling fails for such long recursion chains.
+        state_dict['previous_state'] = None
+        state_dict['prior_state_different_location'] = None
+
+        return state_dict
 
 
 @rl_text(chapter='Feature Extractors', page=1)
@@ -604,8 +633,8 @@ class RobocodeFeatureExtractor(FeatureExtractor):
             enemy_bearing_from_self = None
             enemy_distance_from_self = None
         else:
-            # the bearing comes to us as [-180,180], whichever is closest. normalize to [0,360]. this bearing is
-            # relative to our heading, so degrees from north to thee enemy would be our heading plus this value.
+            # the bearing comes to us in radians. normalize to [0,360]. this bearing is relative to our heading, so
+            # degrees from north to the enemy would be our heading plus this value.
             enemy_bearing_from_self = self.normalize(math.degrees(self.most_recent_scanned_robot['bearing']))
             enemy_distance_from_self = self.most_recent_scanned_robot['distance']
 
@@ -629,19 +658,87 @@ class RobocodeFeatureExtractor(FeatureExtractor):
 
         return X
 
-    def get_feature_action_names(
+    def get_action_feature_names(
             self
-    ) -> Tuple[List[str], List[str]]:
+    ) -> Dict[str, List[str]]:
         """
-        Get names of extracted features and actions.
+        Get names of actions and their associated feature names.
 
-        :return: 2-tuple of (1) list of feature names and (2) list of action names.
+        :return: Dictionary of action names and their associated feature names.
         """
 
-        return (
-            ['action_intercept', 'has_enemy_bearing', 'aim_lock'],
-            [a.name for a in self.actions]
-        )
+        return {
+
+            action.name:
+
+            [
+                f'{action.name}_intercept',
+                'enemy_bearing',
+                'hit_by_bullet_power',
+                'hit_robot',
+                'enough_room',
+                'continue_away',
+                'funnel_cw_ortho',
+                'funnel_ccw_ortho'
+            ] if action.name == RobocodeAction.AHEAD else
+
+            [
+                f'{action.name}_intercept',
+                'enemy_bearing',
+                'bullet_power_cum',
+                'hit_robot',
+                'enough_room',
+                'continue_away',
+                'funnel_cw_ortho',
+                'funnel_ccw_ortho'
+            ] if action.name == RobocodeAction.BACK else
+
+            [
+                f'{action.name}_intercept',
+                'enemy_bearing',
+                'sigmoid_cw_ortho',
+                'sigmoid_ccw_ortho'
+            ] if action.name == RobocodeAction.TURN_LEFT else
+
+            [
+                f'{action.name}_intercept',
+                'enemy_bearing',
+                'sigmoid_cw_ortho',
+                'sigmoid_ccw_ortho'
+            ] if action.name == RobocodeAction.TURN_RIGHT else
+
+            [
+                f'{action.name}_intercept',
+                'enemy_bearing',
+                'sigmoid_lat_dist'
+            ] if action.name == RobocodeAction.TURN_RADAR_LEFT else
+
+            [
+                f'{action.name}_intercept',
+                'enemy_bearing',
+                'sigmoid_lat_dist'
+            ] if action.name == RobocodeAction.TURN_RADAR_RIGHT else
+
+            [
+                f'{action.name}_intercept',
+                'enemy_bearing',
+                'sigmoid_lat_dist'
+            ] if action.name == RobocodeAction.TURN_GUN_LEFT else
+
+            [
+                f'{action.name}_intercept',
+                'enemy_bearing',
+                'sigmoid_lat_dist'
+            ] if action.name == RobocodeAction.TURN_GUN_RIGHT else
+
+            [
+                f'{action.name}_intercept',
+                'enemy_bearing',
+                'funnel_lat_dist'
+            ]
+
+            for action in self.robot_actions
+        }
 
     def set_most_recent_scanned_robot(
             self,
@@ -685,7 +782,7 @@ class RobocodeFeatureExtractor(FeatureExtractor):
         :return: List of floating-point feature values.
         """
 
-        if action_to_extract.name == 'ahead' or action_to_extract.name == 'back':
+        if action_to_extract.name == RobocodeAction.AHEAD or action_to_extract.name == RobocodeAction.BACK:
 
             if action == action_to_extract:
                 feature_values = [
@@ -696,8 +793,36 @@ class RobocodeFeatureExtractor(FeatureExtractor):
                     # indicator (0/1):  we have a bearing on the enemy
                     0.0 if enemy_bearing_from_self is None else 1.0,
 
-                    0.0 if state.bullet_power_hit_self == 0.0 else 1.0,
+                    # discounted cumulative bullet power
+                    state.bullet_power_hit_self_cumulative,
 
+                    # we just hit a robot in the direction we're about to move
+                    1.0 if (action.name == RobocodeAction.AHEAD and any(-90 < e['bearing'] < 90 for e in state.events.get('HitRobotEvent', []))) or
+                           (action.name == RobocodeAction.BACK and any(-90 > e['bearing'] > 90 for e in state.events.get('HitRobotEvent', [])))
+                    else 0.0,
+
+                    # we have enough room to complete the move, plus a buffer.
+                    1.0 if (action.name == RobocodeAction.AHEAD and action.value + 100.0 <= self.heading_distance_to_boundary(state.heading, state.x, state.y, state.battle_field_height, state.battle_field_width)) or
+                           (action.name == RobocodeAction.BACK and action.value + 100.0 <= self.heading_distance_to_boundary(self.normalize(state.heading - 180.0), state.x, state.y, state.battle_field_height, state.battle_field_width))
+                    else 0.0,
+
+                    # the move will continue to take us farther from the most recent prior state whose location differs
+                    # from the current location. we use this most recent prior state rather than the directly previous
+                    # state because non-movement actions can intervene between movement and we don't want them to
+                    # interfere with the feature value (they'll have the same location as the current state).
+                    1.0 if state.prior_state_different_location is not None and RobocodeFeatureExtractor.euclidean_distance(
+                        state.prior_state_different_location.x,
+                        state.prior_state_different_location.y,
+                        *RobocodeFeatureExtractor.heading_destination(state.heading if action.name == RobocodeAction.AHEAD else RobocodeFeatureExtractor.normalize(state.heading - 180.0), state.x, state.y, action.value)
+                    ) > RobocodeFeatureExtractor.euclidean_distance(
+                        state.prior_state_different_location.x,
+                        state.prior_state_different_location.y,
+                        state.x,
+                        state.y
+                    )
+                    else 0.0,
+
+                    # bearing is clockwise-orthogonal to enemy
                     0.0 if enemy_bearing_from_self is None else
                     self.funnel(
                         self.get_shortest_degree_change(
@@ -708,6 +833,7 @@ class RobocodeFeatureExtractor(FeatureExtractor):
                         15.0
                     ),
 
+                    # bearing is counterclockwise-orthogonal to enemy
                     0.0 if enemy_bearing_from_self is None else
                     self.funnel(
                         self.get_shortest_degree_change(
@@ -720,9 +846,9 @@ class RobocodeFeatureExtractor(FeatureExtractor):
 
                 ]
             else:
-                feature_values = [0.0, 0.0, 0.0, 0.0, 0.0]
+                feature_values = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
-        elif action_to_extract.name == 'turnLeft' or action_to_extract.name == 'turnRight':
+        elif action_to_extract.name == RobocodeAction.TURN_LEFT or action_to_extract.name == RobocodeAction.TURN_RIGHT:
 
             if action == action_to_extract:
                 feature_values = [
@@ -732,8 +858,6 @@ class RobocodeFeatureExtractor(FeatureExtractor):
 
                     # indicator (0/1):  we have a bearing on the enemy
                     0.0 if enemy_bearing_from_self is None else 1.0,
-
-                    0.0 if state.bullet_power_hit_self == 0.0 else 1.0,
 
                     0.0 if enemy_bearing_from_self is None else
                     self.sigmoid(
@@ -755,7 +879,7 @@ class RobocodeFeatureExtractor(FeatureExtractor):
 
                 ]
             else:
-                feature_values = [0.0, 0.0, 0.0, 0.0, 0.0]
+                feature_values = [0.0, 0.0, 0.0, 0.0]
 
         elif action_to_extract.name.startswith('turnRadar'):
 
@@ -812,7 +936,7 @@ class RobocodeFeatureExtractor(FeatureExtractor):
             else:
                 feature_values = [0.0, 0.0, 0.0]
 
-        elif action_to_extract.name == 'fire':
+        elif action_to_extract.name == RobocodeAction.FIRE:
 
             if action == action_to_extract:
                 feature_values = [
@@ -951,6 +1075,341 @@ class RobocodeFeatureExtractor(FeatureExtractor):
         return lateral_distance
 
     @staticmethod
+    def compass_to_degrees(
+            heading: float
+    ) -> float:
+        """
+        Convert compass heading (0 @ north then clockwise) to standard trigonometric degrees (0 @ east and then
+        counterclockwise).
+
+        :param heading: Compass heading.
+        :return: Trigonometric degrees.
+        """
+
+        return RobocodeFeatureExtractor.normalize(90.0 - heading)
+
+    @staticmethod
+    def compass_to_radians(
+            heading: float
+    ) -> float:
+        """
+        Convert compass heading (0 @ north then clockwise) to standard trigonometric radians (0 @ east and then
+        counterclockwise).
+
+        :param heading: Compass heading.
+        :return: Trigonometric radians.
+        """
+
+        return math.radians(RobocodeFeatureExtractor.compass_to_degrees(heading))
+
+    @staticmethod
+    def compass_slope(
+            heading: float
+    ) -> float:
+        """
+        Get the slope of the compass heading.
+
+        :param heading: Compass heading.
+        :return: Slope.
+        """
+        
+        return math.tan(RobocodeFeatureExtractor.compass_to_radians(heading))
+
+    @staticmethod
+    def compass_y_intercept(
+            heading: float,
+            x: float,
+            y: float
+    ) -> float:
+        """
+        Get the y-intercept of the compass heading.
+
+        :param heading: Compass heading.
+        :param x: Current x position.
+        :param y: Current y position.
+        :return: The y-intercept.
+        """
+
+        return y - RobocodeFeatureExtractor.compass_slope(heading) * x
+
+    @staticmethod
+    def top_intersect_x(
+            heading: float,
+            x: float,
+            y: float,
+            height: float
+    ) -> float:
+        """
+        Get the x coordinate of the intersection of the compass heading with the top boundary.
+
+        :param heading: Compass heading.
+        :param x: Current x position.
+        :param y: Current y position.
+        :param height: Height of boundary.
+        :return: The x coordinate.
+        """
+
+        slope = RobocodeFeatureExtractor.compass_slope(heading)
+
+        # if slope is zero, then we'll never intersect the top. return infinity.
+        if slope == 0.0:
+            intersect_x = np.inf
+        else:
+            y_intercept = RobocodeFeatureExtractor.compass_y_intercept(heading, x, y)
+            intersect_x = (height - y_intercept) / slope
+
+        return intersect_x
+
+    @staticmethod
+    def bottom_intersect_x(
+            heading: float,
+            x: float,
+            y: float
+    ) -> float:
+        """
+        Get the x coordinate of the intersection of the compass heading with the bottom boundary.
+
+        :param heading: Compass heading.
+        :param x: Current x position.
+        :param y: Current y position.
+        :return: The x coordinate.
+        """
+
+        slope = RobocodeFeatureExtractor.compass_slope(heading)
+
+        # if slope is zero, then we'll never intersect the top. return infinity.
+        if slope == 0.0:
+            intersect_x = np.inf
+        else:
+            y_intercept = RobocodeFeatureExtractor.compass_y_intercept(heading, x, y)
+            intersect_x = -y_intercept / slope
+
+        return intersect_x
+
+    @staticmethod
+    def right_intersect_y(
+            heading: float,
+            x: float,
+            y: float,
+            width: float
+    ) -> float:
+        """
+        Get the y coordinate of the intersection of the compass heading with the right boundary.
+
+        :param heading: Compass heading.
+        :param x: Current x position.
+        :param y: Current y position.
+        :param width: Width of boundary.
+        :return: The y coordinate.
+        """
+
+        slope = RobocodeFeatureExtractor.compass_slope(heading)
+        y_intercept = RobocodeFeatureExtractor.compass_y_intercept(heading, x, y)
+
+        return slope * width + y_intercept
+
+    @staticmethod
+    def left_intersect_y(
+            heading: float,
+            x: float,
+            y: float
+    ) -> float:
+        """
+        Get the y coordinate of the intersection of the compass heading with the left boundary.
+
+        :param heading: Compass heading.
+        :param x: Current x position.
+        :param y: Current y position.
+        :return: The y coordinate.
+        """
+
+        return RobocodeFeatureExtractor.compass_y_intercept(heading, x, y)
+
+    @staticmethod
+    def euclidean_distance(
+            x_1: float,
+            y_1: float,
+            x_2: float,
+            y_2: float
+    ) -> float:
+        """
+        Get Euclidean distance between two points.
+
+        :param x_1: First point's x coordinate.
+        :param y_1: First point's y coordinate.
+        :param x_2: Second point's x coordinate.
+        :param y_2: Second point's y coordinate.
+        :return: Euclidean distance.
+        """
+
+        return math.sqrt((x_2 - x_1) ** 2.0 + (y_2 - y_1) ** 2.0)
+
+    @staticmethod
+    def heading_distance_to_top(
+            heading: float,
+            x: float,
+            y: float,
+            height: float
+    ) -> float:
+        """
+        Get heading distance to top boundary.
+
+        :param heading: Compass heading.
+        :param x: Current x position.
+        :param y: Current y position.
+        :param height: Height of boundary.
+        :return: Distance.
+        """
+
+        return RobocodeFeatureExtractor.euclidean_distance(
+            x,
+            y,
+            RobocodeFeatureExtractor.top_intersect_x(heading, x, y, height),
+            height
+        )
+
+    @staticmethod
+    def heading_distance_to_right(
+            heading: float,
+            x: float,
+            y: float,
+            width: float
+    ) -> float:
+        """
+        Get heading distance to top boundary.
+
+        :param heading: Compass heading.
+        :param x: Current x position.
+        :param y: Current y position.
+        :param width: Width of boundary.
+        :return: Distance.
+        """
+
+        return RobocodeFeatureExtractor.euclidean_distance(
+            x,
+            y,
+            width,
+            RobocodeFeatureExtractor.right_intersect_y(heading, x, y, width)
+        )
+
+    @staticmethod
+    def heading_distance_to_bottom(
+            heading: float,
+            x: float,
+            y: float
+    ) -> float:
+        """
+        Get heading distance to top boundary.
+
+        :param heading: Compass heading.
+        :param x: Current x position.
+        :param y: Current y position.
+        :return: Distance.
+        """
+
+        return RobocodeFeatureExtractor.euclidean_distance(
+            x,
+            y,
+            RobocodeFeatureExtractor.bottom_intersect_x(heading, x, y),
+            0.0
+        )
+
+    @staticmethod
+    def heading_distance_to_left(
+            heading: float,
+            x: float,
+            y: float
+    ) -> float:
+        """
+        Get heading distance to top boundary.
+
+        :param heading: Compass heading.
+        :param x: Current x position.
+        :param y: Current y position.
+        :return: Distance.
+        """
+
+        return RobocodeFeatureExtractor.euclidean_distance(
+            x,
+            y,
+            0.0,
+            RobocodeFeatureExtractor.left_intersect_y(heading, x, y)
+        )
+
+    @staticmethod
+    def heading_distance_to_boundary(
+            heading: float,
+            x: float,
+            y: float,
+            height: float,
+            width: float
+    ) -> float:
+        """
+        Get heading distance to top boundary.
+
+        :param heading: Compass heading.
+        :param x: Current x position.
+        :param y: Current y position.
+        :param height: Height of boundary.
+        :param width: Width of boundary.
+        :return: Distance.
+        """
+
+        degrees = RobocodeFeatureExtractor.compass_to_degrees(heading)
+        heading_quadrant = int(degrees / 90.0) + 1
+
+        if heading_quadrant == 1:
+            distance = min(
+                RobocodeFeatureExtractor.heading_distance_to_top(heading, x, y, height),
+                RobocodeFeatureExtractor.heading_distance_to_right(heading, x, y, width)
+            )
+        elif heading_quadrant == 2:
+            distance = min(
+                RobocodeFeatureExtractor.heading_distance_to_top(heading, x, y, height),
+                RobocodeFeatureExtractor.heading_distance_to_left(heading, x, y)
+            )
+        elif heading_quadrant == 3:
+            distance = min(
+                RobocodeFeatureExtractor.heading_distance_to_left(heading, x, y),
+                RobocodeFeatureExtractor.heading_distance_to_bottom(heading, x, y)
+            )
+        elif heading_quadrant == 4:
+            distance = min(
+                RobocodeFeatureExtractor.heading_distance_to_bottom(heading, x, y),
+                RobocodeFeatureExtractor.heading_distance_to_right(heading, x, y, width)
+            )
+        else:  # pragma no cover
+            raise ValueError(f'Invalid heading quadrant:  {heading_quadrant}')
+
+        logging.debug(f'Heading distance to boundary:  {distance}')
+
+        return distance
+
+    @staticmethod
+    def heading_destination(
+            heading: float,
+            current_x: float,
+            current_y: float,
+            distance: float
+    ) -> Tuple[float, float]:
+        """
+        Get destination coordinates along a heading after traversing a given distance.
+
+        :param heading: Current compass heading.
+        :param current_x: Current x location.
+        :param current_y: Current y location.
+        :param distance: Distance to traverse.
+        :return: 2-tuple of destination x-y coordinates.
+        """
+
+        radians = RobocodeFeatureExtractor.compass_to_radians(heading)
+
+        delta_x = math.cos(radians) * distance
+        delta_y = math.sin(radians) * distance
+
+        return current_x + delta_x, current_y + delta_y
+
+    @staticmethod
     def normalize(
             degrees: float
     ) -> float:
@@ -982,7 +1441,7 @@ class RobocodeFeatureExtractor(FeatureExtractor):
             environment=environment
         )
 
-        self.actions = environment.robot_actions
+        self.robot_actions = environment.robot_actions
         self.most_recent_scanned_robot = None
 
 
@@ -991,6 +1450,16 @@ class RobocodeAction(Action):
     """
     Robocode action.
     """
+
+    AHEAD = 'ahead'
+    BACK = 'back'
+    TURN_LEFT = 'turnLeft'
+    TURN_RIGHT = 'turnRight'
+    TURN_RADAR_LEFT = 'turnRadarLeft'
+    TURN_RADAR_RIGHT = 'turnRadarRight'
+    TURN_GUN_LEFT = 'turnGunLeft'
+    TURN_GUN_RIGHT = 'turnGunRight'
+    FIRE = 'fire'
 
     def __init__(
             self,

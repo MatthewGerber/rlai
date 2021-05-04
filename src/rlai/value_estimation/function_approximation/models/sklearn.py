@@ -235,12 +235,12 @@ class SKLearnSGD(FunctionApproximationModel):
         coefficient value of the associated feature-action pair.
 
         :param feature_extractor: Feature extractor used to build the model.
-        :return: DataFrame (#features, #actions).
+        :return: DataFrame (#features, #actions). The DataFrame is indexed by feature name.
         """
 
-        # not all feature extractors return names. bail if the given one does not.
-        feature_action_names = feature_extractor.get_feature_action_names()
-        if feature_action_names is None:
+        # not all feature extractors return action/feature names. bail if the given one does not.
+        action_feature_names = feature_extractor.get_action_feature_names()
+        if action_feature_names is None:
             return None
 
         # model might not yet be fit (e.g., if called from jupyter notebook) and won't have a coefficients attribute in
@@ -248,35 +248,53 @@ class SKLearnSGD(FunctionApproximationModel):
         if not hasattr(self.model, 'coef_'):  # pragma no cover
             return None
 
-        feature_names, action_names = feature_action_names
+        coefficients = self.model.coef_
 
-        if 'intercept' in feature_names:  # pragma no cover
+        all_feature_names = [
+            feature
+            for action in action_feature_names
+            for feature in action_feature_names[action]
+        ]
+
+        if 'intercept' in all_feature_names:  # pragma no cover
             raise ValueError('Feature extractors may not extract a feature named "intercept".')
 
-        # get (#features, #actions) array of coefficients, along with feature names.
-        num_actions = len(action_names)
-        coefficients = self.model.coef_.reshape((-1, num_actions), order='F')
+        # check feature extractor names against model dimensions
+        num_feature_names = len(all_feature_names)
+        num_dims = coefficients.shape[0]
+        if num_feature_names != num_dims :  # pragma no cover
+            raise ValueError(f'Number of feature names ({num_feature_names}) does not match number of dimensions ({num_dims}).')
+
+        # create dataframe
+        df_index = all_feature_names
+        if self.model.fit_intercept:
+            df_index.append('intercept')
+
+        coefficients_df = pd.DataFrame(
+            index=df_index,
+            columns=action_feature_names.keys()
+        )
+
+        curr_coef = 0
+        for action in action_feature_names:
+
+            feature_names = action_feature_names[action]
+            num_coefs = len(feature_names)
+            coefs = coefficients[curr_coef:curr_coef + num_coefs]
+
+            for feature_name, coef in zip(feature_names, coefs):
+                coefficients_df.loc[feature_name, action] = coef
+
+            curr_coef += num_coefs
+
+        if curr_coef != num_dims:  # pragma no cover
+            raise ValueError(f'Failed to extract all coefficients.')
 
         # add intercept if we fit one
         if self.model.fit_intercept:
-            coefficients = np.append(coefficients, [np.repeat(self.model.intercept_, num_actions)], axis=0)
-            feature_names.append('intercept')
+            coefficients_df.loc['intercept', :] = self.model.intercept_[0]
 
-        # check feature extractor names against model dimensions
-        num_feature_names = len(feature_names)
-        num_dims = coefficients.shape[0]
-        if num_feature_names != num_dims:  # pragma no cover
-            raise ValueError(f'Number of feature names ({num_feature_names}) does not match number of dimensions ({num_dims}).')
-
-        # convert to dataframe with named columns
-        coefficients = pd.DataFrame(
-            data=coefficients,
-            columns=action_names
-        )
-
-        coefficients['feature_name'] = feature_names
-
-        return coefficients
+        return coefficients_df
 
     def plot(
             self,

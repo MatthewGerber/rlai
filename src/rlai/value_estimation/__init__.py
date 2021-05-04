@@ -208,6 +208,10 @@ class StateActionValueEstimator(ABC):
             self.evaluation_policy_improvement_count += 1
         elif event == PolicyImprovementEvent.UPDATED_VALUE_ESTIMATE:
             self.value_estimate_policy_improvement_count += 1
+        elif event == PolicyImprovementEvent.MAKING_POLICY_GREEDY:
+            pass
+        else:  # pragma no cover
+            raise ValueError(f'Unknown policy improvement event:  {event}')
 
     def plot(
             self,
