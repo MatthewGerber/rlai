@@ -261,6 +261,8 @@ Primary points of future development:
 * Redefine the reward to emphasize hits per turn.
 
 ## Evasive Movement
+
+### Introduction
 This section develops evasive movement against a stationary opponent who is actively tracking and firing. The RL robot 
 is mobile but is not allowed to rotate its gun or fire. Moving unarmed against a firing opponent introduces the 
 following challenges:
@@ -272,11 +274,24 @@ following challenges:
 * Bullet escape:  The opponent will inevitably score bullet hits. Success will depend partly on how the RL agent
   responds to bullet hits.
 
-### Introduction
-
 ### Reward Signal
+The reward signal at each time step is 1.0 if no bullet hit the RL robot, and it is -10.0 if a bullet did hit the RL 
+robot. The enemy's rate of fire is limited by Robocode physics, which dictate that each bullet firing event heats the 
+gun. The enemy's gun will not fire beyond a heat threshold, until it cools below the threshold per the cooling rate. 
+Because the enemy's rate of fire is limited, few bullets can possibly hit the RL agent relative to the number of turns.
+Thus, if the reward signal is symmetric with 1.0 (for each turn without a hit) and -1.0 (for each turn with a hit), then 
+it is easy for returns to be dominated by positive values even when the enemy is aiming, firing, and hitting the RL 
+robot very effectively. Using the asymmetric reward compensates for the enemy's limited rate of fire, making hits much 
+more prominent within the returns. I didn't explore alternatives to -10.0, as it seemed to work without much 
+experimentation.
 
 ### State Features
+
+* Actions 1/2:  Move ahead/back 25 pixels.
+
+* Actions 3/4:  Turn left/right 10 degrees.
+
+* Actions 5/6:  Turn radar left/right 5 degrees.
 
 ### Learning Model and Training
 
@@ -285,5 +300,3 @@ following challenges:
 {% include youtubePlayer.html id="JU24oD3JpgI" %}
 
 ## Integrated Aiming, Firing, and Movement (TBD)
-
-## Continuous Control (TBD)
