@@ -364,7 +364,7 @@ class RobocodeEnvironment(TcpMdpEnvironment):
         # only issue a movement reward if we do not have an aiming reward. movement rewards are defined for every tick,
         # but aiming rewards are only nonzero when a bullet hits or misses. as aiming rewards are rarer, be sure to use
         # them whenever possible.
-        aiming_reward_value = bullet_power_hit_others * 10.0 - bullet_power_missed
+        aiming_reward_value = bullet_power_hit_others * 100.0 - bullet_power_missed
         if aiming_reward_value == 0:
             reward = RobocodeMovementReward(
                 i=None,

@@ -69,15 +69,15 @@ bullet power that has missed the opponent.
 
 ### State Features
 * Action 1:  Turn radar left 5 degrees
-  * **Feature 1 - Opponent bearing exists (binary)** _ELO_:  Rotate radar left when `false` and do not rotate radar when 
-    `true`.
+  * **Feature 1 - Has bearing on opponent (binary)** _ELO_:  Rotate radar left when `False` and do not rotate radar when 
+    `True`.
     
 * Actions 2/3:  Turn gun left/right 5 degrees
-  * **Feature 1 - Has bearing on opponent (binary)** _ELO_:  Keep gun stationary when `false` and rotate gun when `true`.
-  * **Feature 2 - Gun is counterclockwise from opponent (binary)** _ELO_:  Rotate gun clockwise when `true` and counterclockwise when `false`.
+  * **Feature 1 - Has bearing on opponent (binary)** _ELO_:  Keep gun stationary when `False` and rotate gun when `True`.
+  * **Feature 2 - Gun is counterclockwise from opponent (binary)** _ELO_:  Rotate gun clockwise when `True` and counterclockwise when `False`.
     
 * Action 4:  Fire
-  * **Feature 1 - Has bearing on opponent (binary)** _ELO_:  Do not fire when `false` and consider firing when `true`.
+  * **Feature 1 - Has bearing on opponent (binary)** _ELO_:  Do not fire when `False` and consider firing when `True`.
   * **Feature 2 - Square root of degree deviation from gun to opponent (continuous)** _ELO_:  Only fire gun when sufficiently well aimed.
 
 ### Learning Model and Training
@@ -151,7 +151,7 @@ The state features described in this section make heavy use of two general conce
   introduction to this section, one cannot assume (as in the previous development iteration) that the enemy's bearing 
   will remain reliable after acquisition, since the enemy is moving. Here we only retain the enemy's bearing for the 
   time step in which it was acquired. If in the next time step the radar has left the enemy, then all binary indications 
-  of the enemy's bearing will be `false`.
+  of the enemy's bearing will be `False`.
 * Aim quality via lateral distance:  Aiming the radar or gun usefully (i.e., in a way that will gain positive 
   reward) requires an estimate of where the bullet will arrive in relation to the enemy position. A useful notion here 
   is that of lateral distance. This is depicted below:
@@ -170,8 +170,8 @@ The state features described in this section make heavy use of two general conce
   transformations will be explained below.
 
 * Action 1/2:  Turn radar left/right 5 degrees
-  * **Feature 1 - Opponent bearing exists (binary)** _ELO_:  Rotate radar either left or right when `false` and do not 
-    rotate radar when `true`.
+  * **Feature 1 - Has bearing on opponent (binary)** _ELO_:  Rotate radar either left or right when `False` and do not 
+    rotate radar when `True`.
   * **Feature 2 - Signed squash of lateral distance** The lateral distance from the radar to the opponent is 
     transformed to be in [-1.0, 1.0] using the sigmoidal squashing function shown below:
     
@@ -182,12 +182,12 @@ The state features described in this section make heavy use of two general conce
     right when the squashed value is negative and to the left when the squashed value is positive.
     
 * Action 3/4:  Turn gun left/right 5 degrees
-  * **Feature 1 - Has bearing on opponent (binary)** _ELO_:  Keep gun stationary when `false` and consider rotating gun 
-    either left or right when `true`.
+  * **Feature 1 - Has bearing on opponent (binary)** _ELO_:  Keep gun stationary when `False` and consider rotating gun 
+    either left or right when `True`.
   * **Feature 2 - Signed squash of lateral distance** (same as for radar, see above).
     
 * Action 5:  Fire
-  * **Feature 1 - Has bearing on opponent (binary)** _ELO_:  Do not fire when `false` and consider firing when `true`.
+  * **Feature 1 - Has bearing on opponent (binary)** _ELO_:  Do not fire when `False` and consider firing when `True`.
   * **Feature 2 - Funneled lateral distance** For the purpose of deciding whether to fire, it might not help to 
     distinguish left (negative) from right (positive) lateral distance. As such, the lateral distance is funneled as 
     shown below:
@@ -287,11 +287,35 @@ experimentation.
 
 ### State Features
 
+
 * Actions 1/2:  Move ahead/back 25 pixels.
-
+  * **Feature 1 - Has bearing on opponent (binary)** _ELO_:  
+  * **Feature 2 - Cumulative hit-by-bullet power (continuous)**  _ELO_:  Each bullet inflicts a certain about of damage (e.g., 
+    reduction of energy by four points for standard bullets). This feature tracks the cumulative decaying bullet power 
+    that has hit the RL robot. In each turn, the bullet power that just hit the RL robot is added to the cumulative 
+    total, and the total decays by 0.9 on each subsequent turn. _ELO_:  Turn and flee when large, continue on the 
+    current trajectory when near zero.
+  * **Feature 3 - The action collides the RL robot with the opponent robot (binary)** _ELO_:  Take the action when 
+    `False` and move in the opposite direction when `True`.
+  * **Feature 4 - The action can be completed with a remaining buffer of 100 pixels to the boundary (binary)** 
+  _ELO_:  Take the action when `True` and take a different action when `False`.
+  * **Feature 5 - The action will continue to take us farther from our previous location (binary)** Given our previous
+    and current locations, this is `True` if the action will take us even farther from our previous location. This feature
+    was critical in getting the RL robot to string together extended sequences of forward and backward navigation. 
+    Without it, the agent had no way to explain the goodness of moving forward following a previous forward movement.
+  * **Feature 6 - Bearing is clockwise-orthogonal to enemy (binary)** The funneled, shortest degree change from the RL 
+    robot's current heading to the bearing that would be clockwise-orthogonal to the opponent's direction. This feature 
+    is explained in the following figure.
+  * **Feature 7 - Bearing is counterclockwise-orthogonal to enemy (binary)** Similar to the previous feature, except 
+    that it is with respect to the counterclockwise-orthogonal bearing (see the previous figure).
+    
 * Actions 3/4:  Turn left/right 10 degrees.
+  * **Feature 1 - Has bearing on opponent (binary)** _ELO_:  Keep gun stationary when `False` and consider rotating gun 
+    either left or right when `True`.
+    
+* Actions 5/6:  Turn radar left/right 5 degrees. 
+  * (same features as described above for aiming)
 
-* Actions 5/6:  Turn radar left/right 5 degrees.
 
 ### Learning Model and Training
 
