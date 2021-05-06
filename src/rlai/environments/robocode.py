@@ -409,8 +409,8 @@ class RobocodeEnvironment(TcpMdpEnvironment):
             (RobocodeAction.BACK, 25.0),
             (RobocodeAction.TURN_LEFT, 10.0),
             (RobocodeAction.TURN_RIGHT, 10.0),
-            (RobocodeAction.TURN_RADAR_LEFT, 5.0),
-            (RobocodeAction.TURN_RADAR_RIGHT, 5.0),
+            (RobocodeAction.TURN_RADAR_LEFT, 10.0),
+            (RobocodeAction.TURN_RADAR_RIGHT, 10.0),
             (RobocodeAction.TURN_GUN_LEFT, 10.0),
             (RobocodeAction.TURN_GUN_RIGHT, 10.0),
             (RobocodeAction.FIRE, 1.0)
