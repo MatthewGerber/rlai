@@ -276,51 +276,78 @@ following challenges:
 
 ### Reward Signal
 The reward signal at each time step is 1.0 if no bullet hit the RL robot, and it is -10.0 if a bullet did hit the RL 
-robot. The enemy's rate of fire is limited by Robocode physics, which dictate that each bullet firing event heats the 
-gun. The enemy's gun will not fire beyond a heat threshold, until it cools below the threshold per the cooling rate. 
-Because the enemy's rate of fire is limited, few bullets can possibly hit the RL agent relative to the number of turns.
-Thus, if the reward signal is symmetric with 1.0 (for each turn without a hit) and -1.0 (for each turn with a hit), then 
-it is easy for returns to be dominated by positive values even when the enemy is aiming, firing, and hitting the RL 
-robot very effectively. Using the asymmetric reward compensates for the enemy's limited rate of fire, making hits much 
-more prominent within the returns. I didn't explore alternatives to -10.0, as it seemed to work without much 
-experimentation.
+robot. Why the asymmetry? The enemy's rate of fire is limited by Robocode physics, which dictate that each bullet firing 
+event heats the gun. The enemy's gun will not fire beyond a heat threshold, until it cools below the threshold per the 
+cooling rate. Because the enemy's rate of fire is limited, few bullets can possibly hit the RL agent relative to the 
+number of turns. Thus, if the reward signal is symmetric with 1.0 (for each turn without a hit) and -1.0 (for each turn 
+with a hit), then it is easy for returns to be dominated by positive values even when the enemy is aiming, firing, and 
+hitting the RL robot very effectively. Using the asymmetric reward compensates for the enemy's limited rate of fire, 
+making hits much more prominent within the returns. I didn't explore alternatives to -10.0, as it seemed to work without 
+much experimentation.
 
 ### State Features
-
-
 * Actions 1/2:  Move ahead/back 25 pixels.
-  * **Feature 1 - Has bearing on opponent (binary)** _ELO_:  
-  * **Feature 2 - Cumulative hit-by-bullet power (continuous)**  _ELO_:  Each bullet inflicts a certain about of damage (e.g., 
+  * **Feature 1 - Has bearing on opponent (binary)** _ELO_:  Consider moving if Features 6 and 7 have values indicating
+    that movement would be useful (see below).
+  * **Feature 2 - Cumulative hit-by-bullet power (continuous)**  Each bullet inflicts a certain about of damage (e.g., 
     reduction of energy by four points for standard bullets). This feature tracks the cumulative decaying bullet power 
     that has hit the RL robot. In each turn, the bullet power that just hit the RL robot is added to the cumulative 
-    total, and the total decays by 0.9 on each subsequent turn. _ELO_:  Turn and flee when large, continue on the 
-    current trajectory when near zero.
+    total, and the resulting total decays by 0.9 on each subsequent turn. _ELO_:  Turn and flee when this feature is
+    large, and continue on the current trajectory when this feature is near zero.
   * **Feature 3 - The action collides the RL robot with the opponent robot (binary)** _ELO_:  Take the action when 
     `False` and move in the opposite direction when `True`.
   * **Feature 4 - The action can be completed with a remaining buffer of 100 pixels to the boundary (binary)** 
   _ELO_:  Take the action when `True` and take a different action when `False`.
   * **Feature 5 - The action will continue to take us farther from our previous location (binary)** Given our previous
-    and current locations, this is `True` if the action will take us even farther from our previous location. This feature
-    was critical in getting the RL robot to string together extended sequences of forward and backward navigation. 
-    Without it, the agent had no way to explain the goodness of moving forward following a previous forward movement.
-  * **Feature 6 - Bearing is clockwise-orthogonal to enemy (binary)** The funneled, shortest degree change from the RL 
-    robot's current heading to the bearing that would be clockwise-orthogonal to the opponent's direction. This feature 
-    is explained in the following figure.
-  * **Feature 7 - Bearing is counterclockwise-orthogonal to enemy (binary)** Similar to the previous feature, except 
+    and current locations, this is `True` if the action will take us even farther from our previous location. This 
+    feature was critical in getting the RL robot to string together extended sequences of forward and backward 
+    navigation. Without it, the agent had no way to explain the goodness of moving forward following a previous forward 
+    movement. _ELO_:  Move in whatever direction continues the trajectory.
+  * **Feature 6 - Bearing is clockwise-orthogonal to enemy (continuous)** The funneled, shortest degree change from the 
+    RL robot's current heading to the bearing that would be clockwise-orthogonal to the opponent's direction. This feature 
+    is depicted in the following figure:
+    
+    ![robocode-ortho](robocode-figs/robocode-ortho.png)
+  
+    In the figure, two line segments (clockwise-orthogonal and counterclockwise-orthogonal) are drawn at right angles
+    to the line segment that connects the opponent to the RL robot. The RL robot's heading is shown as a degree offset
+    of theta from the clockwise-orthogonal line segment. This value of theta is funneled per the earlier figure, and the
+    funneled value is used as the value for this feature. This feature value is maximized when movement ahead or back
+    would generate the greatest angular velocity of the line segment connecting the two robots. _ELO_:  Movements ahead 
+    and back are likely to be useful to the extent that they make aiming more difficult for the enemy, that is, when
+    the value of this feature is maximized.
+  * **Feature 7 - Bearing is counterclockwise-orthogonal to enemy (continuous)** Similar to the previous feature, except 
     that it is with respect to the counterclockwise-orthogonal bearing (see the previous figure).
     
 * Actions 3/4:  Turn left/right 10 degrees.
-  * **Feature 1 - Has bearing on opponent (binary)** _ELO_:  Keep gun stationary when `False` and consider rotating gun 
-    either left or right when `True`.
+  * **Feature 1 - Has bearing on opponent (binary)** _ELO_:  Do not turn when `False` and consider turning either left 
+    or right when `True`.
+  * **Feature 2 - Bearing is clockwise-orthogonal to enemy (continuous)** (same as Feature 6 for ahead/back)
+  * **Feature 3 - Bearing is counterclockwise-orthogonal to enemy (continuous)** (same as Feature 7 for ahead/back)
     
 * Actions 5/6:  Turn radar left/right 5 degrees. 
   * (same features as described above for aiming)
 
 
 ### Learning Model and Training
+The full training command with all parameters is listed below:
+```
+rlai train --random-seed 12345 --agent rlai.environments.robocode.RobocodeAgent --gamma 0.9 --environment rlai.environments.robocode.RobocodeEnvironment --port 54321 --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode SARSA --n-steps 100 --num-improvements 10000 --num-episodes-per-improvement 1 --num-updates-per-improvement 1 --epsilon 0.15 --q-S-A rlai.value_estimation.function_approximation.estimators.ApproximateStateActionValueEstimator --plot-model --plot-model-bins 10 --plot-model-per-improvements 100 --function-approximation-model rlai.value_estimation.function_approximation.models.sklearn.SKLearnSGD --loss squared_loss --sgd-alpha 0.0 --learning-rate constant --eta0 0.001 --feature-extractor rlai.environments.robocode.RobocodeFeatureExtractor --make-final-policy-greedy True --num-improvements-per-plot 50 --save-agent-path ~/Desktop/robot_agent_move.pickle
+```
 
 ### Results
+The policy learned above produces the following Robocode battle:
 
 {% include youtubePlayer.html id="JU24oD3JpgI" %}
+
+A few things are worth noting about the RL robot's policy:
+
+* It strings together long sequences of ahead or back movement (see ahead/back Feature 5 above).
+* The RL robot turns when hit by bullets but then continues with ahead/back movement (see ahead/back Feature 2 above).
+* An ahead/back sequence terminates when the RL robot nears a boundary, and the RL robot reverses direction (see 
+  ahead/back Feature 4 above).
+* It is not uncommon for the movement-only RL robot to defeat this particular enemy, as it often settles into a
+  movement pattern like the one shown in the video. The enemy's aim is not properly calibrated for a moving target at
+  long range, and the RL agent's direction reversals incur little if any damage.
 
 ## Integrated Aiming, Firing, and Movement (TBD)
