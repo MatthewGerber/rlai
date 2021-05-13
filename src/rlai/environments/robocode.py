@@ -364,7 +364,7 @@ class RobocodeEnvironment(TcpMdpEnvironment):
         # only issue a movement reward if we do not have an aiming reward. movement rewards are defined for every tick,
         # but aiming rewards are only nonzero when a bullet hits or misses. as aiming rewards are rarer, be sure to use
         # them whenever possible.
-        aiming_reward_value = bullet_power_hit_others - bullet_power_missed
+        aiming_reward_value = bullet_power_hit_others * 100.0 - bullet_power_missed
         if aiming_reward_value == 0:
             reward = RobocodeMovementReward(
                 i=None,
@@ -409,10 +409,10 @@ class RobocodeEnvironment(TcpMdpEnvironment):
             (RobocodeAction.BACK, 25.0),
             (RobocodeAction.TURN_LEFT, 10.0),
             (RobocodeAction.TURN_RIGHT, 10.0),
-            (RobocodeAction.TURN_RADAR_LEFT, 5.0),
-            (RobocodeAction.TURN_RADAR_RIGHT, 5.0),
-            (RobocodeAction.TURN_GUN_LEFT, 5.0),
-            (RobocodeAction.TURN_GUN_RIGHT, 5.0),
+            (RobocodeAction.TURN_RADAR_LEFT, 10.0),
+            (RobocodeAction.TURN_RADAR_RIGHT, 10.0),
+            (RobocodeAction.TURN_GUN_LEFT, 10.0),
+            (RobocodeAction.TURN_GUN_RIGHT, 10.0),
             (RobocodeAction.FIRE, 1.0)
         ]
 
@@ -1151,8 +1151,9 @@ class RobocodeFeatureExtractor(FeatureExtractor):
 
         slope = RobocodeFeatureExtractor.compass_slope(heading)
 
-        # if slope is zero, then we'll never intersect the top. return infinity.
-        if slope == 0.0:
+        # if slope is zero, then we'll never intersect the top. return infinity. don't measure coverage for the case of
+        # 0.0, as it's exceedingly difficult to generate the condition in a short test run.
+        if slope == 0.0:  # pragma no cover
             intersect_x = np.inf
         else:
             y_intercept = RobocodeFeatureExtractor.compass_y_intercept(heading, x, y)
@@ -1177,8 +1178,9 @@ class RobocodeFeatureExtractor(FeatureExtractor):
 
         slope = RobocodeFeatureExtractor.compass_slope(heading)
 
-        # if slope is zero, then we'll never intersect the top. return infinity.
-        if slope == 0.0:
+        # if slope is zero, then we'll never intersect the top. return infinity. don't measure coverage for the case of
+        # 0.0, as it's exceedingly difficult to generate the condition in a short test run.
+        if slope == 0.0:  # pragma no cover
             intersect_x = np.inf
         else:
             y_intercept = RobocodeFeatureExtractor.compass_y_intercept(heading, x, y)
@@ -1422,7 +1424,8 @@ class RobocodeFeatureExtractor(FeatureExtractor):
 
         degrees = degrees % 360.0
 
-        if degrees < 0 or degrees > 360:
+        # the following should be impossible
+        if degrees < 0 or degrees > 360:  # pragma no cover
             raise ValueError(f'Failed to normalize degrees:  {degrees}')
 
         return degrees
