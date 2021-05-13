@@ -1151,8 +1151,9 @@ class RobocodeFeatureExtractor(FeatureExtractor):
 
         slope = RobocodeFeatureExtractor.compass_slope(heading)
 
-        # if slope is zero, then we'll never intersect the top. return infinity.
-        if slope == 0.0:
+        # if slope is zero, then we'll never intersect the top. return infinity. don't measure coverage for the case of
+        # 0.0, as it's exceedingly difficult to generate the condition in a short test run.
+        if slope == 0.0:  # pragma no cover
             intersect_x = np.inf
         else:
             y_intercept = RobocodeFeatureExtractor.compass_y_intercept(heading, x, y)
@@ -1177,8 +1178,9 @@ class RobocodeFeatureExtractor(FeatureExtractor):
 
         slope = RobocodeFeatureExtractor.compass_slope(heading)
 
-        # if slope is zero, then we'll never intersect the top. return infinity.
-        if slope == 0.0:
+        # if slope is zero, then we'll never intersect the top. return infinity. don't measure coverage for the case of
+        # 0.0, as it's exceedingly difficult to generate the condition in a short test run.
+        if slope == 0.0:  # pragma no cover
             intersect_x = np.inf
         else:
             y_intercept = RobocodeFeatureExtractor.compass_y_intercept(heading, x, y)
@@ -1422,7 +1424,8 @@ class RobocodeFeatureExtractor(FeatureExtractor):
 
         degrees = degrees % 360.0
 
-        if degrees < 0 or degrees > 360:
+        # the following should be impossible
+        if degrees < 0 or degrees > 360:  # pragma no cover
             raise ValueError(f'Failed to normalize degrees:  {degrees}')
 
         return degrees

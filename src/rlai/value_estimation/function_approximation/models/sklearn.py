@@ -542,7 +542,7 @@ class SKLearnSGD(FunctionApproximationModel):
         :return: Dictionary.
         """
 
-        state_dict = dict(self.__dict__)
+        state_dict = super().__getstate__()
 
         # clear other memory intensive attributes
         state_dict['plot_iteration'] = 0

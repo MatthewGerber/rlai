@@ -147,8 +147,8 @@ class TcpMdpEnvironment(MdpEnvironment, ABC):
         :return: Message string.
         """
 
-        # uncomment the following code to store a state sequence for unit test fixture purposes. also uncomment the bit
-        # of code in the close function.
+        # uncomment the following code to store a state sequence that becomes part of test fixture. also uncomment the
+        # bit of code in the close function of this class.
         # message = self.server_connection.recv(999999999).decode('utf-8')
         # if not hasattr(self, 'state_sequence_file'):
         #     import os

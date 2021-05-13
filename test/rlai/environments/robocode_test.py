@@ -15,8 +15,9 @@ from rlai.runners.trainer import run
 
 def test_learn():
 
-    # set the following to True to update the fixture. if you do this, then you'll need to start the robocode game
-    # and uncomment some stuff in rlai.environments.network.TcpMdpEnvironment.read_from_client
+    # set the following to True to update the fixture. if you do this, then you'll also need to start the robocode game
+    # and uncomment some stuff in rlai.environments.network.TcpMdpEnvironment.read_from_client in order to update the
+    # test fixture.
     update_fixture = False
 
     robocode_port = 54321
@@ -68,7 +69,7 @@ def test_learn():
 
     # run training and load resulting agent
     agent_path = tempfile.NamedTemporaryFile(delete=False).name
-    cmd = f'--random-seed 12345 --agent rlai.environments.robocode.RobocodeAgent --gamma 0.9 --environment rlai.environments.robocode.RobocodeEnvironment --port {robocode_port} --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode SARSA --n-steps 100 --num-improvements 2 --num-episodes-per-improvement 1 --num-updates-per-improvement 1 --epsilon 0.15 --q-S-A rlai.value_estimation.function_approximation.estimators.ApproximateStateActionValueEstimator --plot-model --plot-model-bins 10 --plot-model-per-improvements 10 --function-approximation-model rlai.value_estimation.function_approximation.models.sklearn.SKLearnSGD --feature-extractor rlai.environments.robocode.RobocodeFeatureExtractor --make-final-policy-greedy True --num-improvements-per-plot 5 --save-agent-path {agent_path}'
+    cmd = f'--random-seed 12345 --agent rlai.environments.robocode.RobocodeAgent --gamma 0.9 --environment rlai.environments.robocode.RobocodeEnvironment --port {robocode_port} --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode SARSA --n-steps 100 --num-improvements 50 --num-episodes-per-improvement 1 --num-updates-per-improvement 1 --epsilon 0.15 --q-S-A rlai.value_estimation.function_approximation.estimators.ApproximateStateActionValueEstimator --plot-model --plot-model-bins 10 --plot-model-per-improvements 50 --function-approximation-model rlai.value_estimation.function_approximation.models.sklearn.SKLearnSGD --feature-extractor rlai.environments.robocode.RobocodeFeatureExtractor --make-final-policy-greedy True --num-improvements-per-plot 50 --save-agent-path {agent_path}'
     run(shlex.split(cmd))
 
     if not update_fixture:
@@ -77,6 +78,7 @@ def test_learn():
     with open(agent_path, 'rb') as f:
         agent = pickle.load(f)
 
+    # if we're updating the test fixture, then save the state sequence and resulting policy to disk.
     if update_fixture:
         with open(os.path.expanduser('~/Desktop/state_sequence.txt'), 'r') as f:
             state_sequence = f.readlines()

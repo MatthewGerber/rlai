@@ -21,7 +21,6 @@ that make it an appealing testbed for reinforcement learning:
 The purpose of this case study is to explore the use of RLAI for learning robot policies.
 
 # Installing Robocode
-
 1. Download the Robocode installer 
    [here](https://github.com/MatthewGerber/robocode/raw/master/build/robocode-rlai-setup.jar). This is a customized 
    build of Robocode that has been modified to make it compatible with RLAI. This build provides robots with elevated 
@@ -32,7 +31,6 @@ The purpose of this case study is to explore the use of RLAI for learning robot 
 1. Run the Robocode installer. Install to a directory such as `robocode_rlai`.
 
 # Running Robocode with RLAI
-
 1. Start the Robocode RLAI environment. This is most easily done using the 
    [JupyterLab notebook](../jupyterlab_guide.md). There is already a configuration saved in the notebook that should 
    suffice as a demonstration of reinforcement learning with Robocode. Load the configuration and start it.
@@ -270,7 +268,7 @@ following challenges:
 * Obstacle avoidance:  Obstacles include boundary walls as well as the opponent robot. The RL robot will need tactics 
   for avoiding obstacles and navigating away or around them when they are encountered. 
 * Bullet avoidance:  The RL agent will need to move such that it is difficult for the opponent to aim and fire 
-  effectively.  
+  effectively.
 * Bullet escape:  The opponent will inevitably score bullet hits. Success will depend partly on how the RL agent
   responds to bullet hits.
 
@@ -327,8 +325,7 @@ much experimentation.
     
 * Actions 5/6:  Turn radar left/right 5 degrees. 
   * (same features as described above for aiming)
-
-
+  
 ### Learning Model and Training
 The full training command with all parameters is listed below:
 ```
@@ -346,8 +343,8 @@ A few things are worth noting about the RL robot's policy:
 * The RL robot turns when hit by bullets but then continues with ahead/back movement (see ahead/back Feature 2 above).
 * An ahead/back sequence terminates when the RL robot nears a boundary, and the RL robot reverses direction (see 
   ahead/back Feature 4 above).
-* It is not uncommon for the movement-only RL robot to defeat this particular enemy, as it often settles into a
+* It is not uncommon for the movement-only RL robot to defeat this particular enemy, as the former often settles into a
   movement pattern like the one shown in the video. The enemy's aim is not properly calibrated for a moving target at
-  long range, and the RL agent's direction reversals incur little if any damage.
+  long range, and the RL agent's repeated direction reversals incur little if any damage.
 
 ## Integrated Aiming, Firing, and Movement (TBD)
