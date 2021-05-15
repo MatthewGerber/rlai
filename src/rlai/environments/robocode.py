@@ -283,8 +283,11 @@ class RobocodeEnvironment(TcpMdpEnvironment):
         event_type_events: Dict[str, List[Dict]] = client_dict['events']
 
         # calculate number of turns that have passed since previous call to the current function. will be greater than
-        # 1 any time the previous action took more than 1 turn to complete.
-        turns_passed = 0.0 if self.previous_state is None else client_dict['state']['time'] - self.previous_state.time
+        # 1 any time the previous action took more than 1 turn to complete (e.g., moving long distances).
+        if self.previous_state is None:
+            turns_passed = 0
+        else:
+            turns_passed = client_dict['state']['time'] - self.previous_state.time
 
         # bullet power that hit self
         bullet_power_hit_self = sum([
@@ -331,11 +334,15 @@ class RobocodeEnvironment(TcpMdpEnvironment):
         else:
             prior_state_different_location = self.previous_state.prior_state_different_location
 
-        # most recently scanned enemy, decaying over time.
+        # scanned enemy and how many turns ago it was scanned
         most_recent_scanned_robot = event_type_events.get('ScannedRobotEvent', [None])[-1]
-        most_recent_scanned_robot_decayed = 0.0 if most_recent_scanned_robot is None else 1.0
-        if self.previous_state is not None:
-            most_recent_scanned_robot_decayed += self.previous_state.most_recent_scanned_robot_decayed * (0.99 ** turns_passed)
+        most_recent_scanned_robot_age_turns = None
+        if most_recent_scanned_robot is None:
+            if self.previous_state is not None and self.previous_state.most_recent_scanned_robot is not None:
+                most_recent_scanned_robot = self.previous_state.most_recent_scanned_robot
+                most_recent_scanned_robot_age_turns = self.previous_state.most_recent_scanned_robot_age_turns + turns_passed
+        else:
+            most_recent_scanned_robot_age_turns = 0
 
         # the round terminates either with death or victory -- it's a harsh world out there.
         dead = len(event_type_events.get('DeathEvent', [])) > 0
@@ -354,7 +361,7 @@ class RobocodeEnvironment(TcpMdpEnvironment):
             previous_state=self.previous_state,
             prior_state_different_location=prior_state_different_location,
             most_recent_scanned_robot=most_recent_scanned_robot,
-            most_recent_scanned_robot_decayed=most_recent_scanned_robot_decayed,
+            most_recent_scanned_robot_age_turns=most_recent_scanned_robot_age_turns,
             AA=self.robot_actions,
             terminal=terminal
         )
@@ -472,8 +479,8 @@ class RobocodeState(MdpState):
             events: Dict[str, List[Dict]],
             previous_state,
             prior_state_different_location,
-            most_recent_scanned_robot: Dict,
-            most_recent_scanned_robot_decayed: float,
+            most_recent_scanned_robot: Optional[Dict],
+            most_recent_scanned_robot_age_turns: Optional[int],
             AA: List[Action],
             terminal: bool
     ):
@@ -508,7 +515,7 @@ class RobocodeState(MdpState):
         :param previous_state: Previous state.
         :param prior_state_different_location: Most recent prior state at a different location than the current state.
         :param most_recent_scanned_robot: Scanned enemy.
-        :param most_recent_scanned_robot_decayed: Decaying value.
+        :param most_recent_scanned_robot_age_turns: Age of scanned enemy, in turns.
         :param AA: List of actions that can be taken.
         :param terminal: Whether or not the state is terminal.
         """
@@ -547,7 +554,7 @@ class RobocodeState(MdpState):
         self.previous_state: Optional[RobocodeState] = previous_state
         self.prior_state_different_location = prior_state_different_location
         self.most_recent_scanned_robot = most_recent_scanned_robot
-        self.most_recent_scanned_robot_decayed = most_recent_scanned_robot_decayed
+        self.most_recent_scanned_robot_age_turns = most_recent_scanned_robot_age_turns
 
     def __getstate__(
             self
@@ -614,20 +621,6 @@ class RobocodeFeatureExtractor(FeatureExtractor):
 
         return fex, unparsed_args
 
-    def reset_for_new_run(
-            self,
-            state: MdpState
-    ):
-        """
-        Reset the feature extractor for a new run.
-
-        :param state: Initial state.
-        """
-
-        super().reset_for_new_run(state)
-
-        self.most_recent_scanned_robot = None
-
     def extract(
             self,
             states: List[RobocodeState],
@@ -680,7 +673,6 @@ class RobocodeFeatureExtractor(FeatureExtractor):
 
             [
                 f'{action.name}_intercept',
-                'enemy_bearing',
                 'hit_by_bullet_power',
                 'hit_robot',
                 'enough_room',
@@ -691,7 +683,6 @@ class RobocodeFeatureExtractor(FeatureExtractor):
 
             [
                 f'{action.name}_intercept',
-                'enemy_bearing',
                 'bullet_power_cum',
                 'hit_robot',
                 'enough_room',
@@ -702,45 +693,38 @@ class RobocodeFeatureExtractor(FeatureExtractor):
 
             [
                 f'{action.name}_intercept',
-                'enemy_bearing',
                 'sigmoid_cw_ortho',
                 'sigmoid_ccw_ortho'
             ] if action.name == RobocodeAction.TURN_LEFT else
 
             [
                 f'{action.name}_intercept',
-                'enemy_bearing',
                 'sigmoid_cw_ortho',
                 'sigmoid_ccw_ortho'
             ] if action.name == RobocodeAction.TURN_RIGHT else
 
             [
                 f'{action.name}_intercept',
-                'enemy_bearing',
                 'sigmoid_lat_dist'
             ] if action.name == RobocodeAction.TURN_RADAR_LEFT else
 
             [
                 f'{action.name}_intercept',
-                'enemy_bearing',
                 'sigmoid_lat_dist'
             ] if action.name == RobocodeAction.TURN_RADAR_RIGHT else
 
             [
                 f'{action.name}_intercept',
-                'enemy_bearing',
                 'sigmoid_lat_dist'
             ] if action.name == RobocodeAction.TURN_GUN_LEFT else
 
             [
                 f'{action.name}_intercept',
-                'enemy_bearing',
                 'sigmoid_lat_dist'
             ] if action.name == RobocodeAction.TURN_GUN_RIGHT else
 
             [
                 f'{action.name}_intercept',
-                'enemy_bearing',
                 'funnel_lat_dist'
             ]
 
@@ -763,13 +747,15 @@ class RobocodeFeatureExtractor(FeatureExtractor):
         """
 
         if state.most_recent_scanned_robot is None:
-            enemy_bearing_from_self = None
-            enemy_distance_from_self = None
+            most_recent_enemy_bearing_from_self = None
+            most_recent_enemy_distance_from_self = None
+            most_recent_scanned_robot_age_discount = None
         else:
             # the bearing comes to us in radians. normalize to [0,360]. this bearing is relative to our heading, so
             # degrees from north to the enemy would be our heading plus this value.
-            enemy_bearing_from_self = self.normalize(math.degrees(state.most_recent_scanned_robot['bearing']))
-            enemy_distance_from_self = state.most_recent_scanned_robot['distance']
+            most_recent_enemy_bearing_from_self = self.normalize(math.degrees(state.most_recent_scanned_robot['bearing']))
+            most_recent_enemy_distance_from_self = state.most_recent_scanned_robot['distance']
+            most_recent_scanned_robot_age_discount = 0.99 ** state.most_recent_scanned_robot_age_turns
 
         if action_to_extract.name == RobocodeAction.AHEAD or action_to_extract.name == RobocodeAction.BACK:
 
@@ -778,9 +764,6 @@ class RobocodeFeatureExtractor(FeatureExtractor):
 
                     # intercept
                     1.0,
-
-                    # indicator (0/1):  we have a bearing on the enemy
-                    0.0 if enemy_bearing_from_self is None else 1.0,
 
                     # discounted cumulative bullet power
                     state.bullet_power_hit_self_cumulative,
@@ -812,22 +795,22 @@ class RobocodeFeatureExtractor(FeatureExtractor):
                     else 0.0,
 
                     # bearing is clockwise-orthogonal to enemy
-                    0.0 if enemy_bearing_from_self is None else
-                    self.funnel(
+                    0.0 if most_recent_enemy_bearing_from_self is None else
+                    most_recent_scanned_robot_age_discount * self.funnel(
                         self.get_shortest_degree_change(
                             state.heading,
-                            self.normalize(state.heading + enemy_bearing_from_self + 90.0)
+                            self.normalize(state.heading + most_recent_enemy_bearing_from_self + 90.0)
                         ),
                         True,
                         15.0
                     ),
 
                     # bearing is counterclockwise-orthogonal to enemy
-                    0.0 if enemy_bearing_from_self is None else
-                    self.funnel(
+                    0.0 if most_recent_enemy_bearing_from_self is None else
+                    most_recent_scanned_robot_age_discount * self.funnel(
                         self.get_shortest_degree_change(
                             state.heading,
-                            self.normalize(state.heading + enemy_bearing_from_self - 90.0)
+                            self.normalize(state.heading + most_recent_enemy_bearing_from_self - 90.0)
                         ),
                         True,
                         15.0
@@ -835,7 +818,7 @@ class RobocodeFeatureExtractor(FeatureExtractor):
 
                 ]
             else:
-                feature_values = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+                feature_values = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
         elif action_to_extract.name == RobocodeAction.TURN_LEFT or action_to_extract.name == RobocodeAction.TURN_RIGHT:
 
@@ -845,30 +828,27 @@ class RobocodeFeatureExtractor(FeatureExtractor):
                     # intercept
                     1.0,
 
-                    # indicator (0/1):  we have a bearing on the enemy
-                    0.0 if enemy_bearing_from_self is None else 1.0,
-
-                    0.0 if enemy_bearing_from_self is None else
-                    self.sigmoid(
+                    0.0 if most_recent_enemy_bearing_from_self is None else
+                    most_recent_scanned_robot_age_discount * self.sigmoid(
                         self.get_shortest_degree_change(
                             state.heading,
-                            self.normalize(state.heading + enemy_bearing_from_self + 90.0)
+                            self.normalize(state.heading + most_recent_enemy_bearing_from_self + 90.0)
                         ),
                         15.0
                     ),
 
-                    0.0 if enemy_bearing_from_self is None else
-                    self.sigmoid(
+                    0.0 if most_recent_enemy_bearing_from_self is None else
+                    most_recent_scanned_robot_age_discount * self.sigmoid(
                         self.get_shortest_degree_change(
                             state.heading,
-                            self.normalize(state.heading + enemy_bearing_from_self - 90.0)
+                            self.normalize(state.heading + most_recent_enemy_bearing_from_self - 90.0)
                         ),
                         15.0
                     )
 
                 ]
             else:
-                feature_values = [0.0, 0.0, 0.0, 0.0]
+                feature_values = [0.0, 0.0, 0.0]
 
         elif action_to_extract.name.startswith('turnRadar'):
 
@@ -878,25 +858,22 @@ class RobocodeFeatureExtractor(FeatureExtractor):
                     # intercept
                     1.0,
 
-                    # indicator (0/1):  we have a bearing on the enemy
-                    0.0 if enemy_bearing_from_self is None else 1.0,
-
                     # squash lateral distance into [-1.0, 1.0]
-                    0.0 if enemy_bearing_from_self is None else
-                    self.sigmoid(
+                    0.0 if most_recent_enemy_bearing_from_self is None else
+                    most_recent_scanned_robot_age_discount * self.sigmoid(
                         self.get_lateral_distance(
                             -self.get_shortest_degree_change(
                                 state.radar_heading,
-                                self.normalize(state.heading + enemy_bearing_from_self)
+                                self.normalize(state.heading + most_recent_enemy_bearing_from_self)
                             ),
-                            enemy_distance_from_self
+                            most_recent_enemy_distance_from_self
                         ),
                         20.0
                     )
 
                 ]
             else:
-                feature_values = [0.0, 0.0, 0.0]
+                feature_values = [0.0, 0.0]
 
         elif action_to_extract.name.startswith('turnGun'):
 
@@ -906,24 +883,21 @@ class RobocodeFeatureExtractor(FeatureExtractor):
                     # intercept
                     1.0,
 
-                    # indicator (0/1):  we have a bearing on the enemy
-                    0.0 if enemy_bearing_from_self is None else 1.0,
-
                     # squash lateral distance into [-1.0, 1.0]
-                    0.0 if enemy_bearing_from_self is None else
-                    self.sigmoid(
+                    0.0 if most_recent_enemy_bearing_from_self is None else
+                    most_recent_scanned_robot_age_discount * self.sigmoid(
                         self.get_lateral_distance(
                             -self.get_shortest_degree_change(
                                 state.gun_heading,
-                                self.normalize(state.heading + enemy_bearing_from_self)
+                                self.normalize(state.heading + most_recent_enemy_bearing_from_self)
                             ),
-                            enemy_distance_from_self
+                            most_recent_enemy_distance_from_self
                         ),
                         20.0
                     )
                 ]
             else:
-                feature_values = [0.0, 0.0, 0.0]
+                feature_values = [0.0, 0.0]
 
         elif action_to_extract.name == RobocodeAction.FIRE:
 
@@ -933,24 +907,22 @@ class RobocodeFeatureExtractor(FeatureExtractor):
                     # intercept
                     1.0,
 
-                    # indicator (0/1):  we have a bearing on the enemy
-                    0.0 if enemy_bearing_from_self is None else 1.0,
-
-                    # funnel lateral distance to 0.0, scaled by robot scan value.
-                    state.most_recent_scanned_robot_decayed * self.funnel(
+                    # funnel lateral distance to 0.0
+                    0.0 if most_recent_enemy_bearing_from_self is None else
+                    most_recent_scanned_robot_age_discount * self.funnel(
                         self.get_lateral_distance(
                             -self.get_shortest_degree_change(
                                 state.gun_heading,
-                                self.normalize(state.heading + enemy_bearing_from_self)
+                                self.normalize(state.heading + most_recent_enemy_bearing_from_self)
                             ),
-                            enemy_distance_from_self
+                            most_recent_enemy_distance_from_self
                         ),
                         True,
                         20.0
                     )
                 ]
             else:
-                feature_values = [0.0, 0.0, 0.0]
+                feature_values = [0.0, 0.0]
 
         else:  # pragma no cover
             raise ValueError(f'Unknown action:  {action}')
@@ -1433,8 +1405,6 @@ class RobocodeFeatureExtractor(FeatureExtractor):
         )
 
         self.robot_actions = environment.robot_actions
-        self.most_recent_scanned_robot = None
-        self.most_recent_scanned_robot_residual = 0.0
 
 
 @rl_text(chapter='Actions', page=1)
