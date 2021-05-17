@@ -366,8 +366,6 @@ class RobocodeEnvironment(TcpMdpEnvironment):
             terminal=terminal
         )
 
-        logging.debug(f'bullet_power_hit_self_cumulative:  {state.bullet_power_hit_self_cumulative}')
-
         # store bullet firing events so that we can pull out information related to them at a later time step (e.g.,
         # when they hit or miss). add the evaluation time step to each event. the bullet events have times associated
         # with them that are provided by the robocode engine, but those are robocode turns and there isn't always a
@@ -383,7 +381,7 @@ class RobocodeEnvironment(TcpMdpEnvironment):
         # only issue a movement reward if we do not have an aiming reward. movement rewards are defined for every tick,
         # but aiming rewards are only nonzero when a bullet hits or misses. as aiming rewards are rarer, be sure to use
         # them whenever possible.
-        aiming_reward_value = bullet_power_hit_others * 100.0 - bullet_power_missed
+        aiming_reward_value = bullet_power_hit_others * 10.0 - bullet_power_missed
         if aiming_reward_value == 0:
             reward = RobocodeMovementReward(
                 i=None,
@@ -430,8 +428,8 @@ class RobocodeEnvironment(TcpMdpEnvironment):
             (RobocodeAction.TURN_RIGHT, 10.0),
             (RobocodeAction.TURN_RADAR_LEFT, 10.0),
             (RobocodeAction.TURN_RADAR_RIGHT, 10.0),
-            (RobocodeAction.TURN_GUN_LEFT, 10.0),
-            (RobocodeAction.TURN_GUN_RIGHT, 10.0),
+            (RobocodeAction.TURN_GUN_LEFT, 5.0),
+            (RobocodeAction.TURN_GUN_RIGHT, 5.0),
             (RobocodeAction.FIRE, 1.0)
         ]
 
@@ -723,8 +721,11 @@ class RobocodeFeatureExtractor(FeatureExtractor):
                 'sigmoid_lat_dist'
             ] if action.name == RobocodeAction.TURN_GUN_RIGHT else
 
+            # the final feature is FIRE
             [
                 f'{action.name}_intercept',
+                'hit',
+                'missed',
                 'funnel_lat_dist'
             ]
 
@@ -907,6 +908,10 @@ class RobocodeFeatureExtractor(FeatureExtractor):
                     # intercept
                     1.0,
 
+                    state.bullet_power_hit_others,
+
+                    state.bullet_power_missed,
+
                     # funnel lateral distance to 0.0
                     0.0 if most_recent_enemy_bearing_from_self is None else
                     most_recent_scanned_robot_age_discount * self.funnel(
@@ -922,7 +927,7 @@ class RobocodeFeatureExtractor(FeatureExtractor):
                     )
                 ]
             else:
-                feature_values = [0.0, 0.0]
+                feature_values = [0.0, 0.0, 0.0, 0.0]
 
         else:  # pragma no cover
             raise ValueError(f'Unknown action:  {action}')
