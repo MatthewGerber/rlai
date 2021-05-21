@@ -20,15 +20,17 @@ from rlai.value_estimation.function_approximation.models.feature_extraction impo
 
 
 @rl_text(chapter='Rewards', page=1)
-class RobocodeAimingReward(Reward):
+class RobocodeReward(Reward):
     """
-    Robocode aiming reward.
+    Robocode reward.
     """
 
     def __init__(
             self,
-            i,
-            r,
+            i: Optional[int],
+            r: float,
+            gun_reward: float,
+            movement_reward: float,
             bullet_id_fired_event,
             bullet_hit_events,
             bullet_missed_events
@@ -37,7 +39,9 @@ class RobocodeAimingReward(Reward):
         Initialize the reward.
 
         :param i: Identifier for the reward.
-        :param r: Reward value.
+        :param r: Total reward value.
+        :param gun_reward: Portion of total reward due to aiming and firing the gun (e.g., hitting the enemy).
+        :param movement_reward: Portion of total reward due to movement (e.g., avoiding being hit).
         :param bullet_id_fired_event: Bullet identifier firing events.
         :param bullet_hit_events: Bullet hit events.
         :param bullet_missed_events: Bullet missed events.
@@ -48,33 +52,11 @@ class RobocodeAimingReward(Reward):
             r=r
         )
 
+        self.gun_reward = gun_reward
+        self.movement_reward = movement_reward
         self.bullet_id_fired_event = bullet_id_fired_event
         self.bullet_hit_events = bullet_hit_events
         self.bullet_missed_events = bullet_missed_events
-
-
-@rl_text(chapter='Rewards', page=1)
-class RobocodeMovementReward(Reward):
-    """
-    Robocode movement reward.
-    """
-
-    def __init__(
-            self,
-            i,
-            r
-    ):
-        """
-        Initialize the reward.
-
-        :param i: Identifier for the reward.
-        :param r: Reward value.
-        """
-
-        super().__init__(
-            i=i,
-            r=r
-        )
 
 
 @rl_text(chapter='Agents', page=1)
@@ -136,27 +118,35 @@ class RobocodeAgent(StochasticMdpAgent):
             reward: Reward,
             first_t: int,
             final_t: int
-    ) -> List[Tuple[int, float]]:
+    ) -> Dict[int, float]:
         """
         Shape a reward value that has been obtained. Reward shaping entails the calculation of time steps at which
-        returns should be updated along with the weighted reward for each. This function applies exponential discounting
-        based on the value of gamma specified in the current agent (i.e., the traditional reward shaping approach
-        discussed by Sutton and Barto). Subclasses are free to override the current function and shape rewards as needed
-        for the task at hand.
-
-        The current function overrides the super-class implementation to add time shifting of rewards related to gun
-        aiming.
+        returns should be updated along with the weighted reward for each. The super-class implementation applies
+        exponential discounting based on the value of gamma specified in the current agent (i.e., the traditional reward
+        shaping approach discussed by Sutton and Barto). The current function overrides the super-class implementation
+        to add time shifting of rewards related to gun aiming.
 
         :param reward: Obtained reward.
         :param first_t: First time step at which to shape reward value.
         :param final_t: Final time step at which to shape reward value.
-        :return: List of time steps for which returns should be updated, along with shaped rewards.
+        :return: Dictionary of time steps and associated shaped rewards.
         """
 
-        # if we received an aiming reward, then shift the reward backward in time to the evaluation time step of the
-        # most recent bullet event (hit or missed).
-        if isinstance(reward, RobocodeAimingReward) and len(reward.bullet_hit_events) + len(reward.bullet_missed_events) > 0:
+        reward: RobocodeReward
 
+        # the reward will always have a movement component. shape it in the standard way.
+        t_shaped_reward = super().shape_reward(
+            reward=Reward(None, reward.movement_reward),
+            first_t=first_t,
+            final_t=final_t
+        )
+
+        # if the reward has a gun component, then shift the gun component backward in time to the evaluation time step
+        # of the most recent bullet event (hit or missed).
+        if len(reward.bullet_hit_events) + len(reward.bullet_missed_events) > 0:
+
+            # get the most recent origination time step for bullets associated with the given reward. this is the time
+            # step at which the bullet was fired. we're going to shape the reward backward in time starting here.
             shifted_final_t = max([
                 reward.bullet_id_fired_event[bullet_event['bullet']['bulletId']]['step']
                 for bullet_event in reward.bullet_hit_events + reward.bullet_missed_events
@@ -167,11 +157,16 @@ class RobocodeAgent(StochasticMdpAgent):
             first_t = max(0, first_t + shift_amount)
             final_t = shifted_final_t
 
-        return super().shape_reward(
-            reward=reward,
-            first_t=first_t,
-            final_t=final_t
-        )
+            t_shaped_reward.update({
+                t: t_shaped_reward.get(t, 0.0) + shaped_reward
+                for t, shaped_reward in super().shape_reward(
+                    reward=Reward(None, reward.gun_reward),
+                    first_t=first_t,
+                    final_t=final_t
+                )
+            })
+
+        return t_shaped_reward
 
     def __init__(
             self,
@@ -279,7 +274,11 @@ class RobocodeEnvironment(TcpMdpEnvironment):
         :return: 2-tuple of the state and reward.
         """
 
-        # pull out events
+        #########################
+        ##### extract state #####
+        #########################
+
+        # pull out robocode game events
         event_type_events: Dict[str, List[Dict]] = client_dict['events']
 
         # calculate number of turns that have passed since previous call to the current function. will be greater than
@@ -330,11 +329,11 @@ class RobocodeEnvironment(TcpMdpEnvironment):
         elif self.previous_state.x != client_dict['state']['x'] or self.previous_state.y != client_dict['state']['y']:
             prior_state_different_location = self.previous_state
         # otherwise (if the previous and current state have the same location), then use the previous state's prior
-        # state.
+        # state. this will be the case when we did something other than move on our previous turn.
         else:
             prior_state_different_location = self.previous_state.prior_state_different_location
 
-        # scanned enemy and how many turns ago it was scanned
+        # most recent scanned enemy and how many turns ago it was scanned
         most_recent_scanned_robot = event_type_events.get('ScannedRobotEvent', [None])[-1]
         most_recent_scanned_robot_age_turns = None
         if most_recent_scanned_robot is None:
@@ -366,10 +365,14 @@ class RobocodeEnvironment(TcpMdpEnvironment):
             terminal=terminal
         )
 
+        ############################
+        ##### calculate reward #####
+        ############################
+
         # store bullet firing events so that we can pull out information related to them at a later time step (e.g.,
-        # when they hit or miss). add the evaluation time step to each event. the bullet events have times associated
-        # with them that are provided by the robocode engine, but those are robocode turns and there isn't always a
-        # perfect 1:1 between robocode turns and evaluation time steps.
+        # when they hit or miss). add the rlai time step (t) to each event. there is a 1:1 between rlai time steps and
+        # actions, but an action can extend over many robocode turns (e.g., movement). the bullet events have times
+        # associated with them that correspond to robocode turns.
         self.bullet_id_fired_event.update({
             bullet_fired_event['bullet']['bulletId']: {
                 **bullet_fired_event,
@@ -378,23 +381,19 @@ class RobocodeEnvironment(TcpMdpEnvironment):
             for bullet_fired_event in event_type_events.get('BulletFiredEvent', [])
         })
 
-        # only issue a movement reward if we do not have an aiming reward. movement rewards are defined for every tick,
-        # but aiming rewards are only nonzero when a bullet hits or misses. as aiming rewards are rarer, be sure to use
-        # them whenever possible.
-        aiming_reward_value = bullet_power_hit_others * 10.0 - bullet_power_missed
-        if aiming_reward_value == 0:
-            reward = RobocodeMovementReward(
-                i=None,
-                r=1.0 if bullet_power_hit_self == 0.0 else -10.0
-            )
-        else:
-            reward = RobocodeAimingReward(
-                i=None,
-                r=aiming_reward_value,
-                bullet_id_fired_event=self.bullet_id_fired_event,
-                bullet_hit_events=bullet_hit_events,
-                bullet_missed_events=bullet_missed_events
-            )
+        gun_reward = bullet_power_hit_others * 10.0 - bullet_power_missed
+        movement_reward = 1.0 if bullet_power_hit_self == 0.0 else -10.0
+        total_reward = gun_reward + movement_reward
+
+        reward = RobocodeReward(
+            i=None,
+            r=total_reward,
+            gun_reward=gun_reward,
+            movement_reward=movement_reward,
+            bullet_id_fired_event=self.bullet_id_fired_event,
+            bullet_hit_events=bullet_hit_events,
+            bullet_missed_events=bullet_missed_events
+        )
 
         self.previous_state = state
 

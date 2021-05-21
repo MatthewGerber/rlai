@@ -145,7 +145,7 @@ def evaluate_q_pi(
                 final_t=curr_t
             )
 
-            # update truncated return accumulators with shaped rewards
+            # update return accumulators with shaped rewards
             t_state_a_g.update({
 
                 return_t: (
@@ -153,7 +153,7 @@ def evaluate_q_pi(
                     t_state_a_g[return_t][1],
                     t_state_a_g[return_t][2] + shaped_reward
                 )
-                for return_t, shaped_reward in t_shaped_reward
+                for return_t, shaped_reward in t_shaped_reward.items()
 
                 # reward shapers might return invalid time steps. ignore these.
                 if return_t in t_state_a_g

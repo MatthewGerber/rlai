@@ -1,6 +1,6 @@
 from abc import ABC
 from argparse import ArgumentParser
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Dict
 
 import numpy as np
 from numpy.random import RandomState
@@ -49,7 +49,7 @@ class MdpAgent(Agent, ABC):
             reward: Reward,
             first_t: int,
             final_t: int
-    ) -> List[Tuple[int, float]]:
+    ) -> Dict[int, float]:
         """
         Shape a reward value that has been obtained. Reward shaping entails the calculation of time steps at which
         returns should be updated along with the weighted reward for each. This function applies exponential discounting
@@ -60,14 +60,14 @@ class MdpAgent(Agent, ABC):
         :param reward: Obtained reward.
         :param first_t: First time step at which to shape reward value.
         :param final_t: Final time step at which to shape reward value.
-        :return: List of time steps for which returns should be updated, along with shaped rewards.
+        :return: Dictionary of time steps and associated shaped rewards.
         """
 
         # shape reward from the first time step through the final time step, including both endpoints.
-        t_shaped_reward = [
-            (t, self.gamma ** (final_t - t) * reward.r)
+        t_shaped_reward = {
+            t: self.gamma ** (final_t - t) * reward.r
             for t in range(first_t, final_t + 1)
-        ]
+        }
 
         return t_shaped_reward
 
