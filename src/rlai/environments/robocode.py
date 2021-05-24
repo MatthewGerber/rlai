@@ -132,39 +132,44 @@ class RobocodeAgent(StochasticMdpAgent):
         :return: Dictionary of time steps and associated shaped rewards.
         """
 
-        reward: RobocodeReward
+        # the typical case is to shape a reward returned by the robocode environment
+        if isinstance(reward, RobocodeReward):
 
-        # the reward will always have a movement component. shape it in the standard way.
-        t_shaped_reward = super().shape_reward(
-            reward=Reward(None, reward.movement_reward),
-            first_t=first_t,
-            final_t=final_t
-        )
+            # the reward will always have a movement component. shape it in the standard way.
+            t_shaped_reward = super().shape_reward(
+                reward=Reward(None, reward.movement_reward),
+                first_t=first_t,
+                final_t=final_t
+            )
 
-        # if the reward has a gun component, then shift the gun component backward in time to the evaluation time step
-        # of the most recent bullet event (hit or missed).
-        if len(reward.bullet_hit_events) + len(reward.bullet_missed_events) > 0:
+            # if the reward has a gun component, then shift the gun component backward in time to the evaluation time step
+            # of the most recent bullet event (hit or missed).
+            if len(reward.bullet_hit_events) + len(reward.bullet_missed_events) > 0:
 
-            # get the most recent origination time step for bullets associated with the given reward. this is the time
-            # step at which the bullet was fired. we're going to shape the reward backward in time starting here.
-            shifted_final_t = max([
-                reward.bullet_id_fired_event[bullet_event['bullet']['bulletId']]['step']
-                for bullet_event in reward.bullet_hit_events + reward.bullet_missed_events
-            ])
+                # get the most recent origination time step for bullets associated with the given reward. this is the time
+                # step at which the bullet was fired. we're going to shape the reward backward in time starting here.
+                shifted_final_t = max([
+                    reward.bullet_id_fired_event[bullet_event['bullet']['bulletId']]['step']
+                    for bullet_event in reward.bullet_hit_events + reward.bullet_missed_events
+                ])
 
-            # also shift the value of first_t to maintain proper n-step update intervals
-            shift_amount = shifted_final_t - final_t
-            first_t = max(0, first_t + shift_amount)
-            final_t = shifted_final_t
+                # also shift the value of first_t to maintain proper n-step update intervals
+                shift_amount = shifted_final_t - final_t
+                first_t = max(0, first_t + shift_amount)
+                final_t = shifted_final_t
 
-            t_shaped_reward.update({
-                t: t_shaped_reward.get(t, 0.0) + shaped_reward
-                for t, shaped_reward in super().shape_reward(
-                    reward=Reward(None, reward.gun_reward),
-                    first_t=first_t,
-                    final_t=final_t
-                )
-            })
+                t_shaped_reward.update({
+                    t: t_shaped_reward.get(t, 0.0) + shaped_reward
+                    for t, shaped_reward in super().shape_reward(
+                        reward=Reward(None, reward.gun_reward),
+                        first_t=first_t,
+                        final_t=final_t
+                    ).items()
+                })
+
+        # a standard reward is returned by the underlying networked environment if the game client disconnects.
+        else:
+            t_shaped_reward = {}
 
         return t_shaped_reward
 
@@ -319,7 +324,9 @@ class RobocodeEnvironment(TcpMdpEnvironment):
         # cumulative bullet power that has hit self, decaying over time.
         bullet_power_hit_self_cumulative = bullet_power_hit_self
         if self.previous_state is not None:
-            bullet_power_hit_self_cumulative += self.previous_state.bullet_power_hit_self_cumulative * (0.9 ** turns_passed)
+            bullet_power_hit_self_cumulative += self.previous_state.bullet_power_hit_self_cumulative * (0.999 ** turns_passed)
+
+        logging.debug(f'Bullet power hit self cumulative:  {bullet_power_hit_self_cumulative}')
 
         # get most recent prior state that was at a different location than the current state. if there is no previous
         # state, then there is no such state.
@@ -382,7 +389,7 @@ class RobocodeEnvironment(TcpMdpEnvironment):
         })
 
         gun_reward = bullet_power_hit_others * 10.0 - bullet_power_missed
-        movement_reward = 1.0 if bullet_power_hit_self == 0.0 else -10.0
+        movement_reward = 1.0 if bullet_power_hit_self == 0.0 else -100.0
         total_reward = gun_reward + movement_reward
 
         reward = RobocodeReward(
@@ -702,11 +709,15 @@ class RobocodeFeatureExtractor(FeatureExtractor):
 
             [
                 f'{action.name}_intercept',
+                'missed',
+                'hit',
                 'sigmoid_lat_dist'
             ] if action.name == RobocodeAction.TURN_RADAR_LEFT else
 
             [
                 f'{action.name}_intercept',
+                'missed',
+                'hit',
                 'sigmoid_lat_dist'
             ] if action.name == RobocodeAction.TURN_RADAR_RIGHT else
 
@@ -755,7 +766,9 @@ class RobocodeFeatureExtractor(FeatureExtractor):
             # degrees from north to the enemy would be our heading plus this value.
             most_recent_enemy_bearing_from_self = self.normalize(math.degrees(state.most_recent_scanned_robot['bearing']))
             most_recent_enemy_distance_from_self = state.most_recent_scanned_robot['distance']
-            most_recent_scanned_robot_age_discount = 0.99 ** state.most_recent_scanned_robot_age_turns
+            most_recent_scanned_robot_age_discount = 0.999 ** state.most_recent_scanned_robot_age_turns
+
+            logging.debug(f'Scanned robot age discount:  {most_recent_scanned_robot_age_discount}')
 
         if action_to_extract.name == RobocodeAction.AHEAD or action_to_extract.name == RobocodeAction.BACK:
 
@@ -766,7 +779,7 @@ class RobocodeFeatureExtractor(FeatureExtractor):
                     1.0,
 
                     # discounted cumulative bullet power
-                    state.bullet_power_hit_self_cumulative,
+                    min(10.0, state.bullet_power_hit_self_cumulative) / 10.0,
 
                     # we just hit a robot in the direction we're about to move
                     1.0 if (action.name == RobocodeAction.AHEAD and any(-90 < e['bearing'] < 90 for e in state.events.get('HitRobotEvent', []))) or
@@ -858,6 +871,10 @@ class RobocodeFeatureExtractor(FeatureExtractor):
                     # intercept
                     1.0,
 
+                    1.0 if state.bullet_power_missed > 0.0 else 0.0,
+
+                    1.0 if state.bullet_power_hit_others > 0.0 else 0.0,
+
                     # squash lateral distance into [-1.0, 1.0]
                     0.0 if most_recent_enemy_bearing_from_self is None else
                     most_recent_scanned_robot_age_discount * self.sigmoid(
@@ -873,7 +890,7 @@ class RobocodeFeatureExtractor(FeatureExtractor):
 
                 ]
             else:
-                feature_values = [0.0, 0.0]
+                feature_values = [0.0, 0.0, 0.0, 0.0]
 
         elif action_to_extract.name.startswith('turnGun'):
 
@@ -907,9 +924,9 @@ class RobocodeFeatureExtractor(FeatureExtractor):
                     # intercept
                     1.0,
 
-                    state.bullet_power_hit_others,
+                    1.0 if state.bullet_power_missed > 0.0 else 0.0,
 
-                    state.bullet_power_missed,
+                    1.0 if state.bullet_power_hit_others > 0.0 else 0.0,
 
                     # funnel lateral distance to 0.0
                     0.0 if most_recent_enemy_bearing_from_self is None else
