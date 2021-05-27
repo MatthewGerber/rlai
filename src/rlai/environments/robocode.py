@@ -167,6 +167,14 @@ class RobocodeAgent(StochasticMdpAgent):
                     ).items()
                 })
 
+        elif isinstance(reward, Reward):
+
+            t_shaped_reward = super().shape_reward(
+                reward=reward,
+                first_t=first_t,
+                final_t=final_t
+            )
+
         # a standard reward is returned by the underlying networked environment if the game client disconnects.
         else:
             t_shaped_reward = {}
@@ -321,12 +329,18 @@ class RobocodeEnvironment(TcpMdpEnvironment):
         else:
             bullet_power_missed_since_previous_hit = self.previous_state.bullet_power_missed_since_previous_hit + bullet_power_missed
 
-        # cumulative bullet power that has hit self, decaying over time.
+        # cumulative bullet power that has hit self, hit others, and missed decaying over time.
         bullet_power_hit_self_cumulative = bullet_power_hit_self
         if self.previous_state is not None:
-            bullet_power_hit_self_cumulative += self.previous_state.bullet_power_hit_self_cumulative * (0.999 ** turns_passed)
+            bullet_power_hit_self_cumulative += self.previous_state.bullet_power_hit_self_cumulative * (0.99 ** turns_passed)
 
-        logging.debug(f'Bullet power hit self cumulative:  {bullet_power_hit_self_cumulative}')
+        bullet_power_hit_others_cumulative = bullet_power_hit_others
+        if self.previous_state is not None:
+            bullet_power_hit_others_cumulative += self.previous_state.bullet_power_hit_others_cumulative * (0.99 ** turns_passed)
+
+        bullet_power_missed_cumulative = bullet_power_missed
+        if self.previous_state is not None:
+            bullet_power_missed_cumulative += self.previous_state.bullet_power_missed_cumulative * (0.99 ** turns_passed)
 
         # get most recent prior state that was at a different location than the current state. if there is no previous
         # state, then there is no such state.
@@ -361,7 +375,9 @@ class RobocodeEnvironment(TcpMdpEnvironment):
             bullet_power_hit_self=bullet_power_hit_self,
             bullet_power_hit_self_cumulative=bullet_power_hit_self_cumulative,
             bullet_power_hit_others=bullet_power_hit_others,
+            bullet_power_hit_others_cumulative=bullet_power_hit_others_cumulative,
             bullet_power_missed=bullet_power_missed,
+            bullet_power_missed_cumulative=bullet_power_missed_cumulative,
             bullet_power_missed_since_previous_hit=bullet_power_missed_since_previous_hit,
             events=event_type_events,
             previous_state=self.previous_state,
@@ -388,18 +404,28 @@ class RobocodeEnvironment(TcpMdpEnvironment):
             for bullet_fired_event in event_type_events.get('BulletFiredEvent', [])
         })
 
-        gun_reward = bullet_power_hit_others * 10.0 - bullet_power_missed
-        movement_reward = 1.0 if bullet_power_hit_self == 0.0 else -100.0
-        total_reward = gun_reward + movement_reward
+        # gun_reward = bullet_power_hit_others * 10.0 - bullet_power_missed
+        # movement_reward = 1.0 if bullet_power_hit_self == 0.0 else -100.0
+        # total_reward = gun_reward + movement_reward
+        #
+        # reward = RobocodeReward(
+        #     i=None,
+        #     r=total_reward,
+        #     gun_reward=gun_reward,
+        #     movement_reward=movement_reward,
+        #     bullet_id_fired_event=self.bullet_id_fired_event,
+        #     bullet_hit_events=bullet_hit_events,
+        #     bullet_missed_events=bullet_missed_events
+        # )
 
-        reward = RobocodeReward(
-            i=None,
-            r=total_reward,
-            gun_reward=gun_reward,
-            movement_reward=movement_reward,
-            bullet_id_fired_event=self.bullet_id_fired_event,
-            bullet_hit_events=bullet_hit_events,
-            bullet_missed_events=bullet_missed_events
+        # reward = Reward(
+        #     None,
+        #     r=0.0 if self.previous_state is None else state.energy - self.previous_state.energy
+        # )
+
+        reward = Reward(
+            None,
+            r=1.0 if won else -1.0 if dead else 0.0
         )
 
         self.previous_state = state
@@ -417,7 +443,7 @@ class RobocodeEnvironment(TcpMdpEnvironment):
 
         :param random_state: Random state.
         :param T: Maximum number of steps to run, or None for no limit.
-        :param port: Port to serve REST endpoints on.
+        :param port: Port to serve networked environment on.
         """
 
         super().__init__(
@@ -434,8 +460,8 @@ class RobocodeEnvironment(TcpMdpEnvironment):
             (RobocodeAction.TURN_RIGHT, 10.0),
             (RobocodeAction.TURN_RADAR_LEFT, 10.0),
             (RobocodeAction.TURN_RADAR_RIGHT, 10.0),
-            (RobocodeAction.TURN_GUN_LEFT, 5.0),
-            (RobocodeAction.TURN_GUN_RIGHT, 5.0),
+            (RobocodeAction.TURN_GUN_LEFT, 2.0),
+            (RobocodeAction.TURN_GUN_RIGHT, 2.0),
             (RobocodeAction.FIRE, 1.0)
         ]
 
@@ -478,7 +504,9 @@ class RobocodeState(MdpState):
             bullet_power_hit_self: float,
             bullet_power_hit_self_cumulative: float,
             bullet_power_hit_others: float,
+            bullet_power_hit_others_cumulative: float,
             bullet_power_missed: float,
+            bullet_power_missed_cumulative: float,
             bullet_power_missed_since_previous_hit: float,
             events: Dict[str, List[Dict]],
             previous_state,
@@ -513,7 +541,9 @@ class RobocodeState(MdpState):
         :param bullet_power_hit_self: Bullet power that hit self.
         :param bullet_power_hit_self_cumulative: Cumulative bullet power that hit self, including a discounted sum of prior values.
         :param bullet_power_hit_others: Bullet power that hit others.
+        :param bullet_power_hit_others_cumulative: Cumulative bullet power that hit others, including a discounted sum of prior values.
         :param bullet_power_missed: Bullet power that missed.
+        :param bullet_power_missed_cumulative: Cumulative bullet power that missed, including a discounted sum of prior values.
         :param bullet_power_missed_since_previous_hit: Bullet power that has missed since previous hit.
         :param events: List of events sent to the robot since the previous time the state was set.
         :param previous_state: Previous state.
@@ -552,7 +582,9 @@ class RobocodeState(MdpState):
         self.bullet_power_hit_self = bullet_power_hit_self
         self.bullet_power_hit_self_cumulative = bullet_power_hit_self_cumulative
         self.bullet_power_hit_others = bullet_power_hit_others
+        self.bullet_power_hit_others_cumulative = bullet_power_hit_others_cumulative
         self.bullet_power_missed = bullet_power_missed
+        self.bullet_power_missed_cumulative = bullet_power_missed_cumulative
         self.bullet_power_missed_since_previous_hit = bullet_power_missed_since_previous_hit
         self.events = events
         self.previous_state: Optional[RobocodeState] = previous_state
@@ -687,7 +719,7 @@ class RobocodeFeatureExtractor(FeatureExtractor):
 
             [
                 f'{action.name}_intercept',
-                'bullet_power_cum',
+                'hit_by_bullet_power',
                 'hit_robot',
                 'enough_room',
                 'continue_away',
@@ -766,9 +798,7 @@ class RobocodeFeatureExtractor(FeatureExtractor):
             # degrees from north to the enemy would be our heading plus this value.
             most_recent_enemy_bearing_from_self = self.normalize(math.degrees(state.most_recent_scanned_robot['bearing']))
             most_recent_enemy_distance_from_self = state.most_recent_scanned_robot['distance']
-            most_recent_scanned_robot_age_discount = 0.999 ** state.most_recent_scanned_robot_age_turns
-
-            logging.debug(f'Scanned robot age discount:  {most_recent_scanned_robot_age_discount}')
+            most_recent_scanned_robot_age_discount = 0.99 ** state.most_recent_scanned_robot_age_turns
 
         if action_to_extract.name == RobocodeAction.AHEAD or action_to_extract.name == RobocodeAction.BACK:
 
@@ -786,9 +816,9 @@ class RobocodeFeatureExtractor(FeatureExtractor):
                            (action.name == RobocodeAction.BACK and any(-90 > e['bearing'] > 90 for e in state.events.get('HitRobotEvent', [])))
                     else 0.0,
 
-                    # we have enough room to complete the move, plus a buffer.
-                    1.0 if (action.name == RobocodeAction.AHEAD and action.value + 100.0 <= self.heading_distance_to_boundary(state.heading, state.x, state.y, state.battle_field_height, state.battle_field_width)) or
-                           (action.name == RobocodeAction.BACK and action.value + 100.0 <= self.heading_distance_to_boundary(self.normalize(state.heading - 180.0), state.x, state.y, state.battle_field_height, state.battle_field_width))
+                    # we have enough room to complete the move
+                    1.0 if (action.name == RobocodeAction.AHEAD and action.value <= self.heading_distance_to_boundary(state.heading, state.x, state.y, state.battle_field_height, state.battle_field_width)) or
+                           (action.name == RobocodeAction.BACK and action.value <= self.heading_distance_to_boundary(self.normalize(state.heading - 180.0), state.x, state.y, state.battle_field_height, state.battle_field_width))
                     else 0.0,
 
                     # the move will continue to take us farther from the most recent prior state whose location differs
@@ -871,9 +901,9 @@ class RobocodeFeatureExtractor(FeatureExtractor):
                     # intercept
                     1.0,
 
-                    1.0 if state.bullet_power_missed > 0.0 else 0.0,
+                    min(10.0, state.bullet_power_missed_cumulative) / 10.0,
 
-                    1.0 if state.bullet_power_hit_others > 0.0 else 0.0,
+                    min(10.0, state.bullet_power_hit_others_cumulative) / 10.0,
 
                     # squash lateral distance into [-1.0, 1.0]
                     0.0 if most_recent_enemy_bearing_from_self is None else
@@ -924,9 +954,9 @@ class RobocodeFeatureExtractor(FeatureExtractor):
                     # intercept
                     1.0,
 
-                    1.0 if state.bullet_power_missed > 0.0 else 0.0,
+                    min(10.0, state.bullet_power_missed_cumulative) / 10.0,
 
-                    1.0 if state.bullet_power_hit_others > 0.0 else 0.0,
+                    min(10.0, state.bullet_power_hit_others_cumulative) / 10.0,
 
                     # funnel lateral distance to 0.0
                     0.0 if most_recent_enemy_bearing_from_self is None else
@@ -947,6 +977,16 @@ class RobocodeFeatureExtractor(FeatureExtractor):
 
         else:  # pragma no cover
             raise ValueError(f'Unknown action:  {action}')
+
+        if any([v != 0.0 for v in feature_values]):
+            action_feature_names = self.get_action_feature_names()
+            feature_names = action_feature_names[action_to_extract.name]
+            logging.debug(action_to_extract.name)
+            feature_name_padding_width = len(action_to_extract.name) + max([len(s) for s in feature_names])
+            for feature_name, feature_value in zip(feature_names, feature_values):
+                logging.debug(
+                    f'{feature_name.rjust(feature_name_padding_width)}:  {feature_value}'
+                )
 
         return feature_values
 
@@ -1363,8 +1403,6 @@ class RobocodeFeatureExtractor(FeatureExtractor):
             )
         else:  # pragma no cover
             raise ValueError(f'Invalid heading quadrant:  {heading_quadrant}')
-
-        logging.debug(f'Heading distance to boundary:  {distance}')
 
         return distance
 
