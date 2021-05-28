@@ -362,3 +362,23 @@ class RunThreadManager(threading.Event):
             self.clear()
 
         self.abort = False
+
+
+def log_with_border(
+        level: int,
+        message: str
+):
+    """
+    Log a message with border.
+
+    :param level: Logging level.
+    :param message: Message.
+    """
+
+    message = ' ' + message + ' '
+    total_width = len(message) + 10
+    border = ''.ljust(total_width, '*')
+    logging.log(level, border)
+    logging.log(level, message.center(total_width, '*'))
+    logging.log(level, border)
+    logging.log(level, '')

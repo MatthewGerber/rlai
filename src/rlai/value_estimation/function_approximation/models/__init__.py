@@ -76,10 +76,10 @@ class FunctionApproximationModel(ABC):
             X: np.ndarray,
     ) -> np.ndarray:
         """
-        Evaluate the model at a matrix of observations.
+        Evaluate the model at a matrix of features.
 
-        :param X: Observations.
-        :return: Vector of evaluations.
+        :param X: Feature matrix (#obs, #features).
+        :return: Vector of outcomes from the evaluation (#obs,).
         """
 
     def plot(

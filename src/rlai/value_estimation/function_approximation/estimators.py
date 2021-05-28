@@ -1,3 +1,4 @@
+import logging
 from argparse import ArgumentParser
 from typing import Optional, List, Tuple, Iterator, Set
 
@@ -15,7 +16,7 @@ from rlai.gpi import PolicyImprovementEvent
 from rlai.meta import rl_text
 from rlai.policies.function_approximation import FunctionApproximationPolicy
 from rlai.states.mdp import MdpState
-from rlai.utils import load_class, parse_arguments
+from rlai.utils import load_class, parse_arguments, log_with_border
 from rlai.value_estimation import ValueEstimator, ActionValueEstimator, StateActionValueEstimator
 from rlai.value_estimation.function_approximation.models import FunctionApproximationModel
 from rlai.value_estimation.function_approximation.models.feature_extraction import FeatureExtractor
@@ -346,8 +347,10 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
 
         :param state: State.
         :param actions: Actions to evaluate.
-        :return: Numpy array of evaluation results (state-action values).
+        :return: Vector of action values (#actions,).
         """
+
+        log_with_border(logging.DEBUG, f'evaluating {len(actions)} action(s)')
 
         # replicate the state for each action, in order to evaluate each state-action pair.
         X = self.get_X([state] * len(actions), actions, False)
@@ -356,7 +359,11 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         if X.shape[1] == 0:  # pragma no cover
             return np.repeat(0.0, len(actions))
 
-        return self.model.evaluate(X)
+        action_values = self.model.evaluate(X)
+
+        log_with_border(logging.DEBUG, 'evaluation complete')
+
+        return action_values
 
     def get_X(
             self,

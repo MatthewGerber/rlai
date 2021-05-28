@@ -332,15 +332,15 @@ class RobocodeEnvironment(TcpMdpEnvironment):
         # cumulative bullet power that has hit self, hit others, and missed decaying over time.
         bullet_power_hit_self_cumulative = bullet_power_hit_self
         if self.previous_state is not None:
-            bullet_power_hit_self_cumulative += self.previous_state.bullet_power_hit_self_cumulative * (0.99 ** turns_passed)
+            bullet_power_hit_self_cumulative += self.previous_state.bullet_power_hit_self_cumulative * (0.9 ** turns_passed)
 
         bullet_power_hit_others_cumulative = bullet_power_hit_others
         if self.previous_state is not None:
-            bullet_power_hit_others_cumulative += self.previous_state.bullet_power_hit_others_cumulative * (0.99 ** turns_passed)
+            bullet_power_hit_others_cumulative += self.previous_state.bullet_power_hit_others_cumulative * (0.9 ** turns_passed)
 
         bullet_power_missed_cumulative = bullet_power_missed
         if self.previous_state is not None:
-            bullet_power_missed_cumulative += self.previous_state.bullet_power_missed_cumulative * (0.99 ** turns_passed)
+            bullet_power_missed_cumulative += self.previous_state.bullet_power_missed_cumulative * (0.9 ** turns_passed)
 
         # get most recent prior state that was at a different location than the current state. if there is no previous
         # state, then there is no such state.
@@ -418,15 +418,17 @@ class RobocodeEnvironment(TcpMdpEnvironment):
         #     bullet_missed_events=bullet_missed_events
         # )
 
-        # reward = Reward(
-        #     None,
-        #     r=0.0 if self.previous_state is None else state.energy - self.previous_state.energy
-        # )
-
+        # energy change reward
         reward = Reward(
             None,
-            r=1.0 if won else -1.0 if dead else 0.0
+            r=0.0 if self.previous_state is None else state.energy - self.previous_state.energy
         )
+
+        # win/loss reward
+        # reward = Reward(
+        #     None,
+        #     r=1.0 if won else -1.0 if dead else 0.0
+        # )
 
         self.previous_state = state
 
@@ -458,8 +460,8 @@ class RobocodeEnvironment(TcpMdpEnvironment):
             (RobocodeAction.BACK, 25.0),
             (RobocodeAction.TURN_LEFT, 10.0),
             (RobocodeAction.TURN_RIGHT, 10.0),
-            (RobocodeAction.TURN_RADAR_LEFT, 10.0),
-            (RobocodeAction.TURN_RADAR_RIGHT, 10.0),
+            (RobocodeAction.TURN_RADAR_LEFT, 5.0),
+            (RobocodeAction.TURN_RADAR_RIGHT, 5.0),
             (RobocodeAction.TURN_GUN_LEFT, 2.0),
             (RobocodeAction.TURN_GUN_RIGHT, 2.0),
             (RobocodeAction.FIRE, 1.0)
@@ -710,7 +712,7 @@ class RobocodeFeatureExtractor(FeatureExtractor):
             [
                 f'{action.name}_intercept',
                 'hit_by_bullet_power',
-                'hit_robot',
+                'robot_collision',
                 'enough_room',
                 'continue_away',
                 'funnel_cw_ortho',
@@ -720,7 +722,7 @@ class RobocodeFeatureExtractor(FeatureExtractor):
             [
                 f'{action.name}_intercept',
                 'hit_by_bullet_power',
-                'hit_robot',
+                'robot_collision',
                 'enough_room',
                 'continue_away',
                 'funnel_cw_ortho',
@@ -741,15 +743,15 @@ class RobocodeFeatureExtractor(FeatureExtractor):
 
             [
                 f'{action.name}_intercept',
-                'missed',
-                'hit',
+                'bullet_power_missed',
+                'hit_by_bullet_power',
                 'sigmoid_lat_dist'
             ] if action.name == RobocodeAction.TURN_RADAR_LEFT else
 
             [
                 f'{action.name}_intercept',
-                'missed',
-                'hit',
+                'bullet_power_missed',
+                'hit_by_bullet_power',
                 'sigmoid_lat_dist'
             ] if action.name == RobocodeAction.TURN_RADAR_RIGHT else
 
@@ -766,8 +768,8 @@ class RobocodeFeatureExtractor(FeatureExtractor):
             # the final feature is FIRE
             [
                 f'{action.name}_intercept',
-                'hit',
-                'missed',
+                'bullet_power_missed',
+                'bullet_power_hit_others',
                 'funnel_lat_dist'
             ]
 
@@ -798,7 +800,7 @@ class RobocodeFeatureExtractor(FeatureExtractor):
             # degrees from north to the enemy would be our heading plus this value.
             most_recent_enemy_bearing_from_self = self.normalize(math.degrees(state.most_recent_scanned_robot['bearing']))
             most_recent_enemy_distance_from_self = state.most_recent_scanned_robot['distance']
-            most_recent_scanned_robot_age_discount = 0.99 ** state.most_recent_scanned_robot_age_turns
+            most_recent_scanned_robot_age_discount = 0.9 ** state.most_recent_scanned_robot_age_turns
 
         if action_to_extract.name == RobocodeAction.AHEAD or action_to_extract.name == RobocodeAction.BACK:
 
@@ -809,16 +811,16 @@ class RobocodeFeatureExtractor(FeatureExtractor):
                     1.0,
 
                     # discounted cumulative bullet power
-                    min(10.0, state.bullet_power_hit_self_cumulative) / 10.0,
+                    state.bullet_power_hit_self_cumulative,
 
                     # we just hit a robot in the direction we're about to move
                     1.0 if (action.name == RobocodeAction.AHEAD and any(-90 < e['bearing'] < 90 for e in state.events.get('HitRobotEvent', []))) or
                            (action.name == RobocodeAction.BACK and any(-90 > e['bearing'] > 90 for e in state.events.get('HitRobotEvent', [])))
                     else 0.0,
 
-                    # we have enough room to complete the move
-                    1.0 if (action.name == RobocodeAction.AHEAD and action.value <= self.heading_distance_to_boundary(state.heading, state.x, state.y, state.battle_field_height, state.battle_field_width)) or
-                           (action.name == RobocodeAction.BACK and action.value <= self.heading_distance_to_boundary(self.normalize(state.heading - 180.0), state.x, state.y, state.battle_field_height, state.battle_field_width))
+                    # we have enough room to complete the move, plus a little buffer (the robot itself is 36 pixels rectangular).
+                    1.0 if (action.name == RobocodeAction.AHEAD and action.value + 36.0 <= self.heading_distance_to_boundary(state.heading, state.x, state.y, state.battle_field_height, state.battle_field_width)) or
+                           (action.name == RobocodeAction.BACK and action.value + 36.0 <= self.heading_distance_to_boundary(self.normalize(state.heading - 180.0), state.x, state.y, state.battle_field_height, state.battle_field_width))
                     else 0.0,
 
                     # the move will continue to take us farther from the most recent prior state whose location differs
@@ -901,9 +903,9 @@ class RobocodeFeatureExtractor(FeatureExtractor):
                     # intercept
                     1.0,
 
-                    min(10.0, state.bullet_power_missed_cumulative) / 10.0,
+                    state.bullet_power_missed_cumulative,
 
-                    min(10.0, state.bullet_power_hit_others_cumulative) / 10.0,
+                    state.bullet_power_hit_self_cumulative,
 
                     # squash lateral distance into [-1.0, 1.0]
                     0.0 if most_recent_enemy_bearing_from_self is None else
@@ -954,9 +956,9 @@ class RobocodeFeatureExtractor(FeatureExtractor):
                     # intercept
                     1.0,
 
-                    min(10.0, state.bullet_power_missed_cumulative) / 10.0,
+                    state.bullet_power_missed_cumulative,
 
-                    min(10.0, state.bullet_power_hit_others_cumulative) / 10.0,
+                    state.bullet_power_hit_others_cumulative,
 
                     # funnel lateral distance to 0.0
                     0.0 if most_recent_enemy_bearing_from_self is None else
@@ -982,11 +984,13 @@ class RobocodeFeatureExtractor(FeatureExtractor):
             action_feature_names = self.get_action_feature_names()
             feature_names = action_feature_names[action_to_extract.name]
             logging.debug(action_to_extract.name)
-            feature_name_padding_width = len(action_to_extract.name) + max([len(s) for s in feature_names])
+            feature_name_padding_width = max([len(s) for s in feature_names]) + 2
             for feature_name, feature_value in zip(feature_names, feature_values):
                 logging.debug(
                     f'{feature_name.rjust(feature_name_padding_width)}:  {feature_value}'
                 )
+
+            logging.debug('')
 
         return feature_values
 
