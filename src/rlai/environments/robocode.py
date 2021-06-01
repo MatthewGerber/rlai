@@ -316,7 +316,7 @@ class RobocodeEnvironment(TcpMdpEnvironment):
 
         # sum up bullet power that missed others
         bullet_missed_events = event_type_events.get('BulletMissedEvent', [])
-        bullet_power_missed = sum([
+        bullet_power_missed_others = sum([
             bullet_event['bullet']['power']
             for bullet_event in bullet_missed_events
         ])
@@ -327,7 +327,7 @@ class RobocodeEnvironment(TcpMdpEnvironment):
         elif bullet_power_hit_others > 0.0:
             bullet_power_missed_since_previous_hit = 0.0
         else:
-            bullet_power_missed_since_previous_hit = self.previous_state.bullet_power_missed_since_previous_hit + bullet_power_missed
+            bullet_power_missed_since_previous_hit = self.previous_state.bullet_power_missed_since_previous_hit + bullet_power_missed_others
 
         # cumulative bullet power that has hit self, hit others, and missed decaying over time.
         bullet_power_hit_self_cumulative = bullet_power_hit_self
@@ -338,7 +338,7 @@ class RobocodeEnvironment(TcpMdpEnvironment):
         if self.previous_state is not None:
             bullet_power_hit_others_cumulative += self.previous_state.bullet_power_hit_others_cumulative * (0.9 ** turns_passed)
 
-        bullet_power_missed_cumulative = bullet_power_missed
+        bullet_power_missed_cumulative = bullet_power_missed_others
         if self.previous_state is not None:
             bullet_power_missed_cumulative += self.previous_state.bullet_power_missed_cumulative * (0.9 ** turns_passed)
 
@@ -376,7 +376,7 @@ class RobocodeEnvironment(TcpMdpEnvironment):
             bullet_power_hit_self_cumulative=bullet_power_hit_self_cumulative,
             bullet_power_hit_others=bullet_power_hit_others,
             bullet_power_hit_others_cumulative=bullet_power_hit_others_cumulative,
-            bullet_power_missed=bullet_power_missed,
+            bullet_power_missed=bullet_power_missed_others,
             bullet_power_missed_cumulative=bullet_power_missed_cumulative,
             bullet_power_missed_since_previous_hit=bullet_power_missed_since_previous_hit,
             events=event_type_events,
@@ -404,25 +404,25 @@ class RobocodeEnvironment(TcpMdpEnvironment):
             for bullet_fired_event in event_type_events.get('BulletFiredEvent', [])
         })
 
-        # gun_reward = bullet_power_hit_others * 10.0 - bullet_power_missed
-        # movement_reward = 1.0 if bullet_power_hit_self == 0.0 else -100.0
-        # total_reward = gun_reward + movement_reward
-        #
-        # reward = RobocodeReward(
-        #     i=None,
-        #     r=total_reward,
-        #     gun_reward=gun_reward,
-        #     movement_reward=movement_reward,
-        #     bullet_id_fired_event=self.bullet_id_fired_event,
-        #     bullet_hit_events=bullet_hit_events,
-        #     bullet_missed_events=bullet_missed_events
-        # )
+        gun_reward = bullet_power_hit_others - bullet_power_missed_others
+        movement_reward = 1.0 if bullet_power_hit_self == 0.0 else -bullet_power_hit_self
+        total_reward = gun_reward + movement_reward
 
-        # energy change reward
-        reward = Reward(
-            None,
-            r=0.0 if self.previous_state is None else state.energy - self.previous_state.energy
+        reward = RobocodeReward(
+            i=None,
+            r=total_reward,
+            gun_reward=gun_reward,
+            movement_reward=movement_reward,
+            bullet_id_fired_event=self.bullet_id_fired_event,
+            bullet_hit_events=bullet_hit_events,
+            bullet_missed_events=bullet_missed_events
         )
+
+        # energy change reward...bullet firing will be penalized.
+        # reward = Reward(
+        #     None,
+        #     r=0.0 if self.previous_state is None else state.energy - self.previous_state.energy
+        # )
 
         # win/loss reward
         # reward = Reward(
@@ -456,12 +456,12 @@ class RobocodeEnvironment(TcpMdpEnvironment):
         )
 
         action_name_action_value_list = [
-            (RobocodeAction.AHEAD, 25.0),
-            (RobocodeAction.BACK, 25.0),
+            (RobocodeAction.AHEAD, 10.0),
+            (RobocodeAction.BACK, 10.0),
             (RobocodeAction.TURN_LEFT, 10.0),
             (RobocodeAction.TURN_RIGHT, 10.0),
-            (RobocodeAction.TURN_RADAR_LEFT, 5.0),
-            (RobocodeAction.TURN_RADAR_RIGHT, 5.0),
+            (RobocodeAction.TURN_RADAR_LEFT, 10.0),
+            (RobocodeAction.TURN_RADAR_RIGHT, 10.0),
             (RobocodeAction.TURN_GUN_LEFT, 2.0),
             (RobocodeAction.TURN_GUN_RIGHT, 2.0),
             (RobocodeAction.FIRE, 1.0)

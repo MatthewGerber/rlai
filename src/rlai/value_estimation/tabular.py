@@ -1,3 +1,4 @@
+import logging
 from argparse import ArgumentParser
 from typing import Dict, Optional, Iterable, Iterator, List, Tuple
 
@@ -11,7 +12,7 @@ from rlai.gpi.improvement import improve_policy_with_q_pi
 from rlai.meta import rl_text
 from rlai.policies.tabular import TabularPolicy
 from rlai.states.mdp import MdpState
-from rlai.utils import IncrementalSampleAverager, parse_arguments
+from rlai.utils import IncrementalSampleAverager, parse_arguments, log_with_border
 from rlai.value_estimation import StateActionValueEstimator, ActionValueEstimator, ValueEstimator
 
 
@@ -339,6 +340,8 @@ class TabularStateActionValueEstimator(StateActionValueEstimator):
             q_pi=q_pi,
             epsilon=self.epsilon
         )
+
+        log_with_border(logging.DEBUG, 'Policy improved')
 
         return num_states_improved
 

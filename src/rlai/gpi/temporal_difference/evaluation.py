@@ -9,7 +9,7 @@ from rlai.environments.mdp import MdpEnvironment, MdpPlanningEnvironment, Priori
 from rlai.gpi import PolicyImprovementEvent
 from rlai.meta import rl_text
 from rlai.states.mdp import MdpState
-from rlai.utils import IncrementalSampleAverager, sample_list_item
+from rlai.utils import IncrementalSampleAverager, sample_list_item, log_with_border
 from rlai.value_estimation import StateActionValueEstimator
 
 
@@ -109,6 +109,8 @@ def evaluate_q_pi(
                 a=curr_a,
                 agent=agent
             )
+
+            logging.debug(f'Obtained reward:  {next_reward}\n')
 
             # in the case of a planning-based advancement, the planning environment returns a 3-tuple of the current
             # state, current action, and next state. this is because the planning environment may revise any one of

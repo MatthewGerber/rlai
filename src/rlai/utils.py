@@ -375,10 +375,11 @@ def log_with_border(
     :param message: Message.
     """
 
-    message = ' ' + message + ' '
-    total_width = len(message) + 10
-    border = ''.ljust(total_width, '*')
-    logging.log(level, border)
-    logging.log(level, message.center(total_width, '*'))
-    logging.log(level, border)
-    logging.log(level, '')
+    if level >= logging.root.level:
+        message = ' ' + message + ' '
+        total_width = len(message) + 10
+        border = ''.ljust(total_width, '*')
+        logging.log(level, border)
+        logging.log(level, message.center(total_width, '*'))
+        logging.log(level, border)
+        logging.log(level, '')

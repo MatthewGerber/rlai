@@ -335,6 +335,8 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
             self.weights = None
             self.experience_pending = False
 
+        log_with_border(logging.DEBUG, 'Policy improved')
+
         return -1 if states is None else len(states)
 
     def evaluate(
@@ -350,7 +352,7 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         :return: Vector of action values (#actions,).
         """
 
-        log_with_border(logging.DEBUG, f'evaluating {len(actions)} action(s)')
+        log_with_border(logging.DEBUG, f'Evaluating {len(actions)} action(s)')
 
         # replicate the state for each action, in order to evaluate each state-action pair.
         X = self.get_X([state] * len(actions), actions, False)
@@ -361,7 +363,7 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
 
         action_values = self.model.evaluate(X)
 
-        log_with_border(logging.DEBUG, 'evaluation complete')
+        log_with_border(logging.DEBUG, 'Evaluation complete')
 
         return action_values
 

@@ -205,7 +205,7 @@ class StateActionValueEstimator(ABC):
         :return: Number of states improved.
         """
 
-        log_with_border(logging.DEBUG, 'improving policy')
+        log_with_border(logging.DEBUG, 'Improving policy')
 
         if event == PolicyImprovementEvent.FINISHED_EVALUATION:
             self.evaluation_policy_improvement_count += 1
