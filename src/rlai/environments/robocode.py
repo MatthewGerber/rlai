@@ -230,6 +230,12 @@ class RobocodeEnvironment(TcpMdpEnvironment):
             add_help=False
         )
 
+        parser.add_argument(
+            '--bullet-power-decay',
+            type=float,
+            help='Exponential decay rate for cumulative bullet power values.'
+        )
+
         return parser
 
     @classmethod
@@ -323,24 +329,24 @@ class RobocodeEnvironment(TcpMdpEnvironment):
 
         # keep track of how much bullet power has missed the opponent since we last recorded a hit
         if self.previous_state is None:
-            bullet_power_missed_since_previous_hit = 0.0
+            bullet_power_missed_others_since_previous_hit = 0.0
         elif bullet_power_hit_others > 0.0:
-            bullet_power_missed_since_previous_hit = 0.0
+            bullet_power_missed_others_since_previous_hit = 0.0
         else:
-            bullet_power_missed_since_previous_hit = self.previous_state.bullet_power_missed_since_previous_hit + bullet_power_missed_others
+            bullet_power_missed_others_since_previous_hit = self.previous_state.bullet_power_missed_others_since_previous_hit + bullet_power_missed_others
 
         # cumulative bullet power that has hit self, hit others, and missed decaying over time.
         bullet_power_hit_self_cumulative = bullet_power_hit_self
         if self.previous_state is not None:
-            bullet_power_hit_self_cumulative += self.previous_state.bullet_power_hit_self_cumulative * (0.9 ** turns_passed)
+            bullet_power_hit_self_cumulative += self.previous_state.bullet_power_hit_self_cumulative * (self.bullet_power_decay ** turns_passed)
 
         bullet_power_hit_others_cumulative = bullet_power_hit_others
         if self.previous_state is not None:
-            bullet_power_hit_others_cumulative += self.previous_state.bullet_power_hit_others_cumulative * (0.9 ** turns_passed)
+            bullet_power_hit_others_cumulative += self.previous_state.bullet_power_hit_others_cumulative * (self.bullet_power_decay ** turns_passed)
 
-        bullet_power_missed_cumulative = bullet_power_missed_others
+        bullet_power_missed_others_cumulative = bullet_power_missed_others
         if self.previous_state is not None:
-            bullet_power_missed_cumulative += self.previous_state.bullet_power_missed_cumulative * (0.9 ** turns_passed)
+            bullet_power_missed_others_cumulative += self.previous_state.bullet_power_missed_others_cumulative * (self.bullet_power_decay ** turns_passed)
 
         # get most recent prior state that was at a different location than the current state. if there is no previous
         # state, then there is no such state.
@@ -376,9 +382,9 @@ class RobocodeEnvironment(TcpMdpEnvironment):
             bullet_power_hit_self_cumulative=bullet_power_hit_self_cumulative,
             bullet_power_hit_others=bullet_power_hit_others,
             bullet_power_hit_others_cumulative=bullet_power_hit_others_cumulative,
-            bullet_power_missed=bullet_power_missed_others,
-            bullet_power_missed_cumulative=bullet_power_missed_cumulative,
-            bullet_power_missed_since_previous_hit=bullet_power_missed_since_previous_hit,
+            bullet_power_missed_others=bullet_power_missed_others,
+            bullet_power_missed_others_cumulative=bullet_power_missed_others_cumulative,
+            bullet_power_missed_others_since_previous_hit=bullet_power_missed_others_since_previous_hit,
             events=event_type_events,
             previous_state=self.previous_state,
             prior_state_different_location=prior_state_different_location,
@@ -438,7 +444,8 @@ class RobocodeEnvironment(TcpMdpEnvironment):
             self,
             random_state: RandomState,
             T: Optional[int],
-            port: int
+            port: int,
+            bullet_power_decay: float
     ):
         """
         Initialize the Robocode environment.
@@ -446,6 +453,7 @@ class RobocodeEnvironment(TcpMdpEnvironment):
         :param random_state: Random state.
         :param T: Maximum number of steps to run, or None for no limit.
         :param port: Port to serve networked environment on.
+        :param bullet_power_decay: Exponential decay rate for cumulative bullet power values.
         """
 
         super().__init__(
@@ -454,6 +462,8 @@ class RobocodeEnvironment(TcpMdpEnvironment):
             T=T,
             port=port
         )
+
+        self.bullet_power_decay = bullet_power_decay
 
         action_name_action_value_list = [
             (RobocodeAction.AHEAD, 10.0),
@@ -507,9 +517,9 @@ class RobocodeState(MdpState):
             bullet_power_hit_self_cumulative: float,
             bullet_power_hit_others: float,
             bullet_power_hit_others_cumulative: float,
-            bullet_power_missed: float,
-            bullet_power_missed_cumulative: float,
-            bullet_power_missed_since_previous_hit: float,
+            bullet_power_missed_others: float,
+            bullet_power_missed_others_cumulative: float,
+            bullet_power_missed_others_since_previous_hit: float,
             events: Dict[str, List[Dict]],
             previous_state,
             prior_state_different_location,
@@ -544,9 +554,9 @@ class RobocodeState(MdpState):
         :param bullet_power_hit_self_cumulative: Cumulative bullet power that hit self, including a discounted sum of prior values.
         :param bullet_power_hit_others: Bullet power that hit others.
         :param bullet_power_hit_others_cumulative: Cumulative bullet power that hit others, including a discounted sum of prior values.
-        :param bullet_power_missed: Bullet power that missed.
-        :param bullet_power_missed_cumulative: Cumulative bullet power that missed, including a discounted sum of prior values.
-        :param bullet_power_missed_since_previous_hit: Bullet power that has missed since previous hit.
+        :param bullet_power_missed_others: Bullet power that missed.
+        :param bullet_power_missed_others_cumulative: Cumulative bullet power that missed, including a discounted sum of prior values.
+        :param bullet_power_missed_others_since_previous_hit: Bullet power that has missed since previous hit.
         :param events: List of events sent to the robot since the previous time the state was set.
         :param previous_state: Previous state.
         :param prior_state_different_location: Most recent prior state at a different location than the current state.
@@ -585,9 +595,9 @@ class RobocodeState(MdpState):
         self.bullet_power_hit_self_cumulative = bullet_power_hit_self_cumulative
         self.bullet_power_hit_others = bullet_power_hit_others
         self.bullet_power_hit_others_cumulative = bullet_power_hit_others_cumulative
-        self.bullet_power_missed = bullet_power_missed
-        self.bullet_power_missed_cumulative = bullet_power_missed_cumulative
-        self.bullet_power_missed_since_previous_hit = bullet_power_missed_since_previous_hit
+        self.bullet_power_missed_others = bullet_power_missed_others
+        self.bullet_power_missed_others_cumulative = bullet_power_missed_others_cumulative
+        self.bullet_power_missed_others_since_previous_hit = bullet_power_missed_others_since_previous_hit
         self.events = events
         self.previous_state: Optional[RobocodeState] = previous_state
         self.prior_state_different_location = prior_state_different_location
@@ -635,6 +645,12 @@ class RobocodeFeatureExtractor(FeatureExtractor):
             add_help=False
         )
 
+        parser.add_argument(
+            '--scanned-robot-decay',
+            type=float,
+            help='Exponential decay related to scanned-robot feature values.'
+        )
+
         return parser
 
     @classmethod
@@ -654,7 +670,8 @@ class RobocodeFeatureExtractor(FeatureExtractor):
         parsed_args, unparsed_args = parse_arguments(cls, args)
 
         fex = RobocodeFeatureExtractor(
-            environment=environment
+            environment=environment,
+            **vars(parsed_args)
         )
 
         return fex, unparsed_args
@@ -800,7 +817,7 @@ class RobocodeFeatureExtractor(FeatureExtractor):
             # degrees from north to the enemy would be our heading plus this value.
             most_recent_enemy_bearing_from_self = self.normalize(math.degrees(state.most_recent_scanned_robot['bearing']))
             most_recent_enemy_distance_from_self = state.most_recent_scanned_robot['distance']
-            most_recent_scanned_robot_age_discount = 0.9 ** state.most_recent_scanned_robot_age_turns
+            most_recent_scanned_robot_age_discount = self.scanned_robot_decay ** state.most_recent_scanned_robot_age_turns
 
         if action_to_extract.name == RobocodeAction.AHEAD or action_to_extract.name == RobocodeAction.BACK:
 
@@ -903,7 +920,7 @@ class RobocodeFeatureExtractor(FeatureExtractor):
                     # intercept
                     1.0,
 
-                    state.bullet_power_missed_cumulative,
+                    state.bullet_power_missed_others_cumulative,
 
                     state.bullet_power_hit_self_cumulative,
 
@@ -956,7 +973,7 @@ class RobocodeFeatureExtractor(FeatureExtractor):
                     # intercept
                     1.0,
 
-                    state.bullet_power_missed_cumulative,
+                    state.bullet_power_missed_others_cumulative,
 
                     state.bullet_power_hit_others_cumulative,
 
@@ -1455,18 +1472,21 @@ class RobocodeFeatureExtractor(FeatureExtractor):
 
     def __init__(
             self,
-            environment: RobocodeEnvironment
+            environment: RobocodeEnvironment,
+            scanned_robot_decay: float
     ):
         """
         Initialize the feature extractor.
 
         :param environment: Environment.
+        :param scanned_robot_decay: Exponential decay rate for feature values related to scanned robots.
         """
 
         super().__init__(
             environment=environment
         )
 
+        self.scanned_robot_decay = scanned_robot_decay
         self.robot_actions = environment.robot_actions
 
 
