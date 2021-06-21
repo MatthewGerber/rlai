@@ -9,7 +9,7 @@ from rlai.environments.mdp import MdpEnvironment, MdpPlanningEnvironment, Priori
 from rlai.gpi import PolicyImprovementEvent
 from rlai.meta import rl_text
 from rlai.states.mdp import MdpState
-from rlai.utils import IncrementalSampleAverager, sample_list_item, log_with_border
+from rlai.utils import IncrementalSampleAverager, sample_list_item
 from rlai.value_estimation import StateActionValueEstimator
 
 
