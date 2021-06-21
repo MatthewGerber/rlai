@@ -1,3 +1,4 @@
+import logging
 from abc import ABC, abstractmethod
 from argparse import ArgumentParser
 from typing import Optional, Iterable, Tuple, List, Any, Iterator
@@ -13,7 +14,7 @@ from rlai.gpi import PolicyImprovementEvent
 from rlai.meta import rl_text
 from rlai.policies import Policy
 from rlai.states.mdp import MdpState
-from rlai.utils import get_base_argument_parser
+from rlai.utils import get_base_argument_parser, log_with_border
 
 
 @rl_text(chapter='Value Estimation', page=23)
@@ -203,6 +204,8 @@ class StateActionValueEstimator(ABC):
         :param event: Event that triggered the improvement.
         :return: Number of states improved.
         """
+
+        log_with_border(logging.DEBUG, 'Improving policy')
 
         if event == PolicyImprovementEvent.FINISHED_EVALUATION:
             self.evaluation_policy_improvement_count += 1

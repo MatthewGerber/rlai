@@ -209,7 +209,7 @@ class SKLearnSGD(FunctionApproximationModel):
             X: np.ndarray
     ) -> np.ndarray:
         """
-        Evaluate the model at a matrix of features (one row per observation).
+        Evaluate the model at a matrix of features.
 
         :param X: Feature matrix (#obs, #features).
         :return: Vector of outcomes from the evaluation (#obs,).
@@ -262,7 +262,7 @@ class SKLearnSGD(FunctionApproximationModel):
         # check feature extractor names against model dimensions
         num_feature_names = len(all_feature_names)
         num_dims = coefficients.shape[0]
-        if num_feature_names != num_dims :  # pragma no cover
+        if num_feature_names != num_dims:  # pragma no cover
             raise ValueError(f'Number of feature names ({num_feature_names}) does not match number of dimensions ({num_dims}).')
 
         # create dataframe

@@ -199,7 +199,7 @@ class TcpMdpEnvironment(MdpEnvironment, ABC):
         :param name: Name.
         :param random_state: Random state.
         :param T: Maximum number of steps to run, or None for no limit.
-        :param port: Port to serve REST endpoints on.
+        :param port: Port to serve networked environment on.
         """
 
         super().__init__(

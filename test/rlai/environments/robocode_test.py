@@ -17,7 +17,7 @@ def test_learn():
 
     # set the following to True to update the fixture. if you do this, then you'll also need to start the robocode game
     # and uncomment some stuff in rlai.environments.network.TcpMdpEnvironment.read_from_client in order to update the
-    # test fixture.
+    # test fixture. run a battle for 50 rounds to complete the fixture update.
     update_fixture = False
 
     robocode_port = 54321
@@ -69,7 +69,7 @@ def test_learn():
 
     # run training and load resulting agent
     agent_path = tempfile.NamedTemporaryFile(delete=False).name
-    cmd = f'--random-seed 12345 --agent rlai.environments.robocode.RobocodeAgent --gamma 0.9 --environment rlai.environments.robocode.RobocodeEnvironment --port {robocode_port} --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode SARSA --n-steps 100 --num-improvements 50 --num-episodes-per-improvement 1 --num-updates-per-improvement 1 --epsilon 0.15 --q-S-A rlai.value_estimation.function_approximation.estimators.ApproximateStateActionValueEstimator --plot-model --plot-model-bins 10 --plot-model-per-improvements 50 --function-approximation-model rlai.value_estimation.function_approximation.models.sklearn.SKLearnSGD --feature-extractor rlai.environments.robocode.RobocodeFeatureExtractor --make-final-policy-greedy True --num-improvements-per-plot 50 --save-agent-path {agent_path}'
+    cmd = f'--random-seed 12345 --agent rlai.environments.robocode.RobocodeAgent --gamma 0.95 --environment rlai.environments.robocode.RobocodeEnvironment --port {robocode_port} --bullet-power-decay 0.75 --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode SARSA --n-steps 50 --num-improvements 10 --num-episodes-per-improvement 1 --num-updates-per-improvement 1 --epsilon 0.25 --q-S-A rlai.value_estimation.function_approximation.estimators.ApproximateStateActionValueEstimator --plot-model --plot-model-bins 10 --plot-model-per-improvements 10 --function-approximation-model rlai.value_estimation.function_approximation.models.sklearn.SKLearnSGD --loss squared_loss --sgd-alpha 0.0 --learning-rate constant --eta0 0.0001 --feature-extractor rlai.environments.robocode.RobocodeFeatureExtractor --scanned-robot-decay 0.75 --make-final-policy-greedy True --num-improvements-per-plot 100 --save-agent-path {agent_path} --log DEBUG'
     run(shlex.split(cmd))
 
     if not update_fixture:
