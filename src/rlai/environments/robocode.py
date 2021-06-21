@@ -167,7 +167,8 @@ class RobocodeAgent(StochasticMdpAgent):
                     ).items()
                 })
 
-        elif isinstance(reward, Reward):
+        # the following case is not currently used.
+        elif isinstance(reward, Reward):  # pragma no cover
 
             t_shaped_reward = super().shape_reward(
                 reward=reward,
@@ -176,7 +177,7 @@ class RobocodeAgent(StochasticMdpAgent):
             )
 
         # a standard reward is returned by the underlying networked environment if the game client disconnects.
-        else:
+        else:  # pragma no cover
             t_shaped_reward = {}
 
         return t_shaped_reward
