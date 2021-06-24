@@ -17,6 +17,3 @@ def grad_exp(
         raise ValueError('Shape mismatch')
 
     np.exp(theta.dot(x_s_a)) * x_s_a
-
-
-def
