@@ -3,7 +3,8 @@ import logging
 from rlai.agents.mdp import MdpAgent
 from rlai.environments.mdp import MdpEnvironment
 from rlai.meta import rl_text
-from rlai.utils import IncrementalSampleAverager
+from rlai.policies.parameterized import ParameterizedPolicy
+from rlai.utils import IncrementalSampleAverager, RunThreadManager
 
 
 @rl_text(chapter=13, page=326)
@@ -11,7 +12,10 @@ def improve(
         agent: MdpAgent,
         environment: MdpEnvironment,
         num_episodes: int,
-        update_upon_every_visit: bool
+        update_upon_every_visit: bool,
+        alpha: float,
+        thread_manager: RunThreadManager,
+        planning_environment: MdpEnvironment
 ):
     """
     Perform Monte Carlo improvement of an agent's policy within an environment via the REINFORCE policy gradient method.
@@ -23,7 +27,15 @@ def improve(
     :param num_episodes: Number of episodes to execute.
     :param update_upon_every_visit: True to update each state-action pair upon each visit within an episode, or False to
     update each state-action pair upon the first visit within an episode.
+    :param alpha: Policy gradient step size.
+    :param thread_manager: Thread manager. The current function (and the thread running it) will wait on this manager
+    before starting each iteration. This provides a mechanism for pausing, resuming, and aborting training. Omit for no
+    waiting.
+    :param planning_environment: Planning environment to learn and use.
     """
+
+    if not isinstance(agent.pi, ParameterizedPolicy):
+        raise ValueError('Expected a parameterized policy.')
 
     logging.info(f'Running Monte Carlo-based REINFORCE improvement for {num_episodes} episode(s).')
 
@@ -60,19 +72,17 @@ def improve(
             agent.sense(state, t)
 
         # work backwards through the trace to calculate discounted returns. need to work backward in order for the value
-        # of G at each time step t to be properly discounted. here, W is the importance-sampling weight of the agent's
-        # (target) policy compared to the episode generation policy (behavior).
+        # of G at each time step t to be properly discounted.
         G = 0
-        W = 1
         for t, state_a, reward in reversed(t_state_action_reward):
 
             G = agent.gamma * G + reward.r
 
             # if we're doing every-visit, or if the current time step was the first visit to the state-action, then G
-            # is the discounted sample value. use it to update the policy
+            # is the discounted sample value. use it to update the policy.
             if state_action_first_t is None or state_action_first_t[state_a] == t:
-
                 state, a = state_a
+                agent.pi.update(a, state, alpha, G)
 
         episode_reward_averager.update(total_reward)
 
@@ -81,3 +91,7 @@ def improve(
             logging.info(f'Finished {episodes_finished} of {num_episodes} episode(s).')
 
     logging.info(f'Completed optimization. Average reward per episode:  {episode_reward_averager.get_value()}')
+
+    for s in environment.SS:
+        for a in s.AA:
+            print(f'Pr({a}|{s}:  {agent.pi[s][a]}')

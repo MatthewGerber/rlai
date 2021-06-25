@@ -78,8 +78,9 @@ def run(
     else:
         train_function_args['planning_environment'] = None
 
-    # load training function and parse its arguments
+    # load training function and parse any arguments that it requires
     train_function = None
+    initial_policy = None
     if parsed_args.train_function is not None:
 
         train_function = import_function(parsed_args.train_function)
@@ -95,14 +96,25 @@ def run(
 
         train_function_args.update(vars(parsed_train_function_args))
 
-        # initialize state-action value estimator if one is given
+        # initialize state-action value estimator if one is given. state-action value estimation is one of the two
+        # primary methods for learning policies. the other method is policy gradient (see below).
         if hasattr(parsed_train_function_args, 'q_S_A') and parsed_train_function_args.q_S_A is not None:
             estimator_class = load_class(parsed_train_function_args.q_S_A)
-            train_function_args['q_S_A'], unparsed_args = estimator_class.init_from_arguments(
+            state_action_value_estimator, unparsed_args = estimator_class.init_from_arguments(
                 unparsed_args,
                 random_state=random_state,
                 environment=train_function_args['environment']
             )
+            train_function_args['q_S_A'] = state_action_value_estimator
+            initial_policy = state_action_value_estimator.get_initial_policy()
+
+    # initialize the parameterized policy if one is given
+    if parsed_args.policy is not None:
+        policy_class = load_class(parsed_args.policy)
+        initial_policy, unparsed_args = policy_class.init_from_arguments(
+            unparsed_args,
+            environment=train_function_args['environment']
+        )
 
     agent = None
 
@@ -113,7 +125,7 @@ def run(
         agents, unparsed_args = agent_class.init_from_arguments(
             args=unparsed_args,
             random_state=random_state,
-            pi=None if train_function_args.get('q_S_A') is None else train_function_args['q_S_A'].get_initial_policy()
+            pi=initial_policy
         )
 
         if len(agents) != 1:  # pragma no cover
@@ -225,6 +237,12 @@ def get_argument_parser_for_run() -> ArgumentParser:
         help='Random seed. Omit to generate an arbitrary random seed.'
     )
 
+    parser.add_argument(
+        '--policy',
+        type=str,
+        help='Fully-qualified type name of policy to use (for policy gradient methods).'
+    )
+
     return parser
 
 
@@ -274,6 +292,12 @@ def get_argument_parser_for_train_function(
         '--num-episodes-per-improvement',
         type=int,
         help='Number of episodes per improvement.'
+    )
+
+    filter_add_argument(
+        '--num-episodes',
+        type=int,
+        help='Number of episodes.'
     )
 
     filter_add_argument(
@@ -335,7 +359,7 @@ def get_argument_parser_for_train_function(
     filter_add_argument(
         '--q-S-A',
         type=str,
-        help='Fully-qualified type name of state-action value estimator to use.'
+        help='Fully-qualified type name of state-action value estimator to use (for action-value methods).'
     )
 
     filter_add_argument(
