@@ -139,26 +139,27 @@ class SoftMaxInActionPreferencesPolicy(ParameterizedPolicy):
 
         return gradient
 
-    def update(
+    def get_update(
             self,
             a: Action,
             s: MdpState,
             alpha: float,
             discounted_return: float
-    ):
+    ) -> np.ndarray:
         """
-        Update the policy parameterization for an action in a state using a discounted return and a step size.
+        Get the policy parameter update for an action in a state using a discounted return and a step size.
 
         :param a: Action.
         :param s: State.
         :param alpha: Step size.
         :param discounted_return: Discounted return.
+        :return: Policy parameter (theta) update.
         """
 
         gradient_a_s = self.gradient(a, s)
         p_a_s = self[s][a]
 
-        self.theta = self.theta + alpha * discounted_return * (gradient_a_s / p_a_s)
+        return alpha * discounted_return * (gradient_a_s / p_a_s)
 
     def __init__(
             self,
