@@ -13,7 +13,7 @@
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
     <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/rlai/runners/trainer.py" />
-    <option name="PARAMETERS" value="--random-seed 12345 --agent rlai.agents.mdp.StochasticMdpAgent --gamma 1 --environment rlai.environments.gridworld.Gridworld --id example_4_1 --train-function rlai.policy_gradient.monte_carlo.reinforce.improve --num-episodes 100 --T 50 --policy rlai.policies.parameterized.SoftMaxInActionPreferencesPolicy --feature-extractor rlai.environments.gridworld.GridworldFeatureExtractor --alpha 0.01 --update-upon-every-visit True" />
+    <option name="PARAMETERS" value="--random-seed 12345 --agent rlai.agents.mdp.StochasticMdpAgent --gamma 1 --environment rlai.environments.gridworld.Gridworld --id example_4_1 --train-function rlai.policy_gradient.monte_carlo.reinforce.improve --num-episodes 200 --policy rlai.policies.parameterized.SoftMaxInActionPreferencesPolicy --feature-extractor rlai.environments.gridworld.GridworldFeatureExtractor --alpha 0.001 --update-upon-every-visit True" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />

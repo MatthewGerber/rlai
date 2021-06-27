@@ -1,7 +1,5 @@
 import logging
 
-import numpy as np
-
 from rlai.agents.mdp import MdpAgent
 from rlai.environments.mdp import MdpEnvironment
 from rlai.meta import rl_text
@@ -76,7 +74,6 @@ def improve(
         # work backwards through the trace to calculate discounted returns. need to work backward in order for the value
         # of G at each time step t to be properly discounted.
         G = 0
-        theta_update = np.zeros_like(agent.pi.theta)
         for t, state_a, reward in reversed(t_state_action_reward):
 
             G = agent.gamma * G + reward.r
@@ -85,9 +82,8 @@ def improve(
             # is the discounted sample value. use it to update the policy.
             if state_action_first_t is None or state_action_first_t[state_a] == t:
                 state, a = state_a
-                theta_update += agent.pi.get_update(a, state, alpha, G)
+                agent.pi.theta += agent.pi.get_update(a, state, alpha, G)
 
-        agent.pi.theta += theta_update
         episode_reward_averager.update(total_reward)
 
         episodes_finished = episode_i + 1

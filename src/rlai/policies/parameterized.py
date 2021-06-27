@@ -137,6 +137,9 @@ class SoftMaxInActionPreferencesPolicy(ParameterizedPolicy):
         # quotient rule for policy gradient
         gradient = (soft_max_denominator * gradient_soft_max_numerator - soft_max_numerator * gradient_soft_max_denominator) / (soft_max_denominator ** 2.0)
 
+        # mask out gradient for actions other than the one of interest
+        gradient *= gradient > 0.0
+
         return gradient
 
     def get_update(
