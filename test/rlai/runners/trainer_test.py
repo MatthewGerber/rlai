@@ -95,7 +95,8 @@ def test_unparsed_arguments():
 
 def test_help():
 
-    run(shlex.split('--agent rlai.agents.mdp.StochasticMdpAgent --help'))
+    with pytest.raises(ValueError, match='No training function specified. Cannot train.'):
+        run(shlex.split('--agent rlai.agents.mdp.StochasticMdpAgent --help'))
 
 
 def test_resume():

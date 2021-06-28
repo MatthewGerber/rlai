@@ -2,20 +2,23 @@ import logging
 
 from rlai.agents.mdp import MdpAgent
 from rlai.environments.mdp import MdpEnvironment
+from rlai.gpi import PolicyImprovementEvent
 from rlai.meta import rl_text
 from rlai.policies.parameterized import ParameterizedPolicy
 from rlai.utils import IncrementalSampleAverager, RunThreadManager
+from rlai.value_estimation import StateActionValueEstimator
 
 
 @rl_text(chapter=13, page=326)
 def improve(
         agent: MdpAgent,
+        policy: ParameterizedPolicy,
         environment: MdpEnvironment,
         num_episodes: int,
         update_upon_every_visit: bool,
         alpha: float,
-        thread_manager: RunThreadManager,
-        planning_environment: MdpEnvironment
+        q_S_A: StateActionValueEstimator,
+        thread_manager: RunThreadManager
 ):
     """
     Perform Monte Carlo improvement of an agent's policy within an environment via the REINFORCE policy gradient method.
@@ -23,6 +26,7 @@ def improve(
     episodic tasks.
 
     :param agent: Agent containing target policy to be optimized.
+    :param policy: Parameterized policy to be optimized.
     :param environment: Environment.
     :param num_episodes: Number of episodes to execute.
     :param update_upon_every_visit: True to update each state-action pair upon each visit within an episode, or False to
@@ -31,13 +35,12 @@ def improve(
     :param thread_manager: Thread manager. The current function (and the thread running it) will wait on this manager
     before starting each iteration. This provides a mechanism for pausing, resuming, and aborting training. Omit for no
     waiting.
-    :param planning_environment: Planning environment to learn and use.
+    :param q_S_A: Baseline state-action value estimator.
     """
 
-    if not isinstance(agent.pi, ParameterizedPolicy):
-        raise ValueError('Expected a parameterized policy.')
-
     logging.info(f'Running Monte Carlo-based REINFORCE improvement for {num_episodes} episode(s).')
+
+    baseline_a = None
 
     episode_reward_averager = IncrementalSampleAverager()
     episodes_per_print = max(1, int(num_episodes * 0.05))
@@ -47,6 +50,10 @@ def improve(
         # from it), and reset the agent accordingly.
         state = environment.reset_for_new_run(agent)
         agent.reset_for_new_run(state)
+
+        # grab an arbitrary action if we're using a baseline.
+        if q_S_A is not None:
+            baseline_a = state.AA[0]
 
         # simulate until episode termination, keeping a trace of state-action pairs and their immediate rewards, as well
         # as the times of their first visits (only if we're doing first-visit evaluation).
@@ -81,8 +88,20 @@ def improve(
             # if we're doing every-visit, or if the current time step was the first visit to the state-action, then G
             # is the discounted sample value. use it to update the policy.
             if state_action_first_t is None or state_action_first_t[state_a] == t:
+
                 state, a = state_a
-                agent.pi.theta += agent.pi.get_update(a, state, alpha, G)
+
+                # update the baseline state-value estimator. always pass the same arbitrary action to achieve state-
+                # value estimation. as the text notes:  the baseline can be anything as long as it does not vary with
+                # the action.
+                if q_S_A is not None:
+                    q_S_A[state][baseline_a].update(G)
+                    q_S_A.improve_policy(agent, None, PolicyImprovementEvent.UPDATED_VALUE_ESTIMATE)
+                    update_target = G - q_S_A[state][baseline_a].get_value()
+                else:
+                    update_target = G
+
+                agent.pi.theta += agent.pi.get_update(a, state, alpha, update_target)
 
         episode_reward_averager.update(total_reward)
 

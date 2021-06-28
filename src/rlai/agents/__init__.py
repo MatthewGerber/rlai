@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from argparse import ArgumentParser
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Any, Union
 
 from numpy.random import RandomState
 
@@ -38,14 +38,14 @@ class Agent(ABC):
             args: List[str],
             random_state: RandomState,
             pi: Optional[Policy]
-    ) -> List:
+    ) -> Union[List, Any]:
         """
-        Initialize a list of agents from arguments.
+        Initialize a agents from arguments.
 
         :param args: Arguments.
         :param random_state: Random state.
         :param pi: Policy.
-        :return: List of agents.
+        :return: List of agents or a single agent, depending on the concrete class.
         """
 
     def reset_for_new_run(
@@ -175,7 +175,7 @@ class Human(Agent):
             args: List[str],
             random_state: RandomState,
             pi: Optional[Policy]
-    ) -> List:
+    ) -> Agent:
         """
         Not implemented.
         """

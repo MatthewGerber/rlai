@@ -1,7 +1,7 @@
 from abc import ABC
 from argparse import ArgumentParser
 from functools import reduce
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
 
 import numpy as np
 
@@ -68,26 +68,29 @@ class SoftMaxInActionPreferencesPolicy(ParameterizedPolicy):
     def init_from_arguments(
             cls,
             args: List[str],
+            feature_extractor: Optional[FeatureExtractor],
             environment: MdpEnvironment
     ) -> Tuple[Policy, List[str]]:
         """
         Initialize a policy from arguments.
 
         :param args: Arguments.
+        :param feature_extractor: Feature extractor.
         :param environment: Environment.
         :return: 2-tuple of a policy and a list of unparsed arguments.
         """
 
         parsed_args, unparsed_args = parse_arguments(cls, args)
 
-        # load feature extractor
-        feature_extractor_class = load_class(parsed_args.feature_extractor)
-        fex, unparsed_args = feature_extractor_class.init_from_arguments(unparsed_args, environment)
-        del parsed_args.feature_extractor
+        # load feature extractor if it wasn't already initialized
+        if feature_extractor is None:
+            feature_extractor_class = load_class(parsed_args.feature_extractor)
+            feature_extractor, unparsed_args = feature_extractor_class.init_from_arguments(unparsed_args, environment)
+            del parsed_args.feature_extractor
 
         # initialize policy
         policy = SoftMaxInActionPreferencesPolicy(
-            feature_extractor=fex
+            feature_extractor=feature_extractor
         )
 
         return policy, unparsed_args
@@ -136,9 +139,6 @@ class SoftMaxInActionPreferencesPolicy(ParameterizedPolicy):
 
         # quotient rule for policy gradient
         gradient = (soft_max_denominator * gradient_soft_max_numerator - soft_max_numerator * gradient_soft_max_denominator) / (soft_max_denominator ** 2.0)
-
-        # mask out gradient for actions other than the one of interest
-        gradient *= gradient > 0.0
 
         return gradient
 
