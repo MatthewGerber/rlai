@@ -79,13 +79,13 @@ def improve(
             agent.sense(state, t)
 
         # work backwards through the trace to calculate discounted returns. need to work backward in order for the value
-        # of G at each time step t to be properly discounted.
-        G = 0
+        # of g at each time step t to be properly discounted.
+        g = 0
         for t, state_a, reward in reversed(t_state_action_reward):
 
-            G = agent.gamma * G + reward.r
+            g = agent.gamma * g + reward.r
 
-            # if we're doing every-visit, or if the current time step was the first visit to the state-action, then G
+            # if we're doing every-visit, or if the current time step was the first visit to the state-action, then g
             # is the discounted sample value. use it to update the policy.
             if state_action_first_t is None or state_action_first_t[state_a] == t:
 
@@ -95,11 +95,11 @@ def improve(
                 # value estimation. as the text notes:  the baseline can be anything as long as it does not vary with
                 # the action.
                 if q_S_A is not None:
-                    q_S_A[state][baseline_a].update(G)
+                    q_S_A[state][baseline_a].update(g)
                     q_S_A.improve_policy(agent, None, PolicyImprovementEvent.UPDATED_VALUE_ESTIMATE)
-                    update_target = G - q_S_A[state][baseline_a].get_value()
+                    update_target = g - q_S_A[state][baseline_a].get_value()
                 else:
-                    update_target = G
+                    update_target = g
 
                 agent.pi.theta += agent.pi.get_update(a, state, alpha, update_target)
 

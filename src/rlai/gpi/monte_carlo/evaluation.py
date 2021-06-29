@@ -66,20 +66,20 @@ def evaluate_v_pi(
             agent.sense(state, t)
 
         # work backwards through the trace to calculate discounted returns. need to work backward in order for the value
-        # of G at each time step t to be properly discounted.
-        G = 0
+        # of g at each time step t to be properly discounted.
+        g = 0
         for t, state, reward in reversed(t_state_reward):
 
-            G = agent.gamma * G + reward.r
+            g = agent.gamma * g + reward.r
 
-            # if the current time step was the first visit to the state, then G is the discounted sample value. add it
+            # if the current time step was the first visit to the state, then g is the discounted sample value. add it
             # to our average.
             if state_first_t[state] == t:
 
                 if state not in v_pi:
                     v_pi[state] = IncrementalSampleAverager()
 
-                v_pi[state].update(G)
+                v_pi[state].update(g)
 
         episodes_finished = episode_i + 1
         if episodes_finished % episodes_per_print == 0:
@@ -169,15 +169,15 @@ def evaluate_q_pi(
             episode_generation_agent.sense(state, t)
 
         # work backwards through the trace to calculate discounted returns. need to work backward in order for the value
-        # of G at each time step t to be properly discounted. here, W is the importance-sampling weight of the agent's
+        # of g at each time step t to be properly discounted. here, w is the importance-sampling weight of the agent's
         # (target) policy compared to the episode generation policy (behavior).
-        G = 0
-        W = 1
+        g = 0.0
+        w = 1.0
         for t, state_a, reward in reversed(t_state_action_reward):
 
-            G = agent.gamma * G + reward.r
+            g = agent.gamma * g + reward.r
 
-            # if we're doing every-visit, or if the current time step was the first visit to the state-action, then G
+            # if we're doing every-visit, or if the current time step was the first visit to the state-action, then g
             # is the discounted sample value. add it to our average.
             if state_action_first_t is None or state_action_first_t[state_a] == t:
 
@@ -186,16 +186,16 @@ def evaluate_q_pi(
                 q_S_A.initialize(state=state, a=a, alpha=None, weighted=True)
 
                 # the following two lines work correctly for on- and off-policy learning. in the former case, the agent
-                # and episode policies are the same, which makes W always equal to 1 (i.e., q_S_A is unweighted...the
-                # on-policy case). in off-policy learning, W will be the importance-sampling weight.
-                q_S_A[state][a].update(value=G, weight=W)
-                W *= agent.pi[state][a] / episode_generation_agent.pi[state][a]
+                # and episode policies are the same, which makes w always equal to 1 (i.e., q_S_A is unweighted...the
+                # on-policy case). in off-policy learning, w will be the importance-sampling weight.
+                q_S_A[state][a].update(value=g, weight=w)
+                w *= agent.pi[state][a] / episode_generation_agent.pi[state][a]
 
                 # if the importance sampling weight becomes zero (allowing floating-point tolerane), then we're done,
                 # as all subsequent weighted updates (at earlier time steps) will be zero. this is the sense in which
                 # off-policy learning only learns from the "tails" of episodes in which all state-action pairs of the
                 # episode are also greedy with respect to the agent's policy.
-                if W < 0.00000001:
+                if w < 0.00000001:
                     break
 
         episode_reward_averager.update(total_reward)
