@@ -21,9 +21,9 @@ from rlai.states.mdp import MdpState
 from rlai.utils import parse_arguments
 from rlai.q_S_A.function_approximation.models.feature_extraction import (
     StateActionInteractionFeatureExtractor,
-    OneHotCategoricalFeatureInteracter,
-    NonstationaryFeatureScaler
+    OneHotCategoricalFeatureInteracter
 )
+from rlai.models.feature_extraction import NonstationaryFeatureScaler
 
 
 @rl_text(chapter='States', page=1)

@@ -7,10 +7,6 @@ from numpy.random import RandomState
 
 from rlai.meta import rl_text
 from rlai.utils import get_base_argument_parser
-from rlai.v_S.function_approximation.models.feature_extraction import (
-    FeatureExtractor,
-    StateActionInteractionFeatureExtractor
-)
 
 
 @rl_text(chapter=9, page=197)
@@ -43,7 +39,7 @@ class FunctionApproximationModel(ABC):
 
         :param args: Arguments.
         :param random_state: Random state.
-        :return: 2-tuple of a state value estimator and a list of unparsed arguments.
+        :return: 2-tuple of a model and a list of unparsed arguments.
         """
 
     @abstractmethod

@@ -6,11 +6,11 @@ import numpy as np
 from numpy.random import RandomState
 
 from rlai.meta import rl_text
+from rlai.models import FunctionApproximationModel
+from rlai.models.feature_extraction import FeatureExtractor
 from rlai.states.mdp import MdpState
 from rlai.utils import load_class, parse_arguments, log_with_border
 from rlai.v_S import ValueEstimator, StateValueEstimator
-from rlai.v_S.function_approximation.models import FunctionApproximationModel
-from rlai.v_S.function_approximation.models.feature_extraction import FeatureExtractor
 
 
 @rl_text(chapter='Value Estimation', page=195)
@@ -43,7 +43,7 @@ class ApproximateValueEstimator(ValueEstimator):
         :return: Value.
         """
 
-        return self.estimator.evaluate(self.state)[0]
+        return self.estimator.evaluate(self.state)
 
     def __init__(
             self,
@@ -127,11 +127,14 @@ class ApproximateStateValueEstimator(StateValueEstimator):
         fex, unparsed_args = feature_extractor_class.init_from_arguments(unparsed_args)
         del parsed_args.feature_extractor
 
+        # there shouldn't be anything left
+        if len(vars(parsed_args)) > 0:
+            raise ValueError('Parsed args remain. Need to pass to constructor.')
+
         # initialize estimator
         estimator = ApproximateStateValueEstimator(
             model=model,
-            feature_extractor=fex,
-            **vars(parsed_args)
+            feature_extractor=fex
         )
 
         return estimator, unparsed_args
@@ -171,7 +174,7 @@ class ApproximateStateValueEstimator(StateValueEstimator):
         :return: Number of states improved.
         """
 
-        super().improve_policy()
+        super().improve()
 
         # if we have pending experience, then fit the model and reset the data.
         if self.experience_pending:
