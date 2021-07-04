@@ -19,12 +19,12 @@ from rlai.gpi.utils import update_policy_iteration_plot, plot_policy_iteration
 from rlai.planning.environment_models import StochasticEnvironmentModel
 from rlai.runners.trainer import run
 from rlai.utils import RunThreadManager
-from rlai.value_estimation.function_approximation.estimators import ApproximateStateActionValueEstimator
-from rlai.value_estimation.function_approximation.models.feature_extraction import (
+from rlai.q_S_A.function_approximation.estimators import ApproximateStateActionValueEstimator
+from rlai.q_S_A.function_approximation.models.feature_extraction import (
     StateActionIdentityFeatureExtractor
 )
-from rlai.value_estimation.function_approximation.models.sklearn import SKLearnSGD
-from rlai.value_estimation.tabular import TabularStateActionValueEstimator
+from rlai.q_S_A.function_approximation.models.sklearn import SKLearnSGD
+from rlai.q_S_A.tabular import TabularStateActionValueEstimator
 from test.rlai.utils import tabular_estimator_legacy_eq, tabular_pi_legacy_eq
 
 

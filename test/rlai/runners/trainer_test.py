@@ -9,7 +9,7 @@ import pytest
 from rlai.policies.tabular import TabularPolicy
 from rlai.runners.trainer import run
 from test.rlai.utils import init_virtual_display
-import rlai.value_estimation.function_approximation.models
+import rlai.q_S_A.function_approximation.models
 
 
 def test_run():

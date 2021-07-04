@@ -4,7 +4,7 @@ from numpy.random import RandomState
 from rlai.agents.mdp import StochasticMdpAgent
 from rlai.environments.gridworld import Gridworld
 from rlai.gpi.improvement import improve_policy_with_q_pi
-from rlai.value_estimation.tabular import TabularStateActionValueEstimator
+from rlai.q_S_A.tabular import TabularStateActionValueEstimator
 
 
 def test_invalid_improve_policy_with_q_pi():

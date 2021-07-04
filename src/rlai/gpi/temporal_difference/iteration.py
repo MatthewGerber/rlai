@@ -13,7 +13,7 @@ from rlai.gpi.temporal_difference.evaluation import evaluate_q_pi, Mode
 from rlai.gpi.utils import plot_policy_iteration
 from rlai.meta import rl_text
 from rlai.utils import RunThreadManager
-from rlai.value_estimation import StateActionValueEstimator
+from rlai.q_S_A import StateActionValueEstimator
 
 
 @rl_text(chapter=6, page=130)

@@ -11,7 +11,7 @@ from rlai.meta import rl_text
 from rlai.rewards import Reward
 from rlai.states.mdp import MdpState
 from rlai.utils import parse_arguments
-from rlai.value_estimation.function_approximation.models.feature_extraction import (
+from rlai.q_S_A.function_approximation.models.feature_extraction import (
     StateActionInteractionFeatureExtractor
 )
 

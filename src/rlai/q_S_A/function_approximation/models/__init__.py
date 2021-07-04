@@ -13,7 +13,7 @@ from numpy.random import RandomState
 
 from rlai.meta import rl_text
 from rlai.utils import get_base_argument_parser
-from rlai.value_estimation.function_approximation.models.feature_extraction import (
+from rlai.q_S_A.function_approximation.models.feature_extraction import (
     FeatureExtractor,
     StateActionInteractionFeatureExtractor
 )

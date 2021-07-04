@@ -6,7 +6,7 @@ from rlai.gpi import PolicyImprovementEvent
 from rlai.meta import rl_text
 from rlai.policies.parameterized import ParameterizedPolicy
 from rlai.utils import IncrementalSampleAverager, RunThreadManager
-from rlai.value_estimation import StateActionValueEstimator
+from rlai.q_S_A import StateActionValueEstimator
 
 
 @rl_text(chapter=13, page=326)

@@ -16,7 +16,7 @@ from rlai.policies import Policy
 from rlai.rewards import Reward
 from rlai.states.mdp import MdpState
 from rlai.utils import parse_arguments
-from rlai.value_estimation.function_approximation.models.feature_extraction import FeatureExtractor
+from rlai.q_S_A.function_approximation.models.feature_extraction import FeatureExtractor
 
 
 @rl_text(chapter='Rewards', page=1)

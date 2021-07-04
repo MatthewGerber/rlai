@@ -11,7 +11,7 @@ from rlai.meta import rl_text
 from rlai.policies import Policy
 from rlai.states.mdp import MdpState
 from rlai.utils import parse_arguments, load_class, get_base_argument_parser
-from rlai.value_estimation.function_approximation.models import FeatureExtractor
+from rlai.q_S_A.function_approximation.models import FeatureExtractor
 
 
 @rl_text(chapter=13, page=321)

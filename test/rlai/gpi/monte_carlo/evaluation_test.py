@@ -7,7 +7,7 @@ from rlai.agents.mdp import StochasticMdpAgent
 from rlai.environments.gridworld import Gridworld
 from rlai.gpi.monte_carlo.evaluation import evaluate_v_pi, evaluate_q_pi
 from rlai.policies.tabular import TabularPolicy
-from rlai.value_estimation.tabular import TabularStateActionValueEstimator
+from rlai.q_S_A.tabular import TabularStateActionValueEstimator
 from test.rlai.utils import tabular_estimator_legacy_eq
 
 
