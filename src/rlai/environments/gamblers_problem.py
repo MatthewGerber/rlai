@@ -60,7 +60,7 @@ class GamblersProblem(ModelBasedMdpEnvironment):
 
         parsed_args, unparsed_args = parse_arguments(cls, args)
 
-        gamblers_problem = GamblersProblem(
+        gamblers_problem = cls(
             name=f"gambler's problem (p={parsed_args.p_h})",
             random_state=random_state,
             **vars(parsed_args)

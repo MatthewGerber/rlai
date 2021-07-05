@@ -88,8 +88,12 @@ class SoftMaxInActionPreferencesPolicy(ParameterizedPolicy):
             feature_extractor, unparsed_args = feature_extractor_class.init_from_arguments(unparsed_args, environment)
             del parsed_args.feature_extractor
 
+        # there shouldn't be anything left
+        if len(vars(parsed_args)) > 0:
+            raise ValueError('Parsed args remain. Need to pass to constructor.')
+
         # initialize policy
-        policy = SoftMaxInActionPreferencesPolicy(
+        policy = cls(
             feature_extractor=feature_extractor
         )
 

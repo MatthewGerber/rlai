@@ -240,7 +240,11 @@ class GridworldFeatureExtractor(StateActionInteractionFeatureExtractor):
 
         parsed_args, unparsed_args = parse_arguments(cls, args)
 
-        fex = GridworldFeatureExtractor(
+        # there shouldn't be anything left
+        if len(vars(parsed_args)) > 0:
+            raise ValueError('Parsed args remain. Need to pass to constructor.')
+
+        fex = cls(
             environment=environment
         )
 

@@ -262,7 +262,7 @@ class TabularStateActionValueEstimator(StateActionValueEstimator):
 
         parsed_args, unparsed_args = parse_arguments(cls, args)
 
-        estimator = TabularStateActionValueEstimator(
+        estimator = cls(
             environment=environment,
             **vars(parsed_args)
         )

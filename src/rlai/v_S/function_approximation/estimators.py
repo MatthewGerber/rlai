@@ -132,7 +132,7 @@ class ApproximateStateValueEstimator(StateValueEstimator):
             raise ValueError('Parsed args remain. Need to pass to constructor.')
 
         # initialize estimator
-        estimator = ApproximateStateValueEstimator(
+        estimator = cls(
             model=model,
             feature_extractor=fex
         )

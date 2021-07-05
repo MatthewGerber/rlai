@@ -102,7 +102,7 @@ class RobocodeAgent(StochasticMdpAgent):
 
         parsed_args, unparsed_args = parse_arguments(cls, args)
 
-        agent = RobocodeAgent(
+        agent = cls(
             name=f'Robocode (gamma={parsed_args.gamma})',
             random_state=random_state,
             pi=pi,
@@ -253,7 +253,7 @@ class RobocodeEnvironment(TcpMdpEnvironment):
 
         parsed_args, unparsed_args = parse_arguments(cls, args)
 
-        robocode = RobocodeEnvironment(
+        robocode = cls(
             random_state=random_state,
             **vars(parsed_args)
         )
@@ -668,7 +668,7 @@ class RobocodeFeatureExtractor(FeatureExtractor):
 
         parsed_args, unparsed_args = parse_arguments(cls, args)
 
-        fex = RobocodeFeatureExtractor(
+        fex = cls(
             environment=environment,
             **vars(parsed_args)
         )

@@ -196,7 +196,7 @@ class Mancala(MdpEnvironment):
 
         parsed_args, unparsed_args = parse_arguments(cls, args)
 
-        mancala = Mancala(
+        mancala = cls(
             random_state=random_state,
             player_2=StochasticMdpAgent(
                 'environmental agent',

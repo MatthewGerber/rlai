@@ -430,7 +430,21 @@ class SKLearnSGD(FunctionApproximationModel):
         :return: Dictionary.
         """
 
-        state_dict = super().__getstate__()
+        state_dict = dict(self.__dict__)
+
+        self.deflate_state_dict(state_dict)
+
+        return state_dict
+
+    @staticmethod
+    def deflate_state_dict(
+            state_dict: Dict
+    ):
+        """
+        Modify the state dictionary to exclude particular items.
+
+        :param state_dict: State dictionary.
+        """
 
         # clear other memory intensive attributes
         state_dict['plot_iteration'] = 0
@@ -460,22 +474,32 @@ class SKLearnSGD(FunctionApproximationModel):
         # the plot data lock cannot be pickled
         state_dict['plot_data_lock'] = None
 
-        return state_dict
-
     def __setstate__(
             self,
-            state
+            state_dict
     ):
         """
         Set the unpickled state for the current instance.
 
-        :param state: Unpickled state.
+        :param state_dict: Unpickled state.
         """
 
-        self.__dict__ = state
+        self.inflate_state(state_dict)
+
+        self.__dict__ = state_dict
+
+    @staticmethod
+    def inflate_state(
+            state_dict: Dict
+    ):
+        """
+        Modify the state to include items that weren't pickled.
+
+        :param state_dict: Pickled state dictionary.
+        """
 
         # initialize new lock, which couldn't be pickled.
-        self.plot_data_lock = threading.Lock()
+        state_dict['plot_data_lock'] = threading.Lock()
 
     def __eq__(
             self,

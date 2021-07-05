@@ -159,7 +159,7 @@ class StateActionIdentityFeatureExtractor(FeatureExtractor):
     provided for actions (which are generally easy to enumerate up front), but this is certainly not true for states,
     which are not (easily) enumerable for all environments. All of this to say that this feature extractor is not
     generally useful. You should consider writing your own feature extractor for your environment. See
-    `rlai.value_estimation.function_approximation.statistical_learning.feature_extraction.gridworld.GridworldFeatureExtractor`
+    `rlai.q_S_A.function_approximation.statistical_learning.feature_extraction.gridworld.GridworldFeatureExtractor`
     for an example.
     """
 
@@ -198,7 +198,11 @@ class StateActionIdentityFeatureExtractor(FeatureExtractor):
 
         parsed_args, unparsed_args = parse_arguments(cls, args)
 
-        fex = StateActionIdentityFeatureExtractor(
+        # there shouldn't be anything left
+        if len(vars(parsed_args)) > 0:
+            raise ValueError('Parsed args remain. Need to pass to constructor.')
+
+        fex = cls(
             environment=environment
         )
 

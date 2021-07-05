@@ -176,7 +176,7 @@ class FunctionApproximationModel(BaseFunctionApproximationModel, ABC):
         Initialize the model.
         """
 
-        super().__init__()
+        BaseFunctionApproximationModel.__init__(self)
 
         self.feature_action_coefficients: Optional[pd.DataFrame] = None
 
@@ -191,9 +191,45 @@ class FunctionApproximationModel(BaseFunctionApproximationModel, ABC):
 
         state_dict = dict(self.__dict__)
 
+        self.deflate_state_dict(state_dict)
+
+        return state_dict
+
+    @staticmethod
+    def deflate_state_dict(
+            state_dict: Dict
+    ):
+        """
+        Modify the state dictionary to exclude particular items.
+
+        :param state_dict: State dictionary.
+        """
+
         # don't pickle the history of feature action coefficients used for plotting, as they grow unbounded during
         # training. the only known use case for saving them is to continue plotting after resumption; however, that's
         # a pretty narrow use case and isn't worth the large amount of disk space that it takes.
         state_dict['feature_action_coefficients'] = None
 
-        return state_dict
+    def __setstate__(
+            self,
+            state_dict: Dict
+    ):
+        """
+        Set the unpickled state for the current instance.
+
+        :param state_dict: Unpickled state.
+        """
+
+        self.inflate_state(state_dict)
+
+        self.__dict__ = state_dict
+
+    @staticmethod
+    def inflate_state(
+            state_dict: Dict
+    ):
+        """
+        Modify the state to include items that weren't pickled.
+
+        :param state_dict: Pickled state dictionary.
+        """

@@ -147,7 +147,7 @@ class KArmedBandit(Environment):
 
         parsed_args, unparsed_args = parse_arguments(cls, args)
 
-        bandit = KArmedBandit(
+        bandit = cls(
             random_state=random_state,
             **vars(parsed_args)
         )

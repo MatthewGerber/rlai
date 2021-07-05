@@ -130,7 +130,7 @@ class Gym(MdpEnvironment):
 
         parsed_args, unparsed_args = parse_arguments(cls, args)
 
-        gym_env = Gym(
+        gym_env = cls(
             random_state=random_state,
             **vars(parsed_args)
         )
@@ -412,7 +412,11 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
 
         parsed_args, unparsed_args = parse_arguments(cls, args)
 
-        fex = CartpoleFeatureExtractor(
+        # there shouldn't be anything left
+        if len(vars(parsed_args)) > 0:
+            raise ValueError('Parsed args remain. Need to pass to constructor.')
+
+        fex = cls(
             environment=environment
         )
 

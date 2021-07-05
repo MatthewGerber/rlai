@@ -236,7 +236,7 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         del parsed_args.feature_extractor
 
         # initialize estimator
-        estimator = ApproximateStateActionValueEstimator(
+        estimator = cls(
             environment=environment,
             model=model,
             feature_extractor=fex,
@@ -464,7 +464,7 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         "x + y + z" for this argument. See the Patsy documentation for full details of the formula language. Statistical
         learning models used in reinforcement learning generally need to operate "online", learning the reward function
         incrementally at each step. An example of such a model would be
-        `rlai.value_estimation.function_approximation.statistical_learning.sklearn.SKLearnSGD`. Online learning has
+        `rlai.q_S_A.function_approximation.statistical_learning.sklearn.SKLearnSGD`. Online learning has
         implications for the use and coding of categorical variables in the model formula. In particular, the full
         ranges of state and action levels must be specified up front. See
         `test.rlai.gpi.temporal_difference.iteration_test.test_q_learning_iterate_value_q_pi_function_approximation` for

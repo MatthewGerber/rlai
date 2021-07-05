@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Dict
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -38,7 +38,8 @@ class SKLearnSGD(FunctionApproximationModel, BaseSKLearnSGD):
         :return: Matplotlib figure, if one was generated and not plotting to PDF.
         """
 
-        super().plot(
+        FunctionApproximationModel.plot(
+            self,
             feature_extractor=feature_extractor,
             policy_improvement_count=policy_improvement_count,
             num_improvement_bins=num_improvement_bins,
@@ -46,7 +47,8 @@ class SKLearnSGD(FunctionApproximationModel, BaseSKLearnSGD):
             pdf=pdf
         )
 
-        return super(FunctionApproximationModel).plot(
+        return BaseSKLearnSGD.plot(
+            self,
             render=render,
             pdf=pdf
         )
@@ -133,7 +135,41 @@ class SKLearnSGD(FunctionApproximationModel, BaseSKLearnSGD):
         :param kwargs: Keyword arguments to pass to SGDRegressor.
         """
 
-        super().__init__(
+        FunctionApproximationModel.__init__(self)
+
+        BaseSKLearnSGD.__init__(
+            self,
             scale_eta0_for_y=scale_eta0_for_y,
             **kwargs
         )
+
+    def __getstate__(
+            self
+    ) -> Dict:
+        """
+        Get the state to pickle for the current instance.
+
+        :return: Dictionary.
+        """
+
+        state_dict = dict(self.__dict__)
+
+        FunctionApproximationModel.deflate_state_dict(state_dict)
+        BaseSKLearnSGD.deflate_state_dict(state_dict)
+
+        return state_dict
+
+    def __setstate__(
+            self,
+            state_dict: Dict
+    ):
+        """
+        Set the unpickled state for the current instance.
+
+        :param state_dict: Unpickled state.
+        """
+
+        FunctionApproximationModel.inflate_state(state_dict)
+        BaseSKLearnSGD.inflate_state(state_dict)
+
+        self.__dict__ = state_dict

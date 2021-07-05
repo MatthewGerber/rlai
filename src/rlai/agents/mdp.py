@@ -139,7 +139,7 @@ class StochasticMdpAgent(MdpAgent):
 
         parsed_args, unparsed_args = parse_arguments(cls, args)
 
-        agent = StochasticMdpAgent(
+        agent = cls(
             name=f'stochastic (gamma={parsed_args.gamma})',
             random_state=random_state,
             pi=pi,

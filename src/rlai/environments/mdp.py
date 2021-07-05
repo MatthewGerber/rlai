@@ -382,7 +382,7 @@ class PrioritizedSweepingMdpPlanningEnvironment(MdpPlanningEnvironment):
 
         parsed_args, unparsed_args = parse_arguments(cls, args)
 
-        planning_environment = PrioritizedSweepingMdpPlanningEnvironment(
+        planning_environment = cls(
             name=f"prioritized planning (theta={parsed_args.priority_theta})",
             random_state=random_state,
             model=StochasticEnvironmentModel(),
@@ -599,7 +599,7 @@ class TrajectorySamplingMdpPlanningEnvironment(MdpPlanningEnvironment):
 
         parsed_args, unparsed_args = parse_arguments(cls, args)
 
-        planning_environment = TrajectorySamplingMdpPlanningEnvironment(
+        planning_environment = cls(
             name=f"trajectory planning",
             random_state=random_state,
             model=StochasticEnvironmentModel(),
