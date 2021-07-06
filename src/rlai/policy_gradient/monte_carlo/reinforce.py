@@ -84,9 +84,12 @@ def improve(
 
                 state, a = state_a
 
-                # update the baseline state-value estimator
+                # if we don't have a baseline, then the target is the return.
                 if v_S is None:
                     update_target = g
+
+                # otherwise, update the baseline state-value estimator and target the return's difference with the
+                # resulting estimate.
                 else:
                     v_S[state].update(g)
                     v_S.improve()
