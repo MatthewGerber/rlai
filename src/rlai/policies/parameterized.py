@@ -1,7 +1,7 @@
 from abc import ABC
 from argparse import ArgumentParser
 from functools import reduce
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple
 
 import numpy as np
 
@@ -57,9 +57,9 @@ class SoftMaxInActionPreferencesPolicy(ParameterizedPolicy):
         )
 
         parser.add_argument(
-            '--feature-extractor',
+            '--policy-feature-extractor',
             type=str,
-            help='Fully-qualified type name of feature extractor.'
+            help='Fully-qualified type name of feature extractor to use within policy.'
         )
 
         return parser
@@ -68,25 +68,25 @@ class SoftMaxInActionPreferencesPolicy(ParameterizedPolicy):
     def init_from_arguments(
             cls,
             args: List[str],
-            feature_extractor: Optional[FeatureExtractor],
             environment: MdpEnvironment
     ) -> Tuple[Policy, List[str]]:
         """
         Initialize a policy from arguments.
 
         :param args: Arguments.
-        :param feature_extractor: Feature extractor.
         :param environment: Environment.
         :return: 2-tuple of a policy and a list of unparsed arguments.
         """
 
         parsed_args, unparsed_args = parse_arguments(cls, args)
 
-        # load feature extractor if it wasn't already initialized
-        if feature_extractor is None:
-            feature_extractor_class = load_class(parsed_args.feature_extractor)
-            feature_extractor, unparsed_args = feature_extractor_class.init_from_arguments(unparsed_args, environment)
-            del parsed_args.feature_extractor
+        # load feature extractor
+        feature_extractor_class = load_class(parsed_args.policy_feature_extractor)
+        feature_extractor, unparsed_args = feature_extractor_class.init_from_arguments(
+            args=unparsed_args,
+            environment=environment
+        )
+        del parsed_args.policy_feature_extractor
 
         # there shouldn't be anything left
         if len(vars(parsed_args)) > 0:

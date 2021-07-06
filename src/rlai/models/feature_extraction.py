@@ -44,6 +44,15 @@ class FeatureExtractor(ABC):
         :return: 2-tuple of a feature extractor and a list of unparsed arguments.
         """
 
+    def get_feature_names(
+            self
+    ) -> List[str]:
+        """
+        Get names of features.
+
+        :return: List of feature names.
+        """
+
     def __init__(
             self
     ):

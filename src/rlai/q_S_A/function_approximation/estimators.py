@@ -225,14 +225,17 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         # load model
         model_class = load_class(parsed_args.function_approximation_model)
         model, unparsed_args = model_class.init_from_arguments(
-            unparsed_args,
+            args=unparsed_args,
             random_state=random_state
         )
         del parsed_args.function_approximation_model
 
         # load feature extractor
         feature_extractor_class = load_class(parsed_args.feature_extractor)
-        fex, unparsed_args = feature_extractor_class.init_from_arguments(unparsed_args, environment)
+        fex, unparsed_args = feature_extractor_class.init_from_arguments(
+            args=unparsed_args,
+            environment=environment
+        )
         del parsed_args.feature_extractor
 
         # initialize estimator

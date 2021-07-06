@@ -99,27 +99,30 @@ def run(
         )
 
     # load state-action value estimator
-    q_S_A_feature_extractor = None  # others might need the feature extractor attached to the state-action value estimator. hold it here.
     if train_function_args.get('q_S_A', None) is not None:
         estimator_class = load_class(train_function_args['q_S_A'])
         state_action_value_estimator, unparsed_args = estimator_class.init_from_arguments(
-            unparsed_args,
+            args=unparsed_args,
             random_state=random_state,
             environment=train_function_args['environment']
         )
         train_function_args['q_S_A'] = state_action_value_estimator
         initial_policy = state_action_value_estimator.get_initial_policy()
 
-        # not all estimators have a feature extractor (e.g., tabular does not)
-        if hasattr(state_action_value_estimator, 'feature_extractor'):
-            q_S_A_feature_extractor = state_action_value_estimator.feature_extractor
+    # load state-value estimator
+    if train_function_args.get('v_S', None) is not None:
+        estimator_class = load_class(train_function_args['v_S'])
+        train_function_args['v_S'], unparsed_args = estimator_class.init_from_arguments(
+            args=unparsed_args,
+            random_state=random_state,
+            environment=train_function_args['environment']
+        )
 
     # load parameterized policy
     if train_function_args.get('policy', None) is not None:
         policy_class = load_class(train_function_args['policy'])
         initial_policy, unparsed_args = policy_class.init_from_arguments(
-            unparsed_args,
-            feature_extractor=q_S_A_feature_extractor,  # if this is None, then the policy class will obtain it from the arguments
+            args=unparsed_args,
             environment=train_function_args['environment']
         )
         train_function_args['policy'] = initial_policy
@@ -357,6 +360,12 @@ def get_argument_parser_for_train_function(
         '--q-S-A',
         type=str,
         help='Fully-qualified type name of state-action value estimator to use (for action-value methods).'
+    )
+
+    filter_add_argument(
+        '--v-S',
+        type=str,
+        help='Fully-qualified type name of state-value estimator to use (for policy gradient methods).'
     )
 
     filter_add_argument(

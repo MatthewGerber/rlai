@@ -5,6 +5,7 @@ from typing import Optional, List, Tuple
 import numpy as np
 from numpy.random import RandomState
 
+from rlai.environments.mdp import MdpEnvironment
 from rlai.meta import rl_text
 from rlai.models import FunctionApproximationModel
 from rlai.models.feature_extraction import FeatureExtractor
@@ -102,13 +103,15 @@ class ApproximateStateValueEstimator(StateValueEstimator):
     def init_from_arguments(
             cls,
             args: List[str],
-            random_state: RandomState
+            random_state: RandomState,
+            environment: MdpEnvironment
     ) -> Tuple[StateValueEstimator, List[str]]:
         """
         Initialize a state-action value estimator from arguments.
 
         :param args: Arguments.
         :param random_state: Random state.
+        :param environment: Environment.
         :return: 2-tuple of a state-action value estimator and a list of unparsed arguments.
         """
 
@@ -117,14 +120,17 @@ class ApproximateStateValueEstimator(StateValueEstimator):
         # load model
         model_class = load_class(parsed_args.function_approximation_model)
         model, unparsed_args = model_class.init_from_arguments(
-            unparsed_args,
+            args=unparsed_args,
             random_state=random_state
         )
         del parsed_args.function_approximation_model
 
         # load feature extractor
         feature_extractor_class = load_class(parsed_args.feature_extractor)
-        fex, unparsed_args = feature_extractor_class.init_from_arguments(unparsed_args)
+        fex, unparsed_args = feature_extractor_class.init_from_arguments(
+            args=unparsed_args,
+            environment=environment
+        )
         del parsed_args.feature_extractor
 
         # there shouldn't be anything left
