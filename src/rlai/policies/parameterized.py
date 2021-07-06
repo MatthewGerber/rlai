@@ -1,7 +1,7 @@
 from abc import ABC
 from argparse import ArgumentParser
 from functools import reduce
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple
 
 import numpy as np
 
@@ -9,9 +9,9 @@ from rlai.actions import Action
 from rlai.environments.mdp import MdpEnvironment
 from rlai.meta import rl_text
 from rlai.policies import Policy
+from rlai.q_S_A.function_approximation.models import FeatureExtractor
 from rlai.states.mdp import MdpState
 from rlai.utils import parse_arguments, load_class, get_base_argument_parser
-from rlai.value_estimation.function_approximation.models import FeatureExtractor
 
 
 @rl_text(chapter=13, page=321)
@@ -57,9 +57,9 @@ class SoftMaxInActionPreferencesPolicy(ParameterizedPolicy):
         )
 
         parser.add_argument(
-            '--feature-extractor',
+            '--policy-feature-extractor',
             type=str,
-            help='Fully-qualified type name of feature extractor.'
+            help='Fully-qualified type name of feature extractor to use within policy.'
         )
 
         return parser
@@ -68,28 +68,32 @@ class SoftMaxInActionPreferencesPolicy(ParameterizedPolicy):
     def init_from_arguments(
             cls,
             args: List[str],
-            feature_extractor: Optional[FeatureExtractor],
             environment: MdpEnvironment
     ) -> Tuple[Policy, List[str]]:
         """
         Initialize a policy from arguments.
 
         :param args: Arguments.
-        :param feature_extractor: Feature extractor.
         :param environment: Environment.
         :return: 2-tuple of a policy and a list of unparsed arguments.
         """
 
         parsed_args, unparsed_args = parse_arguments(cls, args)
 
-        # load feature extractor if it wasn't already initialized
-        if feature_extractor is None:
-            feature_extractor_class = load_class(parsed_args.feature_extractor)
-            feature_extractor, unparsed_args = feature_extractor_class.init_from_arguments(unparsed_args, environment)
-            del parsed_args.feature_extractor
+        # load feature extractor
+        feature_extractor_class = load_class(parsed_args.policy_feature_extractor)
+        feature_extractor, unparsed_args = feature_extractor_class.init_from_arguments(
+            args=unparsed_args,
+            environment=environment
+        )
+        del parsed_args.policy_feature_extractor
+
+        # there shouldn't be anything left
+        if len(vars(parsed_args)) > 0:
+            raise ValueError('Parsed args remain. Need to pass to constructor.')
 
         # initialize policy
-        policy = SoftMaxInActionPreferencesPolicy(
+        policy = cls(
             feature_extractor=feature_extractor
         )
 

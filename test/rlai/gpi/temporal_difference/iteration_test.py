@@ -19,12 +19,12 @@ from rlai.gpi.utils import update_policy_iteration_plot, plot_policy_iteration
 from rlai.planning.environment_models import StochasticEnvironmentModel
 from rlai.runners.trainer import run
 from rlai.utils import RunThreadManager
-from rlai.value_estimation.function_approximation.estimators import ApproximateStateActionValueEstimator
-from rlai.value_estimation.function_approximation.models.feature_extraction import (
+from rlai.q_S_A.function_approximation.estimators import ApproximateStateActionValueEstimator
+from rlai.q_S_A.function_approximation.models.feature_extraction import (
     StateActionIdentityFeatureExtractor
 )
-from rlai.value_estimation.function_approximation.models.sklearn import SKLearnSGD
-from rlai.value_estimation.tabular import TabularStateActionValueEstimator
+from rlai.q_S_A.function_approximation.models.sklearn import SKLearnSGD
+from rlai.q_S_A.tabular import TabularStateActionValueEstimator
 from test.rlai.utils import tabular_estimator_legacy_eq, tabular_pi_legacy_eq
 
 
@@ -555,7 +555,7 @@ def test_iterate_value_q_pi_func_approx_multi_threaded():
         q_S_A = train_args['q_S_A']
         train_args_wait_event.set()
 
-    cmd = f'--random-seed 12345 --agent rlai.agents.mdp.StochasticMdpAgent --gamma 1 --environment rlai.environments.gridworld.Gridworld --id example_4_1 --T 25 --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode SARSA --num-improvements 10 --num-episodes-per-improvement 10 --epsilon 0.05 --q-S-A rlai.value_estimation.function_approximation.estimators.ApproximateStateActionValueEstimator --function-approximation-model rlai.value_estimation.function_approximation.models.sklearn.SKLearnSGD --plot-model --feature-extractor rlai.environments.gridworld.GridworldFeatureExtractor --make-final-policy-greedy True'
+    cmd = f'--random-seed 12345 --agent rlai.agents.mdp.StochasticMdpAgent --gamma 1 --environment rlai.environments.gridworld.Gridworld --id example_4_1 --T 25 --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode SARSA --num-improvements 10 --num-episodes-per-improvement 10 --epsilon 0.05 --q-S-A rlai.q_S_A.function_approximation.estimators.ApproximateStateActionValueEstimator --function-approximation-model rlai.q_S_A.function_approximation.models.sklearn.SKLearnSGD --plot-model --feature-extractor rlai.environments.gridworld.GridworldFeatureExtractor --make-final-policy-greedy True'
     args = shlex.split(cmd)
 
     def train_thread_target():

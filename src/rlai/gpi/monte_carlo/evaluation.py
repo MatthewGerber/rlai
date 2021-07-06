@@ -6,7 +6,7 @@ from rlai.environments.mdp import MdpEnvironment
 from rlai.meta import rl_text
 from rlai.states.mdp import MdpState
 from rlai.utils import IncrementalSampleAverager, sample_list_item
-from rlai.value_estimation import StateActionValueEstimator
+from rlai.q_S_A import StateActionValueEstimator
 
 
 @rl_text(chapter=5, page=92)

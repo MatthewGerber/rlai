@@ -5,7 +5,7 @@ from rlai.environments.gridworld import Gridworld
 from rlai.gpi.temporal_difference.evaluation import evaluate_q_pi, Mode
 from numpy.random import RandomState
 
-from rlai.value_estimation.tabular import TabularStateActionValueEstimator
+from rlai.q_S_A.tabular import TabularStateActionValueEstimator
 
 
 def test_evaluate_q_pi_invalid_n_steps():

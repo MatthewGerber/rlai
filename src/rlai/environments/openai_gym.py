@@ -19,11 +19,11 @@ from rlai.meta import rl_text
 from rlai.rewards import Reward
 from rlai.states.mdp import MdpState
 from rlai.utils import parse_arguments
-from rlai.value_estimation.function_approximation.models.feature_extraction import (
+from rlai.q_S_A.function_approximation.models.feature_extraction import (
     StateActionInteractionFeatureExtractor,
-    OneHotCategoricalFeatureInteracter,
-    NonstationaryFeatureScaler
+    OneHotCategoricalFeatureInteracter
 )
+from rlai.models.feature_extraction import NonstationaryFeatureScaler
 
 
 @rl_text(chapter='States', page=1)
@@ -130,7 +130,7 @@ class Gym(MdpEnvironment):
 
         parsed_args, unparsed_args = parse_arguments(cls, args)
 
-        gym_env = Gym(
+        gym_env = cls(
             random_state=random_state,
             **vars(parsed_args)
         )
@@ -412,7 +412,11 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
 
         parsed_args, unparsed_args = parse_arguments(cls, args)
 
-        fex = CartpoleFeatureExtractor(
+        # there shouldn't be anything left
+        if len(vars(parsed_args)) > 0:
+            raise ValueError('Parsed args remain. Need to pass to constructor.')
+
+        fex = cls(
             environment=environment
         )
 

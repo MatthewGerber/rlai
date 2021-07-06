@@ -2,11 +2,10 @@ import logging
 
 from rlai.agents.mdp import MdpAgent
 from rlai.environments.mdp import MdpEnvironment
-from rlai.gpi import PolicyImprovementEvent
 from rlai.meta import rl_text
 from rlai.policies.parameterized import ParameterizedPolicy
 from rlai.utils import IncrementalSampleAverager, RunThreadManager
-from rlai.value_estimation import StateActionValueEstimator
+from rlai.v_S import StateValueEstimator
 
 
 @rl_text(chapter=13, page=326)
@@ -17,7 +16,7 @@ def improve(
         num_episodes: int,
         update_upon_every_visit: bool,
         alpha: float,
-        q_S_A: StateActionValueEstimator,
+        v_S: StateValueEstimator,
         thread_manager: RunThreadManager
 ):
     """
@@ -35,12 +34,10 @@ def improve(
     :param thread_manager: Thread manager. The current function (and the thread running it) will wait on this manager
     before starting each iteration. This provides a mechanism for pausing, resuming, and aborting training. Omit for no
     waiting.
-    :param q_S_A: Baseline state-action value estimator.
+    :param v_S: Baseline state-value estimator.
     """
 
     logging.info(f'Running Monte Carlo-based REINFORCE improvement for {num_episodes} episode(s).')
-
-    baseline_a = None
 
     episode_reward_averager = IncrementalSampleAverager()
     episodes_per_print = max(1, int(num_episodes * 0.05))
@@ -50,10 +47,6 @@ def improve(
         # from it), and reset the agent accordingly.
         state = environment.reset_for_new_run(agent)
         agent.reset_for_new_run(state)
-
-        # grab an arbitrary action if we're using a baseline.
-        if q_S_A is not None:
-            baseline_a = state.AA[0]
 
         # simulate until episode termination, keeping a trace of state-action pairs and their immediate rewards, as well
         # as the times of their first visits (only if we're doing first-visit evaluation).
@@ -91,15 +84,16 @@ def improve(
 
                 state, a = state_a
 
-                # update the baseline state-value estimator. always pass the same arbitrary action to achieve state-
-                # value estimation. as the text notes:  the baseline can be anything as long as it does not vary with
-                # the action.
-                if q_S_A is not None:
-                    q_S_A[state][baseline_a].update(g)
-                    q_S_A.improve_policy(agent, None, PolicyImprovementEvent.UPDATED_VALUE_ESTIMATE)
-                    update_target = g - q_S_A[state][baseline_a].get_value()
-                else:
+                # if we don't have a baseline, then the target is the return.
+                if v_S is None:
                     update_target = g
+
+                # otherwise, update the baseline state-value estimator and target the return's difference with the
+                # resulting estimate.
+                else:
+                    v_S[state].update(g)
+                    v_S.improve()
+                    update_target = g - v_S[state].get_value()
 
                 agent.pi.theta += agent.pi.get_update(a, state, alpha, update_target)
 

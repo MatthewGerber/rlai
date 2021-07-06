@@ -6,7 +6,7 @@ from rlai.policies import Policy
 from rlai.policies.tabular import TabularPolicy
 from rlai.states.mdp import MdpState
 from rlai.utils import IncrementalSampleAverager
-from rlai.value_estimation.tabular import TabularStateActionValueEstimator
+from rlai.q_S_A.tabular import TabularStateActionValueEstimator
 
 
 def tabular_pi_legacy_eq(
