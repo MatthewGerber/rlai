@@ -9,9 +9,9 @@ from rlai.actions import Action
 from rlai.environments.mdp import MdpEnvironment
 from rlai.meta import rl_text
 from rlai.policies import Policy
+from rlai.q_S_A.function_approximation.models import FeatureExtractor
 from rlai.states.mdp import MdpState
 from rlai.utils import parse_arguments, load_class, get_base_argument_parser
-from rlai.q_S_A.function_approximation.models import FeatureExtractor
 
 
 @rl_text(chapter=13, page=321)
