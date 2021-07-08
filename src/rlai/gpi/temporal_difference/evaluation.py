@@ -8,9 +8,9 @@ from rlai.agents.mdp import MdpAgent
 from rlai.environments.mdp import MdpEnvironment, MdpPlanningEnvironment, PrioritizedSweepingMdpPlanningEnvironment
 from rlai.gpi import PolicyImprovementEvent
 from rlai.meta import rl_text
+from rlai.q_S_A import StateActionValueEstimator
 from rlai.states.mdp import MdpState
 from rlai.utils import IncrementalSampleAverager, sample_list_item
-from rlai.q_S_A import StateActionValueEstimator
 
 
 @rl_text(chapter=6, page=130)

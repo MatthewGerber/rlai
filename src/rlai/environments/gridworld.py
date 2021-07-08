@@ -9,12 +9,12 @@ from rlai.environments import Environment
 from rlai.environments.mdp import ModelBasedMdpEnvironment
 from rlai.meta import rl_text
 from rlai.models.feature_extraction import FeatureExtractor
-from rlai.rewards import Reward
-from rlai.states.mdp import MdpState
-from rlai.utils import parse_arguments
 from rlai.q_S_A.function_approximation.models.feature_extraction import (
     StateActionInteractionFeatureExtractor
 )
+from rlai.rewards import Reward
+from rlai.states.mdp import MdpState
+from rlai.utils import parse_arguments
 
 
 @rl_text(chapter=3, page=60)

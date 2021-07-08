@@ -15,11 +15,11 @@ from rlai.environments.mdp import MdpEnvironment
 from rlai.gpi import PolicyImprovementEvent
 from rlai.meta import rl_text
 from rlai.policies.function_approximation import FunctionApproximationPolicy
-from rlai.states.mdp import MdpState
-from rlai.utils import load_class, parse_arguments, log_with_border
 from rlai.q_S_A import ValueEstimator, ActionValueEstimator, StateActionValueEstimator
 from rlai.q_S_A.function_approximation.models import FunctionApproximationModel
 from rlai.q_S_A.function_approximation.models.feature_extraction import FeatureExtractor
+from rlai.states.mdp import MdpState
+from rlai.utils import load_class, parse_arguments, log_with_border
 
 
 @rl_text(chapter='Value Estimation', page=195)

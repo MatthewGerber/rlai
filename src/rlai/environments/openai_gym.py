@@ -16,14 +16,14 @@ from rlai.actions import Action, DiscretizedAction
 from rlai.agents.mdp import MdpAgent
 from rlai.environments.mdp import MdpEnvironment
 from rlai.meta import rl_text
-from rlai.rewards import Reward
-from rlai.states.mdp import MdpState
-from rlai.utils import parse_arguments
+from rlai.models.feature_extraction import NonstationaryFeatureScaler
 from rlai.q_S_A.function_approximation.models.feature_extraction import (
     StateActionInteractionFeatureExtractor,
     OneHotCategoricalFeatureInteracter
 )
-from rlai.models.feature_extraction import NonstationaryFeatureScaler
+from rlai.rewards import Reward
+from rlai.states.mdp import MdpState
+from rlai.utils import parse_arguments
 
 
 @rl_text(chapter='States', page=1)
