@@ -104,7 +104,3 @@ def improve(
             logging.info(f'Finished {episodes_finished} of {num_episodes} episode(s).')
 
     logging.info(f'Completed optimization. Average reward per episode:  {episode_reward_averager.get_value()}')
-
-    for s in environment.SS:
-        for a in s.AA:
-            print(f'Pr({a}|{s}:  {agent.pi[s][a]}')

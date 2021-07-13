@@ -22,6 +22,7 @@ INSTALL_REQUIREMENTS = [
     'scikit-learn==0.24',
     'pandas==1.1.5',
     'patsy==0.5.1',
+    'jax[cpu]==0.2.17',
 
     # jupyter requirements
     'jupyterlab==3.0.6',
