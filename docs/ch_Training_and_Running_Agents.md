@@ -1,5 +1,5 @@
 # Training and Running Agents
-### [rlai.runners.agent_in_environment.run](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/runners/agent_in_environment.py#L17)
+### [rlai.runners.agent_in_environment.run](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/runners/agent_in_environment.py#L18)
 ```
 Run an agent within an environment.
 
@@ -12,7 +12,7 @@ Run RLAI.
     :param args: Arguments.
     :return: Return value of specified function.
 ```
-### [rlai.runners.trainer.run](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/runners/trainer.py#L21)
+### [rlai.runners.trainer.run](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/runners/trainer.py#L22)
 ```
 Train an agent in an environment.
 

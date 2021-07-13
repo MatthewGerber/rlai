@@ -1,5 +1,5 @@
 # Chapter 4:  Dynamic Programming
-### [rlai.gpi.dynamic_programming.evaluation.evaluate_v_pi](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/dynamic_programming/evaluation.py#L14)
+### [rlai.gpi.dynamic_programming.evaluation.evaluate_v_pi](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/dynamic_programming/evaluation.py#L15)
 ```
 Perform iterative policy evaluation of an agent's policy within an environment, returning state values.
 
@@ -15,7 +15,7 @@ Perform iterative policy evaluation of an agent's policy within an environment, 
     :return: 2-tuple of (1) dictionary of MDP states and their estimated values under the agent's policy, and (2) final
     value of delta.
 ```
-### [rlai.gpi.dynamic_programming.evaluation.evaluate_q_pi](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/dynamic_programming/evaluation.py#L101)
+### [rlai.gpi.dynamic_programming.evaluation.evaluate_q_pi](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/dynamic_programming/evaluation.py#L102)
 ```
 Perform iterative policy evaluation of an agent's policy within an environment, returning state-action values.
 
@@ -58,7 +58,7 @@ Improve an agent's policy according to its state-action value estimates. This ma
     policy. Must be >= 0.0 if given. Pass None to generate a purely greedy policy.
     :return: Number of states in which the policy was improved.
 ```
-### [rlai.gpi.dynamic_programming.iteration.iterate_policy_q_pi](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/dynamic_programming/iteration.py#L60)
+### [rlai.gpi.dynamic_programming.iteration.iterate_policy_q_pi](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/dynamic_programming/iteration.py#L61)
 ```
 Run policy iteration on an agent using state-value estimates.
 
@@ -69,7 +69,7 @@ Run policy iteration on an agent using state-value estimates.
     :param update_in_place: See `evaluate_q_pi`.
     :return: Final state-action value estimates.
 ```
-### [rlai.gpi.dynamic_programming.iteration.iterate_policy_v_pi](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/dynamic_programming/iteration.py#L13)
+### [rlai.gpi.dynamic_programming.iteration.iterate_policy_v_pi](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/dynamic_programming/iteration.py#L14)
 ```
 Run policy iteration on an agent using state-value estimates.
 
@@ -80,7 +80,7 @@ Run policy iteration on an agent using state-value estimates.
     :param update_in_place: See `evaluate_v_pi`.
     :return: Final state-value estimates.
 ```
-### [rlai.gpi.dynamic_programming.iteration.iterate_value_v_pi](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/dynamic_programming/iteration.py#L106)
+### [rlai.gpi.dynamic_programming.iteration.iterate_value_v_pi](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/dynamic_programming/iteration.py#L107)
 ```
 Run dynamic programming value iteration on an agent using state-value estimates.
 
@@ -97,7 +97,7 @@ Run dynamic programming value iteration on an agent using state-value estimates.
 ```
 Gambler's problem MDP environment.
 ```
-### [rlai.gpi.dynamic_programming.iteration.iterate_value_q_pi](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/dynamic_programming/iteration.py#L158)
+### [rlai.gpi.dynamic_programming.iteration.iterate_value_q_pi](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/dynamic_programming/iteration.py#L159)
 ```
 Run value iteration on an agent using state-action value estimates.
 

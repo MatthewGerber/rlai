@@ -106,3 +106,4 @@ not shown in the text.
 ### [Chapter 8:  Planning and Learning with Tabular Methods](ch_8.md)
 ### [Chapter 9:  On-policy Prediction with Approximation](ch_9.md)
 ### [Chapter 10:  On-policy Control with Approximation](ch_10.md)
+### [Chapter 13:  Policy Gradient Methods](ch_13.md)
