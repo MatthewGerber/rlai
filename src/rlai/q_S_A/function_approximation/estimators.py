@@ -15,11 +15,11 @@ from rlai.environments.mdp import MdpEnvironment
 from rlai.gpi import PolicyImprovementEvent
 from rlai.meta import rl_text
 from rlai.policies.function_approximation import FunctionApproximationPolicy
+from rlai.q_S_A import ValueEstimator, ActionValueEstimator, StateActionValueEstimator
+from rlai.q_S_A.function_approximation.models import FunctionApproximationModel
+from rlai.q_S_A.function_approximation.models.feature_extraction import FeatureExtractor
 from rlai.states.mdp import MdpState
 from rlai.utils import load_class, parse_arguments, log_with_border
-from rlai.value_estimation import ValueEstimator, ActionValueEstimator, StateActionValueEstimator
-from rlai.value_estimation.function_approximation.models import FunctionApproximationModel
-from rlai.value_estimation.function_approximation.models.feature_extraction import FeatureExtractor
 
 
 @rl_text(chapter='Value Estimation', page=195)
@@ -225,18 +225,21 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         # load model
         model_class = load_class(parsed_args.function_approximation_model)
         model, unparsed_args = model_class.init_from_arguments(
-            unparsed_args,
+            args=unparsed_args,
             random_state=random_state
         )
         del parsed_args.function_approximation_model
 
         # load feature extractor
         feature_extractor_class = load_class(parsed_args.feature_extractor)
-        fex, unparsed_args = feature_extractor_class.init_from_arguments(unparsed_args, environment)
+        fex, unparsed_args = feature_extractor_class.init_from_arguments(
+            args=unparsed_args,
+            environment=environment
+        )
         del parsed_args.feature_extractor
 
         # initialize estimator
-        estimator = ApproximateStateActionValueEstimator(
+        estimator = cls(
             environment=environment,
             model=model,
             feature_extractor=fex,
@@ -464,7 +467,7 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         "x + y + z" for this argument. See the Patsy documentation for full details of the formula language. Statistical
         learning models used in reinforcement learning generally need to operate "online", learning the reward function
         incrementally at each step. An example of such a model would be
-        `rlai.value_estimation.function_approximation.statistical_learning.sklearn.SKLearnSGD`. Online learning has
+        `rlai.q_S_A.function_approximation.statistical_learning.sklearn.SKLearnSGD`. Online learning has
         implications for the use and coding of categorical variables in the model formula. In particular, the full
         ranges of state and action levels must be specified up front. See
         `test.rlai.gpi.temporal_difference.iteration_test.test_q_learning_iterate_value_q_pi_function_approximation` for

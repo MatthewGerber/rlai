@@ -1,16 +1,16 @@
 import os
 import pickle
 
+import numpy as np
+import numpy.random
 import pytest
 from numpy.random import RandomState
 
 from rlai.actions import Action
 from rlai.environments.gridworld import GridworldFeatureExtractor, Gridworld
+from rlai.models.feature_extraction import NonstationaryFeatureScaler
+from rlai.q_S_A.function_approximation.models.feature_extraction import OneHotCategoricalFeatureInteracter
 from rlai.states.mdp import MdpState
-from rlai.value_estimation.function_approximation.models.feature_extraction import OneHotCategoricalFeatureInteracter, \
-    NonstationaryFeatureScaler
-import numpy as np
-import numpy.random
 
 
 def test_check_state_and_action_lists():

@@ -8,12 +8,13 @@ from rlai.actions import Action
 from rlai.environments import Environment
 from rlai.environments.mdp import ModelBasedMdpEnvironment
 from rlai.meta import rl_text
+from rlai.models.feature_extraction import FeatureExtractor
+from rlai.q_S_A.function_approximation.models.feature_extraction import (
+    StateActionInteractionFeatureExtractor
+)
 from rlai.rewards import Reward
 from rlai.states.mdp import MdpState
 from rlai.utils import parse_arguments
-from rlai.value_estimation.function_approximation.models.feature_extraction import (
-    StateActionInteractionFeatureExtractor
-)
 
 
 @rl_text(chapter=3, page=60)
@@ -240,7 +241,11 @@ class GridworldFeatureExtractor(StateActionInteractionFeatureExtractor):
 
         parsed_args, unparsed_args = parse_arguments(cls, args)
 
-        fex = GridworldFeatureExtractor(
+        # there shouldn't be anything left
+        if len(vars(parsed_args)) > 0:
+            raise ValueError('Parsed args remain. Need to pass to constructor.')
+
+        fex = cls(
             environment=environment
         )
 
@@ -314,6 +319,113 @@ class GridworldFeatureExtractor(StateActionInteractionFeatureExtractor):
                 environment.a_right
             ]
         )
+
+        self.num_rows = environment.grid.shape[0]
+        self.num_cols = environment.grid.shape[1]
+
+
+@rl_text(chapter='Feature Extractors', page=1)
+class GridworldStateFeatureExtractor(FeatureExtractor):
+    """
+    A feature extractor for the gridworld. This extractor does not interact feature values with actions. Its primary use
+    is in state-value estimation (e.g., for the baseline of policy gradient methods).
+    """
+
+    @classmethod
+    def get_argument_parser(
+            cls
+    ) -> ArgumentParser:
+        """
+        Get argument parser.
+
+        :return: Argument parser.
+        """
+
+        parser = ArgumentParser(
+            prog=f'{cls.__module__}.{cls.__name__}',
+            parents=[super().get_argument_parser()],
+            allow_abbrev=False,
+            add_help=False
+        )
+
+        return parser
+
+    @classmethod
+    def init_from_arguments(
+            cls,
+            args: List[str],
+            environment: Gridworld
+    ) -> Tuple[FeatureExtractor, List[str]]:
+        """
+        Initialize a feature extractor from arguments.
+
+        :param args: Arguments.
+        :param environment: Environment.
+        :return: 2-tuple of a feature extractor and a list of unparsed arguments.
+        """
+
+        parsed_args, unparsed_args = parse_arguments(cls, args)
+
+        # there shouldn't be anything left
+        if len(vars(parsed_args)) > 0:
+            raise ValueError('Parsed args remain. Need to pass to constructor.')
+
+        fex = cls(
+            environment=environment
+        )
+
+        return fex, unparsed_args
+
+    def extract(
+            self,
+            states: List[MdpState],
+            for_fitting: bool
+    ) -> np.ndarray:
+        """
+        Extract features for state-action pairs.
+
+        :param states: States.
+        :param for_fitting: Whether the extracted features will be used for fitting (True) or prediction (False).
+        :return: State-feature numpy.ndarray.
+        """
+
+        rows = [int(state.i / self.num_cols) for state in states]
+        cols = [state.i % self.num_cols for state in states]
+
+        state_features = np.array([
+            [
+                row,  # from top
+                self.num_rows - row - 1,  # from bottom
+                col,  # from left
+                self.num_cols - col - 1  # from right
+            ]
+            for row, col in zip(rows, cols)
+        ])
+
+        return state_features
+
+    def get_feature_names(
+            self
+    ) -> List[str]:
+        """
+        Get names of features.
+
+        :return: List of feature names.
+        """
+
+        return ['from-top', 'from-bottom', 'from-left', 'from-right']
+
+    def __init__(
+            self,
+            environment: Gridworld
+    ):
+        """
+        Initialize the feature extractor.
+
+        :param environment: Environment.
+        """
+
+        super().__init__()
 
         self.num_rows = environment.grid.shape[0]
         self.num_cols = environment.grid.shape[1]

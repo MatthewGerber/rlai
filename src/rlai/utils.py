@@ -149,7 +149,7 @@ def sample_list_item(
     cum_probs = probs.cumsum()
     final_cum_prob = cum_probs[-1]
 
-    if abs(1.0 - final_cum_prob) > 0.0000001:
+    if abs(1.0 - final_cum_prob) > 0.00001:
         raise ValueError(f'Expected cumulative probabilities to sum to 1, but got {final_cum_prob} instead.')
 
     x_i = next(

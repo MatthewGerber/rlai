@@ -77,7 +77,7 @@ class PreferenceGradient(Agent):
 
         # initialize agents
         agents = [
-            PreferenceGradient(
+            cls(
                 name=f'preference gradient (step size={parsed_args.step_size_alpha})',
                 random_state=random_state,
                 **vars(parsed_args)

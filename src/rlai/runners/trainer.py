@@ -50,77 +50,94 @@ def run(
     parser = get_argument_parser_for_run()
     parsed_args, unparsed_args = parse_arguments(parser, args)
 
+    if parsed_args.train_function is None:
+        raise ValueError('No training function specified. Cannot train.')
+
     if parsed_args.random_seed is None:
         warnings.warn('No random seed provided to the trainer. Results will not be replicable. Consider passing --random-seed argument.')
         random_state = RandomState()
     else:
         random_state = RandomState(parsed_args.random_seed)
 
+    # warn user, as training could take a long time and it'll be wasted effort if the agent is not saved.
+    if parsed_args.save_agent_path is None:
+        warnings.warn('No --save-agent-path has been specified, so no agent will be saved after training.')
+
+    initial_policy = None
+
+    # load training function and parse any arguments that it requires
+    train_function = import_function(parsed_args.train_function)
+    train_function_arg_parser = get_argument_parser_for_train_function(parsed_args.train_function)
+    parsed_train_function_args, unparsed_args = parse_arguments(train_function_arg_parser, unparsed_args)
+
     train_function_args = {
-        'thread_manager': thread_manager
+        'thread_manager': thread_manager,
+        **vars(parsed_train_function_args)
     }
 
+    # convert boolean strings to booleans
+    if train_function_args.get('update_upon_every_visit', None) is not None:
+        train_function_args['update_upon_every_visit'] = train_function_args['update_upon_every_visit'] == 'True'
+
+    if train_function_args.get('make_final_policy_greedy', None) is not None:
+        train_function_args['make_final_policy_greedy'] = train_function_args['make_final_policy_greedy'] == 'True'
+
     # load environment
-    if parsed_args.environment is not None:
-        environment_class = load_class(parsed_args.environment)
+    if train_function_args.get('environment', None) is not None:
+        environment_class = load_class(train_function_args['environment'])
         train_function_args['environment'], unparsed_args = environment_class.init_from_arguments(
             args=unparsed_args,
             random_state=random_state
         )
 
     # load planning environment
-    if parsed_args.planning_environment is not None:
-        planning_environment_class = load_class(parsed_args.planning_environment)
+    if train_function_args.get('planning_environment', None) is not None:
+        planning_environment_class = load_class(train_function_args['planning_environment'])
         train_function_args['planning_environment'], unparsed_args = planning_environment_class.init_from_arguments(
             args=unparsed_args,
             random_state=random_state
         )
-    else:
-        train_function_args['planning_environment'] = None
 
-    # load training function and parse its arguments
-    train_function = None
-    if parsed_args.train_function is not None:
-
-        train_function = import_function(parsed_args.train_function)
-        train_function_arg_parser = get_argument_parser_for_train_function(parsed_args.train_function)
-        parsed_train_function_args, unparsed_args = parse_arguments(train_function_arg_parser, unparsed_args)
-
-        # convert parsed boolean strings to booleans
-        if hasattr(parsed_train_function_args, 'update_upon_every_visit') and parsed_train_function_args.update_upon_every_visit is not None:
-            parsed_train_function_args.update_upon_every_visit = parsed_train_function_args.update_upon_every_visit == 'True'
-
-        if hasattr(parsed_train_function_args, 'make_final_policy_greedy') and parsed_train_function_args.make_final_policy_greedy is not None:
-            parsed_train_function_args.make_final_policy_greedy = parsed_train_function_args.make_final_policy_greedy == 'True'
-
-        train_function_args.update(vars(parsed_train_function_args))
-
-        # initialize state-action value estimator if one is given
-        if hasattr(parsed_train_function_args, 'q_S_A') and parsed_train_function_args.q_S_A is not None:
-            estimator_class = load_class(parsed_train_function_args.q_S_A)
-            train_function_args['q_S_A'], unparsed_args = estimator_class.init_from_arguments(
-                unparsed_args,
-                random_state=random_state,
-                environment=train_function_args['environment']
-            )
-
-    agent = None
-
-    # load agent
-    if parsed_args.agent is not None:
-
-        agent_class = load_class(parsed_args.agent)
-        agents, unparsed_args = agent_class.init_from_arguments(
+    # load state-action value estimator
+    if train_function_args.get('q_S_A', None) is not None:
+        estimator_class = load_class(train_function_args['q_S_A'])
+        state_action_value_estimator, unparsed_args = estimator_class.init_from_arguments(
             args=unparsed_args,
             random_state=random_state,
-            pi=None if train_function_args.get('q_S_A') is None else train_function_args['q_S_A'].get_initial_policy()
+            environment=train_function_args['environment']
+        )
+        train_function_args['q_S_A'] = state_action_value_estimator
+        initial_policy = state_action_value_estimator.get_initial_policy()
+
+    # load state-value estimator
+    if train_function_args.get('v_S', None) is not None:
+        estimator_class = load_class(train_function_args['v_S'])
+        train_function_args['v_S'], unparsed_args = estimator_class.init_from_arguments(
+            args=unparsed_args,
+            random_state=random_state,
+            environment=train_function_args['environment']
         )
 
-        if len(agents) != 1:  # pragma no cover
-            raise ValueError('Training is only supported for single agents. Please specify one agent.')
+    # load parameterized policy
+    if train_function_args.get('policy', None) is not None:
+        policy_class = load_class(train_function_args['policy'])
+        initial_policy, unparsed_args = policy_class.init_from_arguments(
+            args=unparsed_args,
+            environment=train_function_args['environment']
+        )
+        train_function_args['policy'] = initial_policy
 
-        agent = agents[0]
+    # load agent
+    if train_function_args.get('agent', None) is not None:
+        agent_class = load_class(train_function_args['agent'])
+        agent, unparsed_args = agent_class.init_from_arguments(
+            args=unparsed_args,
+            random_state=random_state,
+            pi=initial_policy
+        )
         train_function_args['agent'] = agent
+    else:
+        agent = None
 
     if '--help' in unparsed_args:
         unparsed_args.remove('--help')
@@ -128,52 +145,44 @@ def run(
     if len(unparsed_args) > 0:
         raise ValueError(f'Unparsed arguments remain:  {unparsed_args}')
 
-    if train_function is None:
-        warnings.warn('No training function specified. Cannot train.')
+    # resumption will return a trained version of the agent contained in the checkpoint file
+    if parsed_args.resume:
+        agent = resume_from_checkpoint(
+            resume_function=train_function,
+            **train_function_args
+        )
+
+    # fresh training will train the agent that was initialized above and passed in
     else:
 
-        # warn user now, as training could take a long time and it'll be wasted effort if the agent is not saved.
-        if parsed_args.save_agent_path is None:
-            warnings.warn('No --save-agent-path has been specified, so no agent will be saved after training.')
+        if train_function_args_callback is not None:
+            train_function_args_callback(train_function_args)
 
-        # resumption will return a trained version of the agent contained in the checkpoint file
-        if parsed_args.resume:
-            agent = resume_from_checkpoint(
-                resume_function=train_function,
-                **train_function_args
-            )
+        train_function(
+            **train_function_args
+        )
 
-        # fresh training will train the agent that was initialized above and passed in
-        else:
+        train_function_args['environment'].close()
 
-            if train_function_args_callback is not None:
-                train_function_args_callback(train_function_args)
+    logging.info('Training complete.')
 
-            train_function(
-                **train_function_args
-            )
+    # try to save agent
+    if agent is None:  # pragma no cover
+        warnings.warn('No agent resulting at end of training. Nothing to save.')
+    elif parsed_args.save_agent_path is None:
+        warnings.warn('No --save-agent-path specified. Not saving agent.')
+    else:
+        with open(os.path.expanduser(parsed_args.save_agent_path), 'wb') as f:
+            pickle.dump(agent, f)
 
-            train_function_args['environment'].close()
-
-        logging.info('Training complete.')
-
-        # try to save agent
-        if agent is None:  # pragma no cover
-            warnings.warn('No agent resulting at end of training. Nothing to save.')
-        elif parsed_args.save_agent_path is None:
-            warnings.warn('No --save-agent-path specified. Not saving agent.')
-        else:
-            with open(os.path.expanduser(parsed_args.save_agent_path), 'wb') as f:
-                pickle.dump(agent, f)
-
-            logging.info(f'Saved agent to {parsed_args.save_agent_path}')
+        logging.info(f'Saved agent to {parsed_args.save_agent_path}')
 
     return train_function_args.get('checkpoint_path'), parsed_args.save_agent_path
 
 
 def get_argument_parser_for_run() -> ArgumentParser:
     """
-    Get argument parser for the run function.
+    Get argument parser for values used in the run function.
 
     :return: Argument parser.
     """
@@ -181,24 +190,6 @@ def get_argument_parser_for_run() -> ArgumentParser:
     parser = get_base_argument_parser(
         prog='rlai train',
         description='Train an agent in an environment.'
-    )
-
-    parser.add_argument(
-        '--agent',
-        type=str,
-        help='Fully-qualified type name of agent to train.'
-    )
-
-    parser.add_argument(
-        '--environment',
-        type=str,
-        help='Fully-qualified type name of environment to train agent in.'
-    )
-
-    parser.add_argument(
-        '--planning-environment',
-        type=str,
-        help='Fully-qualified type name of planning environment to train agent in.'
     )
 
     parser.add_argument(
@@ -242,9 +233,9 @@ def get_argument_parser_for_train_function(
 
     function = import_function(function_name)
 
-    # get argument names expected by training function
+    # get argument names actuall expected by the specified training function
     # noinspection PyUnresolvedReferences
-    arg_names = function.__code__.co_varnames[:function.__code__.co_argcount]
+    actual_arg_names = function.__code__.co_varnames[:function.__code__.co_argcount]
 
     def filter_add_argument(
             name: str,
@@ -258,11 +249,38 @@ def get_argument_parser_for_train_function(
         """
 
         var_name = name.lstrip('-').replace('-', '_')
-        if var_name in arg_names:
+        if var_name in actual_arg_names:
             argument_parser.add_argument(
                 name,
                 **kwargs
             )
+
+    # attempt to add the superset of all arguments used across all training function. the filter will only retain those
+    # that are actually allowed.
+
+    filter_add_argument(
+        '--agent',
+        type=str,
+        help='Fully-qualified type name of agent to train.'
+    )
+
+    filter_add_argument(
+        '--environment',
+        type=str,
+        help='Fully-qualified type name of environment to train agent in.'
+    )
+
+    filter_add_argument(
+        '--planning-environment',
+        type=str,
+        help='Fully-qualified type name of planning environment to train agent in.'
+    )
+
+    filter_add_argument(
+        '--policy',
+        type=str,
+        help='Fully-qualified type name of policy to use (for policy gradient methods).'
+    )
 
     filter_add_argument(
         '--num-improvements',
@@ -274,6 +292,12 @@ def get_argument_parser_for_train_function(
         '--num-episodes-per-improvement',
         type=int,
         help='Number of episodes per improvement.'
+    )
+
+    filter_add_argument(
+        '--num-episodes',
+        type=int,
+        help='Number of episodes.'
     )
 
     filter_add_argument(
@@ -335,7 +359,13 @@ def get_argument_parser_for_train_function(
     filter_add_argument(
         '--q-S-A',
         type=str,
-        help='Fully-qualified type name of state-action value estimator to use.'
+        help='Fully-qualified type name of state-action value estimator to use (for action-value methods).'
+    )
+
+    filter_add_argument(
+        '--v-S',
+        type=str,
+        help='Fully-qualified type name of state-value estimator to use (for policy gradient methods).'
     )
 
     filter_add_argument(

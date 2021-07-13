@@ -1,19 +1,16 @@
 import math
 import threading
 import warnings
-from abc import ABC, abstractmethod
-from argparse import ArgumentParser
-from typing import Tuple, List, Any, Optional, Dict
+from abc import ABC
+from typing import Optional, Dict
 
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 from matplotlib.backends.backend_pdf import PdfPages
-from numpy.random import RandomState
 
 from rlai.meta import rl_text
-from rlai.utils import get_base_argument_parser
-from rlai.value_estimation.function_approximation.models.feature_extraction import (
+from rlai.models import FunctionApproximationModel as BaseFunctionApproximationModel
+from rlai.q_S_A.function_approximation.models.feature_extraction import (
     FeatureExtractor,
     StateActionInteractionFeatureExtractor
 )
@@ -23,64 +20,10 @@ MAX_PLOT_ACTIONS = 20
 
 
 @rl_text(chapter=9, page=197)
-class FunctionApproximationModel(ABC):
+class FunctionApproximationModel(BaseFunctionApproximationModel, ABC):
     """
     Function approximation model.
     """
-
-    @classmethod
-    def get_argument_parser(
-            cls
-    ) -> ArgumentParser:
-        """
-        Get argument parser.
-
-        :return: Argument parser.
-        """
-
-        return get_base_argument_parser()
-
-    @classmethod
-    @abstractmethod
-    def init_from_arguments(
-            cls,
-            args: List[str],
-            random_state: RandomState
-    ) -> Tuple[Any, List[str]]:
-        """
-        Initialize a model from arguments.
-
-        :param args: Arguments.
-        :param random_state: Random state.
-        :return: 2-tuple of a state-action value estimator and a list of unparsed arguments.
-        """
-
-    @abstractmethod
-    def fit(
-            self,
-            X: Any,
-            y: Any,
-            weight: Optional[float]
-    ):
-        """
-        Fit the model to a matrix of features and a vector of returns.
-
-        :param X: Feature matrix.
-        :param y: Returns.
-        :param weight: Weight.
-        """
-
-    @abstractmethod
-    def evaluate(
-            self,
-            X: np.ndarray,
-    ) -> np.ndarray:
-        """
-        Evaluate the model at a matrix of features.
-
-        :param X: Feature matrix (#obs, #features).
-        :return: Vector of outcomes from the evaluation (#obs,).
-        """
 
     def plot(
             self,
@@ -91,7 +34,7 @@ class FunctionApproximationModel(ABC):
             pdf: Optional[PdfPages]
     ) -> Optional[plt.Figure]:
         """
-        Plot the model.
+        Plot the model's feature-action coefficients.
 
         :param feature_extractor: Feature extractor used to build the model.
         :param policy_improvement_count: Number of policy improvements that have been made.
@@ -213,17 +156,6 @@ class FunctionApproximationModel(ABC):
                 else:
                     pdf.savefig()
 
-    def update_plot(
-            self,
-            time_step_detail_iteration: Optional[int]
-    ):
-        """
-        Update the plot of the model. Can only be called from the main thread.
-
-        :param time_step_detail_iteration: Iteration for which to plot time-step-level detail, or None for no detail.
-        Passing -1 will plot detail for the most recently completed iteration.
-        """
-
     def get_feature_action_coefficients(
             self,
             feature_extractor: FeatureExtractor
@@ -244,31 +176,9 @@ class FunctionApproximationModel(ABC):
         Initialize the model.
         """
 
+        BaseFunctionApproximationModel.__init__(self)
+
         self.feature_action_coefficients: Optional[pd.DataFrame] = None
-
-    @abstractmethod
-    def __eq__(
-            self,
-            other
-    ) -> bool:
-        """
-        Check whether the model equals another.
-
-        :param other: Other model.
-        :return: True if equal and False otherwise.
-        """
-
-    @abstractmethod
-    def __ne__(
-            self,
-            other
-    ) -> bool:
-        """
-        Check whether the model does not equal another.
-
-        :param other: Other model.
-        :return: True if not equal and False otherwise.
-        """
 
     def __getstate__(
             self
@@ -281,9 +191,45 @@ class FunctionApproximationModel(ABC):
 
         state_dict = dict(self.__dict__)
 
+        self.deflate_state_dict(state_dict)
+
+        return state_dict
+
+    @staticmethod
+    def deflate_state_dict(
+            state_dict: Dict
+    ):
+        """
+        Modify the state dictionary to exclude particular items.
+
+        :param state_dict: State dictionary.
+        """
+
         # don't pickle the history of feature action coefficients used for plotting, as they grow unbounded during
         # training. the only known use case for saving them is to continue plotting after resumption; however, that's
         # a pretty narrow use case and isn't worth the large amount of disk space that it takes.
         state_dict['feature_action_coefficients'] = None
 
-        return state_dict
+    def __setstate__(
+            self,
+            state_dict: Dict
+    ):
+        """
+        Set the unpickled state for the current instance.
+
+        :param state_dict: Unpickled state.
+        """
+
+        self.inflate_state(state_dict)
+
+        self.__dict__ = state_dict
+
+    @staticmethod
+    def inflate_state(
+            state_dict: Dict
+    ):
+        """
+        Modify the state to include items that weren't pickled.
+
+        :param state_dict: Pickled state dictionary.
+        """

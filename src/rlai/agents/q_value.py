@@ -181,7 +181,7 @@ class EpsilonGreedy(QValue):
 
         # initialize agents
         agents = [
-            EpsilonGreedy(
+            cls(
                 name=f'epsilon-greedy (e={epsilon:0.2f})',
                 random_state=random_state,
                 epsilon=epsilon,
@@ -332,7 +332,7 @@ class UpperConfidenceBound(QValue):
 
         # initialize agents
         agents = [
-            UpperConfidenceBound(
+            cls(
                 name=f'UCB (c={c})',
                 random_state=random_state,
                 c=c,

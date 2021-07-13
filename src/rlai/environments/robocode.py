@@ -7,16 +7,15 @@ import numpy as np
 from numpy.random import RandomState
 
 from rlai.actions import Action
-from rlai.agents import Agent
 from rlai.agents.mdp import MdpAgent, StochasticMdpAgent
 from rlai.environments.mdp import MdpEnvironment
 from rlai.environments.network import TcpMdpEnvironment
 from rlai.meta import rl_text
 from rlai.policies import Policy
+from rlai.q_S_A.function_approximation.models.feature_extraction import FeatureExtractor
 from rlai.rewards import Reward
 from rlai.states.mdp import MdpState
 from rlai.utils import parse_arguments
-from rlai.value_estimation.function_approximation.models.feature_extraction import FeatureExtractor
 
 
 @rl_text(chapter='Rewards', page=1)
@@ -90,28 +89,26 @@ class RobocodeAgent(StochasticMdpAgent):
             args: List[str],
             random_state: RandomState,
             pi: Optional[Policy]
-    ) -> Tuple[List[Agent], List[str]]:
+    ) -> Tuple[StochasticMdpAgent, List[str]]:
         """
-        Initialize a list of agents from arguments.
+        Initialize a Robocode agent from arguments.
 
         :param args: Arguments.
         :param random_state: Random state.
         :param pi: Policy.
-        :return: 2-tuple of a list of agents and a list of unparsed arguments.
+        :return: 2-tuple of a Robocode agent and a list of unparsed arguments.
         """
 
         parsed_args, unparsed_args = parse_arguments(cls, args)
 
-        agents = [
-            RobocodeAgent(
-                name=f'Robocode (gamma={parsed_args.gamma})',
-                random_state=random_state,
-                pi=pi,
-                **vars(parsed_args)
-            )
-        ]
+        agent = cls(
+            name=f'Robocode (gamma={parsed_args.gamma})',
+            random_state=random_state,
+            pi=pi,
+            **vars(parsed_args)
+        )
 
-        return agents, unparsed_args
+        return agent, unparsed_args
 
     def shape_reward(
             self,
@@ -255,7 +252,7 @@ class RobocodeEnvironment(TcpMdpEnvironment):
 
         parsed_args, unparsed_args = parse_arguments(cls, args)
 
-        robocode = RobocodeEnvironment(
+        robocode = cls(
             random_state=random_state,
             **vars(parsed_args)
         )
@@ -670,7 +667,7 @@ class RobocodeFeatureExtractor(FeatureExtractor):
 
         parsed_args, unparsed_args = parse_arguments(cls, args)
 
-        fex = RobocodeFeatureExtractor(
+        fex = cls(
             environment=environment,
             **vars(parsed_args)
         )

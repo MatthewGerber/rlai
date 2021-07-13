@@ -143,13 +143,12 @@ class Mancala(MdpEnvironment):
     @staticmethod
     def human_player_mutator(
             environment,
-            **kwargs
+            **_
     ):
         """
         Change the Mancala environment to let a human play the trained agent.
 
         :param environment: Environment.
-        :param kwargs: Unused args.
         """
 
         environment: Mancala
@@ -196,7 +195,7 @@ class Mancala(MdpEnvironment):
 
         parsed_args, unparsed_args = parse_arguments(cls, args)
 
-        mancala = Mancala(
+        mancala = cls(
             random_state=random_state,
             player_2=StochasticMdpAgent(
                 'environmental agent',

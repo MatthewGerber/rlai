@@ -127,28 +127,26 @@ class StochasticMdpAgent(MdpAgent):
             args: List[str],
             random_state: RandomState,
             pi: Optional[Policy]
-    ) -> Tuple[List[Agent], List[str]]:
+    ) -> Tuple[MdpAgent, List[str]]:
         """
-        Initialize a list of agents from arguments.
+        Initialize an MDP agent from arguments.
 
         :param args: Arguments.
         :param random_state: Random state.
         :param pi: Policy.
-        :return: 2-tuple of a list of agents and a list of unparsed arguments.
+        :return: 2-tuple of an MDP agent and a list of unparsed arguments.
         """
 
         parsed_args, unparsed_args = parse_arguments(cls, args)
 
-        agents = [
-            StochasticMdpAgent(
-                name=f'stochastic (gamma={parsed_args.gamma})',
-                random_state=random_state,
-                pi=pi,
-                **vars(parsed_args)
-            )
-        ]
+        agent = cls(
+            name=f'stochastic (gamma={parsed_args.gamma})',
+            random_state=random_state,
+            pi=pi,
+            **vars(parsed_args)
+        )
 
-        return agents, unparsed_args
+        return agent, unparsed_args
 
     def reset_for_new_run(
             self,
