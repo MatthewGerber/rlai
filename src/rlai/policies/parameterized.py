@@ -1,14 +1,14 @@
 from abc import ABC
 from argparse import ArgumentParser
 from functools import reduce
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Any
 
 import jax.numpy as jnp
 import jax.scipy.stats as jstats
 import numpy as np
-from jax import grad, jit, random
+from jax import grad, jit, random as jrandom
 
-from rlai.actions import Action
+from rlai.actions import Action, ContinuousAction
 from rlai.environments.mdp import MdpEnvironment
 from rlai.meta import rl_text
 from rlai.policies import Policy
@@ -536,13 +536,12 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
         :return: Vector of partial gradients, one per parameter.
         """
 
-        action_state_features = self.get_action_state_features(s)[a.i, :]
-        gradient = self.get_action_prob_gradient(self.theta, action_state_features, self.jax_rand_key)
-        _, self.jax_rand_key = random.split(self.jax_rand_key)
+        action_state_features = self.get_state_action_features(s)[:, a.i]
+        gradient = self.get_action_prob_gradient(self.theta, action_state_features, a.value)
 
         return gradient
 
-    def get_action_state_features(
+    def get_state_action_features(
             self,
             state: MdpState
     ) -> jnp.ndarray:
@@ -550,44 +549,60 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
         Get a matrix containing a feature vector for each action in a state.
 
         :param state: State.
-        :return: An (#features, #actions) matrix.
+        :return: An (#actions, #features) matrix.
         """
 
         return jnp.array([
             self.feature_extractor.extract([state], [a], False)[0, :]
             for a in state.AA
-        ])
+        ]).transpose()
 
     @staticmethod
     def get_action_prob(
             theta: jnp.ndarray,
             state_action_features: jnp.ndarray,
-            random_key
-    ) -> Tuple[float, float]:
+            action_value: float
+    ) -> float:
         """
         Get action probability.
 
         :param theta: Policy parameters.
         :param state_action_features: A vector of state-action features as returned by `get_state_action_features`.
-        :param random_key: Random key.
-        :return: 2-tuple of the sampled action and its probability.
+        :param action_value: Action value.
+        :return: Action probability.
         """
 
-        theta_split = theta.shape[0] / 2
+        mean, std = ContinuousActionDistributionPolicy.get_means_and_stds(theta, state_action_features)
 
-        theta_mean = theta[0:theta_split]
-        mean = jnp.dot(theta_mean, state_action_features)
-
-        theta_std = theta[theta_split:]
-        std = jnp.exp(jnp.dot(theta_std, state_action_features))
-
-        action_sample = std * random.normal(random_key) + mean
-
-        action_prob_upper = jstats.norm.cdf(action_sample + std / 10.0, loc=mean, scale=std)
-        action_prob_lower = jstats.norm.cdf(action_sample + std / 10.0, loc=mean, scale=std)
+        action_prob_upper = jstats.norm.cdf(action_value + std / 10.0, loc=mean, scale=std)
+        action_prob_lower = jstats.norm.cdf(action_value - std / 10.0, loc=mean, scale=std)
         action_prob = action_prob_upper - action_prob_lower
 
-        return action_sample, action_prob
+        return action_prob
+
+    @staticmethod
+    def get_means_and_stds(
+            theta: jnp.ndarray,
+            state_action_features: jnp.ndarray
+    ) -> Tuple[Any, Any]:
+        """
+        Get means and standard deviations for a matrix of state-action feature vectors.
+
+        :param theta: Policy parameters.
+        :param state_action_features: An (#features, #actions) Matrix of state-action feature vectors.
+        :return: 2-tuple of means and standard deviations, with one mean and one standard deviation for each column
+        vector in `state_action_features`.
+        """
+
+        theta_split = int(theta.shape[0] / 2)
+
+        theta_mean = theta[0:theta_split]
+        means = jnp.dot(theta_mean, state_action_features)
+
+        theta_std = theta[theta_split:]
+        stds = jnp.exp(jnp.dot(theta_std, state_action_features))
+
+        return means, stds
 
     def get_update(
             self,
@@ -611,6 +626,20 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
 
         return alpha * discounted_return * (gradient_a_s / p_a_s)
 
+    def get_random_key(
+            self
+    ) -> np.uint32:
+        """
+        Get a new random key.
+
+        :return: Random key.
+        """
+
+        random_key = self.jax_rand_key
+        _, self.jax_rand_key = jrandom.split(self.jax_rand_key)
+
+        return random_key
+
     def __init__(
             self,
             feature_extractor: FeatureExtractor
@@ -627,7 +656,7 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
 
         self.theta = jnp.zeros(sum(len(features) for features in feature_extractor.get_action_feature_names().values()) * 2)
         self.get_action_prob_gradient = jit(grad(self.get_action_prob))
-        self.jax_rand_key = random.PRNGKey(12345)
+        self.jax_rand_key = jrandom.PRNGKey(12345)
 
     def __contains__(
             self,
@@ -656,16 +685,37 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
         :return: Dictionary of action-probability items.
         """
 
-        action_state_features = self.get_action_state_features(state)
+        # extract state-action features for state (#features, #actions)
+        state_action_features = self.get_state_action_features(state)
 
-        jax_rand_keys = []
-        for i in range(len(state.AA)):
-            jax_rand_keys.append(self.jax_rand_key)
-            _, self.jax_rand_key = random.split(self.jax_rand_key)
+        # calculate the modeled mean and standard deviation for each action
+        means, stds = self.get_means_and_stds(
+            theta=self.theta,
+            state_action_features=state_action_features
+        )
 
+        # sample actions
+        sampled_actions = [
+            ContinuousAction(
+                i=i,
+                value=std * jrandom.normal(self.get_random_key()) + mean,
+                min_value=None,
+                max_value=None
+            )
+            for i, (mean, std) in enumerate(zip(means, stds))
+        ]
+
+        # calculate action probabilities
         action_prob = {
-            a: self.get_action_prob(self.theta, action_state_features[i, :], jax_rand_keys[i])
-            for i, a in enumerate(state.AA)
+            a: self.get_action_prob(self.theta, state_action_features[:, i], a.value)
+            for i, a in enumerate(sampled_actions)
+        }
+
+        # rescale to form distribution
+        total = sum(action_prob.values())
+        action_prob = {
+            a: p / total
+            for a, p in action_prob.items()
         }
 
         return action_prob

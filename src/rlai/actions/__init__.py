@@ -20,7 +20,7 @@ class Action:
         Initialize the action.
 
         :param i: Identifier for the action.
-        :param name: Name (optional).
+        :param name: Name.
         """
 
         self.i = i
@@ -100,3 +100,37 @@ class DiscretizedAction(Action):
         )
 
         self.continuous_value = continuous_value
+
+
+@rl_text(chapter=13, page=335)
+class ContinuousAction(Action):
+    """
+    Continuous-valued action.
+    """
+
+    def __init__(
+            self,
+            i: int,
+            value: Optional[float],
+            min_value: Optional[float],
+            max_value: Optional[float],
+            name: Optional[str] = None
+    ):
+        """
+        Initialize the action.
+
+        :param i: Identifier for the action.
+        :param value: Value.
+        :param min_value: Minimum value.
+        :param max_value: Maximum value.
+        :param name: Name.
+        """
+
+        super().__init__(
+            i=i,
+            name=name
+        )
+
+        self.value = value
+        self.min_value = min_value
+        self.max_value = max_value
