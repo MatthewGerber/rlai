@@ -1,7 +1,7 @@
 from abc import ABC
 from argparse import ArgumentParser
 from functools import reduce
-from typing import Dict, List, Tuple, Any
+from typing import Dict, List, Tuple, Any, Optional
 
 import jax.numpy as jnp
 import jax.scipy.stats as jstats
@@ -459,8 +459,8 @@ class SoftMaxInActionPreferencesJaxPolicy(ParameterizedPolicy):
 @rl_text(chapter=13, page=335)
 class ContinuousActionDistributionPolicy(ParameterizedPolicy):
     """
-    Parameterized policy that produces continuous actions by modeling a continuous distribution in terms of
-    state-action feature vectors.
+    Parameterized policy that produces continuous actions by modeling a continuous distribution's parameters (e.g., the
+    mean and standard deviation) in terms of state-action features.
     """
 
     @classmethod
@@ -525,7 +525,7 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
 
     def gradient(
             self,
-            a: Action,
+            a: ContinuousAction,
             s: MdpState
     ) -> np.ndarray:
         """
@@ -536,26 +536,33 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
         :return: Vector of partial gradients, one per parameter.
         """
 
-        action_state_features = self.get_state_action_features(s)[:, a.i]
+        action_state_features = self.get_state_action_features(s, a)[:, 0]  # extract column vector from matrix, as it's required to return a scalar from the probability gradient (which will be a length-1 vector otherwise)
         gradient = self.get_action_prob_gradient(self.theta, action_state_features, a.value)
 
         return gradient
 
     def get_state_action_features(
             self,
-            state: MdpState
+            state: MdpState,
+            action: Optional[ContinuousAction]
     ) -> jnp.ndarray:
         """
-        Get a matrix containing a feature vector for each action in a state.
+        Get a matrix containing a column feature vector for actions in a state.
 
         :param state: State.
-        :return: An (#actions, #features) matrix.
+        :param action: An action to extract features for, or None for all of the state's valid actions.
+        :return: A (#features, #actions) matrix.
         """
 
-        return jnp.array([
-            self.feature_extractor.extract([state], [a], False)[0, :]
-            for a in state.AA
-        ]).transpose()
+        if action is None:
+            actions = state.AA
+        else:
+            actions = [action]
+
+        # replicate the state for each action
+        states = [state] * len(actions)
+
+        return jnp.array(self.feature_extractor.extract(states, actions, False)).transpose()
 
     @staticmethod
     def get_action_prob(
@@ -606,7 +613,7 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
 
     def get_update(
             self,
-            a: Action,
+            a: ContinuousAction,
             s: MdpState,
             alpha: float,
             discounted_return: float
@@ -686,7 +693,7 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
         """
 
         # extract state-action features for state (#features, #actions)
-        state_action_features = self.get_state_action_features(state)
+        state_action_features = self.get_state_action_features(state, None)
 
         # calculate the modeled mean and standard deviation for each action
         means, stds = self.get_means_and_stds(
@@ -709,13 +716,6 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
         action_prob = {
             a: self.get_action_prob(self.theta, state_action_features[:, i], a.value)
             for i, a in enumerate(sampled_actions)
-        }
-
-        # rescale to form distribution
-        total = sum(action_prob.values())
-        action_prob = {
-            a: p / total
-            for a, p in action_prob.items()
         }
 
         return action_prob
