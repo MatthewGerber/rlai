@@ -6,7 +6,7 @@ from typing import Dict, List, Tuple, Any, Optional
 import jax.numpy as jnp
 import jax.scipy.stats as jstats
 import numpy as np
-from jax import grad, jit, random as jrandom
+from jax import grad, random as jrandom
 
 from rlai.actions import Action, ContinuousAction
 from rlai.environments.mdp import MdpEnvironment
@@ -389,7 +389,7 @@ class SoftMaxInActionPreferencesJaxPolicy(ParameterizedPolicy):
         self.feature_extractor = feature_extractor
 
         self.theta = jnp.zeros(sum(len(features) for features in feature_extractor.get_action_feature_names().values()))
-        self.get_action_prob_gradient = jit(grad(self.get_action_prob))
+        self.get_action_prob_gradient = grad(self.get_action_prob)
 
     def __contains__(
             self,
@@ -451,7 +451,7 @@ class SoftMaxInActionPreferencesJaxPolicy(ParameterizedPolicy):
         :param state_dict: Unpickled state.
         """
 
-        state_dict['get_action_prob_gradient'] = jit(grad(self.get_action_prob))
+        state_dict['get_action_prob_gradient'] = grad(self.get_action_prob)
 
         self.__dict__ = state_dict
 
@@ -662,7 +662,7 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
         self.feature_extractor = feature_extractor
 
         self.theta = jnp.zeros(sum(len(features) for features in feature_extractor.get_action_feature_names().values()) * 2)
-        self.get_action_prob_gradient = jit(grad(self.get_action_prob))
+        self.get_action_prob_gradient = grad(self.get_action_prob)
         self.jax_rand_key = jrandom.PRNGKey(12345)
 
     def __contains__(
@@ -744,6 +744,6 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
         :param state_dict: Unpickled state.
         """
 
-        state_dict['get_action_prob_gradient'] = jit(grad(self.get_action_prob))
+        state_dict['get_action_prob_gradient'] = grad(self.get_action_prob)
 
         self.__dict__ = state_dict

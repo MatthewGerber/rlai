@@ -95,7 +95,6 @@ def improve(
                     v_S.improve()
                     update_target = g - v_S[state].get_value()
 
-                raise ValueError('do we update theta here or batch the updates for after the loop?')
                 agent.pi.theta += agent.pi.get_update(a, state, alpha, update_target)
 
         episode_reward_averager.update(total_reward)

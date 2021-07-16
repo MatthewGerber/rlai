@@ -147,18 +147,17 @@ def sample_list_item(
     cdf_y_rand = random_state.random_sample()
 
     cum_probs = probs.cumsum()
-    final_cum_prob = cum_probs[-1]
 
-    if abs(1.0 - final_cum_prob) > 0.00001:
-        raise ValueError(f'Expected cumulative probabilities to sum to 1, but got {final_cum_prob} instead.')
-
-    x_i = next(
-        i
-        for i, cum_prob in enumerate(cum_probs)
-        if cdf_y_rand < cum_prob
+    sample_i = next(
+        (
+            i
+            for i, cum_prob in enumerate(cum_probs)
+            if cdf_y_rand < cum_prob
+        ),
+        len(x) - 1
     )
 
-    return x[x_i]
+    return x[sample_i]
 
 
 def import_function(
