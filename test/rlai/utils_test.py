@@ -68,9 +68,6 @@ def test_sample_list_item():
 
     assert_allclose(p, x_p, atol=0.01)
 
-    with pytest.raises(ValueError, match='Expected cumulative probabilities to sum to 1'):
-        sample_list_item([1, 2, 3], np.array([0.2, 0.3, 0.4]), rng)
-
 
 def test_import_function():
 

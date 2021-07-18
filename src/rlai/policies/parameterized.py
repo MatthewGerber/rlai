@@ -1,12 +1,13 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 from argparse import ArgumentParser
 from functools import reduce
-from typing import Dict, List, Tuple, Any, Optional
+from typing import Dict, List, Tuple, Optional
 
 import jax.numpy as jnp
 import jax.scipy.stats as jstats
 import numpy as np
-from jax import grad, random as jrandom
+from jax import grad
+from numpy.random import RandomState
 
 from rlai.actions import Action, ContinuousAction
 from rlai.environments.mdp import MdpEnvironment
@@ -34,6 +35,23 @@ class ParameterizedPolicy(Policy, ABC):
         """
 
         return get_base_argument_parser()
+
+    @abstractmethod
+    def update(
+            self,
+            a: Action,
+            s: MdpState,
+            alpha: float,
+            discounted_return: float
+    ):
+        """
+        Update the policy parameters for an action in a state using a discounted return and a step size.
+
+        :param a: Action.
+        :param s: State.
+        :param alpha: Step size.
+        :param discounted_return: Discounted return.
+        """
 
 
 @rl_text(chapter=13, page=322)
@@ -151,27 +169,26 @@ class SoftMaxInActionPreferencesPolicy(ParameterizedPolicy):
 
         return gradient
 
-    def get_update(
+    def update(
             self,
             a: Action,
             s: MdpState,
             alpha: float,
             discounted_return: float
-    ) -> np.ndarray:
+    ):
         """
-        Get the policy parameter update for an action in a state using a discounted return and a step size.
+        Update the policy parameters for an action in a state using a discounted return and a step size.
 
         :param a: Action.
         :param s: State.
         :param alpha: Step size.
         :param discounted_return: Discounted return.
-        :return: Policy parameter (theta) update.
         """
 
         gradient_a_s = self.gradient(a, s)
         p_a_s = self[s][a]
 
-        return alpha * discounted_return * (gradient_a_s / p_a_s)
+        self.theta += alpha * discounted_return * (gradient_a_s / p_a_s)
 
     def __init__(
             self,
@@ -319,7 +336,7 @@ class SoftMaxInActionPreferencesJaxPolicy(ParameterizedPolicy):
     def get_state_action_features(
             self,
             state: MdpState
-    ) -> jnp.ndarray:
+    ) -> np.ndarray:
         """
         Get a matrix containing a feature vector for each action in a state.
 
@@ -327,15 +344,15 @@ class SoftMaxInActionPreferencesJaxPolicy(ParameterizedPolicy):
         :return: An (#features, #actions) matrix.
         """
 
-        return jnp.array([
+        return np.array([
             self.feature_extractor.extract([state], [a], False)[0, :]
             for a in state.AA
         ]).transpose()
 
     @staticmethod
     def get_action_prob(
-            theta: jnp.ndarray,
-            state_action_features: jnp.ndarray,
+            theta: np.ndarray,
+            state_action_features: np.ndarray,
             action_i: int
     ) -> float:
         """
@@ -352,13 +369,13 @@ class SoftMaxInActionPreferencesJaxPolicy(ParameterizedPolicy):
 
         return soft_max_denominator_addends[action_i] / soft_max_denominator
 
-    def get_update(
+    def update(
             self,
             a: Action,
             s: MdpState,
             alpha: float,
             discounted_return: float
-    ) -> np.ndarray:
+    ):
         """
         Get the policy parameter update for an action in a state using a discounted return and a step size.
 
@@ -366,13 +383,12 @@ class SoftMaxInActionPreferencesJaxPolicy(ParameterizedPolicy):
         :param s: State.
         :param alpha: Step size.
         :param discounted_return: Discounted return.
-        :return: Policy parameter (theta) update.
         """
 
         gradient_a_s = self.gradient(a, s)
         p_a_s = self[s][a]
 
-        return alpha * discounted_return * (gradient_a_s / p_a_s)
+        self.theta += alpha * discounted_return * (gradient_a_s / p_a_s)
 
     def __init__(
             self,
@@ -388,7 +404,7 @@ class SoftMaxInActionPreferencesJaxPolicy(ParameterizedPolicy):
 
         self.feature_extractor = feature_extractor
 
-        self.theta = jnp.zeros(sum(len(features) for features in feature_extractor.get_action_feature_names().values()))
+        self.theta = np.zeros(sum(len(features) for features in feature_extractor.get_action_feature_names().values()))
         self.get_action_prob_gradient = grad(self.get_action_prob)
 
     def __contains__(
@@ -523,29 +539,84 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
 
         return policy, unparsed_args
 
-    def gradient(
+    @staticmethod
+    def get_action_prob(
+            theta_mean: np.ndarray,
+            theta_std: np.ndarray,
+            state_action_features: np.ndarray,
+            action_value: float
+    ) -> float:
+        """
+        Get action probability.
+
+        :param theta_mean: Policy parameters for mean.
+        :param theta_std: Policy parameters for standard deviation.
+        :param state_action_features: A vector of state-action features as returned by `get_state_action_features`.
+        :param action_value: Action value.
+        :return: Action probability.
+        """
+
+        mean = jnp.dot(theta_mean, state_action_features)
+        std = jnp.exp(jnp.dot(theta_std, state_action_features))
+
+        action_prob_upper = jstats.norm.cdf(action_value + std / 10.0, loc=mean, scale=std)
+        action_prob_lower = jstats.norm.cdf(action_value - std / 10.0, loc=mean, scale=std)
+        action_prob = action_prob_upper - action_prob_lower
+
+        return action_prob
+
+    def update(
             self,
             a: ContinuousAction,
-            s: MdpState
-    ) -> np.ndarray:
+            s: MdpState,
+            alpha: float,
+            discounted_return: float
+    ):
         """
-        Calculate the gradient of the policy for an action in a state, with respect to the policy's parameter vector.
+        Update the policy parameters for an action in a state using a discounted return and a step size.
 
         :param a: Action.
         :param s: State.
-        :return: Vector of partial gradients, one per parameter.
+        :param alpha: Step size.
+        :param discounted_return: Discounted return.
         """
 
-        action_state_features = self.get_state_action_features(s, a)[:, 0]  # extract column vector from matrix, as it's required to return a scalar from the probability gradient (which will be a length-1 vector otherwise)
-        gradient = self.get_action_prob_gradient(self.theta, action_state_features, a.value)
+        gradient_a_s_mean, gradient_a_s_std = self.gradient(self.theta_mean, self.theta_std, a, s)
+        p_a_s = self[s][a]
 
-        return gradient
+        self.theta_mean += alpha * discounted_return * (gradient_a_s_mean / p_a_s)
+        self.theta_std += alpha * discounted_return * (gradient_a_s_std / p_a_s)
+
+    def gradient(
+            self,
+            theta_mean: np.ndarray,
+            theta_std: np.ndarray,
+            a: ContinuousAction,
+            s: MdpState
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Calculate the gradient of the policy for an action in a state, with respect to the policy's parameters.
+
+        :param theta_mean: Policy parameters for mean.
+        :param theta_std: Policy parameters for standard deviation.
+        :param a: Action.
+        :param s: State.
+        :return: 2-tuple of partial gradient vectors, one vector for the mean and one vector for the standard deviation.
+        """
+
+        # extract column vector from matrix, as it's required in order to return a scalar from the probability gradient
+        # (which will be a length-1 vector otherwise).
+        state_action_features = self.get_state_action_features(s, a)[:, 0]
+
+        gradient_mean, gradient_std = self.get_action_prob_gradients(theta_mean, theta_std, state_action_features, a.value)
+
+        return gradient_mean, gradient_std
 
     def get_state_action_features(
             self,
             state: MdpState,
             action: Optional[ContinuousAction]
-    ) -> jnp.ndarray:
+    ) -> np.ndarray:
         """
         Get a matrix containing a column feature vector for actions in a state.
 
@@ -562,90 +633,7 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
         # replicate the state for each action
         states = [state] * len(actions)
 
-        return jnp.array(self.feature_extractor.extract(states, actions, False)).transpose()
-
-    @staticmethod
-    def get_action_prob(
-            theta: jnp.ndarray,
-            state_action_features: jnp.ndarray,
-            action_value: float
-    ) -> float:
-        """
-        Get action probability.
-
-        :param theta: Policy parameters.
-        :param state_action_features: A vector of state-action features as returned by `get_state_action_features`.
-        :param action_value: Action value.
-        :return: Action probability.
-        """
-
-        mean, std = ContinuousActionDistributionPolicy.get_means_and_stds(theta, state_action_features)
-
-        action_prob_upper = jstats.norm.cdf(action_value + std / 10.0, loc=mean, scale=std)
-        action_prob_lower = jstats.norm.cdf(action_value - std / 10.0, loc=mean, scale=std)
-        action_prob = action_prob_upper - action_prob_lower
-
-        return action_prob
-
-    @staticmethod
-    def get_means_and_stds(
-            theta: jnp.ndarray,
-            state_action_features: jnp.ndarray
-    ) -> Tuple[Any, Any]:
-        """
-        Get means and standard deviations for a matrix of state-action feature vectors.
-
-        :param theta: Policy parameters.
-        :param state_action_features: An (#features, #actions) Matrix of state-action feature vectors.
-        :return: 2-tuple of means and standard deviations, with one mean and one standard deviation for each column
-        vector in `state_action_features`.
-        """
-
-        theta_split = int(theta.shape[0] / 2)
-
-        theta_mean = theta[0:theta_split]
-        means = jnp.dot(theta_mean, state_action_features)
-
-        theta_std = theta[theta_split:]
-        stds = jnp.exp(jnp.dot(theta_std, state_action_features))
-
-        return means, stds
-
-    def get_update(
-            self,
-            a: ContinuousAction,
-            s: MdpState,
-            alpha: float,
-            discounted_return: float
-    ) -> np.ndarray:
-        """
-        Get the policy parameter update for an action in a state using a discounted return and a step size.
-
-        :param a: Action.
-        :param s: State.
-        :param alpha: Step size.
-        :param discounted_return: Discounted return.
-        :return: Policy parameter (theta) update.
-        """
-
-        gradient_a_s = self.gradient(a, s)
-        p_a_s = self[s][a]
-
-        return alpha * discounted_return * (gradient_a_s / p_a_s)
-
-    def get_random_key(
-            self
-    ) -> np.uint32:
-        """
-        Get a new random key.
-
-        :return: Random key.
-        """
-
-        random_key = self.jax_rand_key
-        _, self.jax_rand_key = jrandom.split(self.jax_rand_key)
-
-        return random_key
+        return self.feature_extractor.extract(states, actions, False).transpose()
 
     def __init__(
             self,
@@ -661,9 +649,10 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
 
         self.feature_extractor = feature_extractor
 
-        self.theta = jnp.zeros(sum(len(features) for features in feature_extractor.get_action_feature_names().values()) * 2)
-        self.get_action_prob_gradient = grad(self.get_action_prob)
-        self.jax_rand_key = jrandom.PRNGKey(12345)
+        self.theta_mean = np.zeros(sum(len(features) for features in feature_extractor.get_action_feature_names().values()))
+        self.theta_std = np.zeros(sum(len(features) for features in feature_extractor.get_action_feature_names().values()))
+        self.get_action_prob_gradients = grad(self.get_action_prob, argnums=(0, 1))
+        self.rng = RandomState(12345)
 
     def __contains__(
             self,
@@ -692,29 +681,27 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
         :return: Dictionary of action-probability items.
         """
 
-        # extract state-action features for state (#features, #actions)
+        # extract state-action feature matrix (#features, #actions) for the given state's actions
         state_action_features = self.get_state_action_features(state, None)
 
         # calculate the modeled mean and standard deviation for each action
-        means, stds = self.get_means_and_stds(
-            theta=self.theta,
-            state_action_features=state_action_features
-        )
+        means = self.theta_mean.dot(state_action_features)
+        stds = np.exp(self.theta_std.dot(state_action_features))
 
         # sample actions
         sampled_actions = [
             ContinuousAction(
                 i=i,
-                value=std * jrandom.normal(self.get_random_key()) + mean,
-                min_value=None,
-                max_value=None
+                value=max(a.min_value, min(a.max_value, self.rng.normal(loc=mean, scale=std))),
+                min_value=a.min_value,
+                max_value=a.max_value
             )
-            for i, (mean, std) in enumerate(zip(means, stds))
+            for i, (a, mean, std) in enumerate(zip(state.AA, means, stds))
         ]
 
         # calculate action probabilities
         action_prob = {
-            a: self.get_action_prob(self.theta, state_action_features[:, i], a.value)
+            a: self.get_action_prob(self.theta_mean, self.theta_std, state_action_features[:, i], a.value)
             for i, a in enumerate(sampled_actions)
         }
 
@@ -730,7 +717,7 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
         """
 
         state_dict = dict(self.__dict__)
-        state_dict['get_action_prob_gradient'] = None
+        state_dict['get_action_prob_gradients'] = None
 
         return state_dict
 
@@ -744,6 +731,6 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
         :param state_dict: Unpickled state.
         """
 
-        state_dict['get_action_prob_gradient'] = grad(self.get_action_prob)
+        state_dict['get_action_prob_gradients'] = grad(self.get_action_prob, argnums=(0, 1))
 
         self.__dict__ = state_dict
