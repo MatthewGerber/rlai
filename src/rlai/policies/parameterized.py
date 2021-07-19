@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from argparse import ArgumentParser
 from functools import reduce
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple
 
 import jax.numpy as jnp
 import jax.scipy.stats as jstats
@@ -9,13 +9,14 @@ import numpy as np
 from jax import grad
 from numpy.random import RandomState
 
-from rlai.actions import Action, ContinuousAction
+from rlai.actions import Action, ContinuousMultiDimensionalAction
 from rlai.environments.mdp import MdpEnvironment
 from rlai.meta import rl_text
 from rlai.policies import Policy
 from rlai.q_S_A.function_approximation.models import FeatureExtractor
 from rlai.states.mdp import MdpState
 from rlai.utils import parse_arguments, load_class, get_base_argument_parser
+from rlai.v_S.function_approximation.models.feature_extraction import StateFeatureExtractor
 
 
 @rl_text(chapter=13, page=321)
@@ -475,8 +476,8 @@ class SoftMaxInActionPreferencesJaxPolicy(ParameterizedPolicy):
 @rl_text(chapter=13, page=335)
 class ContinuousActionDistributionPolicy(ParameterizedPolicy):
     """
-    Parameterized policy that produces continuous actions by modeling a continuous distribution's parameters (e.g., the
-    mean and standard deviation) in terms of state-action features.
+    Parameterized policy that produces continuous, multi-dimensional actions by modeling a multi-dimensional
+    distribution (e.g., the multidimensional mean and covariance matrixf) in terms of state features.
     """
 
     @classmethod
@@ -539,35 +540,9 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
 
         return policy, unparsed_args
 
-    @staticmethod
-    def get_action_prob(
-            theta_mean: np.ndarray,
-            theta_std: np.ndarray,
-            state_action_features: np.ndarray,
-            action_value: float
-    ) -> float:
-        """
-        Get action probability.
-
-        :param theta_mean: Policy parameters for mean.
-        :param theta_std: Policy parameters for standard deviation.
-        :param state_action_features: A vector of state-action features as returned by `get_state_action_features`.
-        :param action_value: Action value.
-        :return: Action probability.
-        """
-
-        mean = jnp.dot(theta_mean, state_action_features)
-        std = jnp.exp(jnp.dot(theta_std, state_action_features))
-
-        action_prob_upper = jstats.norm.cdf(action_value + std / 10.0, loc=mean, scale=std)
-        action_prob_lower = jstats.norm.cdf(action_value - std / 10.0, loc=mean, scale=std)
-        action_prob = action_prob_upper - action_prob_lower
-
-        return action_prob
-
     def update(
             self,
-            a: ContinuousAction,
+            a: ContinuousMultiDimensionalAction,
             s: MdpState,
             alpha: float,
             discounted_return: float
@@ -581,63 +556,60 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
         :param discounted_return: Discounted return.
         """
 
-        gradient_a_s_mean, gradient_a_s_std = self.gradient(self.theta_mean, self.theta_std, a, s)
+        gradient_a_s_mean, gradient_a_s_cov = self.gradient(self.theta_mean, self.theta_cov, a, s)
         p_a_s = self[s][a]
 
         self.theta_mean += alpha * discounted_return * (gradient_a_s_mean / p_a_s)
-        self.theta_std += alpha * discounted_return * (gradient_a_s_std / p_a_s)
+        self.theta_cov += alpha * discounted_return * (gradient_a_s_cov / p_a_s)
 
     def gradient(
             self,
             theta_mean: np.ndarray,
-            theta_std: np.ndarray,
-            a: ContinuousAction,
+            theta_cov: np.ndarray,
+            a: ContinuousMultiDimensionalAction,
             s: MdpState
     ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Calculate the gradient of the policy for an action in a state, with respect to the policy's parameters.
 
         :param theta_mean: Policy parameters for mean.
-        :param theta_std: Policy parameters for standard deviation.
+        :param theta_cov: Policy parameters for covariance matrix.
         :param a: Action.
         :param s: State.
-        :return: 2-tuple of partial gradient vectors, one vector for the mean and one vector for the standard deviation.
+        :return: 2-tuple of partial gradient vectors, one vector for the mean and one vector for the covariance matrix.
         """
 
-        # extract column vector from matrix, as it's required in order to return a scalar from the probability gradient
-        # (which will be a length-1 vector otherwise).
-        state_action_features = self.get_state_action_features(s, a)[:, 0]
+        state_features = self.feature_extractor.extract(s)
 
-        gradient_mean, gradient_std = self.get_action_prob_gradients(theta_mean, theta_std, state_action_features, a.value)
+        gradient_mean, gradient_std = self.get_action_density_gradients(theta_mean, theta_cov, state_features, a.value)
 
         return gradient_mean, gradient_std
 
-    def get_state_action_features(
-            self,
-            state: MdpState,
-            action: Optional[ContinuousAction]
-    ) -> np.ndarray:
+    @staticmethod
+    def get_action_density(
+            theta_mean: np.ndarray,
+            theta_cov: np.ndarray,
+            state_features: np.ndarray,
+            action_value: np.ndarray
+    ) -> float:
         """
-        Get a matrix containing a column feature vector for actions in a state.
+        Get action density.
 
-        :param state: State.
-        :param action: An action to extract features for, or None for all of the state's valid actions.
-        :return: A (#features, #actions) matrix.
+        :param theta_mean: Policy parameters for mean.
+        :param theta_cov: Policy parameters for covariance matrix.
+        :param state_features: A vector of state features.
+        :param action_value: Action value.
+        :return: Action density.
         """
 
-        if action is None:
-            actions = state.AA
-        else:
-            actions = [action]
+        mean = jnp.dot(theta_mean, state_features)
+        cov = jnp.dot(theta_cov, state_features).reshape(-1, len(mean))
 
-        # replicate the state for each action
-        states = [state] * len(actions)
-
-        return self.feature_extractor.extract(states, actions, False).transpose()
+        return jstats.multivariate_normal.pdf(action_value, mean, cov)
 
     def __init__(
             self,
-            feature_extractor: FeatureExtractor
+            feature_extractor: StateFeatureExtractor
     ):
         """
         Initialize the parameterized policy.
@@ -649,9 +621,23 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
 
         self.feature_extractor = feature_extractor
 
-        self.theta_mean = np.zeros(sum(len(features) for features in feature_extractor.get_action_feature_names().values()))
-        self.theta_std = np.zeros(sum(len(features) for features in feature_extractor.get_action_feature_names().values()))
-        self.get_action_prob_gradients = grad(self.get_action_prob, argnums=(0, 1))
+        state_space_dimensionality = self.feature_extractor.get_state_space_dimensionality()
+        action_space_dimensionality = self.feature_extractor.get_action_space_dimensionality()
+
+        # coefficients for multi-dimensional mean:  one row per action and one column per feature
+        self.theta_mean = np.zeros(shape=(action_space_dimensionality, state_space_dimensionality))
+
+        # coefficients for multi-dimensional covariance:  one row per entry in the covariance matrix and one column per
+        # feature. start with a diagonal covariance matrix and flatten it.
+        diagonal_cov = np.zeros(shape=(action_space_dimensionality, action_space_dimensionality))
+        np.fill_diagonal(diagonal_cov, 1.0)
+        self.theta_cov = np.array([
+            np.ones(state_space_dimensionality) if cov == 1.0 else np.zeros(state_space_dimensionality)
+            for cov_row in diagonal_cov
+            for cov in cov_row
+        ])
+
+        self.get_action_density_gradients = grad(self.get_action_density, argnums=(0, 1))
         self.rng = RandomState(12345)
 
     def __contains__(
@@ -681,31 +667,20 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
         :return: Dictionary of action-probability items.
         """
 
-        # extract state-action feature matrix (#features, #actions) for the given state's actions
-        state_action_features = self.get_state_action_features(state, None)
+        state_features = self.feature_extractor.extract(state)
 
-        # calculate the modeled mean and standard deviation for each action
-        means = self.theta_mean.dot(state_action_features)
-        stds = np.exp(self.theta_std.dot(state_action_features))
+        # calculate the modeled mean and covariance of the n-dimensional action
+        mean = self.theta_mean.dot(state_features)
+        cov = self.theta_cov.dot(state_features).reshape(-1, len(mean))
 
-        # sample actions
-        sampled_actions = [
-            ContinuousAction(
-                i=i,
-                value=max(a.min_value, min(a.max_value, self.rng.normal(loc=mean, scale=std))),
-                min_value=a.min_value,
-                max_value=a.max_value
-            )
-            for i, (a, mean, std) in enumerate(zip(state.AA, means, stds))
-        ]
+        # sample action
+        a = ContinuousMultiDimensionalAction(
+            value=self.rng.multivariate_normal(mean=mean, cov=cov),
+            min_values=None,
+            max_values=None
+        )
 
-        # calculate action probabilities
-        action_prob = {
-            a: self.get_action_prob(self.theta_mean, self.theta_std, state_action_features[:, i], a.value)
-            for i, a in enumerate(sampled_actions)
-        }
-
-        return action_prob
+        return {a: 1.0}
 
     def __getstate__(
             self
@@ -717,7 +692,7 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
         """
 
         state_dict = dict(self.__dict__)
-        state_dict['get_action_prob_gradients'] = None
+        state_dict['get_action_density_gradients'] = None
 
         return state_dict
 
@@ -731,6 +706,6 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
         :param state_dict: Unpickled state.
         """
 
-        state_dict['get_action_prob_gradients'] = grad(self.get_action_prob, argnums=(0, 1))
+        state_dict['get_action_density_gradients'] = grad(self.get_action_density, argnums=(0, 1))
 
         self.__dict__ = state_dict

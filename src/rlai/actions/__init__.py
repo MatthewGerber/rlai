@@ -103,34 +103,32 @@ class DiscretizedAction(Action):
 
 
 @rl_text(chapter=13, page=335)
-class ContinuousAction(Action):
+class ContinuousMultiDimensionalAction(Action):
     """
-    Continuous-valued action.
+    Continuous-valued multi-dimensional action.
     """
 
     def __init__(
             self,
-            i: int,
-            value: Optional[float],
-            min_value: Optional[float],
-            max_value: Optional[float],
+            value: Optional[np.ndarray],
+            min_values: Optional[np.ndarray],
+            max_values: Optional[np.ndarray],
             name: Optional[str] = None
     ):
         """
         Initialize the action.
 
-        :param i: Identifier for the action.
         :param value: Value.
-        :param min_value: Minimum value.
-        :param max_value: Maximum value.
+        :param min_values: Minimum values.
+        :param max_values: Maximum values.
         :param name: Name.
         """
 
         super().__init__(
-            i=i,
+            i=0,
             name=name
         )
 
         self.value = value
-        self.min_value = min_value
-        self.max_value = max_value
+        self.min_values = min_values
+        self.max_values = max_values

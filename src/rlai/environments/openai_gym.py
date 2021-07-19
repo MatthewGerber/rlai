@@ -12,11 +12,11 @@ from gym.spaces import Discrete, Box
 from gym.wrappers import TimeLimit
 from numpy.random import RandomState
 
-from rlai.actions import Action, DiscretizedAction, ContinuousAction
+from rlai.actions import Action, DiscretizedAction, ContinuousMultiDimensionalAction
 from rlai.agents.mdp import MdpAgent
 from rlai.environments.mdp import MdpEnvironment
 from rlai.meta import rl_text
-from rlai.models.feature_extraction import NonstationaryFeatureScaler
+from rlai.models.feature_extraction import NonstationaryFeatureScaler, FeatureExtractor
 from rlai.q_S_A.function_approximation.models.feature_extraction import (
     StateActionInteractionFeatureExtractor,
     OneHotCategoricalFeatureInteracter
@@ -24,6 +24,7 @@ from rlai.q_S_A.function_approximation.models.feature_extraction import (
 from rlai.rewards import Reward
 from rlai.states.mdp import MdpState
 from rlai.utils import parse_arguments
+from rlai.v_S.function_approximation.models.feature_extraction import StateFeatureExtractor
 
 
 @rl_text(chapter='States', page=1)
@@ -158,8 +159,8 @@ class Gym(MdpEnvironment):
         if isinstance(a, DiscretizedAction):
             gym_action = a.continuous_value
         # use continuous action values directly (need to be arrays)
-        elif isinstance(a, ContinuousAction):
-            gym_action = np.array([a.value])
+        elif isinstance(a, ContinuousMultiDimensionalAction):
+            gym_action = a.value
         # use discretized action indices
         else:
             gym_action = a.i
@@ -320,13 +321,11 @@ class Gym(MdpEnvironment):
         # action space is continuous and we lack a discretization resolution.
         elif isinstance(self.gym_native.action_space, Box) and self.continuous_action_discretization_resolution is None:
             self.actions = [
-                ContinuousAction(
-                    i=i,
+                ContinuousMultiDimensionalAction(
                     value=None,
-                    min_value=min_value,
-                    max_value=max_value
+                    min_values=self.gym_native.action_space.low,
+                    max_values=self.gym_native.action_space.high
                 )
-                for i, (min_value, max_value) in enumerate(zip(self.gym_native.action_space.low, self.gym_native.action_space.high))
             ]
 
         # action space is continuous and we have a discretization resolution. discretize it.
@@ -712,11 +711,112 @@ class ContinuousMountainCarFeatureExtractor(StateActionInteractionFeatureExtract
 
         if not isinstance(environment.gym_native.action_space, Box):  # pragma no cover
             raise ValueError('Expected a discrete action space, but did not get one.')
-
-        if len(environment.gym_native.action_space.shape) != 1:  # pragma no cover
+        elif environment.gym_native.action_space.shape[0] != 1:  # pragma no cover
             raise ValueError('Expected one action.')
 
         super().__init__(
             environment=environment,
             actions=environment.actions
         )
+
+
+@rl_text(chapter='Feature Extractors', page=1)
+class ContinuousLunarLanderFeatureExtractor(StateFeatureExtractor):
+    """
+    A feature extractor for the OpenAI continuous lunar lander environment.
+    """
+
+    @classmethod
+    def get_argument_parser(
+            cls
+    ) -> ArgumentParser:
+        """
+        Get argument parser.
+
+        :return: Argument parser.
+        """
+
+        parser = ArgumentParser(
+            prog=f'{cls.__module__}.{cls.__name__}',
+            parents=[super().get_argument_parser()],
+            allow_abbrev=False,
+            add_help=False
+        )
+
+        return parser
+
+    @classmethod
+    def init_from_arguments(
+            cls,
+            args: List[str],
+            environment: Gym
+    ) -> Tuple[FeatureExtractor, List[str]]:
+        """
+        Initialize a feature extractor from arguments.
+
+        :param args: Arguments.
+        :param environment: Environment.
+        :return: 2-tuple of a feature extractor and a list of unparsed arguments.
+        """
+
+        parsed_args, unparsed_args = parse_arguments(cls, args)
+
+        # there shouldn't be anything left
+        if len(vars(parsed_args)) > 0:
+            raise ValueError('Parsed args remain. Need to pass to constructor.')
+
+        fex = cls(
+            environment=environment
+        )
+
+        return fex, unparsed_args
+
+    def get_state_space_dimensionality(
+            self
+    ) -> int:
+        """
+        Get the state-space dimensionality.
+
+        :return: Dimensions.
+        """
+
+        return self.state_space_dimensionality
+
+    def get_action_space_dimensionality(
+            self
+    ) -> int:
+        """
+        Get the action-space dimensionality.
+
+        :return: Dimensions.
+        """
+
+        return self.action_space_dimensionality
+
+    def extract(
+            self,
+            state: GymState,
+    ) -> np.ndarray:
+        """
+        Extract state features.
+
+        :param state: State.
+        :return: State-feature vector.
+        """
+
+        return state.observation
+
+    def __init__(
+            self,
+            environment: Gym
+    ):
+        """
+        Initialize the feature extractor.
+
+        :param environment: Environment.
+        """
+
+        super().__init__()
+
+        self.state_space_dimensionality = environment.gym_native.observation_space.shape[0]
+        self.action_space_dimensionality = environment.gym_native.action_space.shape[0]
