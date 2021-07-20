@@ -20,7 +20,7 @@ class StateFeatureExtractor(FeatureExtractor, ABC):
         """
         Get the state-space dimensionality.
 
-        :return: Dimensions.
+        :return: Number of dimensions.
         """
 
     @abstractmethod
@@ -30,7 +30,7 @@ class StateFeatureExtractor(FeatureExtractor, ABC):
         """
         Get the action-space dimensionality.
 
-        :return: Dimensions.
+        :return: Number of dimensions.
         """
 
     @abstractmethod

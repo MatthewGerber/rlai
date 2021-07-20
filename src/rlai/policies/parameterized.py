@@ -1,3 +1,4 @@
+import warnings
 from abc import ABC, abstractmethod
 from argparse import ArgumentParser
 from functools import reduce
@@ -7,7 +8,7 @@ import jax.numpy as jnp
 import jax.scipy.stats as jstats
 import numpy as np
 from jax import grad
-from numpy.random import RandomState
+from scipy import stats
 
 from rlai.actions import Action, ContinuousMultiDimensionalAction
 from rlai.environments.mdp import MdpEnvironment
@@ -15,7 +16,7 @@ from rlai.meta import rl_text
 from rlai.policies import Policy
 from rlai.q_S_A.function_approximation.models import FeatureExtractor
 from rlai.states.mdp import MdpState
-from rlai.utils import parse_arguments, load_class, get_base_argument_parser
+from rlai.utils import parse_arguments, load_class, get_base_argument_parser, is_positive_definite
 from rlai.v_S.function_approximation.models.feature_extraction import StateFeatureExtractor
 
 
@@ -556,11 +557,26 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
         :param discounted_return: Discounted return.
         """
 
-        gradient_a_s_mean, gradient_a_s_cov = self.gradient(self.theta_mean, self.theta_cov, a, s)
+        # TODO:  This is always 1. How to estimate it from the PDF? The multivariate_normal class has a CDF.
         p_a_s = self[s][a]
 
-        self.theta_mean += alpha * discounted_return * (gradient_a_s_mean / p_a_s)
-        self.theta_cov += alpha * discounted_return * (gradient_a_s_cov / p_a_s)
+        gradient_a_s_mean, gradient_a_s_cov = self.gradient(self.theta_mean, self.theta_cov, a, s)
+
+        # check for nans in the gradient
+        if np.isnan(gradient_a_s_mean).any() or np.isnan(gradient_a_s_cov).any():
+            warnings.warn('Gradients are NaN. Skipping update.')
+        else:
+            self.theta_mean += alpha * discounted_return * (gradient_a_s_mean / p_a_s)
+
+            new_theta_cov = self.theta_cov + alpha * discounted_return * (gradient_a_s_cov / p_a_s)
+
+            # check whether the resulting covariance matrix will be positive definite. don't update theta if it won't.
+            state_features = self.feature_extractor.extract(s)
+            cov = new_theta_cov.dot(state_features).reshape(-1, len(self.theta_mean))
+            if is_positive_definite(cov):
+                self.theta_cov = new_theta_cov
+            else:
+                warnings.warn('The updated covariance theta parameters produce a ')
 
     def gradient(
             self,
@@ -638,7 +654,6 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
         ])
 
         self.get_action_density_gradients = grad(self.get_action_density, argnums=(0, 1))
-        self.rng = RandomState(12345)
 
     def __contains__(
             self,
@@ -673,9 +688,10 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
         mean = self.theta_mean.dot(state_features)
         cov = self.theta_cov.dot(state_features).reshape(-1, len(mean))
 
+        # TODO:  Need to seed the following
         # sample action
         a = ContinuousMultiDimensionalAction(
-            value=self.rng.multivariate_normal(mean=mean, cov=cov),
+            value=stats.multivariate_normal.rvs(mean=mean, cov=cov),
             min_values=None,
             max_values=None
         )

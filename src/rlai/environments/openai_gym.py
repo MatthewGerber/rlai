@@ -777,7 +777,7 @@ class ContinuousLunarLanderFeatureExtractor(StateFeatureExtractor):
         """
         Get the state-space dimensionality.
 
-        :return: Dimensions.
+        :return: Number of dimensions.
         """
 
         return self.state_space_dimensionality
@@ -788,7 +788,7 @@ class ContinuousLunarLanderFeatureExtractor(StateFeatureExtractor):
         """
         Get the action-space dimensionality.
 
-        :return: Dimensions.
+        :return: Number of dimensions.
         """
 
         return self.action_space_dimensionality
