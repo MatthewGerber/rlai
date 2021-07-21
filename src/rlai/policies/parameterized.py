@@ -2,12 +2,13 @@ import warnings
 from abc import ABC, abstractmethod
 from argparse import ArgumentParser
 from functools import reduce
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Set
 
 import jax.numpy as jnp
 import jax.scipy.stats as jstats
 import numpy as np
 from jax import grad
+from numpy.random import RandomState
 from scipy import stats
 
 from rlai.actions import Action, ContinuousMultiDimensionalAction
@@ -560,28 +561,59 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
         # TODO:  This is always 1. How to estimate it from the PDF? The multivariate_normal class has a CDF.
         p_a_s = self[s][a]
 
-        gradient_a_s_mean, gradient_a_s_cov = self.gradient(self.theta_mean, self.theta_cov, a, s)
+        gradient_a_s_mean, gradient_a_s_cov = self.gradient(
+            self.theta_mean,
+            self.theta_cov,
+            self.theta_cov_diagonal_rows,
+            a,
+            s
+        )
 
-        # check for nans in the gradient
+        # check for nans in the gradient and skip update if any are found
         if np.isnan(gradient_a_s_mean).any() or np.isnan(gradient_a_s_cov).any():
             warnings.warn('Gradients are NaN. Skipping update.')
         else:
+
             self.theta_mean += alpha * discounted_return * (gradient_a_s_mean / p_a_s)
 
+            # check whether the covariance matrix resulting from the updated parameters will be be positive definite, as
+            # it must be for multivariate normal distribution. don't update theta if it won't be.
             new_theta_cov = self.theta_cov + alpha * discounted_return * (gradient_a_s_cov / p_a_s)
-
-            # check whether the resulting covariance matrix will be positive definite. don't update theta if it won't.
             state_features = self.feature_extractor.extract(s)
-            cov = new_theta_cov.dot(state_features).reshape(-1, len(self.theta_mean))
-            if is_positive_definite(cov):
+            covariance = self.get_covariance_matrix(new_theta_cov, state_features, self.theta_cov_diagonal_rows, len(self.theta_mean))
+            if is_positive_definite(covariance):
                 self.theta_cov = new_theta_cov
             else:
-                warnings.warn('The updated covariance theta parameters produce a ')
+                warnings.warn('The updated covariance theta parameters produce a covariance matrix that is not positive definite. Skipping update.')
+
+    @staticmethod
+    def get_covariance_matrix(
+            theta_cov: np.ndarray,
+            state_features: np.ndarray,
+            theta_cov_diagonal_rows: Set[int],
+            action_dimensionality: int
+    ) -> np.ndarray:
+        """
+        Get covariance matrix from its parameters.
+
+        :param theta_cov: Parameters.
+        :param state_features: State features.
+        :param theta_cov_diagonal_rows: Rows that correspond to the diagonal in the covariance matrix.
+        :param action_dimensionality: Dimensionality of action space.
+        :return: Covariance matrix.
+        """
+
+        # ensure that the diagonal of the covariance matrix has positive values by exponentiating
+        return np.array([
+            np.exp(np.dot(row, state_features)) if i in theta_cov_diagonal_rows else np.dot(row, state_features)
+            for i, row in enumerate(theta_cov)
+        ]).reshape(action_dimensionality, action_dimensionality)
 
     def gradient(
             self,
             theta_mean: np.ndarray,
             theta_cov: np.ndarray,
+            theta_cov_diagonal_rows: Set[int],
             a: ContinuousMultiDimensionalAction,
             s: MdpState
     ) -> Tuple[np.ndarray, np.ndarray]:
@@ -590,6 +622,8 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
 
         :param theta_mean: Policy parameters for mean.
         :param theta_cov: Policy parameters for covariance matrix.
+        :param theta_cov_diagonal_rows: Rows in `theta_cov` that correspond to diagonal elements of the covariance
+        matrix.
         :param a: Action.
         :param s: State.
         :return: 2-tuple of partial gradient vectors, one vector for the mean and one vector for the covariance matrix.
@@ -597,7 +631,13 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
 
         state_features = self.feature_extractor.extract(s)
 
-        gradient_mean, gradient_std = self.get_action_density_gradients(theta_mean, theta_cov, state_features, a.value)
+        gradient_mean, gradient_std = self.get_action_density_gradients(
+            theta_mean,
+            theta_cov,
+            theta_cov_diagonal_rows,
+            state_features,
+            a.value
+        )
 
         return gradient_mean, gradient_std
 
@@ -605,6 +645,7 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
     def get_action_density(
             theta_mean: np.ndarray,
             theta_cov: np.ndarray,
+            theta_cov_diagonal_rows: Set[int],
             state_features: np.ndarray,
             action_value: np.ndarray
     ) -> float:
@@ -613,13 +654,19 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
 
         :param theta_mean: Policy parameters for mean.
         :param theta_cov: Policy parameters for covariance matrix.
+        :param theta_cov_diagonal_rows: Rows in `theta_cov` that correspond to diagonal elements of the covariance
+        matrix.
         :param state_features: A vector of state features.
         :param action_value: Action value.
         :return: Action density.
         """
 
         mean = jnp.dot(theta_mean, state_features)
-        cov = jnp.dot(theta_cov, state_features).reshape(-1, len(mean))
+        action_dimensionality = len(mean)
+        cov = jnp.array([
+            jnp.exp(jnp.dot(row, state_features)) if i in theta_cov_diagonal_rows else jnp.dot(row, state_features)
+            for i, row in enumerate(theta_cov)
+        ]).reshape(action_dimensionality, action_dimensionality)
 
         return jstats.multivariate_normal.pdf(action_value, mean, cov)
 
@@ -653,7 +700,16 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
             for cov in cov_row
         ])
 
+        # keep track of which rows correspond to the diagonal, since we need to ensure that the resulting covariance
+        # matrix has positive entries along the diagonal (we'll do something like exponentiate the dot-product to
+        # ensure this).
+        self.theta_cov_diagonal_rows = set(
+            i * action_space_dimensionality + j
+            for i, j in enumerate(range(action_space_dimensionality))
+        )
+
         self.get_action_density_gradients = grad(self.get_action_density, argnums=(0, 1))
+        self.rng = RandomState(12345)
 
     def __contains__(
             self,
@@ -686,12 +742,16 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
 
         # calculate the modeled mean and covariance of the n-dimensional action
         mean = self.theta_mean.dot(state_features)
-        cov = self.theta_cov.dot(state_features).reshape(-1, len(mean))
+        covariance = self.get_covariance_matrix(
+            self.theta_cov,
+            state_features,
+            self.theta_cov_diagonal_rows,
+            len(mean)
+        )
 
-        # TODO:  Need to seed the following
         # sample action
         a = ContinuousMultiDimensionalAction(
-            value=stats.multivariate_normal.rvs(mean=mean, cov=cov),
+            value=stats.multivariate_normal.rvs(mean=mean, cov=covariance, random_state=self.rng),
             min_values=None,
             max_values=None
         )
