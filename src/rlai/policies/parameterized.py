@@ -580,7 +580,12 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
             # it must be for multivariate normal distribution. don't update theta if it won't be.
             new_theta_cov = self.theta_cov + alpha * discounted_return * (gradient_a_s_cov / p_a_s)
             state_features = self.feature_extractor.extract(s)
-            covariance = self.get_covariance_matrix(new_theta_cov, state_features, self.theta_cov_diagonal_rows, len(self.theta_mean))
+            covariance = self.get_covariance_matrix(
+                new_theta_cov,
+                state_features,
+                self.theta_cov_diagonal_rows,
+                len(self.theta_mean)
+            )
             if is_positive_definite(covariance):
                 self.theta_cov = new_theta_cov
             else:
@@ -650,15 +655,15 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
             action_value: np.ndarray
     ) -> float:
         """
-        Get action density.
+        Get the value of the probability density function at an action.
 
         :param theta_mean: Policy parameters for mean.
         :param theta_cov: Policy parameters for covariance matrix.
         :param theta_cov_diagonal_rows: Rows in `theta_cov` that correspond to diagonal elements of the covariance
         matrix.
         :param state_features: A vector of state features.
-        :param action_value: Action value.
-        :return: Action density.
+        :param action_value: Multi-dimensional action vector.
+        :return: Value of the PDF.
         """
 
         mean = jnp.dot(theta_mean, state_features)
@@ -700,9 +705,10 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
             for cov in cov_row
         ])
 
-        # keep track of which rows correspond to the diagonal, since we need to ensure that the resulting covariance
-        # matrix has positive entries along the diagonal (we'll do something like exponentiate the dot-product to
-        # ensure this).
+        # keep track of which rows in theta_cov correspond to the diagonal elements in the resulting covariance matrix.
+        # we need to ensure that the resulting covariance matrix has positive entries along the diagonal (we'll do
+        # something like exponentiate the dot-product to for these elements to ensure this), so we need to know which
+        # rows of theta_cov require the operation.
         self.theta_cov_diagonal_rows = set(
             i * action_space_dimensionality + j
             for i, j in enumerate(range(action_space_dimensionality))
