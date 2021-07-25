@@ -73,9 +73,8 @@ def improve(
 
         # work backwards through the trace to calculate discounted returns. need to work backward in order for the value
         # of g at each time step t to be properly discounted.
-        g = 0
-        time_steps_per_print = max(1, int(len(t_state_action_reward) * 0.05))
         logging.info('Updating policy parameters...')
+        g = 0
         for i, (t, state_a, reward) in enumerate(reversed(t_state_action_reward)):
 
             g = agent.gamma * g + reward.r
@@ -97,13 +96,11 @@ def improve(
                     v_S.improve()
                     update_target = g - v_S[state].get_value()
 
-                agent.pi.update(a, state, alpha, update_target)
+                agent.pi.add_update(a, state, alpha, update_target)
 
-                if i % time_steps_per_print == 0:
-                    logging.info(f'\tupdate is {100.0 * i / len(t_state_action_reward):.0f}% complete.')
+        agent.pi.commit_updates()
 
         episode_reward_averager.update(total_reward)
-
         episodes_finished = episode_i + 1
         if episodes_finished % episodes_per_print == 0:
             logging.info(f'Finished {episodes_finished} of {num_episodes} episode(s).')
