@@ -188,7 +188,7 @@ class SoftMaxInActionPreferencesPolicy(ParameterizedPolicy):
             discounted_return: float
     ):
         """
-        Update the policy parameters for an action in a state using a discounted return and a step size.
+        Add an update for an action in a state using a discounted return and a step size.
 
         :param a: Action.
         :param s: State.
@@ -388,7 +388,7 @@ class SoftMaxInActionPreferencesJaxPolicy(ParameterizedPolicy):
             discounted_return: float
     ):
         """
-        Get the policy parameter update for an action in a state using a discounted return and a step size.
+        Add an update for an action in a state using a discounted return and a step size.
 
         :param a: Action.
         :param s: State.
@@ -487,7 +487,7 @@ class SoftMaxInActionPreferencesJaxPolicy(ParameterizedPolicy):
 class ContinuousActionDistributionPolicy(ParameterizedPolicy):
     """
     Parameterized policy that produces continuous, multi-dimensional actions by modeling a multi-dimensional
-    distribution (e.g., the multidimensional mean and covariance matrixf) in terms of state features.
+    distribution (e.g., the multidimensional mean and covariance matrix) in terms of state features.
     """
 
     @classmethod
@@ -558,7 +558,7 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
             discounted_return: float
     ):
         """
-        Update the policy parameters for an action in a state using a discounted return and a step size.
+        Add an update for an action in a state using a discounted return and a step size.
 
         :param a: Action.
         :param s: State.
@@ -620,12 +620,12 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
                 # it must be for multivariate normal distribution. don't update theta if it won't be.
                 new_theta_cov = self.theta_cov + alpha * discounted_return * (gradient_a_s_cov / p_a_s)
                 state_features = self.feature_extractor.extract(s)
-                covariance = self.get_covariance_matrix(
+                cov = self.get_covariance_matrix(
                     new_theta_cov,
                     state_features
                 )
 
-                if is_positive_definite(covariance):
+                if is_positive_definite(cov):
                     self.theta_cov = new_theta_cov
                 else:
                     warnings.warn('The updated covariance theta parameters produce a covariance matrix that is not positive definite. Skipping update.')
@@ -753,14 +753,14 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
 
         # calculate the modeled mean and covariance of the n-dimensional action
         mean = self.theta_mean.dot(state_features)
-        covariance = self.get_covariance_matrix(
+        cov = self.get_covariance_matrix(
             self.theta_cov,
             state_features
         )
 
         # sample action
         a = ContinuousMultiDimensionalAction(
-            value=stats.multivariate_normal.rvs(mean=mean, cov=covariance, random_state=self.rng),
+            value=stats.multivariate_normal.rvs(mean=mean, cov=cov, random_state=self.rng),
             min_values=None,
             max_values=None
         )
@@ -778,6 +778,7 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
 
         state_dict = dict(self.__dict__)
         state_dict['get_action_density_gradients'] = None
+        state_dict['get_action_density_gradients_vmap'] = None
 
         return state_dict
 
@@ -791,6 +792,7 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
         :param state_dict: Unpickled state.
         """
 
-        state_dict['get_action_density_gradients'] = grad(self.get_action_density, argnums=(0, 1))
+        state_dict['get_action_density_gradients'] = jit(grad(self.get_action_density, argnums=(0, 1)))
+        state_dict['get_action_density_gradients_vmap'] = jit(vmap(self.get_action_density_gradients, in_axes=(None, None, 0, 0)))
 
         self.__dict__ = state_dict
