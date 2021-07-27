@@ -7,7 +7,15 @@ import pytest
 from numpy.random import RandomState
 from numpy.testing import assert_allclose
 
-from rlai.utils import IncrementalSampleAverager, sample_list_item, import_function, StdStreamTee, RunThreadManager
+from rlai.utils import (
+    IncrementalSampleAverager,
+    sample_list_item,
+    import_function,
+    StdStreamTee,
+    RunThreadManager,
+    get_nearest_positive_definite_matrix,
+    is_positive_definite
+)
 
 
 def test_incremental_averager():
@@ -107,3 +115,12 @@ def test_run_thread_manager_initially_blocked():
     t.join()
 
     assert not wait_return
+
+
+def test_neareset_pd():
+
+    for i in range(10):
+        for j in range(2, 100):
+            A = np.random.randn(j, j)
+            B = get_nearest_positive_definite_matrix(A)
+            assert is_positive_definite(B)

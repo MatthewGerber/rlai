@@ -1,19 +1,25 @@
-from abc import ABC
+import warnings
+from abc import ABC, abstractmethod
 from argparse import ArgumentParser
 from functools import reduce
+from math import sqrt
 from typing import Dict, List, Tuple
 
 import jax.numpy as jnp
+import jax.scipy.stats as jstats
 import numpy as np
-from jax import grad, jit
+from jax import grad, jit, vmap
+from numpy.random import RandomState
+from scipy import stats
 
-from rlai.actions import Action
+from rlai.actions import Action, ContinuousMultiDimensionalAction
 from rlai.environments.mdp import MdpEnvironment
 from rlai.meta import rl_text
 from rlai.policies import Policy
 from rlai.q_S_A.function_approximation.models import FeatureExtractor
 from rlai.states.mdp import MdpState
-from rlai.utils import parse_arguments, load_class, get_base_argument_parser
+from rlai.utils import parse_arguments, load_class, get_base_argument_parser, is_positive_definite
+from rlai.v_S.function_approximation.models.feature_extraction import StateFeatureExtractor
 
 
 @rl_text(chapter=13, page=321)
@@ -33,6 +39,60 @@ class ParameterizedPolicy(Policy, ABC):
         """
 
         return get_base_argument_parser()
+
+    def append_update(
+            self,
+            a: Action,
+            s: MdpState,
+            alpha: float,
+            discounted_return: float
+    ):
+        """
+        Append an update for an action in a state using a discounted return and a step size. All appended updates will
+        be commited to the policy when `commit_updates` is called.
+
+        :param a: Action.
+        :param s: State.
+        :param alpha: Step size.
+        :param discounted_return: Discounted return.
+        """
+
+        self.update_batch_a.append(a)
+        self.update_batch_s.append(s)
+        self.update_batch_alpha.append(alpha)
+        self.update_batch_discounted_return.append(discounted_return)
+
+    @abstractmethod
+    def commit_updates(
+            self
+    ):
+        """
+        Commit updates that were previously appended with calls to `append_update`.
+        """
+
+    def complete_commit(
+            self
+    ):
+        """
+        Complete the commit of updates.
+        """
+
+        self.update_batch_a.clear()
+        self.update_batch_s.clear()
+        self.update_batch_alpha.clear()
+        self.update_batch_discounted_return.clear()
+
+    def __init__(
+            self
+    ):
+        """
+        Initialize the parameterized policy.
+        """
+
+        self.update_batch_a = []
+        self.update_batch_s = []
+        self.update_batch_alpha = []
+        self.update_batch_discounted_return = []
 
 
 @rl_text(chapter=13, page=322)
@@ -150,27 +210,26 @@ class SoftMaxInActionPreferencesPolicy(ParameterizedPolicy):
 
         return gradient
 
-    def get_update(
-            self,
-            a: Action,
-            s: MdpState,
-            alpha: float,
-            discounted_return: float
-    ) -> np.ndarray:
+    def commit_updates(
+            self
+    ):
         """
-        Get the policy parameter update for an action in a state using a discounted return and a step size.
-
-        :param a: Action.
-        :param s: State.
-        :param alpha: Step size.
-        :param discounted_return: Discounted return.
-        :return: Policy parameter (theta) update.
+        Commit updates that were previously appended with calls to `append_update`.
         """
 
-        gradient_a_s = self.gradient(a, s)
-        p_a_s = self[s][a]
+        updates = zip(
+            self.update_batch_a,
+            self.update_batch_s,
+            self.update_batch_alpha,
+            self.update_batch_discounted_return
+        )
 
-        return alpha * discounted_return * (gradient_a_s / p_a_s)
+        for a, s, alpha, discounted_return in updates:
+            gradient_a_s = self.gradient(a, s)
+            p_a_s = self[s][a]
+            self.theta += alpha * discounted_return * (gradient_a_s / p_a_s)
+
+        self.complete_commit()
 
     def __init__(
             self,
@@ -310,15 +369,15 @@ class SoftMaxInActionPreferencesJaxPolicy(ParameterizedPolicy):
         :return: Vector of partial gradients, one per parameter.
         """
 
-        action_state_features = self.get_action_state_features(s)
-        gradient = self.get_action_prob_gradient(self.theta, action_state_features, a.i)
+        state_action_features = self.get_state_action_features(s)
+        gradient = self.get_action_prob_gradient(self.theta, state_action_features, a.i)
 
         return gradient
 
-    def get_action_state_features(
+    def get_state_action_features(
             self,
             state: MdpState
-    ) -> jnp.ndarray:
+    ) -> np.ndarray:
         """
         Get a matrix containing a feature vector for each action in a state.
 
@@ -326,52 +385,51 @@ class SoftMaxInActionPreferencesJaxPolicy(ParameterizedPolicy):
         :return: An (#features, #actions) matrix.
         """
 
-        return jnp.array([
+        return np.array([
             self.feature_extractor.extract([state], [a], False)[0, :]
             for a in state.AA
         ]).transpose()
 
     @staticmethod
     def get_action_prob(
-            theta: jnp.ndarray,
-            action_state_features: jnp.ndarray,
+            theta: np.ndarray,
+            state_action_features: np.ndarray,
             action_i: int
     ) -> float:
         """
         Get action probability.
 
         :param theta: Policy parameters.
-        :param action_state_features: An (#features, #actions) matrix, as returned by `get_action_state_features`.
+        :param state_action_features: An (#features, #actions) matrix, as returned by `get_state_action_features`.
         :param action_i: Index of action to get probability for.
         :return: Action probability.
         """
 
-        soft_max_denominator_addends = jnp.exp(jnp.dot(theta, action_state_features))
+        soft_max_denominator_addends = jnp.exp(jnp.dot(theta, state_action_features))
         soft_max_denominator = soft_max_denominator_addends.sum()
 
         return soft_max_denominator_addends[action_i] / soft_max_denominator
 
-    def get_update(
-            self,
-            a: Action,
-            s: MdpState,
-            alpha: float,
-            discounted_return: float
-    ) -> np.ndarray:
+    def commit_updates(
+            self
+    ):
         """
-        Get the policy parameter update for an action in a state using a discounted return and a step size.
-
-        :param a: Action.
-        :param s: State.
-        :param alpha: Step size.
-        :param discounted_return: Discounted return.
-        :return: Policy parameter (theta) update.
+        Commit updates that were previously appended with calls to `append_update`.
         """
 
-        gradient_a_s = self.gradient(a, s)
-        p_a_s = self[s][a]
+        updates = zip(
+            self.update_batch_a,
+            self.update_batch_s,
+            self.update_batch_alpha,
+            self.update_batch_discounted_return
+        )
 
-        return alpha * discounted_return * (gradient_a_s / p_a_s)
+        for a, s, alpha, discounted_return in updates:
+            gradient_a_s = self.gradient(a, s)
+            p_a_s = self[s][a]
+            self.theta += alpha * discounted_return * (gradient_a_s / p_a_s)
+
+        self.complete_commit()
 
     def __init__(
             self,
@@ -387,8 +445,8 @@ class SoftMaxInActionPreferencesJaxPolicy(ParameterizedPolicy):
 
         self.feature_extractor = feature_extractor
 
-        self.theta = jnp.zeros(sum(len(features) for features in feature_extractor.get_action_feature_names().values()))
-        self.get_action_prob_gradient = jit(grad(self.get_action_prob))
+        self.theta = np.zeros(sum(len(features) for features in feature_extractor.get_action_feature_names().values()))
+        self.get_action_prob_gradient = grad(self.get_action_prob)
 
     def __contains__(
             self,
@@ -417,10 +475,10 @@ class SoftMaxInActionPreferencesJaxPolicy(ParameterizedPolicy):
         :return: Dictionary of action-probability items.
         """
 
-        action_state_features = self.get_action_state_features(state)
+        state_action_features = self.get_state_action_features(state)
 
         action_prob = {
-            a: self.get_action_prob(self.theta, action_state_features, i)
+            a: self.get_action_prob(self.theta, state_action_features, i)
             for i, a in enumerate(state.AA)
         }
 
@@ -450,6 +508,291 @@ class SoftMaxInActionPreferencesJaxPolicy(ParameterizedPolicy):
         :param state_dict: Unpickled state.
         """
 
-        state_dict['get_action_prob_gradient'] = jit(grad(self.get_action_prob))
+        state_dict['get_action_prob_gradient'] = grad(self.get_action_prob)
+
+        self.__dict__ = state_dict
+
+
+@rl_text(chapter=13, page=335)
+class ContinuousActionDistributionPolicy(ParameterizedPolicy):
+    """
+    Parameterized policy that produces continuous, multi-dimensional actions by modeling a multi-dimensional
+    distribution (e.g., the multidimensional mean and covariance matrix) in terms of state features.
+    """
+
+    @classmethod
+    def get_argument_parser(
+            cls
+    ) -> ArgumentParser:
+        """
+        Get argument parser.
+
+        :return: Argument parser.
+        """
+
+        parser = ArgumentParser(
+            prog=f'{cls.__module__}.{cls.__name__}',
+            parents=[super().get_argument_parser()],
+            allow_abbrev=False,
+            add_help=False
+        )
+
+        parser.add_argument(
+            '--policy-feature-extractor',
+            type=str,
+            help='Fully-qualified type name of feature extractor to use within policy.'
+        )
+
+        return parser
+
+    @classmethod
+    def init_from_arguments(
+            cls,
+            args: List[str],
+            environment: MdpEnvironment
+    ) -> Tuple[Policy, List[str]]:
+        """
+        Initialize a policy from arguments.
+
+        :param args: Arguments.
+        :param environment: Environment.
+        :return: 2-tuple of a policy and a list of unparsed arguments.
+        """
+
+        parsed_args, unparsed_args = parse_arguments(cls, args)
+
+        # load feature extractor
+        feature_extractor_class = load_class(parsed_args.policy_feature_extractor)
+        feature_extractor, unparsed_args = feature_extractor_class.init_from_arguments(
+            args=unparsed_args,
+            environment=environment
+        )
+        del parsed_args.policy_feature_extractor
+
+        # there shouldn't be anything left
+        if len(vars(parsed_args)) > 0:
+            raise ValueError('Parsed args remain. Need to pass to constructor.')
+
+        # initialize policy
+        policy = cls(
+            feature_extractor=feature_extractor
+        )
+
+        return policy, unparsed_args
+
+    def commit_updates(
+            self
+    ):
+        """
+        Commit previously added updates.
+        """
+
+        state_feature_matrix = np.array([
+            self.feature_extractor.extract(s)
+            for s in self.update_batch_s
+        ])
+
+        action_matrix = np.array([
+            a.value
+            for a in self.update_batch_a
+        ])
+
+        gradients_a_s_mean, gradients_a_s_cov = self.get_action_density_gradients_vmap(
+            self.theta_mean,
+            self.theta_cov,
+            state_feature_matrix,
+            action_matrix
+        )
+
+        updates = zip(
+            self.update_batch_a,
+            self.update_batch_s,
+            self.update_batch_alpha,
+            self.update_batch_discounted_return,
+            gradients_a_s_mean,
+            gradients_a_s_cov
+        )
+
+        for a, s, alpha, discounted_return, gradient_a_s_mean, gradient_a_s_cov in updates:
+
+            # TODO:  This is always 1. How to estimate it from the PDF? The multivariate_normal class has a CDF.
+            p_a_s = self[s][a]
+
+            # check for nans in the gradient and skip update if any are found
+            if np.isnan(gradient_a_s_mean).any() or np.isnan(gradient_a_s_cov).any():
+                warnings.warn('Gradients are NaN. Skipping update.')
+            else:
+
+                self.theta_mean += alpha * discounted_return * (gradient_a_s_mean / p_a_s)
+
+                # check whether the covariance matrix resulting from the updated parameters will be be positive definite, as
+                # it must be for multivariate normal distribution. don't update theta if it won't be.
+                new_theta_cov = self.theta_cov + alpha * discounted_return * (gradient_a_s_cov / p_a_s)
+                state_features = self.feature_extractor.extract(s)
+                cov = self.get_covariance_matrix(
+                    new_theta_cov,
+                    state_features
+                )
+
+                if is_positive_definite(cov):
+                    self.theta_cov = new_theta_cov
+                else:
+                    warnings.warn('The updated covariance theta parameters produce a covariance matrix that is not positive definite. Skipping update.')
+
+        self.complete_commit()
+
+    @staticmethod
+    def get_covariance_matrix(
+            theta_cov: np.ndarray,
+            state_features: np.ndarray
+    ) -> np.ndarray:
+        """
+        Get covariance matrix from its parameters.
+
+        :param theta_cov: Parameters.
+        :param state_features: State features.
+        :return: Covariance matrix.
+        """
+
+        action_dimensionality = int(sqrt(theta_cov.shape[0]))
+
+        # ensure that the diagonal of the covariance matrix has positive values by exponentiating
+        return np.array([
+            np.exp(np.dot(row, state_features)) if i % (action_dimensionality + 1) == 0 else np.dot(row, state_features)
+            for i, row in enumerate(theta_cov)
+        ]).reshape(action_dimensionality, action_dimensionality)
+
+    @staticmethod
+    def get_action_density(
+            theta_mean: np.ndarray,
+            theta_cov: np.ndarray,
+            state_features: np.ndarray,
+            action_vector: np.ndarray
+    ) -> float:
+        """
+        Get the value of the probability density function at an action.
+
+        :param theta_mean: Policy parameters for mean.
+        :param theta_cov: Policy parameters for covariance matrix.
+        :param state_features: A vector of state features.
+        :param action_vector: Multi-dimensional action vector.
+        :return: Value of the PDF.
+        """
+
+        mean = jnp.dot(theta_mean, state_features)
+        action_dimensionality = action_vector.shape[0]
+        cov = jnp.array([
+            jnp.exp(jnp.dot(row, state_features)) if i % (action_dimensionality + 1) == 0 else jnp.dot(row, state_features)
+            for i, row in enumerate(theta_cov)
+        ]).reshape(action_dimensionality, action_dimensionality)
+
+        return jstats.multivariate_normal.pdf(action_vector, mean, cov)
+
+    def __init__(
+            self,
+            feature_extractor: StateFeatureExtractor
+    ):
+        """
+        Initialize the parameterized policy.
+
+        :param feature_extractor: Feature extractor.
+        """
+
+        super().__init__()
+
+        self.feature_extractor = feature_extractor
+
+        state_space_dimensionality = self.feature_extractor.get_state_space_dimensionality()
+        action_space_dimensionality = self.feature_extractor.get_action_space_dimensionality()
+
+        # coefficients for multi-dimensional mean:  one row per action and one column per feature
+        self.theta_mean = np.zeros(shape=(action_space_dimensionality, state_space_dimensionality))
+
+        # coefficients for multi-dimensional covariance:  one row per entry in the covariance matrix and one column per
+        # feature. start with a diagonal covariance matrix and flatten it.
+        diagonal_cov = np.zeros(shape=(action_space_dimensionality, action_space_dimensionality))
+        np.fill_diagonal(diagonal_cov, 1.0)
+        self.theta_cov = np.array([
+            np.ones(state_space_dimensionality) if cov == 1.0 else np.zeros(state_space_dimensionality)
+            for cov_row in diagonal_cov
+            for cov in cov_row
+        ])
+
+        self.get_action_density_gradients = jit(grad(self.get_action_density, argnums=(0, 1)))
+        self.get_action_density_gradients_vmap = jit(vmap(self.get_action_density_gradients, in_axes=(None, None, 0, 0)))
+        self.random_state = RandomState(12345)
+
+    def __contains__(
+            self,
+            state: MdpState
+    ) -> bool:
+        """
+        Check whether the policy is defined for a state.
+
+        :param state: State.
+        :return: True if policy is defined for state and False otherwise.
+        """
+
+        if state is None:
+            raise ValueError('Attempted to check for None in policy.')
+
+        return True
+
+    def __getitem__(
+            self,
+            state: MdpState
+    ) -> Dict[Action, float]:
+        """
+        Get action-probability dictionary for a state.
+
+        :param state: State.
+        :return: Dictionary of action-probability items.
+        """
+
+        state_features = self.feature_extractor.extract(state)
+
+        # calculate the modeled mean and covariance of the n-dimensional action
+        mean = self.theta_mean.dot(state_features)
+        cov = self.get_covariance_matrix(
+            self.theta_cov,
+            state_features
+        )
+
+        # sample action
+        a = ContinuousMultiDimensionalAction(
+            value=stats.multivariate_normal.rvs(mean=mean, cov=cov, random_state=self.random_state),
+            min_values=None,
+            max_values=None
+        )
+
+        return {a: 1.0}
+
+    def __getstate__(
+            self
+    ) -> Dict:
+        """
+        Get state dictionary for pickling.
+
+        :return: Dictionary.
+        """
+
+        state_dict = dict(self.__dict__)
+        state_dict['get_action_density_gradients'] = None
+        state_dict['get_action_density_gradients_vmap'] = None
+
+        return state_dict
+
+    def __setstate__(
+            self,
+            state_dict: Dict
+    ):
+        """
+        Set unpickled state.
+
+        :param state_dict: Unpickled state.
+        """
+
+        state_dict['get_action_density_gradients'] = jit(grad(self.get_action_density, argnums=(0, 1)))
+        state_dict['get_action_density_gradients_vmap'] = jit(vmap(self.get_action_density_gradients, in_axes=(None, None, 0, 0)))
 
         self.__dict__ = state_dict
