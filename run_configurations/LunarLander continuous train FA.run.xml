@@ -13,7 +13,7 @@
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
     <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/rlai/runners/trainer.py" />
-    <option name="PARAMETERS" value="--random-seed 12345 --agent rlai.agents.mdp.StochasticMdpAgent --gamma 0.95 --environment rlai.environments.openai_gym.Gym --gym-id LunarLanderContinuous-v2 --render-every-nth-episode 5 --video-directory ~/Desktop/lunarlander_continuous_videos --force --train-function rlai.policy_gradient.monte_carlo.reinforce.improve --num-episodes 1000 --policy rlai.policies.parameterized.ContinuousActionDistributionPolicy --policy-feature-extractor rlai.environments.openai_gym.ContinuousLunarLanderFeatureExtractor --alpha 0.0001 --update-upon-every-visit True --save-agent-path ~/Desktop/continuous_lunarlander_agent.pickle --log DEBUG" />
+    <option name="PARAMETERS" value="--random-seed 12345 --agent rlai.agents.mdp.StochasticMdpAgent --gamma 0.9 --environment rlai.environments.openai_gym.Gym --gym-id LunarLanderContinuous-v2 --render-every-nth-episode 20 --video-directory ~/Desktop/lunarlander_continuous_videos --force --train-function rlai.policy_gradient.monte_carlo.reinforce.improve --num-episodes 1000 --policy rlai.policies.parameterized.ContinuousActionDistributionPolicy --policy-feature-extractor rlai.environments.openai_gym.ContinuousLunarLanderFeatureExtractor --alpha 0.0001 --update-upon-every-visit True --save-agent-path ~/Desktop/continuous_lunarlander_agent.pickle --log DEBUG" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />

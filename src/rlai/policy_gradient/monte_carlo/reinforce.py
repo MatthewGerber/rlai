@@ -96,7 +96,7 @@ def improve(
                     v_S.improve()
                     update_target = g - v_S[state].get_value()
 
-                agent.pi.add_update(a, state, alpha, update_target)
+                agent.pi.append_update(a, state, alpha, update_target)
 
         agent.pi.commit_updates()
 

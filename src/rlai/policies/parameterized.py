@@ -40,8 +40,7 @@ class ParameterizedPolicy(Policy, ABC):
 
         return get_base_argument_parser()
 
-    @abstractmethod
-    def add_update(
+    def append_update(
             self,
             a: Action,
             s: MdpState,
@@ -49,7 +48,8 @@ class ParameterizedPolicy(Policy, ABC):
             discounted_return: float
     ):
         """
-        Add an update for an action in a state using a discounted return and a step size.
+        Append an update for an action in a state using a discounted return and a step size. All appended updates will
+        be commited to the policy when `commit_updates` is called.
 
         :param a: Action.
         :param s: State.
@@ -57,12 +57,42 @@ class ParameterizedPolicy(Policy, ABC):
         :param discounted_return: Discounted return.
         """
 
+        self.update_batch_a.append(a)
+        self.update_batch_s.append(s)
+        self.update_batch_alpha.append(alpha)
+        self.update_batch_discounted_return.append(discounted_return)
+
+    @abstractmethod
     def commit_updates(
             self
     ):
         """
-        Commit previously added updates.
+        Commit updates that were previously appended with calls to `append_update`.
         """
+
+    def complete_commit(
+            self
+    ):
+        """
+        Complete the commit of updates.
+        """
+
+        self.update_batch_a.clear()
+        self.update_batch_s.clear()
+        self.update_batch_alpha.clear()
+        self.update_batch_discounted_return.clear()
+
+    def __init__(
+            self
+    ):
+        """
+        Initialize the parameterized policy.
+        """
+
+        self.update_batch_a = []
+        self.update_batch_s = []
+        self.update_batch_alpha = []
+        self.update_batch_discounted_return = []
 
 
 @rl_text(chapter=13, page=322)
@@ -180,26 +210,26 @@ class SoftMaxInActionPreferencesPolicy(ParameterizedPolicy):
 
         return gradient
 
-    def add_update(
-            self,
-            a: Action,
-            s: MdpState,
-            alpha: float,
-            discounted_return: float
+    def commit_updates(
+            self
     ):
         """
-        Add an update for an action in a state using a discounted return and a step size.
-
-        :param a: Action.
-        :param s: State.
-        :param alpha: Step size.
-        :param discounted_return: Discounted return.
+        Commit updates that were previously appended with calls to `append_update`.
         """
 
-        gradient_a_s = self.gradient(a, s)
-        p_a_s = self[s][a]
+        updates = zip(
+            self.update_batch_a,
+            self.update_batch_s,
+            self.update_batch_alpha,
+            self.update_batch_discounted_return
+        )
 
-        self.theta += alpha * discounted_return * (gradient_a_s / p_a_s)
+        for a, s, alpha, discounted_return in updates:
+            gradient_a_s = self.gradient(a, s)
+            p_a_s = self[s][a]
+            self.theta += alpha * discounted_return * (gradient_a_s / p_a_s)
+
+        self.complete_commit()
 
     def __init__(
             self,
@@ -380,26 +410,26 @@ class SoftMaxInActionPreferencesJaxPolicy(ParameterizedPolicy):
 
         return soft_max_denominator_addends[action_i] / soft_max_denominator
 
-    def add_update(
-            self,
-            a: Action,
-            s: MdpState,
-            alpha: float,
-            discounted_return: float
+    def commit_updates(
+            self
     ):
         """
-        Add an update for an action in a state using a discounted return and a step size.
-
-        :param a: Action.
-        :param s: State.
-        :param alpha: Step size.
-        :param discounted_return: Discounted return.
+        Commit updates that were previously appended with calls to `append_update`.
         """
 
-        gradient_a_s = self.gradient(a, s)
-        p_a_s = self[s][a]
+        updates = zip(
+            self.update_batch_a,
+            self.update_batch_s,
+            self.update_batch_alpha,
+            self.update_batch_discounted_return
+        )
 
-        self.theta += alpha * discounted_return * (gradient_a_s / p_a_s)
+        for a, s, alpha, discounted_return in updates:
+            gradient_a_s = self.gradient(a, s)
+            p_a_s = self[s][a]
+            self.theta += alpha * discounted_return * (gradient_a_s / p_a_s)
+
+        self.complete_commit()
 
     def __init__(
             self,
@@ -550,27 +580,6 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
 
         return policy, unparsed_args
 
-    def add_update(
-            self,
-            a: ContinuousMultiDimensionalAction,
-            s: MdpState,
-            alpha: float,
-            discounted_return: float
-    ):
-        """
-        Add an update for an action in a state using a discounted return and a step size.
-
-        :param a: Action.
-        :param s: State.
-        :param alpha: Step size.
-        :param discounted_return: Discounted return.
-        """
-
-        self.update_batch_s.append(s)
-        self.update_batch_a.append(a)
-        self.update_batch_alpha.append(alpha)
-        self.update_batch_discounted_return.append(discounted_return)
-
     def commit_updates(
             self
     ):
@@ -596,15 +605,15 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
         )
 
         updates = zip(
-            self.update_batch_s,
             self.update_batch_a,
+            self.update_batch_s,
             self.update_batch_alpha,
             self.update_batch_discounted_return,
             gradients_a_s_mean,
             gradients_a_s_cov
         )
 
-        for s, a, alpha, discounted_return, gradient_a_s_mean, gradient_a_s_cov in updates:
+        for a, s, alpha, discounted_return, gradient_a_s_mean, gradient_a_s_cov in updates:
 
             # TODO:  This is always 1. How to estimate it from the PDF? The multivariate_normal class has a CDF.
             p_a_s = self[s][a]
@@ -630,10 +639,7 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
                 else:
                     warnings.warn('The updated covariance theta parameters produce a covariance matrix that is not positive definite. Skipping update.')
 
-        self.update_batch_s.clear()
-        self.update_batch_a.clear()
-        self.update_batch_alpha.clear()
-        self.update_batch_discounted_return.clear()
+        self.complete_commit()
 
     @staticmethod
     def get_covariance_matrix(
@@ -661,7 +667,7 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
             theta_mean: np.ndarray,
             theta_cov: np.ndarray,
             state_features: np.ndarray,
-            action_value: np.ndarray
+            action_vector: np.ndarray
     ) -> float:
         """
         Get the value of the probability density function at an action.
@@ -669,18 +675,18 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
         :param theta_mean: Policy parameters for mean.
         :param theta_cov: Policy parameters for covariance matrix.
         :param state_features: A vector of state features.
-        :param action_value: Multi-dimensional action vector.
+        :param action_vector: Multi-dimensional action vector.
         :return: Value of the PDF.
         """
 
         mean = jnp.dot(theta_mean, state_features)
-        action_dimensionality = len(mean)
+        action_dimensionality = action_vector.shape[0]
         cov = jnp.array([
             jnp.exp(jnp.dot(row, state_features)) if i % (action_dimensionality + 1) == 0 else jnp.dot(row, state_features)
             for i, row in enumerate(theta_cov)
         ]).reshape(action_dimensionality, action_dimensionality)
 
-        return jstats.multivariate_normal.pdf(action_value, mean, cov)
+        return jstats.multivariate_normal.pdf(action_vector, mean, cov)
 
     def __init__(
             self,
@@ -714,13 +720,7 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
 
         self.get_action_density_gradients = jit(grad(self.get_action_density, argnums=(0, 1)))
         self.get_action_density_gradients_vmap = jit(vmap(self.get_action_density_gradients, in_axes=(None, None, 0, 0)))
-        self.rng = RandomState(12345)
-
-        # update batch lists
-        self.update_batch_s = []
-        self.update_batch_a = []
-        self.update_batch_alpha = []
-        self.update_batch_discounted_return = []
+        self.random_state = RandomState(12345)
 
     def __contains__(
             self,
@@ -760,7 +760,7 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
 
         # sample action
         a = ContinuousMultiDimensionalAction(
-            value=stats.multivariate_normal.rvs(mean=mean, cov=cov, random_state=self.rng),
+            value=stats.multivariate_normal.rvs(mean=mean, cov=cov, random_state=self.random_state),
             min_values=None,
             max_values=None
         )
