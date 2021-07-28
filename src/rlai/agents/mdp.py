@@ -1,6 +1,6 @@
 from abc import ABC
 from argparse import ArgumentParser
-from typing import List, Tuple, Optional, Dict
+from typing import List, Tuple, Dict
 
 import numpy as np
 from numpy.random import RandomState
@@ -126,7 +126,7 @@ class StochasticMdpAgent(MdpAgent):
             cls,
             args: List[str],
             random_state: RandomState,
-            pi: Optional[Policy]
+            pi: Policy
     ) -> Tuple[MdpAgent, List[str]]:
         """
         Initialize an MDP agent from arguments.

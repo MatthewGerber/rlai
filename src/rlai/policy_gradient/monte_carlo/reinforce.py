@@ -1,6 +1,7 @@
 import logging
+import warnings
 
-from rlai.agents.mdp import MdpAgent
+from rlai.agents.mdp import StochasticMdpAgent
 from rlai.environments.mdp import MdpEnvironment
 from rlai.meta import rl_text
 from rlai.policies.parameterized import ParameterizedPolicy
@@ -10,7 +11,7 @@ from rlai.v_S import StateValueEstimator
 
 @rl_text(chapter=13, page=326)
 def improve(
-        agent: MdpAgent,
+        agent: StochasticMdpAgent,
         policy: ParameterizedPolicy,
         environment: MdpEnvironment,
         num_episodes: int,
@@ -36,6 +37,9 @@ def improve(
     waiting.
     :param v_S: Baseline state-value estimator.
     """
+
+    if thread_manager is not None:
+        warnings.warn('This optimization method will ignoree the thread_manager.')
 
     logging.info(f'Running Monte Carlo-based REINFORCE improvement for {num_episodes} episode(s).')
 
@@ -73,7 +77,7 @@ def improve(
 
         # work backwards through the trace to calculate discounted returns. need to work backward in order for the value
         # of g at each time step t to be properly discounted.
-        logging.info('Updating policy parameters...')
+        logging.info('Updating policy parameters.')
         g = 0
         for i, (t, state_a, reward) in enumerate(reversed(t_state_action_reward)):
 
@@ -96,9 +100,11 @@ def improve(
                     v_S.improve()
                     update_target = g - v_S[state].get_value()
 
-                agent.pi.append_update(a, state, alpha, update_target)
+                policy.append_update(a, state, alpha, update_target)
 
-        agent.pi.commit_updates()
+        policy.commit_updates()
+
+        logging.info('Policy parameters updated.')
 
         episode_reward_averager.update(total_reward)
         episodes_finished = episode_i + 1

@@ -2,7 +2,6 @@ import warnings
 from abc import ABC, abstractmethod
 from argparse import ArgumentParser
 from functools import reduce
-from math import sqrt
 from typing import Dict, List, Tuple
 
 import jax.numpy as jnp
@@ -62,7 +61,6 @@ class ParameterizedPolicy(Policy, ABC):
         self.update_batch_alpha.append(alpha)
         self.update_batch_discounted_return.append(discounted_return)
 
-    @abstractmethod
     def commit_updates(
             self
     ):
@@ -70,17 +68,20 @@ class ParameterizedPolicy(Policy, ABC):
         Commit updates that were previously appended with calls to `append_update`.
         """
 
-    def complete_commit(
-            self
-    ):
-        """
-        Complete the commit of updates.
-        """
+        self.__commit_updates__()
 
         self.update_batch_a.clear()
         self.update_batch_s.clear()
         self.update_batch_alpha.clear()
         self.update_batch_discounted_return.clear()
+
+    @abstractmethod
+    def __commit_updates__(
+            self
+    ):
+        """
+        Commit updates that were previously appended with calls to `append_update`.
+        """
 
     def __init__(
             self
@@ -210,7 +211,7 @@ class SoftMaxInActionPreferencesPolicy(ParameterizedPolicy):
 
         return gradient
 
-    def commit_updates(
+    def __commit_updates__(
             self
     ):
         """
@@ -228,8 +229,6 @@ class SoftMaxInActionPreferencesPolicy(ParameterizedPolicy):
             gradient_a_s = self.gradient(a, s)
             p_a_s = self[s][a]
             self.theta += alpha * discounted_return * (gradient_a_s / p_a_s)
-
-        self.complete_commit()
 
     def __init__(
             self,
@@ -410,7 +409,7 @@ class SoftMaxInActionPreferencesJaxPolicy(ParameterizedPolicy):
 
         return soft_max_denominator_addends[action_i] / soft_max_denominator
 
-    def commit_updates(
+    def __commit_updates__(
             self
     ):
         """
@@ -428,8 +427,6 @@ class SoftMaxInActionPreferencesJaxPolicy(ParameterizedPolicy):
             gradient_a_s = self.gradient(a, s)
             p_a_s = self[s][a]
             self.theta += alpha * discounted_return * (gradient_a_s / p_a_s)
-
-        self.complete_commit()
 
     def __init__(
             self,
@@ -517,7 +514,8 @@ class SoftMaxInActionPreferencesJaxPolicy(ParameterizedPolicy):
 class ContinuousActionDistributionPolicy(ParameterizedPolicy):
     """
     Parameterized policy that produces continuous, multi-dimensional actions by modeling a multi-dimensional
-    distribution (e.g., the multidimensional mean and covariance matrix) in terms of state features.
+    distribution (e.g., the multidimensional mean and covariance matrix of the multivariate normal distribution) in
+    terms of state features.
     """
 
     @classmethod
@@ -580,7 +578,7 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
 
         return policy, unparsed_args
 
-    def commit_updates(
+    def __commit_updates__(
             self
     ):
         """
@@ -639,10 +637,8 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
                 else:
                     warnings.warn('The updated covariance theta parameters produce a covariance matrix that is not positive definite. Skipping update.')
 
-        self.complete_commit()
-
-    @staticmethod
     def get_covariance_matrix(
+            self,
             theta_cov: np.ndarray,
             state_features: np.ndarray
     ) -> np.ndarray:
@@ -654,13 +650,11 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
         :return: Covariance matrix.
         """
 
-        action_dimensionality = int(sqrt(theta_cov.shape[0]))
-
         # ensure that the diagonal of the covariance matrix has positive values by exponentiating
         return np.array([
-            np.exp(np.dot(row, state_features)) if i % (action_dimensionality + 1) == 0 else np.dot(row, state_features)
+            np.exp(np.dot(row, state_features)) if i % (self.action_space_dimensionality + 1) == 0 else np.dot(row, state_features)
             for i, row in enumerate(theta_cov)
-        ]).reshape(action_dimensionality, action_dimensionality)
+        ]).reshape(self.action_space_dimensionality, self.action_space_dimensionality)
 
     @staticmethod
     def get_action_density(
@@ -702,18 +696,18 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
 
         self.feature_extractor = feature_extractor
 
-        state_space_dimensionality = self.feature_extractor.get_state_space_dimensionality()
-        action_space_dimensionality = self.feature_extractor.get_action_space_dimensionality()
+        self.state_space_dimensionality = self.feature_extractor.get_state_space_dimensionality()
+        self.action_space_dimensionality = self.feature_extractor.get_action_space_dimensionality()
 
         # coefficients for multi-dimensional mean:  one row per action and one column per feature
-        self.theta_mean = np.zeros(shape=(action_space_dimensionality, state_space_dimensionality))
+        self.theta_mean = np.zeros(shape=(self.action_space_dimensionality, self.state_space_dimensionality))
 
         # coefficients for multi-dimensional covariance:  one row per entry in the covariance matrix and one column per
         # feature. start with a diagonal covariance matrix and flatten it.
-        diagonal_cov = np.zeros(shape=(action_space_dimensionality, action_space_dimensionality))
+        diagonal_cov = np.zeros(shape=(self.action_space_dimensionality, self.action_space_dimensionality))
         np.fill_diagonal(diagonal_cov, 1.0)
         self.theta_cov = np.array([
-            np.ones(state_space_dimensionality) if cov == 1.0 else np.zeros(state_space_dimensionality)
+            np.ones(self.state_space_dimensionality) if cov == 1.0 else np.zeros(self.state_space_dimensionality)
             for cov_row in diagonal_cov
             for cov in cov_row
         ])
@@ -758,9 +752,16 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
             state_features
         )
 
+        # sample the n-dimensional action
+        action_value = stats.multivariate_normal.rvs(mean=mean, cov=cov, random_state=self.random_state)
+
+        # convert scalar action to array (e.g., if we're dealing with a 1-dimensional action)
+        if np.isscalar(action_value):
+            action_value = np.array([action_value])
+
         # sample action
         a = ContinuousMultiDimensionalAction(
-            value=stats.multivariate_normal.rvs(mean=mean, cov=cov, random_state=self.random_state),
+            value=action_value,
             min_values=None,
             max_values=None
         )
