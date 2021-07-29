@@ -101,7 +101,9 @@ class SoftMaxInActionPreferencesPolicy(ParameterizedPolicy):
     """
     Parameterized policy that implements a soft-max over action preferences. The policy gradient calculation is coded up
     manually. See the `JaxSoftMaxInActionPreferencesPolicy` for a similar policy in which the gradient is calculated
-    using the JAX library.
+    using the JAX library. This is only compatible with feature extractors derived from
+    `rlai.q_S_A.function_approximation.models.feature_extraction.FeatureExtractor`, which returns state-action feature
+    vectors.
     """
 
     @classmethod
@@ -292,7 +294,9 @@ class SoftMaxInActionPreferencesPolicy(ParameterizedPolicy):
 class SoftMaxInActionPreferencesJaxPolicy(ParameterizedPolicy):
     """
     Parameterized policy that implements a soft-max over action preferences. The policy gradient calculation is
-    performed using the JAX library.
+    performed using the JAX library. This is only compatible with feature extractors derived from
+    `rlai.q_S_A.function_approximation.models.feature_extraction.FeatureExtractor`, which returns state-action feature
+    vectors.
     """
 
     @classmethod
@@ -515,7 +519,8 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
     """
     Parameterized policy that produces continuous, multi-dimensional actions by modeling a multi-dimensional
     distribution (e.g., the multidimensional mean and covariance matrix of the multivariate normal distribution) in
-    terms of state features.
+    terms of state features. The state features must be extracted by an extractor derived from
+    `rlai.v_S.function_approximation.models.feature_extraction.StateFeatureExtractor`.
     """
 
     @classmethod
