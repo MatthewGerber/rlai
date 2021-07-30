@@ -495,7 +495,9 @@ class Gym(MdpEnvironment):
         self.__dict__ = state
 
         self.gym_native = self.init_gym_native()
-        self.init_state_plot()
+
+        if self.plot_state:
+            self.init_state_plot()
 
 
 @rl_text(chapter='Feature Extractors', page=1)
