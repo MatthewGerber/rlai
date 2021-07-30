@@ -121,6 +121,12 @@ class Gym(MdpEnvironment):
             help='Number of steps per second when displaying videos.'
         )
 
+        parser.add_argument(
+            '--plot-state',
+            action='store_true',
+            help='Pass this flag to plot the state of the environment.'
+        )
+
         return parser
 
     @classmethod
@@ -185,18 +191,23 @@ class Gym(MdpEnvironment):
             if self.steps_per_second is not None:
                 sleep(1.0 / self.steps_per_second)
 
-            # plot/update state
-            state_x_vals = range(len(observation))
-            state_y_vals = observation
-            max_abs_state_y = np.abs(state_y_vals).max()
-            if self.state_plot_max_abs_y is None or max_abs_state_y > self.state_plot_max_abs_y:
-                self.state_plot_max_abs_y = max_abs_state_y
-                self.state_plot_widget.setYRange(-self.state_plot_max_abs_y, self.state_plot_max_abs_y)
+            if self.plot_state:
 
-            if self.state_plot is None:
-                self.state_plot = self.state_plot_widget.plot(state_x_vals, state_y_vals, pen=pg.mkPen(None), symbol='o')
-            else:
-                self.state_plot.setData(state_x_vals, state_y_vals)
+                # expand y range if needed. never shrink it. this help to keep the visual interpretable.
+                state_x_vals = range(len(observation))
+                state_y_vals = observation
+                max_abs_state_y = np.abs(state_y_vals).max()
+                if self.state_plot_max_abs_y is None or max_abs_state_y > self.state_plot_max_abs_y:
+                    self.state_plot_max_abs_y = max_abs_state_y
+                    self.state_plot_widget.setYRange(-self.state_plot_max_abs_y, self.state_plot_max_abs_y)
+
+                # create initial plot item if we don't have one.
+                if self.state_plot is None:
+                    self.state_plot = self.state_plot_widget.plot(state_x_vals, state_y_vals, pen=pg.mkPen(None), symbol='o')
+
+                # update data in plot item if we already have one.
+                else:
+                    self.state_plot.setData(state_x_vals, state_y_vals)
 
         self.state = GymState(
             environment=self,
@@ -354,7 +365,8 @@ class Gym(MdpEnvironment):
             render_every_nth_episode: Optional[int] = None,
             video_directory: Optional[str] = None,
             force: bool = False,
-            steps_per_second: Optional[int] = None
+            steps_per_second: Optional[int] = None,
+            plot_state: bool = False
     ):
         """
         Initialize the environment.
@@ -370,6 +382,7 @@ class Gym(MdpEnvironment):
         :param force: Whether or not to force the writing of videos into the video directory. This will overwrite/delete
         content in the directory.
         :param steps_per_second: Number of steps per second when displaying videos.
+        :param plot_state: Whether or not to plot the state of the environment.
         """
 
         super().__init__(
@@ -387,6 +400,7 @@ class Gym(MdpEnvironment):
         self.video_directory = video_directory
         self.force = force
         self.steps_per_second = steps_per_second
+        self.plot_state = plot_state
 
         self.gym_native = self.init_gym_native()
 
@@ -437,12 +451,13 @@ class Gym(MdpEnvironment):
         else:  # pragma no cover
             raise ValueError(f'Unknown Gym action space type:  {type(self.gym_native.action_space)}')
 
-        # initialize state plot
+        # initialize state plot if we're plotting
         self.state_plot_layout = None
         self.state_plot_widget = None
         self.state_plot = None
         self.state_plot_max_abs_y = None
-        self.init_state_plot()
+        if self.plot_state:
+            self.init_state_plot()
 
     def __getstate__(
             self
