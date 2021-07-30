@@ -280,7 +280,9 @@ class Gym(MdpEnvironment):
         """
 
         self.gym_native.close()
-        self.state_plot_layout.close()
+
+        if self.plot_state:
+            self.state_plot_layout.close()
 
     def init_gym_native(
             self
