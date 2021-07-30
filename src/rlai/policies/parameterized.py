@@ -623,13 +623,13 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
 
             # check for nans in the gradient and skip update if any are found
             if np.isnan(gradient_a_s_mean).any() or np.isnan(gradient_a_s_cov).any():
-                warnings.warn('Gradients are NaN. Skipping update.')
+                warnings.warn('Gradients contain 1 or more NAN values. Skipping update.')
             else:
 
                 self.theta_mean += alpha * discounted_return * (gradient_a_s_mean / p_a_s)
 
-                # check whether the covariance matrix resulting from the updated parameters will be be positive definite, as
-                # it must be for multivariate normal distribution. don't update theta if it won't be.
+                # check whether the covariance matrix resulting from the updated parameters will be be positive
+                # definite, as it must be for the multivariate normal distribution. don't update theta if it won't be.
                 new_theta_cov = self.theta_cov + alpha * discounted_return * (gradient_a_s_cov / p_a_s)
                 state_features = self.feature_extractor.extract(s)
                 cov = self.get_covariance_matrix(
@@ -640,7 +640,7 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
                 if is_positive_definite(cov):
                     self.theta_cov = new_theta_cov
                 else:
-                    warnings.warn('The updated covariance theta parameters produce a covariance matrix that is not positive definite. Skipping update.')
+                    warnings.warn('The updated covariance theta parameters will produce a covariance matrix that is not positive definite. Skipping update.')
 
     def get_covariance_matrix(
             self,
@@ -685,7 +685,7 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
             for i, row in enumerate(theta_cov)
         ]).reshape(action_dimensionality, action_dimensionality)
 
-        return jstats.multivariate_normal.pdf(action_vector, mean, cov)
+        return jstats.multivariate_normal.pdf(x=action_vector, mean=mean, cov=cov)
 
     def __init__(
             self,
@@ -704,7 +704,7 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
         self.state_space_dimensionality = self.feature_extractor.get_state_space_dimensionality()
         self.action_space_dimensionality = self.feature_extractor.get_action_space_dimensionality()
 
-        # coefficients for multi-dimensional mean:  one row per action and one column per feature
+        # coefficients for multi-dimensional mean:  one row per action and one column per feature.
         self.theta_mean = np.zeros(shape=(self.action_space_dimensionality, self.state_space_dimensionality))
 
         # coefficients for multi-dimensional covariance:  one row per entry in the covariance matrix and one column per

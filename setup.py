@@ -24,6 +24,7 @@ INSTALL_REQUIREMENTS = [
     'patsy==0.5.1',
     'jax[cpu]==0.2.17',
     'pyqtgraph==0.12.2',
+    'PyQt5==5.15.4',
 
     # jupyter requirements
     'jupyterlab==3.0.6',
