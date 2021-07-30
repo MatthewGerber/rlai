@@ -3,10 +3,12 @@ import os
 import warnings
 from argparse import ArgumentParser
 from itertools import product
+from time import sleep
 from typing import List, Tuple, Optional, Union, Dict
 
 import gym
 import numpy as np
+import pyqtgraph as pg
 from gym.envs.registration import EnvSpec
 from gym.spaces import Discrete, Box
 from gym.wrappers import TimeLimit
@@ -113,6 +115,12 @@ class Gym(MdpEnvironment):
             help='Pass this flag to force the writing of videos into the video directory. Will overwrite/delete content in the directory.'
         )
 
+        parser.add_argument(
+            '--steps-per-second',
+            type=int,
+            help='Number of steps per second when displaying videos.'
+        )
+
         return parser
 
     @classmethod
@@ -167,8 +175,28 @@ class Gym(MdpEnvironment):
 
         observation, reward, done, _ = self.gym_native.step(action=gym_action)
 
-        if self.render_current_episode:
+        # call render if rendering manually
+        if self.check_render_current_episode(True):
             self.gym_native.render()
+
+        if self.check_render_current_episode(None):
+
+            # sleep if we're restricting steps per second
+            if self.steps_per_second is not None:
+                sleep(1.0 / self.steps_per_second)
+
+            # plot/update state
+            state_x_vals = range(len(observation))
+            state_y_vals = observation
+            max_abs_state_y = np.abs(state_y_vals).max()
+            if self.state_plot_max_abs_y is None or max_abs_state_y > self.state_plot_max_abs_y:
+                self.state_plot_max_abs_y = max_abs_state_y
+                self.state_plot_widget.setYRange(-self.state_plot_max_abs_y, self.state_plot_max_abs_y)
+
+            if self.state_plot is None:
+                self.state_plot = self.state_plot_widget.plot(state_x_vals, state_y_vals, pen=pg.mkPen(None), symbol='o')
+            else:
+                self.state_plot.setData(state_x_vals, state_y_vals)
 
         self.state = GymState(
             environment=self,
@@ -192,13 +220,12 @@ class Gym(MdpEnvironment):
 
         super().reset_for_new_run(agent)
 
-        # subtract 1 from number of resets in order to render the first episode
-        if self.display_only_rendering:
-            self.render_current_episode = (self.num_resets - 1) % self.render_every_nth_episode == 0
+        self.state_plot_max_abs_y = None
 
         observation = self.gym_native.reset()
 
-        if self.render_current_episode:
+        # call render if rendering manually
+        if self.check_render_current_episode(True):
             self.gym_native.render()
 
         self.state = GymState(
@@ -210,6 +237,30 @@ class Gym(MdpEnvironment):
 
         return self.state
 
+    def check_render_current_episode(
+            self,
+            render_manually: Optional[bool]
+    ) -> bool:
+        """
+        Check whether the current episode is to be rendered.
+
+        :param render_manually: Wether the rendering will be done manually with calls to the render function or automatically
+        as a result of saving videos via the monitor. Pass None to check whether the episode should be rendered,
+        regardless of how the rendering will be done.
+        :return: True if rendered and False otherwise.
+        """
+
+        # subtract 1 from number of resets to render first episode
+        check_result = self.render_every_nth_episode is not None and (self.num_resets - 1) % self.render_every_nth_episode == 0
+
+        if render_manually is not None:
+            if render_manually:
+                check_result = check_result and self.video_directory is None
+            else:
+                check_result = check_result and self.video_directory is not None
+
+        return check_result
+
     def close(
             self
     ):
@@ -218,6 +269,7 @@ class Gym(MdpEnvironment):
         """
 
         self.gym_native.close()
+        self.state_plot_layout.close()
 
     def init_gym_native(
             self
@@ -235,7 +287,7 @@ class Gym(MdpEnvironment):
         # the native gym object uses the max value, so set it to something crazy huge if we're not given a T.
         gym_native._max_episode_steps = 999999999999 if self.T is None else self.T
 
-        # save videos via wrapper
+        # save videos via wrapper if we have a video directory
         if self.render_every_nth_episode is not None and self.video_directory is not None:
             try:
                 gym_native = gym.wrappers.Monitor(
@@ -254,6 +306,45 @@ class Gym(MdpEnvironment):
 
         return gym_native
 
+    def get_state_dimension_names(
+            self
+    ) -> List[str]:
+        """
+        Get names of state dimensions.
+
+        :return: List of names.
+        """
+
+        if self.gym_id == 'LunarLanderContinuous-v2':
+            names = [
+                'posX',
+                'posY',
+                'velX',
+                'velY',
+                'ang',
+                'angV',
+                'leg1Con',
+                'leg2Con'
+            ]
+        else:
+            warnings.warn(f'The state dimension names for {self.gym_id} are unknown. Defaulting to numbers')
+            names = [str(x) for x in range(0, self.gym_native.observation_space.shape[0])]
+
+        return names
+
+    def init_state_plot(
+            self
+    ):
+        """
+        Initialize the state plot.
+        """
+
+        self.state_plot_layout = pg.GraphicsLayoutWidget(show=True, title=f'State:  {self.gym_id}')
+        state_dimension_names = self.get_state_dimension_names()
+        state_plot_x_axis = pg.AxisItem(orientation='bottom')
+        state_plot_x_axis.setTicks([list(enumerate(state_dimension_names))])
+        self.state_plot_widget = self.state_plot_layout.addPlot(axisItems={'bottom': state_plot_x_axis})
+
     def __init__(
             self,
             random_state: RandomState,
@@ -262,7 +353,8 @@ class Gym(MdpEnvironment):
             continuous_action_discretization_resolution: Optional[float] = None,
             render_every_nth_episode: Optional[int] = None,
             video_directory: Optional[str] = None,
-            force: bool = False
+            force: bool = False,
+            steps_per_second: Optional[int] = None
     ):
         """
         Initialize the environment.
@@ -277,6 +369,7 @@ class Gym(MdpEnvironment):
         :param video_directory: Directory in which to store rendered videos.
         :param force: Whether or not to force the writing of videos into the video directory. This will overwrite/delete
         content in the directory.
+        :param steps_per_second: Number of steps per second when displaying videos.
         """
 
         super().__init__(
@@ -287,23 +380,14 @@ class Gym(MdpEnvironment):
 
         self.gym_id = gym_id
         self.continuous_action_discretization_resolution = continuous_action_discretization_resolution
-
-        # set up rendering...either display-only or saved videos via wrapper
         self.render_every_nth_episode = render_every_nth_episode
-        self.display_only_rendering = False
-        self.render_current_episode = False
+        if self.render_every_nth_episode is not None and self.render_every_nth_episode <= 0:
+            raise ValueError('render_every_nth_episode must be > 0 if provided.')
+
         self.video_directory = video_directory
-        if self.render_every_nth_episode is not None:
-
-            if self.render_every_nth_episode <= 0:
-                raise ValueError('render_every_nth_episode must be > 0 if provided.')
-
-            # display-only if we don't have a video directory
-            if self.video_directory is None:
-                self.display_only_rendering = True
-                self.render_current_episode = True
-
         self.force = force
+        self.steps_per_second = steps_per_second
+
         self.gym_native = self.init_gym_native()
 
         if self.continuous_action_discretization_resolution is not None and not isinstance(self.gym_native.action_space, Box):
@@ -353,6 +437,13 @@ class Gym(MdpEnvironment):
         else:  # pragma no cover
             raise ValueError(f'Unknown Gym action space type:  {type(self.gym_native.action_space)}')
 
+        # initialize state plot
+        self.state_plot_layout = None
+        self.state_plot_widget = None
+        self.state_plot = None
+        self.state_plot_max_abs_y = None
+        self.init_state_plot()
+
     def __getstate__(
             self
     ) -> Dict:
@@ -366,6 +457,11 @@ class Gym(MdpEnvironment):
 
         # the native gym environment cannot be pickled. blank it out.
         state_dict['gym_native'] = None
+
+        # same with plotting stuff
+        state_dict['state_plot_layout'] = None
+        state_dict['state_plot_widget'] = None
+        state_dict['state_plot'] = None
 
         return state_dict
 
@@ -382,6 +478,7 @@ class Gym(MdpEnvironment):
         self.__dict__ = state
 
         self.gym_native = self.init_gym_native()
+        self.init_state_plot()
 
 
 @rl_text(chapter='Feature Extractors', page=1)
