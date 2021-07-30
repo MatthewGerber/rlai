@@ -10,11 +10,15 @@ A feature extractor for the gridworld. This extractor, being based on the `State
 A feature extractor for the gridworld. This extractor does not interact feature values with actions. Its primary use
     is in state-value estimation (e.g., for the baseline of policy gradient methods).
 ```
-### [rlai.environments.openai_gym.CartpoleFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/openai_gym.py#L373)
+### [rlai.environments.openai_gym.CartpoleFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/openai_gym.py#L504)
 ```
 A feature extractor for the OpenAI cartpole environment. This extractor, being based on the
     `StateActionInteractionFeatureExtractor`, directly extracts the fully interacted state-action feature matrix. It
     returns numpy.ndarray feature matrices, which are not compatible with the Patsy formula-based interface.
+```
+### [rlai.environments.openai_gym.ContinuousFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/openai_gym.py#L724)
+```
+A feature extractor for continuous OpenAI environments.
 ```
 ### [rlai.environments.robocode.RobocodeFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/robocode.py#L624)
 ```
@@ -56,4 +60,8 @@ A feature extractor that extracts features comprising the interaction (in a stat
     number of possible discrete actions. To arrive at the full vector expression for a particular state-action pair, we
     first form the cartesian product of (a) the one-hot action vector and (b) the state features. Each pair in this
     product is then multiplied to arrive at the full vector expression of the state-action pair.
+```
+### [rlai.v_S.function_approximation.models.feature_extraction.StateFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/v_S/function_approximation/models/feature_extraction.py#L11)
+```
+Feature extractor for states.
 ```

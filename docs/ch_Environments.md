@@ -19,7 +19,7 @@ Environment for the mancala game. This is a simple game with many rule variation
 An MDP environment served over a TCP connection from an external source (e.g., a simulation environment running as
     a separate program).
 ```
-### [rlai.environments.openai_gym.Gym](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/openai_gym.py#L63)
+### [rlai.environments.openai_gym.Gym](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/openai_gym.py#L66)
 ```
 Generalized Gym environment. Any OpenAI Gym environment can be executed by supplying the appropriate identifier.
 ```

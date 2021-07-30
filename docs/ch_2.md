@@ -15,7 +15,7 @@ Nonassociative, q-value agent.
 ```
 K-armed bandit.
 ```
-### [rlai.utils.IncrementalSampleAverager](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/utils.py#L15)
+### [rlai.utils.IncrementalSampleAverager](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/utils.py#L16)
 ```
 An incremental, constant-time and -memory sample averager. Supports both decreasing (i.e., unweighted sample
     average) and constant (i.e., exponential recency-weighted average, pp. 32-33) step sizes.
