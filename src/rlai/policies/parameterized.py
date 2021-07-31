@@ -591,7 +591,7 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
         """
 
         state_feature_matrix = np.array([
-            self.feature_extractor.extract(s)
+            np.append([1.0], self.feature_extractor.extract(s))
             for s in self.update_batch_s
         ])
 
@@ -631,7 +631,7 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
                 # check whether the covariance matrix resulting from the updated parameters will be be positive
                 # definite, as it must be for the multivariate normal distribution. don't update theta if it won't be.
                 new_theta_cov = self.theta_cov + alpha * discounted_return * (gradient_a_s_cov / p_a_s)
-                state_features = self.feature_extractor.extract(s)
+                state_features = np.append([1.0], self.feature_extractor.extract(s))
                 cov = self.get_covariance_matrix(
                     new_theta_cov,
                     state_features
@@ -704,18 +704,13 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
         self.state_space_dimensionality = self.feature_extractor.get_state_space_dimensionality()
         self.action_space_dimensionality = self.feature_extractor.get_action_space_dimensionality()
 
-        # coefficients for multi-dimensional mean:  one row per action and one column per feature.
-        self.theta_mean = np.zeros(shape=(self.action_space_dimensionality, self.state_space_dimensionality))
+        # coefficients for multi-dimensional mean:  one row per action and one column per state feature (plus 1 for the
+        # bias/intercept).
+        self.theta_mean = np.zeros(shape=(self.action_space_dimensionality, self.state_space_dimensionality + 1))
 
-        # coefficients for multi-dimensional covariance:  one row per entry in the covariance matrix and one column per
-        # feature. start with a diagonal covariance matrix and flatten it.
-        diagonal_cov = np.zeros(shape=(self.action_space_dimensionality, self.action_space_dimensionality))
-        np.fill_diagonal(diagonal_cov, 1.0)
-        self.theta_cov = np.array([
-            np.ones(self.state_space_dimensionality) if cov == 1.0 else np.zeros(self.state_space_dimensionality)
-            for cov_row in diagonal_cov
-            for cov in cov_row
-        ])
+        # coefficients for multi-dimensional covariance:  one row per entry in the covariance matrix (a square matrix
+        # with each action along each dimension) and one column per state feature (plus 1 for the bias/intercept).
+        self.theta_cov = np.zeros(shape=(self.action_space_dimensionality ** 2, self.state_space_dimensionality + 1))
 
         self.get_action_density_gradients = jit(grad(self.get_action_density, argnums=(0, 1)))
         self.get_action_density_gradients_vmap = jit(vmap(self.get_action_density_gradients, in_axes=(None, None, 0, 0)))
@@ -748,7 +743,7 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
         :return: Dictionary of action-probability items.
         """
 
-        state_features = self.feature_extractor.extract(state)
+        state_features = np.append([1.0], self.feature_extractor.extract(state))
 
         # calculate the modeled mean and covariance of the n-dimensional action
         mean = self.theta_mean.dot(state_features)
