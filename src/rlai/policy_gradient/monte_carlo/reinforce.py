@@ -39,7 +39,7 @@ def improve(
     """
 
     if thread_manager is not None:
-        warnings.warn('This optimization method will ignoree the thread_manager.')
+        warnings.warn('This optimization method will ignore the thread_manager.')
 
     logging.info(f'Running Monte Carlo-based REINFORCE improvement for {num_episodes} episode(s).')
 
@@ -77,7 +77,6 @@ def improve(
 
         # work backwards through the trace to calculate discounted returns. need to work backward in order for the value
         # of g at each time step t to be properly discounted.
-        logging.info('Updating policy parameters.')
         g = 0
         for i, (t, state_a, reward) in enumerate(reversed(t_state_action_reward)):
 
@@ -103,8 +102,6 @@ def improve(
                 policy.append_update(a, state, alpha, update_target)
 
         policy.commit_updates()
-
-        logging.info('Policy parameters updated.')
 
         episode_reward_averager.update(total_reward)
         episodes_finished = episode_i + 1

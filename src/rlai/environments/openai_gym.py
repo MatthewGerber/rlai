@@ -122,9 +122,9 @@ class Gym(MdpEnvironment):
         )
 
         parser.add_argument(
-            '--plot-state',
+            '--plot',
             action='store_true',
-            help='Pass this flag to plot the state of the environment.'
+            help='Pass this flag to plot environment values (e.g., state).'
         )
 
         return parser
@@ -181,6 +181,10 @@ class Gym(MdpEnvironment):
 
         observation, reward, done, _ = self.gym_native.step(action=gym_action)
 
+        # override reward per environment
+        if self.gym_id == 'LunarLanderContinuous-v2':
+            reward = 2.0 - np.abs(observation[0:5]).sum()
+
         # call render if rendering manually
         if self.check_render_current_episode(True):
             self.gym_native.render()
@@ -191,23 +195,23 @@ class Gym(MdpEnvironment):
             if self.steps_per_second is not None:
                 sleep(1.0 / self.steps_per_second)
 
-            if self.plot_state:
+            if self.plot:
 
-                # expand y range if needed. never shrink it. this help to keep the visual interpretable.
-                state_x_vals = range(len(observation))
-                state_y_vals = observation
-                max_abs_state_y = np.abs(state_y_vals).max()
-                if self.state_plot_max_abs_y is None or max_abs_state_y > self.state_plot_max_abs_y:
-                    self.state_plot_max_abs_y = max_abs_state_y
-                    self.state_plot_widget.setYRange(-self.state_plot_max_abs_y, self.state_plot_max_abs_y)
+                # expand y range if needed. never shrink it. this helps to keep the visual interpretable.
+                plot_x_vals = range(len(observation) + 1)
+                plot_y_vals = np.append(observation, reward)
+                plot_max_abs_y = np.abs(plot_y_vals).max()
+                if self.plot_max_abs_y is None or plot_max_abs_y > self.plot_max_abs_y:
+                    self.plot_max_abs_y = plot_max_abs_y
+                    self.plot_widget.setYRange(-self.plot_max_abs_y, self.plot_max_abs_y)
 
                 # create initial plot item if we don't have one.
-                if self.state_plot is None:
-                    self.state_plot = self.state_plot_widget.plot(state_x_vals, state_y_vals, pen=pg.mkPen(None), symbol='o')
+                if self.plot_item is None:
+                    self.plot_item = self.plot_widget.plot(plot_x_vals, plot_y_vals, pen=pg.mkPen(None), symbol='o')
 
                 # update data in plot item if we already have one.
                 else:
-                    self.state_plot.setData(state_x_vals, state_y_vals)
+                    self.plot_item.setData(plot_x_vals, plot_y_vals)
 
         self.state = GymState(
             environment=self,
@@ -231,7 +235,7 @@ class Gym(MdpEnvironment):
 
         super().reset_for_new_run(agent)
 
-        self.state_plot_max_abs_y = None
+        self.plot_max_abs_y = None
 
         observation = self.gym_native.reset()
 
@@ -281,8 +285,8 @@ class Gym(MdpEnvironment):
 
         self.gym_native.close()
 
-        if self.plot_state:
-            self.state_plot_layout.close()
+        if self.plot:
+            self.plot_layout.close()
 
     def init_gym_native(
             self
@@ -345,18 +349,18 @@ class Gym(MdpEnvironment):
 
         return names
 
-    def init_state_plot(
+    def init_plot(
             self
     ):
         """
-        Initialize the state plot.
+        Initialize the plot.
         """
 
-        self.state_plot_layout = pg.GraphicsLayoutWidget(show=True, title=f'State:  {self.gym_id}')
-        state_dimension_names = self.get_state_dimension_names()
-        state_plot_x_axis = pg.AxisItem(orientation='bottom')
-        state_plot_x_axis.setTicks([list(enumerate(state_dimension_names))])
-        self.state_plot_widget = self.state_plot_layout.addPlot(axisItems={'bottom': state_plot_x_axis})
+        self.plot_layout = pg.GraphicsLayoutWidget(show=True, title=f'{self.gym_id}')
+        plot_tick_labels = self.get_state_dimension_names() + ['reward']
+        plot_x_axis = pg.AxisItem(orientation='bottom')
+        plot_x_axis.setTicks([list(enumerate(plot_tick_labels))])
+        self.plot_widget = self.plot_layout.addPlot(axisItems={'bottom': plot_x_axis})
 
     def __init__(
             self,
@@ -368,7 +372,7 @@ class Gym(MdpEnvironment):
             video_directory: Optional[str] = None,
             force: bool = False,
             steps_per_second: Optional[int] = None,
-            plot_state: bool = False
+            plot: bool = False
     ):
         """
         Initialize the environment.
@@ -384,7 +388,7 @@ class Gym(MdpEnvironment):
         :param force: Whether or not to force the writing of videos into the video directory. This will overwrite/delete
         content in the directory.
         :param steps_per_second: Number of steps per second when displaying videos.
-        :param plot_state: Whether or not to plot the state of the environment.
+        :param plot: Whether or not to plot the environment.
         """
 
         super().__init__(
@@ -402,7 +406,7 @@ class Gym(MdpEnvironment):
         self.video_directory = video_directory
         self.force = force
         self.steps_per_second = steps_per_second
-        self.plot_state = plot_state
+        self.plot = plot
 
         self.gym_native = self.init_gym_native()
 
@@ -453,13 +457,13 @@ class Gym(MdpEnvironment):
         else:  # pragma no cover
             raise ValueError(f'Unknown Gym action space type:  {type(self.gym_native.action_space)}')
 
-        # initialize state plot if we're plotting
-        self.state_plot_layout = None
-        self.state_plot_widget = None
-        self.state_plot = None
-        self.state_plot_max_abs_y = None
-        if self.plot_state:
-            self.init_state_plot()
+        # initialize plot
+        self.plot_layout = None
+        self.plot_widget = None
+        self.plot_item = None
+        self.plot_max_abs_y = None
+        if self.plot:
+            self.init_plot()
 
     def __getstate__(
             self
@@ -476,9 +480,9 @@ class Gym(MdpEnvironment):
         state_dict['gym_native'] = None
 
         # same with plotting stuff
-        state_dict['state_plot_layout'] = None
-        state_dict['state_plot_widget'] = None
-        state_dict['state_plot'] = None
+        state_dict['plot_layout'] = None
+        state_dict['plot_widget'] = None
+        state_dict['plot_item'] = None
 
         return state_dict
 
@@ -496,8 +500,8 @@ class Gym(MdpEnvironment):
 
         self.gym_native = self.init_gym_native()
 
-        if self.plot_state:
-            self.init_state_plot()
+        if self.plot:
+            self.init_plot()
 
 
 @rl_text(chapter='Feature Extractors', page=1)
