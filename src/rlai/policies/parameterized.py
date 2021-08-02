@@ -14,7 +14,6 @@ from scipy import stats
 from rlai.actions import Action, ContinuousMultiDimensionalAction
 from rlai.environments.mdp import MdpEnvironment
 from rlai.meta import rl_text
-from rlai.models.feature_extraction import NonstationaryFeatureScaler
 from rlai.policies import Policy
 from rlai.q_S_A.function_approximation.models import FeatureExtractor
 from rlai.states.mdp import MdpState
@@ -596,7 +595,6 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
             self.feature_extractor.extract(s)
             for s in self.update_batch_s
         ])
-        # state_feature_matrix = self.feature_scaler.scale_features(state_feature_matrix, True)
 
         # add intercept
         intercept_state_feature_matrix = np.ones(shape=np.add(state_feature_matrix.shape, (0, 1)))
@@ -608,7 +606,7 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
         ])
 
         # calculate per-update gradients
-        gradients_a_s_mean, gradients_a_s_cov = self.get_action_density_gradients_vmap(
+        action_density_gradients_wrt_theta_mean, action_density_gradients_wrt_theta_cov = self.get_action_density_gradients_vmap(
             self.theta_mean,
             self.theta_cov,
             intercept_state_feature_matrix,
@@ -622,59 +620,33 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
             intercept_state_feature_matrix,
             self.update_batch_alpha,
             self.update_batch_discounted_return,
-            gradients_a_s_mean,
-            gradients_a_s_cov
+            action_density_gradients_wrt_theta_mean,
+            action_density_gradients_wrt_theta_cov
         )
 
-        for a, s, state_features, alpha, discounted_return, gradient_a_s_mean, gradient_a_s_cov in updates:
+        for a, s, state_features, alpha, discounted_return, action_density_gradient_wrt_theta_mean, action_density_gradient_wrt_theta_cov in updates:
 
             # TODO:  This is always 1. How to estimate it from the PDF? The multivariate_normal class has a CDF.
             p_a_s = self[s][a]
 
             # check for nans in the gradients and skip the update if any are found
-            if np.isnan(gradient_a_s_mean).any() or np.isnan(gradient_a_s_cov).any():
+            if np.isnan(action_density_gradient_wrt_theta_mean).any() or np.isnan(action_density_gradient_wrt_theta_cov).any():
                 warnings.warn('Gradients contain np.nan value(s). Skipping update.')
             else:
 
                 # check whether the covariance matrix resulting from the updated parameters will be be positive
                 # definite, as the multivariate normal distribution requires this. assign the update only if it is so.
-                new_theta_cov = self.theta_cov + alpha * discounted_return * (gradient_a_s_cov / p_a_s)
-                cov = self.get_covariance_matrix(
+                new_theta_cov = self.theta_cov + alpha * discounted_return * (action_density_gradient_wrt_theta_cov / p_a_s)
+                new_cov = self.get_covariance_matrix(
                     new_theta_cov,
                     state_features
                 )
 
-                if is_positive_definite(cov):
-                    self.theta_mean += alpha * discounted_return * (gradient_a_s_mean / p_a_s)
+                if is_positive_definite(new_cov):
+                    self.theta_mean += alpha * discounted_return * (action_density_gradient_wrt_theta_mean / p_a_s)
                     self.theta_cov = new_theta_cov
                 else:
                     warnings.warn('The updated covariance theta parameters will produce a covariance matrix that is not positive definite. Skipping update.')
-
-    def get_covariance_matrix(
-            self,
-            theta_cov: np.ndarray,
-            state_features: np.ndarray
-    ) -> np.ndarray:
-        """
-        Get covariance matrix from its parameters.
-
-        :param theta_cov: Parameters.
-        :param state_features: State features.
-        :return: Covariance matrix.
-        """
-
-        return np.array([
-
-            # ensure that the diagonal of the covariance matrix has positive values by exponentiating
-            np.exp(np.dot(theta_cov_row, state_features)) if i % (self.action_space_dimensionality + 1) == 0
-
-            # off-diagonal elements can be positive or negative
-            else np.dot(theta_cov_row, state_features)
-
-            # iteraate over each row of coefficients
-            for i, theta_cov_row in enumerate(theta_cov)
-
-        ]).reshape(self.action_space_dimensionality, self.action_space_dimensionality)
 
     @staticmethod
     def get_action_density(
@@ -711,6 +683,32 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
 
         return jstats.multivariate_normal.pdf(x=action_vector, mean=mean, cov=cov)
 
+    def get_covariance_matrix(
+            self,
+            theta_cov: np.ndarray,
+            state_features: np.ndarray
+    ) -> np.ndarray:
+        """
+        Get covariance matrix from its parameters.
+
+        :param theta_cov: Parameters.
+        :param state_features: State features.
+        :return: Covariance matrix.
+        """
+
+        return np.array([
+
+            # ensure that the diagonal of the covariance matrix has positive values by exponentiating
+            np.exp(np.dot(theta_cov_row, state_features)) if i % (self.action_space_dimensionality + 1) == 0
+
+            # off-diagonal elements can be positive or negative
+            else np.dot(theta_cov_row, state_features)
+
+            # iteraate over each row of coefficients
+            for i, theta_cov_row in enumerate(theta_cov)
+
+        ]).reshape(self.action_space_dimensionality, self.action_space_dimensionality)
+
     def __init__(
             self,
             feature_extractor: StateFeatureExtractor
@@ -739,11 +737,6 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
         self.get_action_density_gradients = jit(grad(self.get_action_density, argnums=(0, 1)))
         self.get_action_density_gradients_vmap = jit(vmap(self.get_action_density_gradients, in_axes=(None, None, 0, 0)))
         self.random_state = RandomState(12345)
-        self.feature_scaler = NonstationaryFeatureScaler(
-            1000,
-            50000,
-            0.99999
-        )
 
     def __contains__(
             self,
@@ -772,15 +765,13 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
         :return: Dictionary of action-probability items.
         """
 
-        state_features = self.feature_extractor.extract(state)
-        # state_features = self.feature_scaler.scale_features(np.array([state_features]), True)[0, :]
-        state_features = np.append([1.0], state_features)
+        intercept_state_features = np.append([1.0], self.feature_extractor.extract(state))
 
         # calculate the modeled mean and covariance of the n-dimensional action
-        mean = self.theta_mean.dot(state_features)
+        mean = self.theta_mean.dot(intercept_state_features)
         cov = self.get_covariance_matrix(
             self.theta_cov,
-            state_features
+            intercept_state_features
         )
 
         # sample the n-dimensional action
