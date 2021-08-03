@@ -8,7 +8,6 @@ from typing import List, Tuple, Optional, Union, Dict
 
 import gym
 import numpy as np
-import pyqtgraph as pg
 from gym.envs.registration import EnvSpec
 from gym.spaces import Discrete, Box
 from gym.wrappers import TimeLimit
@@ -25,7 +24,7 @@ from rlai.q_S_A.function_approximation.models.feature_extraction import (
 )
 from rlai.rewards import Reward
 from rlai.states.mdp import MdpState
-from rlai.utils import parse_arguments
+from rlai.utils import parse_arguments, ScatterPlot, ScatterPlotPosition
 from rlai.v_S.function_approximation.models.feature_extraction import StateFeatureExtractor
 
 
@@ -122,7 +121,7 @@ class Gym(MdpEnvironment):
         )
 
         parser.add_argument(
-            '--plot',
+            '--plot-environment',
             action='store_true',
             help='Pass this flag to plot environment values (e.g., state).'
         )
@@ -195,23 +194,8 @@ class Gym(MdpEnvironment):
             if self.steps_per_second is not None:
                 sleep(1.0 / self.steps_per_second)
 
-            if self.plot:
-
-                # expand y range if needed. never shrink it. this helps to keep the visual interpretable.
-                plot_x_vals = range(len(observation) + 1)
-                plot_y_vals = np.append(observation, reward)
-                plot_max_abs_y = np.abs(plot_y_vals).max()
-                if self.plot_max_abs_y is None or plot_max_abs_y > self.plot_max_abs_y:
-                    self.plot_max_abs_y = plot_max_abs_y
-                    self.plot_widget.setYRange(-self.plot_max_abs_y, self.plot_max_abs_y)
-
-                # create initial plot item if we don't have one.
-                if self.plot_item is None:
-                    self.plot_item = self.plot_widget.plot(plot_x_vals, plot_y_vals, pen=pg.mkPen(None), symbol='o')
-
-                # update data in plot item if we already have one.
-                else:
-                    self.plot_item.setData(plot_x_vals, plot_y_vals)
+            if self.plot_environment:
+                self.scatter_plot.update(np.append(observation, reward))
 
         self.state = GymState(
             environment=self,
@@ -235,7 +219,7 @@ class Gym(MdpEnvironment):
 
         super().reset_for_new_run(agent)
 
-        self.plot_max_abs_y = None
+        self.scatter_plot.plot_max_abs_y = None
 
         observation = self.gym_native.reset()
 
@@ -285,7 +269,7 @@ class Gym(MdpEnvironment):
 
         self.gym_native.close()
 
-        if self.plot:
+        if self.plot_environment:
             self.plot_layout.close()
 
     def init_gym_native(
@@ -349,19 +333,6 @@ class Gym(MdpEnvironment):
 
         return names
 
-    def init_plot(
-            self
-    ):
-        """
-        Initialize the plot.
-        """
-
-        self.plot_layout = pg.GraphicsLayoutWidget(show=True, title=f'{self.gym_id}')
-        plot_tick_labels = self.get_state_dimension_names() + ['reward']
-        plot_x_axis = pg.AxisItem(orientation='bottom')
-        plot_x_axis.setTicks([list(enumerate(plot_tick_labels))])
-        self.plot_widget = self.plot_layout.addPlot(axisItems={'bottom': plot_x_axis})
-
     def __init__(
             self,
             random_state: RandomState,
@@ -372,7 +343,7 @@ class Gym(MdpEnvironment):
             video_directory: Optional[str] = None,
             force: bool = False,
             steps_per_second: Optional[int] = None,
-            plot: bool = False
+            plot_environment: bool = False
     ):
         """
         Initialize the environment.
@@ -388,7 +359,7 @@ class Gym(MdpEnvironment):
         :param force: Whether or not to force the writing of videos into the video directory. This will overwrite/delete
         content in the directory.
         :param steps_per_second: Number of steps per second when displaying videos.
-        :param plot: Whether or not to plot the environment.
+        :param plot_environment: Whether or not to plot the environment.
         """
 
         super().__init__(
@@ -406,7 +377,14 @@ class Gym(MdpEnvironment):
         self.video_directory = video_directory
         self.force = force
         self.steps_per_second = steps_per_second
-        self.plot = plot
+        self.plot_environment = plot_environment
+
+        if self.plot_environment:
+            self.scatter_plot = ScatterPlot(
+                f'{self.gym_id}:  State and Reward',
+                self.get_state_dimension_names() + ['reward'],
+                ScatterPlotPosition.TOP_LEFT
+            )
 
         self.gym_native = self.init_gym_native()
 
@@ -457,14 +435,6 @@ class Gym(MdpEnvironment):
         else:  # pragma no cover
             raise ValueError(f'Unknown Gym action space type:  {type(self.gym_native.action_space)}')
 
-        # initialize plot
-        self.plot_layout = None
-        self.plot_widget = None
-        self.plot_item = None
-        self.plot_max_abs_y = None
-        if self.plot:
-            self.init_plot()
-
     def __getstate__(
             self
     ) -> Dict:
@@ -479,10 +449,8 @@ class Gym(MdpEnvironment):
         # the native gym environment cannot be pickled. blank it out.
         state_dict['gym_native'] = None
 
-        # same with plotting stuff
-        state_dict['plot_layout'] = None
-        state_dict['plot_widget'] = None
-        state_dict['plot_item'] = None
+        # same with plotting
+        state_dict['scatter_plot'] = None
 
         return state_dict
 
@@ -500,8 +468,12 @@ class Gym(MdpEnvironment):
 
         self.gym_native = self.init_gym_native()
 
-        if self.plot:
-            self.init_plot()
+        if self.plot_environment:
+            self.scatter_plot = ScatterPlot(
+                f'{self.gym_id}:  State and Reward',
+                self.get_state_dimension_names() + ['reward'],
+                ScatterPlotPosition.TOP_LEFT
+            )
 
 
 @rl_text(chapter='Feature Extractors', page=1)

@@ -17,7 +17,14 @@ from rlai.meta import rl_text
 from rlai.policies import Policy
 from rlai.q_S_A.function_approximation.models import FeatureExtractor
 from rlai.states.mdp import MdpState
-from rlai.utils import parse_arguments, load_class, get_base_argument_parser, is_positive_definite
+from rlai.utils import (
+    parse_arguments,
+    load_class,
+    get_base_argument_parser,
+    is_positive_definite,
+    ScatterPlot,
+    ScatterPlotPosition
+)
 from rlai.v_S.function_approximation.models.feature_extraction import StateFeatureExtractor
 
 
@@ -546,6 +553,12 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
             help='Fully-qualified type name of feature extractor to use within policy.'
         )
 
+        parser.add_argument(
+            '--plot-policy',
+            action='store_true',
+            help='Pass this flag to plot policy values (e.g., action).'
+        )
+
         return parser
 
     @classmethod
@@ -572,13 +585,10 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
         )
         del parsed_args.policy_feature_extractor
 
-        # there shouldn't be anything left
-        if len(vars(parsed_args)) > 0:
-            raise ValueError('Parsed args remain. Need to pass to constructor.')
-
         # initialize policy
         policy = cls(
-            feature_extractor=feature_extractor
+            feature_extractor=feature_extractor,
+            **vars(parsed_args)
         )
 
         return policy, unparsed_args
@@ -711,20 +721,26 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
 
     def __init__(
             self,
-            feature_extractor: StateFeatureExtractor
+            feature_extractor: StateFeatureExtractor,
+            plot_policy: bool
     ):
         """
         Initialize the parameterized policy.
 
         :param feature_extractor: Feature extractor.
+        :param plot_policy: Whether or not to plot policy values (e.g., action).
         """
 
         super().__init__()
 
         self.feature_extractor = feature_extractor
-
         self.state_space_dimensionality = self.feature_extractor.get_state_space_dimensionality()
         self.action_space_dimensionality = self.feature_extractor.get_action_space_dimensionality()
+
+        self.plot_policy = plot_policy
+        if self.plot_policy:
+            self.scatter_plot_x_tick_labels = [str(i) for i in range(self.action_space_dimensionality)]
+            self.scatter_plot = ScatterPlot('Action', self.scatter_plot_x_tick_labels, ScatterPlotPosition.TOP_RIGHT)
 
         # coefficients for multi-dimensional mean:  one row per action and one column per state feature (plus 1 for the
         # bias/intercept).
@@ -787,6 +803,9 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy):
             min_values=None,
             max_values=None
         )
+
+        if self.plot_policy:
+            self.scatter_plot.update(action_value)
 
         return {a: 1.0}
 
