@@ -487,6 +487,9 @@ class ScatterPlot:
         :param y_values: New y values.
         """
 
+        if np.isinf(y_values).any():
+            return
+
         # expand y range if needed. never shrink it. this helps to keep the visual interpretable.
         max_abs_y = np.abs(y_values).max()
         if self.plot_max_abs_y is None or max_abs_y > self.plot_max_abs_y:

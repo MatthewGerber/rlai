@@ -180,10 +180,6 @@ class Gym(MdpEnvironment):
 
         observation, reward, done, _ = self.gym_native.step(action=gym_action)
 
-        # override reward per environment
-        if self.gym_id == 'LunarLanderContinuous-v2':
-            reward = 2.5 - np.abs(observation[0:5]).sum()
-
         # call render if rendering manually
         if self.check_render_current_episode(True):
             self.gym_native.render()
