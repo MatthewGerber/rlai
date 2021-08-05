@@ -20,11 +20,9 @@ from rlai.v_S.function_approximation.models.feature_extraction import StateFeatu
 
 
 @rl_text(chapter=13, page=335)
-class ContinuousActionDistributionPolicy(ParameterizedPolicy, ABC):
+class ContinuousActionPolicy(ParameterizedPolicy, ABC):
     """
-    Parameterized policy that produces continuous, multi-dimensional actions by modeling a multi-dimensional
-    distribution in terms of state features. The state features must be extracted by an extractor derived from
-    `rlai.v_S.function_approximation.models.feature_extraction.StateFeatureExtractor`.
+    Parameterized policy that produces continuous, multi-dimensional actions.
     """
 
     @classmethod
@@ -63,7 +61,7 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy, ABC):
             environment: MdpEnvironment,
             feature_extractor: StateFeatureExtractor,
             plot_policy: bool,
-            scatter_plot_labels: Optional[List[str]] = None
+            scatter_plot_x_tick_labels: Optional[List[str]]
     ):
         """
         Initialize the parameterized policy.
@@ -71,25 +69,26 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy, ABC):
         :param environment: Environment.
         :param feature_extractor: Feature extractor.
         :param plot_policy: Whether or not to plot policy values (e.g., action).
-        :param scatter_plot_labels: Scatter plot labels, to be added to those for the action.
+        :param scatter_plot_x_tick_labels: Scatter plot labels to be added to those for the actions when plotting the policy.
         """
 
-        if scatter_plot_labels is None:
-            scatter_plot_labels = []
+        if scatter_plot_x_tick_labels is None:
+            scatter_plot_x_tick_labels = []
 
         super().__init__()
 
-        # TODO: This is poorly abstracted -- only gym environments have such an action
-        self.action = environment.actions[0]
-
+        self.action = environment.actions[0]  # TODO: This is poorly abstracted -- only gym environments have such an action
         self.feature_extractor = feature_extractor
         self.state_space_dimensionality = self.feature_extractor.get_state_space_dimensionality()
         self.action_space_dimensionality = self.feature_extractor.get_action_space_dimensionality()
 
         self.plot_policy = plot_policy
         if self.plot_policy:
-            self.scatter_plot_x_tick_labels = scatter_plot_labels + [f'Action {i}' for i in range(self.action_space_dimensionality)]
-            self.scatter_plot = ScatterPlot('Action', self.scatter_plot_x_tick_labels, ScatterPlotPosition.TOP_RIGHT)
+            self.scatter_plot_x_tick_labels = scatter_plot_x_tick_labels + [
+                f'A{i}'
+                for i in range(self.action_space_dimensionality)
+            ]
+            self.scatter_plot = ScatterPlot('Policy', self.scatter_plot_x_tick_labels, ScatterPlotPosition.TOP_RIGHT)
 
         self.random_state = RandomState(12345)
 
@@ -110,12 +109,13 @@ class ContinuousActionDistributionPolicy(ParameterizedPolicy, ABC):
         return True
 
 
-class ContinuousActionNormalDistributionPolicy(ContinuousActionDistributionPolicy):
+@rl_text(chapter=13, page=335)
+class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
     """
     Parameterized policy that produces continuous, multi-dimensional actions by modeling the multidimensional mean and
     covariance matrix of the multivariate normal distribution in terms of state features. This is appropriate for action
-    spaces that are unbounded in (-infinity, infinity).The state features must be extracted by an extractor derived from
-    `rlai.v_S.function_approximation.models.feature_extraction.StateFeatureExtractor`.
+    spaces that are unbounded in (-infinity, infinity). The state features must be extracted by an extractor derived
+    from `rlai.v_S.function_approximation.models.feature_extraction.StateFeatureExtractor`.
     """
 
     @classmethod
@@ -293,7 +293,8 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionDistributionPolic
         super().__init__(
             environment=environment,
             feature_extractor=feature_extractor,
-            plot_policy=plot_policy
+            plot_policy=plot_policy,
+            scatter_plot_x_tick_labels=None
         )
 
         # coefficients for multi-dimensional mean:  one row per action and one column per state feature (plus 1 for the
@@ -376,12 +377,13 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionDistributionPolic
         self.__dict__ = state_dict
 
 
-class ContinuousActionBetaDistributionPolicy(ContinuousActionDistributionPolicy):
+@rl_text(chapter=13, page=335)
+class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
     """
     Parameterized policy that produces continuous, multi-dimensional actions by modeling multiple independent beta
-    distributions in terms of state features. This is appropriate for action spaces that are bounded in [min, max]. The
-    state features must be extracted by an extractor derived from
-    `rlai.v_S.function_approximation.models.feature_extraction.StateFeatureExtractor`.
+    distributions in terms of state features. This is appropriate for action spaces that are bounded in [min, max],
+    where the values of min and max can be different along each action dimension. The state features must be extracted
+    by an extractor derived from `rlai.v_S.function_approximation.models.feature_extraction.StateFeatureExtractor`.
     """
 
     @classmethod
@@ -441,14 +443,14 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionDistributionPolicy)
         ])
 
         # perform updates per-action, since we model the distribution of each action independently of the other actions.
-        for action_i, (action_theta_a, action_theta_b, action_values) in enumerate(zip(self.action_theta_a, self.action_theta_b, action_matrix.T)):
+        for action_i, (action_i_theta_a, action_i_theta_b, action_i_values) in enumerate(zip(self.action_theta_a, self.action_theta_b, action_matrix.T)):
 
             # calculate per-update gradients for the current action
             action_density_gradients_wrt_theta_a, action_density_gradients_wrt_theta_b = self.get_action_density_gradients_vmap(
-                action_theta_a,
-                action_theta_b,
+                action_i_theta_a,
+                action_i_theta_b,
                 intercept_state_feature_matrix,
-                action_values
+                action_i_values
             )
 
             # assemble updates
@@ -463,12 +465,12 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionDistributionPolicy)
 
             for a, s, alpha, discounted_return, action_density_gradient_wrt_theta_a, action_density_gradient_wrt_theta_b in updates:
 
-                # TODO:  This is always 1. How to estimate it from the PDF?
+                # TODO:  This is always 1 but should be calculated per the text. How to estimate it from the PDF?
                 p_a_s = self[s][a]
 
                 # check for nans in the gradients and skip the update if any are found
                 if np.isnan(action_density_gradient_wrt_theta_a).any() or np.isnan(action_density_gradient_wrt_theta_b).any():
-                    warnings.warn('Gradient contain np.nan value(s). Skipping update.')
+                    warnings.warn('Gradients contain np.nan value(s). Skipping update.')
                 else:
                     self.action_theta_a[action_i, :] += alpha * discounted_return * (action_density_gradient_wrt_theta_a / p_a_s)
                     self.action_theta_b[action_i, :] += alpha * discounted_return * (action_density_gradient_wrt_theta_b / p_a_s)
@@ -490,8 +492,11 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionDistributionPolicy)
         :return: Value of the PDF.
         """
 
-        a = 1.0 + jnp.exp(jnp.dot(theta_a, state_features))
-        b = 1.0 + jnp.exp(jnp.dot(theta_b, state_features))
+        a_x = jnp.dot(theta_a, state_features)
+        a = 1.0 + (1.0 / (1.0 + jnp.exp(-a_x))) * 50.0
+
+        b_x = jnp.dot(theta_b, state_features)
+        b = 1.0 + (1.0 / (1.0 + jnp.exp(-b_x))) * 50.0
 
         return jstats.beta.pdf(x=action_value, a=a, b=b, loc=0.0, scale=1.0)
 
@@ -499,23 +504,36 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionDistributionPolicy)
             self,
             action_value: np.ndarray
     ) -> np.ndarray:
+        """
+        Rescale an action value from [0.0, 1.0] to be in the range expected by the environment.
+
+        :param action_value: Action value.
+        :return: Rescaled action value.
+        """
 
         value_ranges = [
             max_value - min_value
             for min_value, max_value in zip(self.action.min_values, self.action.max_values)
         ]
 
-        action_value = np.array([
+        rescaled_action_value = np.array([
             min_value + value * value_range
             for value, min_value, value_range in zip(action_value, self.action.min_values, value_ranges)
         ])
 
-        return action_value
+        return rescaled_action_value
 
     def rescale_inv(
             self,
-            action_value: np.ndarray
+            rescaled_action_value: np.ndarray
     ) -> np.ndarray:
+        """
+        Invert a rescaled action value from its range (expected by the environment) back to [0.0, 1.0] (expected by the
+        beta distribution).
+
+        :param rescaled_action_value: Rescaled action value.
+        :return: Action value.
+        """
 
         value_ranges = [
             max_value - min_value
@@ -524,7 +542,7 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionDistributionPolicy)
 
         action_value = np.array([
             (value - min_value) / value_range
-            for value, min_value, value_range in zip(action_value, self.action.min_values, value_ranges)
+            for value, min_value, value_range in zip(rescaled_action_value, self.action.min_values, value_ranges)
         ])
 
         return action_value
@@ -547,10 +565,10 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionDistributionPolicy)
             environment=environment,
             feature_extractor=feature_extractor,
             plot_policy=plot_policy,
-            scatter_plot_labels=[
+            scatter_plot_x_tick_labels=[
                 label
                 for i in range(feature_extractor.get_action_space_dimensionality())
-                for label in [f'Action {i} a', f'Action {i} b']
+                for label in [f'A{i} a-shape', f'Action {i} b-shape']
             ]
         )
 
@@ -576,8 +594,11 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionDistributionPolicy)
         intercept_state_features = np.append([1.0], self.feature_extractor.extract(state))
 
         # calculate the modeled shape parameters of the n-dimensional action
-        a_values = 1.0 + np.exp(self.action_theta_a.dot(intercept_state_features))
-        b_values = 1.0 + np.exp(self.action_theta_b.dot(intercept_state_features))
+        a_x_values = self.action_theta_a.dot(intercept_state_features)
+        a_values = 1.0 + (1.0 / (1.0 + np.exp(-a_x_values))) * 50.0
+
+        b_x_values = self.action_theta_b.dot(intercept_state_features)
+        b_values = 1.0 + (1.0 / (1.0 + np.exp(-b_x_values))) * 50.0
 
         # sample each of the n dimensions and then rescale
         action_value = np.array([
@@ -593,6 +614,7 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionDistributionPolicy)
             max_values=self.action.max_values
         )
 
+        # TODO:  Separate scatter plot for shape parameters. Reset limits on each episode.
         if self.plot_policy:
             plot_values = np.append(np.array([
                 v
