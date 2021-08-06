@@ -1,13 +1,16 @@
+import logging
 import warnings
 from abc import ABC
 from argparse import ArgumentParser
 from typing import List, Tuple, Dict
 
 import numpy as np
+import pandas as pd
 from jax import numpy as jnp, jit, grad, vmap
 from jax.scipy import stats as jstats
 from numpy.random import RandomState
 from scipy import stats
+from tabulate import tabulate
 
 from rlai.actions import Action, ContinuousMultiDimensionalAction
 from rlai.environments.mdp import MdpEnvironment
@@ -56,23 +59,39 @@ class ContinuousActionPolicy(ParameterizedPolicy, ABC):
 
         return parser
 
+    def set_action(
+            self,
+            state: MdpState
+    ):
+        """
+        Set the single, continuous, multi-dimensional action for this policy based on a state. This function can be
+        called repeatedly; however, it will only have an effect upon the first call. It assumes that the state contains
+        a single action and will raise an exception if it does not.
+
+        :param state: State.
+        """
+
+        if self.action is None:
+            if len(state.AA) == 1 and isinstance(state.AA[0], ContinuousMultiDimensionalAction):
+                self.action = state.AA[0]
+            else:
+                raise ValueError('Expected state to contain a single action of type ContinuousMultiDimensionalAction.')
+
     def __init__(
             self,
-            environment: MdpEnvironment,
             feature_extractor: StateFeatureExtractor,
             plot_policy: bool
     ):
         """
         Initialize the parameterized policy.
 
-        :param environment: Environment.
         :param feature_extractor: Feature extractor.
         :param plot_policy: Whether or not to plot policy values (e.g., action).
         """
 
         super().__init__()
 
-        self.action = environment.actions[0]  # TODO: This is poorly abstracted -- only gym environments have such an action
+        self.action = None  # we'll fill this in upon the first call to __getitem__, where we have access to a state and its actions
         self.feature_extractor = feature_extractor
         self.state_space_dimensionality = self.feature_extractor.get_state_space_dimensionality()
         self.action_space_dimensionality = self.feature_extractor.get_action_space_dimensionality()
@@ -274,20 +293,17 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
 
     def __init__(
             self,
-            environment: MdpEnvironment,
             feature_extractor: StateFeatureExtractor,
             plot_policy: bool
     ):
         """
         Initialize the parameterized policy.
 
-        :param environment: Environment.
         :param feature_extractor: Feature extractor.
         :param plot_policy: Whether or not to plot policy values (e.g., action).
         """
 
         super().__init__(
-            environment=environment,
             feature_extractor=feature_extractor,
             plot_policy=plot_policy
         )
@@ -313,6 +329,8 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
         :param state: State.
         :return: Dictionary of action-probability items.
         """
+
+        self.set_action(state)
 
         intercept_state_features = np.append([1.0], self.feature_extractor.extract(state))
 
@@ -409,7 +427,6 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
 
         # initialize policy
         policy = cls(
-            environment=environment,
             feature_extractor=feature_extractor,
             **vars(parsed_args)
         )
@@ -475,6 +492,20 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
         if self.plot_policy:
             self.action_scatter_plot.reset_y_range()
             self.beta_shape_scatter_plot.reset_y_range()
+
+        if logging.getLogger().level <= logging.DEBUG:
+            row_names = [
+                f'A{i}_{p}'
+                for i in range(self.action_theta_a.shape[0])
+                for p in ['a', 'b']
+            ]
+            col_names = [f'T{j}' for j in range(self.action_theta_a.shape[1])]
+            theta_df = pd.DataFrame([
+                row
+                for theta_a_row, theta_b_row in zip(self.action_theta_a, self.action_theta_b)
+                for row in [theta_a_row, theta_b_row]
+            ], index=row_names, columns=col_names)
+            logging.debug(f'Per-action beta hyperparameters:\n{tabulate(theta_df, headers="keys", tablefmt="psql")}')
 
     @staticmethod
     def get_action_density(
@@ -550,20 +581,17 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
 
     def __init__(
             self,
-            environment: MdpEnvironment,
             feature_extractor: StateFeatureExtractor,
             plot_policy: bool
     ):
         """
         Initialize the parameterized policy.
 
-        :param environment: Environment.
         :param feature_extractor: Feature extractor.
         :param plot_policy: Whether or not to plot policy values (e.g., action).
         """
 
         super().__init__(
-            environment=environment,
             feature_extractor=feature_extractor,
             plot_policy=plot_policy
         )
@@ -596,14 +624,16 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
         :return: Dictionary of action-probability items.
         """
 
+        self.set_action(state)
+
         intercept_state_features = np.append([1.0], self.feature_extractor.extract(state))
 
         # calculate the modeled shape parameters of the n-dimensional action
         a_x_values = self.action_theta_a.dot(intercept_state_features)
-        a_values = 1.0 + (1.0 / (1.0 + np.exp(-a_x_values))) * ContinuousActionBetaDistributionPolicy.MAX_BETA_SHAPE_VALUE
+        a_values = 1.0 + (1.0 / (1.0 + np.exp(-a_x_values))) * (ContinuousActionBetaDistributionPolicy.MAX_BETA_SHAPE_VALUE - 1.0)
 
         b_x_values = self.action_theta_b.dot(intercept_state_features)
-        b_values = 1.0 + (1.0 / (1.0 + np.exp(-b_x_values))) * ContinuousActionBetaDistributionPolicy.MAX_BETA_SHAPE_VALUE
+        b_values = 1.0 + (1.0 / (1.0 + np.exp(-b_x_values))) * (ContinuousActionBetaDistributionPolicy.MAX_BETA_SHAPE_VALUE - 1.0)
 
         # sample each of the n dimensions and then rescale
         action_value = np.array([

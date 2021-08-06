@@ -378,7 +378,6 @@ class Gym(MdpEnvironment):
         self.force = force
         self.steps_per_second = steps_per_second
         self.plot_environment = plot_environment
-
         if self.plot_environment:
             self.scatter_plot = ScatterPlot(
                 f'{self.gym_id}:  State and Reward',
@@ -391,7 +390,7 @@ class Gym(MdpEnvironment):
         if self.continuous_action_discretization_resolution is not None and not isinstance(self.gym_native.action_space, Box):
             raise ValueError('Continuous-action discretization is only valid for Box action-space environments.')
 
-        # action space is already discrete. initialize n actions from it.
+        # action space is already discrete:  initialize n actions from it.
         if isinstance(self.gym_native.action_space, Discrete):
             self.actions = [
                 Action(
@@ -400,7 +399,8 @@ class Gym(MdpEnvironment):
                 for i in range(self.gym_native.action_space.n)
             ]
 
-        # action space is continuous and we lack a discretization resolution.
+        # action space is continuous and we lack a discretization resolution:  initializee a single, multi-dimensional
+        # action including the min and max values of the dimensions.
         elif isinstance(self.gym_native.action_space, Box) and self.continuous_action_discretization_resolution is None:
             self.actions = [
                 ContinuousMultiDimensionalAction(
@@ -410,7 +410,8 @@ class Gym(MdpEnvironment):
                 )
             ]
 
-        # action space is continuous and we have a discretization resolution. discretize it.
+        # action space is continuous and we have a discretization resolution:  discretize it. this is generally not a
+        # great approach, as it results in high-dimensional action spaces.
         elif isinstance(self.gym_native.action_space, Box) and self.continuous_action_discretization_resolution is not None:
 
             box = self.gym_native.action_space
