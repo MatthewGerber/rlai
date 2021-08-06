@@ -219,7 +219,7 @@ class Gym(MdpEnvironment):
 
         super().reset_for_new_run(agent)
 
-        self.scatter_plot.plot_max_abs_y = None
+        self.scatter_plot.reset_y_range()
 
         observation = self.gym_native.reset()
 

@@ -504,6 +504,15 @@ class ScatterPlot:
         else:
             self.plot_item.setData(self.plot_x_vals, y_values)
 
+    def reset_y_range(
+            self
+    ):
+        """
+        Reset the y-axis range, so that the next call to `update` will determine it.
+        """
+
+        self.plot_max_abs_y = None
+
     def move_to_top_left(self):
         """
         Move the scatter plot to the top-left corner of the screen.

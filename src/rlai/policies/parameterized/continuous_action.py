@@ -1,7 +1,7 @@
 import warnings
 from abc import ABC
 from argparse import ArgumentParser
-from typing import List, Tuple, Dict, Optional
+from typing import List, Tuple, Dict
 
 import numpy as np
 from jax import numpy as jnp, jit, grad, vmap
@@ -60,8 +60,7 @@ class ContinuousActionPolicy(ParameterizedPolicy, ABC):
             self,
             environment: MdpEnvironment,
             feature_extractor: StateFeatureExtractor,
-            plot_policy: bool,
-            scatter_plot_x_tick_labels: Optional[List[str]]
+            plot_policy: bool
     ):
         """
         Initialize the parameterized policy.
@@ -69,11 +68,7 @@ class ContinuousActionPolicy(ParameterizedPolicy, ABC):
         :param environment: Environment.
         :param feature_extractor: Feature extractor.
         :param plot_policy: Whether or not to plot policy values (e.g., action).
-        :param scatter_plot_x_tick_labels: Scatter plot labels to be added to those for the actions when plotting the policy.
         """
-
-        if scatter_plot_x_tick_labels is None:
-            scatter_plot_x_tick_labels = []
 
         super().__init__()
 
@@ -83,12 +78,13 @@ class ContinuousActionPolicy(ParameterizedPolicy, ABC):
         self.action_space_dimensionality = self.feature_extractor.get_action_space_dimensionality()
 
         self.plot_policy = plot_policy
+        self.action_scatter_plot = None
         if self.plot_policy:
-            self.scatter_plot_x_tick_labels = scatter_plot_x_tick_labels + [
+            self.action_scatter_plot_x_tick_labels = [
                 f'A{i}'
                 for i in range(self.action_space_dimensionality)
             ]
-            self.scatter_plot = ScatterPlot('Policy', self.scatter_plot_x_tick_labels, ScatterPlotPosition.TOP_RIGHT)
+            self.action_scatter_plot = ScatterPlot('Actions', self.action_scatter_plot_x_tick_labels, ScatterPlotPosition.TOP_RIGHT)
 
         self.random_state = RandomState(12345)
 
@@ -293,8 +289,7 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
         super().__init__(
             environment=environment,
             feature_extractor=feature_extractor,
-            plot_policy=plot_policy,
-            scatter_plot_x_tick_labels=None
+            plot_policy=plot_policy
         )
 
         # coefficients for multi-dimensional mean:  one row per action and one column per state feature (plus 1 for the
@@ -342,7 +337,7 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
         )
 
         if self.plot_policy:
-            self.scatter_plot.update(action_value)
+            self.action_scatter_plot.update(action_value)
 
         return {a: 1.0}
 
@@ -385,6 +380,8 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
     where the values of min and max can be different along each action dimension. The state features must be extracted
     by an extractor derived from `rlai.v_S.function_approximation.models.feature_extraction.StateFeatureExtractor`.
     """
+
+    MAX_BETA_SHAPE_VALUE = 50.0
 
     @classmethod
     def init_from_arguments(
@@ -475,6 +472,10 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
                     self.action_theta_a[action_i, :] += alpha * discounted_return * (action_density_gradient_wrt_theta_a / p_a_s)
                     self.action_theta_b[action_i, :] += alpha * discounted_return * (action_density_gradient_wrt_theta_b / p_a_s)
 
+        if self.plot_policy:
+            self.action_scatter_plot.reset_y_range()
+            self.beta_shape_scatter_plot.reset_y_range()
+
     @staticmethod
     def get_action_density(
             theta_a: np.ndarray,
@@ -493,10 +494,10 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
         """
 
         a_x = jnp.dot(theta_a, state_features)
-        a = 1.0 + (1.0 / (1.0 + jnp.exp(-a_x))) * 50.0
+        a = 1.0 + (1.0 / (1.0 + jnp.exp(-a_x))) * ContinuousActionBetaDistributionPolicy.MAX_BETA_SHAPE_VALUE
 
         b_x = jnp.dot(theta_b, state_features)
-        b = 1.0 + (1.0 / (1.0 + jnp.exp(-b_x))) * 50.0
+        b = 1.0 + (1.0 / (1.0 + jnp.exp(-b_x))) * ContinuousActionBetaDistributionPolicy.MAX_BETA_SHAPE_VALUE
 
         return jstats.beta.pdf(x=action_value, a=a, b=b, loc=0.0, scale=1.0)
 
@@ -564,12 +565,7 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
         super().__init__(
             environment=environment,
             feature_extractor=feature_extractor,
-            plot_policy=plot_policy,
-            scatter_plot_x_tick_labels=[
-                label
-                for i in range(feature_extractor.get_action_space_dimensionality())
-                for label in [f'A{i} a-shape', f'Action {i} b-shape']
-            ]
+            plot_policy=plot_policy
         )
 
         # coefficients for shape parameters a and b:  one row per action and one column per state feature (plus 1 for
@@ -579,6 +575,15 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
 
         self.get_action_density_gradients = jit(grad(self.get_action_density, argnums=(0, 1)))
         self.get_action_density_gradients_vmap = jit(vmap(self.get_action_density_gradients, in_axes=(None, None, 0, 0)))
+
+        self.beta_shape_scatter_plot = None
+        if self.plot_policy:
+            self.beta_shape_scatter_plot_x_tick_labels = [
+                label
+                for i in range(feature_extractor.get_action_space_dimensionality())
+                for label in [f'A{i} a-shape', f'Action {i} b-shape']
+            ]
+            self.beta_shape_scatter_plot = ScatterPlot('Beta Distribution Shape', self.beta_shape_scatter_plot_x_tick_labels, ScatterPlotPosition.BOTTOM_RIGHT)
 
     def __getitem__(
             self,
@@ -595,10 +600,10 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
 
         # calculate the modeled shape parameters of the n-dimensional action
         a_x_values = self.action_theta_a.dot(intercept_state_features)
-        a_values = 1.0 + (1.0 / (1.0 + np.exp(-a_x_values))) * 50.0
+        a_values = 1.0 + (1.0 / (1.0 + np.exp(-a_x_values))) * ContinuousActionBetaDistributionPolicy.MAX_BETA_SHAPE_VALUE
 
         b_x_values = self.action_theta_b.dot(intercept_state_features)
-        b_values = 1.0 + (1.0 / (1.0 + np.exp(-b_x_values))) * 50.0
+        b_values = 1.0 + (1.0 / (1.0 + np.exp(-b_x_values))) * ContinuousActionBetaDistributionPolicy.MAX_BETA_SHAPE_VALUE
 
         # sample each of the n dimensions and then rescale
         action_value = np.array([
@@ -614,14 +619,13 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
             max_values=self.action.max_values
         )
 
-        # TODO:  Separate scatter plot for shape parameters. Reset limits on each episode.
         if self.plot_policy:
-            plot_values = np.append(np.array([
+            self.action_scatter_plot.update(action_value)
+            self.beta_shape_scatter_plot.update(np.array([
                 v
                 for a, b in zip(a_values, b_values)
                 for v in [a, b]
-            ]), action_value)
-            self.scatter_plot.update(plot_values)
+            ]))
 
         return {a: 1.0}
 
