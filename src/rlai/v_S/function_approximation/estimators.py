@@ -8,10 +8,10 @@ from numpy.random import RandomState
 from rlai.environments.mdp import MdpEnvironment
 from rlai.meta import rl_text
 from rlai.models import FunctionApproximationModel
-from rlai.models.feature_extraction import FeatureExtractor
 from rlai.states.mdp import MdpState
 from rlai.utils import load_class, parse_arguments, log_with_border
 from rlai.v_S import ValueEstimator, StateValueEstimator
+from rlai.v_S.function_approximation.models.feature_extraction import StateFeatureExtractor
 
 
 @rl_text(chapter='Value Estimation', page=195)
@@ -185,7 +185,7 @@ class ApproximateStateValueEstimator(StateValueEstimator):
         # if we have pending experience, then fit the model and reset the data.
         if self.experience_pending:
 
-            X = self.get_X(self.experience_states, True)
+            X = self.get_X(self.experience_states)
 
             # feature extractors may return a matrix with no columns if extraction was not possible
             if X.shape[1] > 0:
@@ -212,13 +212,13 @@ class ApproximateStateValueEstimator(StateValueEstimator):
         log_with_border(logging.DEBUG, f'Evaluating state')
 
         # get feature vector
-        X = self.get_X([state], False)
+        X = self.get_X([state])
 
         # feature extractors may return a matrix with no columns if extraction was not possible
         if X.shape[1] == 0:  # pragma no cover
             return 0.0
 
-        value = self.model.evaluate(X)
+        value = self.model.evaluate(X)[0]
 
         log_with_border(logging.DEBUG, 'Evaluation complete')
 
@@ -226,23 +226,24 @@ class ApproximateStateValueEstimator(StateValueEstimator):
 
     def get_X(
             self,
-            states: List[MdpState],
-            for_fitting: bool
+            states: List[MdpState]
     ) -> np.ndarray:
         """
         Extract features for states.
 
         :param states: States.
-        :param for_fitting: Whether the extracted features will be used for fitting (True) or prediction (False).
         :return: State-feature numpy.ndarray.
         """
 
-        return self.feature_extractor.extract(states, for_fitting)
+        return np.array([
+            self.feature_extractor.extract(state)
+            for state in states
+        ])
 
     def __init__(
             self,
             model: FunctionApproximationModel,
-            feature_extractor: FeatureExtractor
+            feature_extractor: StateFeatureExtractor
     ):
         """
         Initialize the estimator.
