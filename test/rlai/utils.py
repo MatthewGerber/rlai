@@ -1,12 +1,12 @@
 import os
-from typing import Dict, Any
+from typing import Dict
 
 from rlai.actions import Action
 from rlai.policies import Policy
 from rlai.policies.tabular import TabularPolicy
+from rlai.q_S_A.tabular import TabularStateActionValueEstimator
 from rlai.states.mdp import MdpState
 from rlai.utils import IncrementalSampleAverager
-from rlai.q_S_A.tabular import TabularStateActionValueEstimator
 
 
 def tabular_pi_legacy_eq(
@@ -75,3 +75,5 @@ def init_virtual_display():
         virtual_display = Xvfb()
         virtual_display.start()
         VIRTUAL_DISPLAY_INITIALIZED = True
+
+        return virtual_display
