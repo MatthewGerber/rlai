@@ -593,7 +593,6 @@ class ScatterPlot:
         self.position = position
 
         self.plot_layout = pg.GraphicsLayoutWidget(show=True, title=title)
-        self.plot_layout.move(0, 0)
         plot_x_axis = pg.AxisItem(orientation='bottom')
         plot_x_axis.setTicks([list(enumerate(self.x_tick_labels))])
         self.plot_widget = self.plot_layout.addPlot(axisItems={'bottom': plot_x_axis})
@@ -632,8 +631,8 @@ class ScatterPlot:
 
         self.__dict__ = state
 
+        self.plot_layout = pg.GraphicsLayoutWidget(show=True, title=self.title)
         plot_x_axis = pg.AxisItem(orientation='bottom')
         plot_x_axis.setTicks([list(enumerate(self.x_tick_labels))])
-        self.plot_layout = pg.GraphicsLayoutWidget(show=True, title=self.title)
         self.plot_widget = self.plot_layout.addPlot(axisItems={'bottom': plot_x_axis})
         self.set_position(self.position)
