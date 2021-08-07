@@ -535,16 +535,16 @@ class PrioritizedSweepingMdpPlanningEnvironment(MdpPlanningEnvironment):
         :return: State dictionary.
         """
 
-        state_dict = dict(self.__dict__)
+        state = dict(self.__dict__)
 
         # the priority queue cannot be pickled. blank it out.
-        state_dict['state_action_priority'] = None
+        state['state_action_priority'] = None
 
-        return state_dict
+        return state
 
     def __setstate__(
             self,
-            state
+            state: Dict
     ):
         """
         Set the state dictionary.

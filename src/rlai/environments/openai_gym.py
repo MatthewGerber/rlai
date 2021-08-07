@@ -486,19 +486,16 @@ class Gym(ContinuousMdpEnvironment):
         :return: State dictionary.
         """
 
-        state_dict = dict(self.__dict__)
+        state = dict(self.__dict__)
 
         # the native gym environment cannot be pickled. blank it out.
-        state_dict['gym_native'] = None
+        state['gym_native'] = None
 
-        # same with plotting
-        state_dict['state_reward_scatter_plot'] = None
-
-        return state_dict
+        return state
 
     def __setstate__(
             self,
-            state
+            state: Dict
     ):
         """
         Set the state dictionary.
@@ -509,13 +506,6 @@ class Gym(ContinuousMdpEnvironment):
         self.__dict__ = state
 
         self.gym_native = self.init_gym_native()
-
-        if self.plot_environment:
-            self.state_reward_scatter_plot = ScatterPlot(
-                f'{self.gym_id}:  State and Reward',
-                self.get_state_dimension_names() + ['reward'],
-                ScatterPlotPosition.TOP_LEFT
-            )
 
 
 @rl_text(chapter='Feature Extractors', page=1)

@@ -189,47 +189,47 @@ class FunctionApproximationModel(BaseFunctionApproximationModel, ABC):
         :return: State dictionary.
         """
 
-        state_dict = dict(self.__dict__)
+        state = dict(self.__dict__)
 
-        self.deflate_state_dict(state_dict)
+        self.deflate_state(state)
 
-        return state_dict
+        return state
 
     @staticmethod
-    def deflate_state_dict(
-            state_dict: Dict
+    def deflate_state(
+            state: Dict
     ):
         """
         Modify the state dictionary to exclude particular items.
 
-        :param state_dict: State dictionary.
+        :param state: State dictionary.
         """
 
         # don't pickle the history of feature action coefficients used for plotting, as they grow unbounded during
         # training. the only known use case for saving them is to continue plotting after resumption; however, that's
         # a pretty narrow use case and isn't worth the large amount of disk space that it takes.
-        state_dict['feature_action_coefficients'] = None
+        state['feature_action_coefficients'] = None
 
     def __setstate__(
             self,
-            state_dict: Dict
+            state: Dict
     ):
         """
         Set the unpickled state for the current instance.
 
-        :param state_dict: Unpickled state.
+        :param state: Unpickled state.
         """
 
-        self.inflate_state(state_dict)
+        self.inflate_state(state)
 
-        self.__dict__ = state_dict
+        self.__dict__ = state
 
     @staticmethod
     def inflate_state(
-            state_dict: Dict
+            state: Dict
     ):
         """
         Modify the state to include items that weren't pickled.
 
-        :param state_dict: Pickled state dictionary.
+        :param state: Pickled state dictionary.
         """

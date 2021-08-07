@@ -410,24 +410,25 @@ class SoftMaxInActionPreferencesJaxPolicy(ParameterizedPolicy):
         """
         Get state dictionary for pickling.
 
-        :return: Dictionary.
+        :return: State dictionary.
         """
 
-        state_dict = dict(self.__dict__)
-        state_dict['get_action_prob_gradient'] = None
+        state = dict(self.__dict__)
 
-        return state_dict
+        state['get_action_prob_gradient'] = None
+
+        return state
 
     def __setstate__(
             self,
-            state_dict: Dict
+            state: Dict
     ):
         """
         Set unpickled state.
 
-        :param state_dict: Unpickled state.
+        :param state: Unpickled state.
         """
 
-        state_dict['get_action_prob_gradient'] = grad(self.get_action_prob)
+        state['get_action_prob_gradient'] = grad(self.get_action_prob)
 
-        self.__dict__ = state_dict
+        self.__dict__ = state

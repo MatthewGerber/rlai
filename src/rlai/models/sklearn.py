@@ -427,79 +427,79 @@ class SKLearnSGD(FunctionApproximationModel):
         """
         Get the state to pickle for the current instance.
 
-        :return: Dictionary.
+        :return: State dictionary.
         """
 
-        state_dict = dict(self.__dict__)
+        state = dict(self.__dict__)
 
-        self.deflate_state_dict(state_dict)
+        self.deflate_state(state)
 
-        return state_dict
+        return state
 
     @staticmethod
-    def deflate_state_dict(
-            state_dict: Dict
+    def deflate_state(
+            state: Dict
     ):
         """
         Modify the state dictionary to exclude particular items.
 
-        :param state_dict: State dictionary.
+        :param state: State dictionary.
         """
 
         # clear other memory intensive attributes
-        state_dict['plot_iteration'] = 0
-        state_dict['iteration_y_values'] = {}
-        state_dict['y_averager'] = IncrementalSampleAverager()
-        state_dict['y_averages'] = []
-        state_dict['iteration_loss_values'] = {}
-        state_dict['loss_averager'] = IncrementalSampleAverager()
-        state_dict['loss_averages'] = []
-        state_dict['iteration_eta0_values'] = {}
-        state_dict['eta0_averager'] = IncrementalSampleAverager()
-        state_dict['eta0_averages'] = []
+        state['plot_iteration'] = 0
+        state['iteration_y_values'] = {}
+        state['y_averager'] = IncrementalSampleAverager()
+        state['y_averages'] = []
+        state['iteration_loss_values'] = {}
+        state['loss_averager'] = IncrementalSampleAverager()
+        state['loss_averages'] = []
+        state['iteration_eta0_values'] = {}
+        state['eta0_averager'] = IncrementalSampleAverager()
+        state['eta0_averages'] = []
 
         # debatable whether plotting axes and lines should be pickled. the lines can contain a good deal of data, and
         # neither makes much sense to pickle without the above data
-        state_dict['iteration_ax'] = None
-        state_dict['iteration_return_line'] = None
-        state_dict['iteration_loss_line'] = None
-        state_dict['iteration_eta0_ax'] = None
-        state_dict['iteration_eta0_line'] = None
-        state_dict['time_step_ax'] = None
-        state_dict['time_step_return_line'] = None
-        state_dict['time_step_loss_line'] = None
-        state_dict['time_step_eta0_ax'] = None
-        state_dict['time_step_eta0_line'] = None
+        state['iteration_ax'] = None
+        state['iteration_return_line'] = None
+        state['iteration_loss_line'] = None
+        state['iteration_eta0_ax'] = None
+        state['iteration_eta0_line'] = None
+        state['time_step_ax'] = None
+        state['time_step_return_line'] = None
+        state['time_step_loss_line'] = None
+        state['time_step_eta0_ax'] = None
+        state['time_step_eta0_line'] = None
 
         # the plot data lock cannot be pickled
-        state_dict['plot_data_lock'] = None
+        state['plot_data_lock'] = None
 
     def __setstate__(
             self,
-            state_dict
+            state: Dict
     ):
         """
         Set the unpickled state for the current instance.
 
-        :param state_dict: Unpickled state.
+        :param state: Unpickled state.
         """
 
-        self.inflate_state(state_dict)
+        self.inflate_state(state)
 
-        self.__dict__ = state_dict
+        self.__dict__ = state
 
     @staticmethod
     def inflate_state(
-            state_dict: Dict
+            state: Dict
     ):
         """
         Modify the state to include items that weren't pickled.
 
-        :param state_dict: Pickled state dictionary.
+        :param state: Pickled state dictionary.
         """
 
         # initialize new lock, which couldn't be pickled.
-        state_dict['plot_data_lock'] = threading.Lock()
+        state['plot_data_lock'] = threading.Lock()
 
     def __eq__(
             self,

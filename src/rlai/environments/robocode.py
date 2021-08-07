@@ -611,13 +611,13 @@ class RobocodeState(MdpState):
         :return: State dictionary.
         """
 
-        state_dict = dict(self.__dict__)
+        state = dict(self.__dict__)
 
         # don't pickle backreference to prior states, as pickling fails for such long recursion chains.
-        state_dict['previous_state'] = None
-        state_dict['prior_state_different_location'] = None
+        state['previous_state'] = None
+        state['prior_state_different_location'] = None
 
-        return state_dict
+        return state
 
 
 @rl_text(chapter='Feature Extractors', page=1)

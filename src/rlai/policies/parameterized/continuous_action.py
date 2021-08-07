@@ -365,29 +365,30 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
         """
         Get state dictionary for pickling.
 
-        :return: Dictionary.
+        :return: State dictionary.
         """
 
-        state_dict = dict(self.__dict__)
-        state_dict['get_action_density_gradients'] = None
-        state_dict['get_action_density_gradients_vmap'] = None
+        state = dict(self.__dict__)
 
-        return state_dict
+        state['get_action_density_gradients'] = None
+        state['get_action_density_gradients_vmap'] = None
+
+        return state
 
     def __setstate__(
             self,
-            state_dict: Dict
+            state: Dict
     ):
         """
         Set unpickled state.
 
-        :param state_dict: Unpickled state.
+        :param state: Unpickled state.
         """
 
-        state_dict['get_action_density_gradients'] = jit(grad(self.get_action_density, argnums=(0, 1)))
-        state_dict['get_action_density_gradients_vmap'] = jit(vmap(self.get_action_density_gradients, in_axes=(None, None, 0, 0)))
+        get_action_density_gradients = state['get_action_density_gradients'] = jit(grad(self.get_action_density, argnums=(0, 1)))
+        state['get_action_density_gradients_vmap'] = jit(vmap(get_action_density_gradients, in_axes=(None, None, 0, 0)))
 
-        self.__dict__ = state_dict
+        self.__dict__ = state
 
 
 @rl_text(chapter=13, page=335)
@@ -669,26 +670,27 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
         """
         Get state dictionary for pickling.
 
-        :return: Dictionary.
+        :return: State dictionary.
         """
 
-        state_dict = dict(self.__dict__)
-        state_dict['get_action_density_gradients'] = None
-        state_dict['get_action_density_gradients_vmap'] = None
+        state = dict(self.__dict__)
 
-        return state_dict
+        state['get_action_density_gradients'] = None
+        state['get_action_density_gradients_vmap'] = None
+
+        return state
 
     def __setstate__(
             self,
-            state_dict: Dict
+            state: Dict
     ):
         """
         Set unpickled state.
 
-        :param state_dict: Unpickled state.
+        :param state: Unpickled state.
         """
 
-        state_dict['get_action_density_gradients'] = jit(grad(self.get_action_density, argnums=(0, 1)))
-        state_dict['get_action_density_gradients_vmap'] = jit(vmap(self.get_action_density_gradients, in_axes=(None, None, 0, 0)))
+        get_action_density_gradients = state['get_action_density_gradients'] = jit(grad(self.get_action_density, argnums=(0, 1)))
+        state['get_action_density_gradients_vmap'] = jit(vmap(get_action_density_gradients, in_axes=(None, None, 0, 0)))
 
-        self.__dict__ = state_dict
+        self.__dict__ = state

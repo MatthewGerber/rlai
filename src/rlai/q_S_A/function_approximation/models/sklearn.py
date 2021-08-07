@@ -149,27 +149,27 @@ class SKLearnSGD(FunctionApproximationModel, BaseSKLearnSGD):
         """
         Get the state to pickle for the current instance.
 
-        :return: Dictionary.
+        :return: State dictionary.
         """
 
-        state_dict = dict(self.__dict__)
+        state = dict(self.__dict__)
 
-        FunctionApproximationModel.deflate_state_dict(state_dict)
-        BaseSKLearnSGD.deflate_state_dict(state_dict)
+        FunctionApproximationModel.deflate_state(state)
+        BaseSKLearnSGD.deflate_state(state)
 
-        return state_dict
+        return state
 
     def __setstate__(
             self,
-            state_dict: Dict
+            state: Dict
     ):
         """
         Set the unpickled state for the current instance.
 
-        :param state_dict: Unpickled state.
+        :param state: Unpickled state.
         """
 
-        FunctionApproximationModel.inflate_state(state_dict)
-        BaseSKLearnSGD.inflate_state(state_dict)
+        FunctionApproximationModel.inflate_state(state)
+        BaseSKLearnSGD.inflate_state(state)
 
-        self.__dict__ = state_dict
+        self.__dict__ = state

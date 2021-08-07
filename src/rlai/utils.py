@@ -4,7 +4,7 @@ import threading
 from argparse import Namespace, ArgumentParser
 from enum import Enum, auto
 from importlib import import_module
-from typing import List, Any, Optional, Callable, Tuple, TextIO
+from typing import List, Any, Optional, Callable, Tuple, TextIO, Dict
 
 import numpy as np
 import pyqtgraph as pg
@@ -553,6 +553,27 @@ class ScatterPlot:
         plot_layout_geometry.moveBottomRight(bottom_right_point)
         self.plot_layout.move(plot_layout_geometry.topLeft())
 
+    def set_position(
+            self,
+            position: ScatterPlotPosition
+    ):
+        """
+        Set the position of the scatter plot on the screen.
+
+        :param position: Position.
+        """
+
+        self.position = position
+
+        if self.position == ScatterPlotPosition.TOP_LEFT:
+            self.move_to_top_left()
+        elif self.position == ScatterPlotPosition.TOP_RIGHT:
+            self.move_to_top_right()
+        elif self.position == ScatterPlotPosition.BOTTOM_LEFT:
+            self.move_to_bottom_left()
+        else:
+            self.move_to_bottom_right()
+
     def __init__(
             self,
             title: str,
@@ -569,6 +590,7 @@ class ScatterPlot:
 
         self.title = title
         self.x_tick_labels = x_tick_labels
+        self.position = position
 
         self.plot_layout = pg.GraphicsLayoutWidget(show=True, title=title)
         self.plot_layout.move(0, 0)
@@ -579,33 +601,28 @@ class ScatterPlot:
         self.plot_x_vals = list(range(len(x_tick_labels)))
         self.plot_max_abs_y = None
 
-        if position == ScatterPlotPosition.TOP_LEFT:
-            self.move_to_top_left()
-        elif position == ScatterPlotPosition.TOP_RIGHT:
-            self.move_to_top_right()
-        elif position == ScatterPlotPosition.BOTTOM_LEFT:
-            self.move_to_bottom_left()
-        else:
-            self.move_to_bottom_right()
+        self.set_position(self.position)
 
     def __getstate__(
             self
-    ):
+    ) -> Dict:
         """
         Get state dictionary for pickling.
 
         :return: State dictionary.
         """
 
-        state_dict = dict(self.__dict__)
+        state = dict(self.__dict__)
 
-        state_dict['plot_layout'] = None
-        state_dict['plot_widget'] = None
-        state_dict['plot_item'] = None
+        state['plot_layout'] = None
+        state['plot_widget'] = None
+        state['plot_item'] = None
+
+        return state
 
     def __setstate__(
             self,
-            state
+            state: Dict
     ):
         """
         Set the state dictionary.
@@ -619,3 +636,4 @@ class ScatterPlot:
         plot_x_axis.setTicks([list(enumerate(self.x_tick_labels))])
         self.plot_layout = pg.GraphicsLayoutWidget(show=True, title=self.title)
         self.plot_widget = self.plot_layout.addPlot(axisItems={'bottom': plot_x_axis})
+        self.set_position(self.position)
