@@ -14,26 +14,6 @@ class StateFeatureExtractor(FeatureExtractor, ABC):
     """
 
     @abstractmethod
-    def get_state_space_dimensionality(
-            self
-    ) -> int:
-        """
-        Get the state-space dimensionality.
-
-        :return: Number of dimensions.
-        """
-
-    @abstractmethod
-    def get_action_space_dimensionality(
-            self
-    ) -> int:
-        """
-        Get the action-space dimensionality.
-
-        :return: Number of dimensions.
-        """
-
-    @abstractmethod
     def extract(
             self,
             state: MdpState,

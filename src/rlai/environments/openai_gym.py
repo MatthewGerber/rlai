@@ -15,7 +15,7 @@ from numpy.random import RandomState
 
 from rlai.actions import Action, DiscretizedAction, ContinuousMultiDimensionalAction
 from rlai.agents.mdp import MdpAgent
-from rlai.environments.mdp import MdpEnvironment
+from rlai.environments.mdp import ContinuousMdpEnvironment
 from rlai.meta import rl_text
 from rlai.models.feature_extraction import NonstationaryFeatureScaler, FeatureExtractor
 from rlai.q_S_A.function_approximation.models.feature_extraction import (
@@ -62,7 +62,7 @@ class GymState(MdpState):
 
 
 @rl_text(chapter='Environments', page=1)
-class Gym(MdpEnvironment):
+class Gym(ContinuousMdpEnvironment):
     """
     Generalized Gym environment. Any OpenAI Gym environment can be executed by supplying the appropriate identifier.
     """
@@ -133,7 +133,7 @@ class Gym(MdpEnvironment):
             cls,
             args: List[str],
             random_state: RandomState
-    ) -> Tuple[MdpEnvironment, List[str]]:
+    ) -> Tuple[ContinuousMdpEnvironment, List[str]]:
         """
         Initialize an environment from arguments.
 
@@ -182,7 +182,7 @@ class Gym(MdpEnvironment):
 
         # override reward per environment
         if self.gym_id == 'LunarLanderContinuous-v2':
-            reward = 2.5 - np.abs(observation[0:5]).sum()
+            reward = 2.0 - np.abs(observation[0:5]).sum()
 
         # call render if rendering manually
         if self.check_render_current_episode(True):
@@ -195,7 +195,7 @@ class Gym(MdpEnvironment):
                 sleep(1.0 / self.steps_per_second)
 
             if self.plot_environment:
-                self.scatter_plot.update(np.append(observation, reward))
+                self.state_reward_scatter_plot.update(np.append(observation, reward))
 
         self.state = GymState(
             environment=self,
@@ -219,7 +219,8 @@ class Gym(MdpEnvironment):
 
         super().reset_for_new_run(agent)
 
-        self.scatter_plot.plot_max_abs_y = None
+        if self.plot_environment:
+            self.state_reward_scatter_plot.reset_y_range()
 
         observation = self.gym_native.reset()
 
@@ -269,9 +270,6 @@ class Gym(MdpEnvironment):
 
         self.gym_native.close()
 
-        if self.plot_environment:
-            self.plot_layout.close()
-
     def init_gym_native(
             self
     ) -> Union[EnvSpec, TimeLimit]:
@@ -307,6 +305,17 @@ class Gym(MdpEnvironment):
 
         return gym_native
 
+    def get_state_space_dimensionality(
+            self
+    ) -> int:
+        """
+        Get the dimensionality of the state space.
+
+        :return: Number of dimensions.
+        """
+
+        return self.gym_native.observation_space.shape[0]
+
     def get_state_dimension_names(
             self
     ) -> List[str]:
@@ -328,8 +337,39 @@ class Gym(MdpEnvironment):
                 'leg2Con'
             ]
         else:
-            warnings.warn(f'The state dimension names for {self.gym_id} are unknown. Defaulting to numbers')
-            names = [str(x) for x in range(0, self.gym_native.observation_space.shape[0])]
+            warnings.warn(f'The state dimension names for {self.gym_id} are unknown. Defaulting to numbers.')
+            names = [str(x) for x in range(0, self.get_state_space_dimensionality())]
+
+        return names
+
+    def get_action_space_dimensionality(
+            self
+    ) -> int:
+        """
+        Get the dimensionality of the action space.
+
+        :return: Number of dimensions.
+        """
+
+        return self.gym_native.action_space.shape[0]
+
+    def get_action_dimension_names(
+            self
+    ) -> List[str]:
+        """
+        Get action names.
+
+        :return: List of names.
+        """
+
+        if self.gym_id == 'LunarLanderContinuous-v2':
+            names = [
+                'main',
+                'side'
+            ]
+        else:
+            warnings.warn(f'The action names for {self.gym_id} are unknown. Defaulting to numbers.')
+            names = [str(x) for x in range(0, self.get_action_space_dimensionality())]
 
         return names
 
@@ -378,9 +418,9 @@ class Gym(MdpEnvironment):
         self.force = force
         self.steps_per_second = steps_per_second
         self.plot_environment = plot_environment
-
+        self.state_reward_scatter_plot = None
         if self.plot_environment:
-            self.scatter_plot = ScatterPlot(
+            self.state_reward_scatter_plot = ScatterPlot(
                 f'{self.gym_id}:  State and Reward',
                 self.get_state_dimension_names() + ['reward'],
                 ScatterPlotPosition.TOP_LEFT
@@ -391,7 +431,7 @@ class Gym(MdpEnvironment):
         if self.continuous_action_discretization_resolution is not None and not isinstance(self.gym_native.action_space, Box):
             raise ValueError('Continuous-action discretization is only valid for Box action-space environments.')
 
-        # action space is already discrete. initialize n actions from it.
+        # action space is already discrete:  initialize n actions from it.
         if isinstance(self.gym_native.action_space, Discrete):
             self.actions = [
                 Action(
@@ -400,7 +440,8 @@ class Gym(MdpEnvironment):
                 for i in range(self.gym_native.action_space.n)
             ]
 
-        # action space is continuous and we lack a discretization resolution.
+        # action space is continuous and we lack a discretization resolution:  initializee a single, multi-dimensional
+        # action including the min and max values of the dimensions.
         elif isinstance(self.gym_native.action_space, Box) and self.continuous_action_discretization_resolution is None:
             self.actions = [
                 ContinuousMultiDimensionalAction(
@@ -410,7 +451,8 @@ class Gym(MdpEnvironment):
                 )
             ]
 
-        # action space is continuous and we have a discretization resolution. discretize it.
+        # action space is continuous and we have a discretization resolution:  discretize it. this is generally not a
+        # great approach, as it results in high-dimensional action spaces.
         elif isinstance(self.gym_native.action_space, Box) and self.continuous_action_discretization_resolution is not None:
 
             box = self.gym_native.action_space
@@ -450,7 +492,7 @@ class Gym(MdpEnvironment):
         state_dict['gym_native'] = None
 
         # same with plotting
-        state_dict['scatter_plot'] = None
+        state_dict['state_reward_scatter_plot'] = None
 
         return state_dict
 
@@ -469,7 +511,7 @@ class Gym(MdpEnvironment):
         self.gym_native = self.init_gym_native()
 
         if self.plot_environment:
-            self.scatter_plot = ScatterPlot(
+            self.state_reward_scatter_plot = ScatterPlot(
                 f'{self.gym_id}:  State and Reward',
                 self.get_state_dimension_names() + ['reward'],
                 ScatterPlotPosition.TOP_LEFT
@@ -741,33 +783,9 @@ class ContinuousFeatureExtractor(StateFeatureExtractor):
         if len(vars(parsed_args)) > 0:
             raise ValueError('Parsed args remain. Need to pass to constructor.')
 
-        fex = cls(
-            environment=environment
-        )
+        fex = cls()
 
         return fex, unparsed_args
-
-    def get_state_space_dimensionality(
-            self
-    ) -> int:
-        """
-        Get the state-space dimensionality.
-
-        :return: Number of dimensions.
-        """
-
-        return self.state_space_dimensionality
-
-    def get_action_space_dimensionality(
-            self
-    ) -> int:
-        """
-        Get the action-space dimensionality.
-
-        :return: Number of dimensions.
-        """
-
-        return self.action_space_dimensionality
 
     def extract(
             self,
@@ -783,16 +801,10 @@ class ContinuousFeatureExtractor(StateFeatureExtractor):
         return state.observation
 
     def __init__(
-            self,
-            environment: Gym
+            self
     ):
         """
         Initialize the feature extractor.
-
-        :param environment: Environment.
         """
 
         super().__init__()
-
-        self.state_space_dimensionality = environment.gym_native.observation_space.shape[0]
-        self.action_space_dimensionality = environment.gym_native.action_space.shape[0]

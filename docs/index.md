@@ -89,6 +89,7 @@ not shown in the text.
 # Links to Code by Topic
 ### [Actions](ch_Actions.md)
 ### [Agents](ch_Agents.md)
+### [Diagnostics](ch_Diagnostics.md)
 ### [Environments](ch_Environments.md)
 ### [Feature Extractors](ch_Feature_Extractors.md)
 ### [Rewards](ch_Rewards.md)

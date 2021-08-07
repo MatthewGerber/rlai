@@ -25,6 +25,7 @@ INSTALL_REQUIREMENTS = [
     'jax[cpu]==0.2.17',
     'pyqtgraph==0.12.2',
     'PyQt5==5.15.4',
+    'tabulate==0.8.9',
 
     # jupyter requirements
     'jupyterlab==3.0.6',
