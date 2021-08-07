@@ -15,6 +15,7 @@ from rlai.q_S_A.function_approximation.models.feature_extraction import (
 from rlai.rewards import Reward
 from rlai.states.mdp import MdpState
 from rlai.utils import parse_arguments
+from rlai.v_S.function_approximation.models.feature_extraction import StateFeatureExtractor
 
 
 @rl_text(chapter=3, page=60)
@@ -242,7 +243,7 @@ class GridworldFeatureExtractor(StateActionInteractionFeatureExtractor):
         parsed_args, unparsed_args = parse_arguments(cls, args)
 
         # there shouldn't be anything left
-        if len(vars(parsed_args)) > 0:
+        if len(vars(parsed_args)) > 0:  # pragma no cover
             raise ValueError('Parsed args remain. Need to pass to constructor.')
 
         fex = cls(
@@ -325,7 +326,7 @@ class GridworldFeatureExtractor(StateActionInteractionFeatureExtractor):
 
 
 @rl_text(chapter='Feature Extractors', page=1)
-class GridworldStateFeatureExtractor(FeatureExtractor):
+class GridworldStateFeatureExtractor(StateFeatureExtractor):
     """
     A feature extractor for the gridworld. This extractor does not interact feature values with actions. Its primary use
     is in state-value estimation (e.g., for the baseline of policy gradient methods).
@@ -367,7 +368,7 @@ class GridworldStateFeatureExtractor(FeatureExtractor):
         parsed_args, unparsed_args = parse_arguments(cls, args)
 
         # there shouldn't be anything left
-        if len(vars(parsed_args)) > 0:
+        if len(vars(parsed_args)) > 0:  # pragma no cover
             raise ValueError('Parsed args remain. Need to pass to constructor.')
 
         fex = cls(
@@ -378,28 +379,23 @@ class GridworldStateFeatureExtractor(FeatureExtractor):
 
     def extract(
             self,
-            states: List[MdpState],
-            for_fitting: bool
+            state: MdpState
     ) -> np.ndarray:
         """
-        Extract features for state-action pairs.
+        Extract state features.
 
-        :param states: States.
-        :param for_fitting: Whether the extracted features will be used for fitting (True) or prediction (False).
-        :return: State-feature numpy.ndarray.
+        :param state: State.
+        :return: State-feature vector.
         """
 
-        rows = [int(state.i / self.num_cols) for state in states]
-        cols = [state.i % self.num_cols for state in states]
+        row = int(state.i / self.num_cols)
+        col = state.i % self.num_cols
 
         state_features = np.array([
-            [
-                row,  # from top
-                self.num_rows - row - 1,  # from bottom
-                col,  # from left
-                self.num_cols - col - 1  # from right
-            ]
-            for row, col in zip(rows, cols)
+            row,  # from top
+            self.num_rows - row - 1,  # from bottom
+            col,  # from left
+            self.num_cols - col - 1  # from right
         ])
 
         return state_features

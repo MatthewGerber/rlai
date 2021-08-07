@@ -133,7 +133,7 @@ class ApproximateStateValueEstimator(StateValueEstimator):
         del parsed_args.feature_extractor
 
         # there shouldn't be anything left
-        if len(vars(parsed_args)) > 0:
+        if len(vars(parsed_args)) > 0:  # pragma no cover
             raise ValueError('Parsed args remain. Need to pass to constructor.')
 
         # initialize estimator

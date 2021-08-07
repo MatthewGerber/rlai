@@ -119,6 +119,10 @@ def test_run_thread_manager_initially_blocked():
 
 def test_neareset_pd():
 
+    diag = np.array([[0, 0], [0, 0]])
+    np.fill_diagonal(diag, 1)
+    assert np.array_equal(diag, get_nearest_positive_definite_matrix(diag))
+
     for i in range(10):
         for j in range(2, 100):
             A = np.random.randn(j, j)

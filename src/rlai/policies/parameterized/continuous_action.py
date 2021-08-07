@@ -74,7 +74,7 @@ class ContinuousActionPolicy(ParameterizedPolicy, ABC):
         if self.action is None:
             if len(state.AA) == 1 and isinstance(state.AA[0], ContinuousMultiDimensionalAction):
                 self.action = state.AA[0]
-            else:
+            else:  # pragma no cover
                 raise ValueError('Expected state to contain a single action of type ContinuousMultiDimensionalAction.')
 
     def __init__(
@@ -114,7 +114,7 @@ class ContinuousActionPolicy(ParameterizedPolicy, ABC):
         :return: True if policy is defined for state and False otherwise.
         """
 
-        if state is None:
+        if state is None:  # pragma no cover
             raise ValueError('Attempted to check for None in policy.')
 
         return True
@@ -209,7 +209,7 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
             p_a_s = self[s][a]
 
             # check for nans in the gradients and skip the update if any are found
-            if np.isnan(action_density_gradient_wrt_theta_mean).any() or np.isnan(action_density_gradient_wrt_theta_cov).any():
+            if np.isnan(action_density_gradient_wrt_theta_mean).any() or np.isnan(action_density_gradient_wrt_theta_cov).any():  # pragma no cover
                 warnings.warn('Gradients contain np.nan value(s). Skipping update.')
             else:
 
@@ -224,7 +224,7 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
                 if is_positive_definite(new_cov):
                     self.theta_mean += alpha * discounted_return * (action_density_gradient_wrt_theta_mean / p_a_s)
                     self.theta_cov = new_theta_cov
-                else:
+                else:  # pragma no cover
                     warnings.warn('The updated covariance theta parameters will produce a covariance matrix that is not positive definite. Skipping update.')
 
     def get_covariance_matrix(
@@ -390,6 +390,34 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
 
         self.__dict__ = state
 
+    def __eq__(
+            self,
+            other
+    ) -> bool:
+        """
+        Check whether the current policy equals another.
+
+        :param other: Other policy.
+        :return: True if policies are equal and False otherwise.
+        """
+
+        other: ContinuousActionNormalDistributionPolicy
+
+        return np.allclose(self.theta_mean, other.theta_mean) and np.allclose(self.theta_cov, other.theta_cov)
+
+    def __ne__(
+            self,
+            other
+    ) -> bool:
+        """
+        Check whether the current policy does not equal another.
+
+        :param other: Other policy.
+        :return: True if policies are not equal and False otherwise.
+        """
+
+        return not (self == other)
+
 
 @rl_text(chapter=13, page=335)
 class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
@@ -485,7 +513,7 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
                 p_a_s = self[s][a]
 
                 # check for nans in the gradients and skip the update if any are found
-                if np.isnan(action_density_gradient_wrt_theta_a).any() or np.isnan(action_density_gradient_wrt_theta_b).any():
+                if np.isnan(action_density_gradient_wrt_theta_a).any() or np.isnan(action_density_gradient_wrt_theta_b).any():  # pragma no cover
                     warnings.warn('Gradients contain np.nan value(s). Skipping update.')
                 else:
                     self.action_theta_a[action_i, :] += alpha * discounted_return * (action_density_gradient_wrt_theta_a / p_a_s)
@@ -694,3 +722,31 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
         state['get_action_density_gradients_vmap'] = jit(vmap(get_action_density_gradients, in_axes=(None, None, 0, 0)))
 
         self.__dict__ = state
+
+    def __eq__(
+            self,
+            other
+    ) -> bool:
+        """
+        Check whether the current policy equals another.
+
+        :param other: Other policy.
+        :return: True if policies are equal and False otherwise.
+        """
+
+        other: ContinuousActionBetaDistributionPolicy
+
+        return np.allclose(self.action_theta_a, other.action_theta_a) and np.allclose(self.action_theta_b, other.action_theta_b)
+
+    def __ne__(
+            self,
+            other
+    ) -> bool:
+        """
+        Check whether the current policy does not equal another.
+
+        :param other: Other policy.
+        :return: True if policies are not equal and False otherwise.
+        """
+
+        return not (self == other)

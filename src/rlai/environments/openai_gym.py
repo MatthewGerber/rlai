@@ -336,7 +336,7 @@ class Gym(ContinuousMdpEnvironment):
                 'leg1Con',
                 'leg2Con'
             ]
-        else:
+        else:  # pragma no cover
             warnings.warn(f'The state dimension names for {self.gym_id} are unknown. Defaulting to numbers.')
             names = [str(x) for x in range(0, self.get_state_space_dimensionality())]
 
@@ -367,7 +367,7 @@ class Gym(ContinuousMdpEnvironment):
                 'main',
                 'side'
             ]
-        else:
+        else:  # pragma no cover
             warnings.warn(f'The action names for {self.gym_id} are unknown. Defaulting to numbers.')
             names = [str(x) for x in range(0, self.get_action_space_dimensionality())]
 
@@ -552,7 +552,7 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
         parsed_args, unparsed_args = parse_arguments(cls, args)
 
         # there shouldn't be anything left
-        if len(vars(parsed_args)) > 0:
+        if len(vars(parsed_args)) > 0:  # pragma no cover
             raise ValueError('Parsed args remain. Need to pass to constructor.')
 
         fex = cls(
@@ -770,7 +770,7 @@ class ContinuousFeatureExtractor(StateFeatureExtractor):
         parsed_args, unparsed_args = parse_arguments(cls, args)
 
         # there shouldn't be anything left
-        if len(vars(parsed_args)) > 0:
+        if len(vars(parsed_args)) > 0:  # pragma no cover
             raise ValueError('Parsed args remain. Need to pass to constructor.')
 
         fex = cls()

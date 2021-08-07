@@ -512,7 +512,7 @@ class SKLearnSGD(FunctionApproximationModel):
         :return: True if equal and False otherwise.
         """
 
-        return np.array_equal(self.model.coef_, other.model.coef_) and np.array_equal(self.model.intercept_, other.model.intercept_)
+        return np.allclose(self.model.coef_, other.model.coef_) and np.allclose(self.model.intercept_, other.model.intercept_)
 
     def __ne__(
             self,

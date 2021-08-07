@@ -75,7 +75,7 @@ class SoftMaxInActionPreferencesPolicy(ParameterizedPolicy):
         del parsed_args.policy_feature_extractor
 
         # there shouldn't be anything left
-        if len(vars(parsed_args)) > 0:
+        if len(vars(parsed_args)) > 0:  # pragma no cover
             raise ValueError('Parsed args remain. Need to pass to constructor.')
 
         # initialize policy
@@ -178,7 +178,7 @@ class SoftMaxInActionPreferencesPolicy(ParameterizedPolicy):
         :return: True if policy is defined for state and False otherwise.
         """
 
-        if state is None:
+        if state is None:  # pragma no cover
             raise ValueError('Attempted to check for None in policy.')
 
         return True
@@ -207,6 +207,34 @@ class SoftMaxInActionPreferencesPolicy(ParameterizedPolicy):
         }
 
         return action_prob
+
+    def __eq__(
+            self,
+            other
+    ) -> bool:
+        """
+        Check whether the current policy equals another.
+
+        :param other: Other policy.
+        :return: True if policies are equal and False otherwise.
+        """
+
+        other: SoftMaxInActionPreferencesPolicy
+
+        return np.allclose(self.theta, other.theta)
+
+    def __ne__(
+            self,
+            other
+    ) -> bool:
+        """
+        Check whether the current policy does not equal another.
+
+        :param other: Other policy.
+        :return: True if policies are not equal and False otherwise.
+        """
+
+        return not (self == other)
 
 
 @rl_text(chapter=13, page=322)
@@ -268,7 +296,7 @@ class SoftMaxInActionPreferencesJaxPolicy(ParameterizedPolicy):
         del parsed_args.policy_feature_extractor
 
         # there shouldn't be anything left
-        if len(vars(parsed_args)) > 0:
+        if len(vars(parsed_args)) > 0:  # pragma no cover
             raise ValueError('Parsed args remain. Need to pass to constructor.')
 
         # initialize policy
@@ -379,7 +407,7 @@ class SoftMaxInActionPreferencesJaxPolicy(ParameterizedPolicy):
         :return: True if policy is defined for state and False otherwise.
         """
 
-        if state is None:
+        if state is None:  # pragma no cover
             raise ValueError('Attempted to check for None in policy.')
 
         return True
@@ -432,3 +460,31 @@ class SoftMaxInActionPreferencesJaxPolicy(ParameterizedPolicy):
         state['get_action_prob_gradient'] = grad(self.get_action_prob)
 
         self.__dict__ = state
+
+    def __eq__(
+            self,
+            other
+    ) -> bool:
+        """
+        Check whether the current policy equals another.
+
+        :param other: Other policy.
+        :return: True if policies are equal and False otherwise.
+        """
+
+        other: SoftMaxInActionPreferencesJaxPolicy
+
+        return np.allclose(self.theta, other.theta)
+
+    def __ne__(
+            self,
+            other
+    ) -> bool:
+        """
+        Check whether the current policy does not equal another.
+
+        :param other: Other policy.
+        :return: True if policies are not equal and False otherwise.
+        """
+
+        return not (self == other)

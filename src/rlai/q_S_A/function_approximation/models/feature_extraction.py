@@ -199,7 +199,7 @@ class StateActionIdentityFeatureExtractor(FeatureExtractor):
         parsed_args, unparsed_args = parse_arguments(cls, args)
 
         # there shouldn't be anything left
-        if len(vars(parsed_args)) > 0:
+        if len(vars(parsed_args)) > 0:  # pragma no cover
             raise ValueError('Parsed args remain. Need to pass to constructor.')
 
         fex = cls(
