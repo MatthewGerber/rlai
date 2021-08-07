@@ -14,12 +14,16 @@ Environment for the mancala game. This is a simple game with many rule variation
     A couple hours of Monte Carlo optimization explores more than 1 million states when playing against an equiprobable
     random opponent.
 ```
+### [rlai.environments.mdp.ContinuousMdpEnvironment](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/mdp.py#L666)
+```
+MDP environment in which states and actions are continuous and multidimensional.
+```
 ### [rlai.environments.network.TcpMdpEnvironment](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/network.py#L20)
 ```
 An MDP environment served over a TCP connection from an external source (e.g., a simulation environment running as
     a separate program).
 ```
-### [rlai.environments.openai_gym.Gym](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/openai_gym.py#L66)
+### [rlai.environments.openai_gym.Gym](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/openai_gym.py#L65)
 ```
 Generalized Gym environment. Any OpenAI Gym environment can be executed by supplying the appropriate identifier.
 ```
