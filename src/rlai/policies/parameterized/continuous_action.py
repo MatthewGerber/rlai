@@ -13,7 +13,7 @@ from scipy import stats
 from tabulate import tabulate
 
 from rlai.actions import Action, ContinuousMultiDimensionalAction
-from rlai.environments.mdp import MdpEnvironment
+from rlai.environments.mdp import ContinuousMdpEnvironment
 from rlai.meta import rl_text
 from rlai.policies import Policy
 from rlai.policies.parameterized import ParameterizedPolicy
@@ -79,32 +79,28 @@ class ContinuousActionPolicy(ParameterizedPolicy, ABC):
 
     def __init__(
             self,
+            environment: ContinuousMdpEnvironment,
             feature_extractor: StateFeatureExtractor,
             plot_policy: bool
     ):
         """
         Initialize the parameterized policy.
 
+        :param environment: Environment.
         :param feature_extractor: Feature extractor.
         :param plot_policy: Whether or not to plot policy values (e.g., action).
         """
 
         super().__init__()
 
-        self.action = None  # we'll fill this in upon the first call to __getitem__, where we have access to a state and its actions
+        self.environment = environment
         self.feature_extractor = feature_extractor
-        self.state_space_dimensionality = self.feature_extractor.get_state_space_dimensionality()
-        self.action_space_dimensionality = self.feature_extractor.get_action_space_dimensionality()
-
         self.plot_policy = plot_policy
         self.action_scatter_plot = None
         if self.plot_policy:
-            self.action_scatter_plot_x_tick_labels = [
-                f'A{i}'
-                for i in range(self.action_space_dimensionality)
-            ]
-            self.action_scatter_plot = ScatterPlot('Actions', self.action_scatter_plot_x_tick_labels, ScatterPlotPosition.TOP_RIGHT)
+            self.action_scatter_plot = ScatterPlot('Actions', self.environment.get_action_dimension_names(), ScatterPlotPosition.TOP_RIGHT)
 
+        self.action = None  # we'll fill this in upon the first call to __getitem__, where we have access to a state and its actions
         self.random_state = RandomState(12345)
 
     def __contains__(
@@ -137,7 +133,7 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
     def init_from_arguments(
             cls,
             args: List[str],
-            environment: MdpEnvironment
+            environment: ContinuousMdpEnvironment
     ) -> Tuple[Policy, List[str]]:
         """
         Initialize a policy from arguments.
@@ -159,6 +155,7 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
 
         # initialize policy
         policy = cls(
+            environment=environment,
             feature_extractor=feature_extractor,
             **vars(parsed_args)
         )
@@ -246,7 +243,7 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
         return np.array([
 
             # ensure that the diagonal of the covariance matrix has positive values by exponentiating
-            np.exp(np.dot(theta_cov_row, state_features)) if i % (self.action_space_dimensionality + 1) == 0
+            np.exp(np.dot(theta_cov_row, state_features)) if i % (self.environment.get_action_space_dimensionality() + 1) == 0
 
             # off-diagonal elements can be positive or negative
             else np.dot(theta_cov_row, state_features)
@@ -254,7 +251,7 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
             # iteraate over each row of coefficients
             for i, theta_cov_row in enumerate(theta_cov)
 
-        ]).reshape(self.action_space_dimensionality, self.action_space_dimensionality)
+        ]).reshape(self.environment.get_action_space_dimensionality(), self.environment.get_action_space_dimensionality())
 
     @staticmethod
     def get_action_density(
@@ -293,28 +290,31 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
 
     def __init__(
             self,
+            environment: ContinuousMdpEnvironment,
             feature_extractor: StateFeatureExtractor,
             plot_policy: bool
     ):
         """
         Initialize the parameterized policy.
 
+        :param environment: Environment.
         :param feature_extractor: Feature extractor.
         :param plot_policy: Whether or not to plot policy values (e.g., action).
         """
 
         super().__init__(
+            environment=environment,
             feature_extractor=feature_extractor,
             plot_policy=plot_policy
         )
 
         # coefficients for multi-dimensional mean:  one row per action and one column per state feature (plus 1 for the
         # bias/intercept).
-        self.theta_mean = np.zeros(shape=(self.action_space_dimensionality, self.state_space_dimensionality + 1))
+        self.theta_mean = np.zeros(shape=(self.environment.get_action_space_dimensionality(), self.environment.get_state_space_dimensionality() + 1))
 
         # coefficients for multi-dimensional covariance:  one row per entry in the covariance matrix (a square matrix
         # with each action along each dimension) and one column per state feature (plus 1 for the bias/intercept).
-        self.theta_cov = np.zeros(shape=(self.action_space_dimensionality ** 2, self.state_space_dimensionality + 1))
+        self.theta_cov = np.zeros(shape=(self.environment.get_action_space_dimensionality() ** 2, self.environment.get_state_space_dimensionality() + 1))
 
         self.get_action_density_gradients = jit(grad(self.get_action_density, argnums=(0, 1)))
         self.get_action_density_gradients_vmap = jit(vmap(self.get_action_density_gradients, in_axes=(None, None, 0, 0)))
@@ -405,7 +405,7 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
     def init_from_arguments(
             cls,
             args: List[str],
-            environment: MdpEnvironment
+            environment: ContinuousMdpEnvironment
     ) -> Tuple[Policy, List[str]]:
         """
         Initialize a policy from arguments.
@@ -427,6 +427,7 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
 
         # initialize policy
         policy = cls(
+            environment=environment,
             feature_extractor=feature_extractor,
             **vars(parsed_args)
         )
@@ -495,11 +496,11 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
 
         if logging.getLogger().level <= logging.DEBUG:
             row_names = [
-                f'A{i}_{p}'
-                for i in range(self.action_theta_a.shape[0])
+                f'{action_name}_{p}'
+                for action_name in self.environment.get_action_dimension_names()
                 for p in ['a', 'b']
             ]
-            col_names = [f'T{j}' for j in range(self.action_theta_a.shape[1])]
+            col_names = ['intercept'] + self.environment.get_state_dimension_names()
             theta_df = pd.DataFrame([
                 row
                 for theta_a_row, theta_b_row in zip(self.action_theta_a, self.action_theta_b)
@@ -581,25 +582,28 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
 
     def __init__(
             self,
+            environment: ContinuousMdpEnvironment,
             feature_extractor: StateFeatureExtractor,
             plot_policy: bool
     ):
         """
         Initialize the parameterized policy.
 
+        :param environment: Environment.
         :param feature_extractor: Feature extractor.
         :param plot_policy: Whether or not to plot policy values (e.g., action).
         """
 
         super().__init__(
+            environment=environment,
             feature_extractor=feature_extractor,
             plot_policy=plot_policy
         )
 
         # coefficients for shape parameters a and b:  one row per action and one column per state feature (plus 1 for
         # the bias/intercept).
-        self.action_theta_a = np.zeros(shape=(self.action_space_dimensionality, self.state_space_dimensionality + 1))
-        self.action_theta_b = np.zeros(shape=(self.action_space_dimensionality, self.state_space_dimensionality + 1))
+        self.action_theta_a = np.zeros(shape=(self.environment.get_action_space_dimensionality(), self.environment.get_state_space_dimensionality() + 1))
+        self.action_theta_b = np.zeros(shape=(self.environment.get_action_space_dimensionality(), self.environment.get_state_space_dimensionality() + 1))
 
         self.get_action_density_gradients = jit(grad(self.get_action_density, argnums=(0, 1)))
         self.get_action_density_gradients_vmap = jit(vmap(self.get_action_density_gradients, in_axes=(None, None, 0, 0)))
@@ -608,8 +612,8 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
         if self.plot_policy:
             self.beta_shape_scatter_plot_x_tick_labels = [
                 label
-                for i in range(feature_extractor.get_action_space_dimensionality())
-                for label in [f'A{i} a-shape', f'Action {i} b-shape']
+                for action_name in self.environment.get_action_dimension_names()
+                for label in [f'{action_name} a', f'{action_name} b']
             ]
             self.beta_shape_scatter_plot = ScatterPlot('Beta Distribution Shape', self.beta_shape_scatter_plot_x_tick_labels, ScatterPlotPosition.BOTTOM_RIGHT)
 

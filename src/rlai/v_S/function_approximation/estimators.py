@@ -1,4 +1,3 @@
-import logging
 from argparse import ArgumentParser
 from typing import Optional, List, Tuple
 
@@ -9,7 +8,7 @@ from rlai.environments.mdp import MdpEnvironment
 from rlai.meta import rl_text
 from rlai.models import FunctionApproximationModel
 from rlai.states.mdp import MdpState
-from rlai.utils import load_class, parse_arguments, log_with_border
+from rlai.utils import load_class, parse_arguments
 from rlai.v_S import ValueEstimator, StateValueEstimator
 from rlai.v_S.function_approximation.models.feature_extraction import StateFeatureExtractor
 
@@ -196,8 +195,6 @@ class ApproximateStateValueEstimator(StateValueEstimator):
             self.weights = None
             self.experience_pending = False
 
-        log_with_border(logging.DEBUG, 'Estimator improved')
-
     def evaluate(
             self,
             state: MdpState
@@ -209,8 +206,6 @@ class ApproximateStateValueEstimator(StateValueEstimator):
         :return: Estimate.
         """
 
-        log_with_border(logging.DEBUG, f'Evaluating state')
-
         # get feature vector
         X = self.get_X([state])
 
@@ -218,11 +213,7 @@ class ApproximateStateValueEstimator(StateValueEstimator):
         if X.shape[1] == 0:  # pragma no cover
             return 0.0
 
-        value = self.model.evaluate(X)[0]
-
-        log_with_border(logging.DEBUG, 'Evaluation complete')
-
-        return value
+        return self.model.evaluate(X)[0]
 
     def get_X(
             self,

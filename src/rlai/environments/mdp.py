@@ -660,3 +660,50 @@ class TrajectorySamplingMdpPlanningEnvironment(MdpPlanningEnvironment):
             model=model,
             num_planning_improvements_per_direct_improvement=num_planning_improvements_per_direct_improvement
         )
+
+
+@rl_text(chapter='Environments', page=1)
+class ContinuousMdpEnvironment(MdpEnvironment, ABC):
+    """
+    MDP environment in which states and actions are continuous and multidimensional.
+    """
+
+    @abstractmethod
+    def get_state_space_dimensionality(
+            self
+    ) -> int:
+        """
+        Get the dimensionality of the state space.
+
+        :return: Number of dimensions.
+        """
+
+    @abstractmethod
+    def get_state_dimension_names(
+            self
+    ) -> List[str]:
+        """
+        Get names of state dimensions.
+
+        :return: List of names.
+        """
+
+    @abstractmethod
+    def get_action_space_dimensionality(
+            self
+    ) -> int:
+        """
+        Get the dimensionality of the action space.
+
+        :return: Number of dimensions.
+        """
+
+    @abstractmethod
+    def get_action_dimension_names(
+            self
+    ) -> List[str]:
+        """
+        Get action names.
+
+        :return: List of names.
+        """
