@@ -15,7 +15,7 @@ from test.rlai.utils import init_virtual_display
 
 def test_resume_gym_valid_environment():
 
-    display = init_virtual_display()
+    init_virtual_display()
 
     def resume_args_mutator(
             resume_args: Dict
