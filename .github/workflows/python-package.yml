@@ -41,6 +41,6 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        export HEADLESS=True
-        coverage run --source=src --omit=src/rlai/meta/* -m pytest ./test
+        # export HEADLESS=True
+        xvfb-run coverage run --source=src --omit=src/rlai/meta/* -m pytest ./test
         coveralls
