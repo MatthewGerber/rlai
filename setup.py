@@ -11,7 +11,7 @@ INSTALL_REQUIREMENTS = [
     'matplotlib==3.3.1',
     'numpy==1.19.0',
     'gym==0.17.3',
-    'pyglet==1.5.18',
+    'pyglet==1.5.0',
     'Box2D==2.3.10',
     'python-dateutil==2.8.1',
     'importlib-metadata==3.1.1',
