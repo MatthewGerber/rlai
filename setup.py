@@ -35,13 +35,13 @@ INSTALL_REQUIREMENTS = [
 ]
 
 TEST_REQUIREMENTS = [
-    'pytest==5.3',
-    'pytest-cov==2.8',
-    'coverage==5.3',
-    'pytest-runner==5.2',
+    'pytest==6.2.4',
+    'pytest-cov==2.12.1',
+    'coverage==5.5',
+    'pytest-runner==5.3.1',
     'nose==1.3.7',
-    'flake8==3.7',
-    'coveralls==2.2.0'
+    'flake8==3.9.2',
+    'coveralls==3.2.0'
 ]
 
 DEV_REQUIREMENTS = [
