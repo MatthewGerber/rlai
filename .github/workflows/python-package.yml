@@ -42,6 +42,5 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         export HEADLESS=True
-        # ./venv/bin/coverage run --source=src --omit=src/rlai/meta/* -m pytest ./test/rlai/runners/trainer_test.py
-        python -m pytest ./test/rlai/runners/trainer_test.py
+        ./venv/bin/coverage run --source=src --omit=src/rlai/meta/* -m pytest ./test/rlai/runners/trainer_test.py
         # ./venv/bin/coveralls
