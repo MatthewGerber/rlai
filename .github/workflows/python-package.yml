@@ -25,11 +25,12 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
-        sudo apt-get update
-        sudo apt-get install xvfb ffmpeg virtualenv libegl1-mesa freeglut3-dev
+        sudo apt update
+        sudo apt install xvfb ffmpeg virtualenv libegl1-mesa freeglut3-dev
         virtualenv -p python3.8 venv
         . venv/bin/activate
         python -m pip install --upgrade pip
+        pip install xvfbwrapper==0.2.9
         python -m pip install -e .[test]
     - name: Lint with flake8
       run: |

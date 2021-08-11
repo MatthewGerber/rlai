@@ -1,8 +1,6 @@
 import os
 from typing import Dict
 
-from xvfbwrapper import Xvfb
-
 from rlai.actions import Action
 from rlai.policies import Policy
 from rlai.policies.tabular import TabularPolicy
@@ -73,6 +71,7 @@ def init_virtual_display():
     headless = os.getenv('HEADLESS') == 'True'
 
     if headless and not VIRTUAL_DISPLAY_INITIALIZED:
+        from xvfbwrapper import Xvfb
         virtual_display = Xvfb()
         virtual_display.start()
         VIRTUAL_DISPLAY_INITIALIZED = True
