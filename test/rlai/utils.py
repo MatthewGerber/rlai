@@ -75,3 +75,5 @@ def init_virtual_display():
         virtual_display = Xvfb()
         virtual_display.start()
         VIRTUAL_DISPLAY_INITIALIZED = True
+
+        return virtual_display
