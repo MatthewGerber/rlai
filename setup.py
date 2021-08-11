@@ -41,7 +41,8 @@ TEST_REQUIREMENTS = [
     'pytest-runner==5.2',
     'nose==1.3.7',
     'flake8==3.7',
-    'coveralls==2.2.0'
+    'coveralls==2.2.0',
+    'xvfbwrapper==0.2.9'
 ]
 
 DEV_REQUIREMENTS = [

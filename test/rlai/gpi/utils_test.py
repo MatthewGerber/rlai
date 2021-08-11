@@ -10,12 +10,12 @@ from rlai.environments.openai_gym import Gym
 from rlai.gpi.monte_carlo.iteration import iterate_value_q_pi
 from rlai.gpi.utils import resume_from_checkpoint
 from rlai.runners.trainer import run
-from test.rlai.utils import init_virtual_display
+from test.rlai.utils import start_virtual_display_if_headless
 
 
 def test_resume_gym_valid_environment():
 
-    display = init_virtual_display()
+    virtual_display = start_virtual_display_if_headless()
 
     def resume_args_mutator(
             resume_args: Dict
@@ -51,3 +51,6 @@ def test_resume_gym_valid_environment():
         pi_fixture = pickle.load(file)
 
     assert agent.pi == pi_fixture
+
+    if virtual_display is not None:
+        virtual_display.stop()

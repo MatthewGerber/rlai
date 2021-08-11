@@ -25,11 +25,9 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
-        sudo apt-get install xvfb freeglut3-dev
-        sudo apt update
-        sudo apt install ffmpeg
+        sudo apt-get update
+        sudo apt-get install -y ffmpeg xvfb freeglut3-dev
         python -m pip install --upgrade pip
-        pip install xvfbwrapper==0.2.9
         python -m pip install -e .[test]
     - name: Lint with flake8
       run: |

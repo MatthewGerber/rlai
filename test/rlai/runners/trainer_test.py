@@ -8,12 +8,12 @@ import pytest
 import rlai.q_S_A.function_approximation.models
 from rlai.policies.tabular import TabularPolicy
 from rlai.runners.trainer import run
-from test.rlai.utils import init_virtual_display
+from test.rlai.utils import start_virtual_display_if_headless
 
 
 def test_run():
 
-    display = init_virtual_display()
+    virtual_display = start_virtual_display_if_headless()
 
     run_args_list = [
         f'--random-seed 12345 --agent rlai.agents.mdp.StochasticMdpAgent --continuous-state-discretization-resolution 0.1 --gamma 1 --environment rlai.environments.openai_gym.Gym --gym-id CartPole-v1 --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode Q_LEARNING --n-steps 10 --num-improvements 3 --num-episodes-per-improvement 5 --alpha 0.1 --epsilon 0.01 --q-S-A rlai.q_S_A.tabular.TabularStateActionValueEstimator --make-final-policy-greedy True --num-improvements-per-checkpoint 3 --checkpoint-path {tempfile.NamedTemporaryFile(delete=False).name} --save-agent-path {tempfile.NamedTemporaryFile(delete=False).name}',
@@ -82,6 +82,9 @@ def test_run():
 
     assert passed_all
     assert len(run_args_list) == len(run_fixture.keys())
+
+    if virtual_display is not None:
+        virtual_display.stop()
 
 
 def test_missing_arguments():
