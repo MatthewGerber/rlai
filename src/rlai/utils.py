@@ -592,7 +592,7 @@ class ScatterPlot:
         self.x_tick_labels = x_tick_labels
         self.position = position
 
-        self.plot_layout = pg.GraphicsLayoutWidget(show=False, title=title)
+        self.plot_layout = pg.GraphicsLayoutWidget(show=True, title=title)
         plot_x_axis = pg.AxisItem(orientation='bottom')
         plot_x_axis.setTicks([list(enumerate(self.x_tick_labels))])
         self.plot_widget = self.plot_layout.addPlot(axisItems={'bottom': plot_x_axis})
