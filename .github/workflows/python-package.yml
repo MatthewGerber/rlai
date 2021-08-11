@@ -25,7 +25,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
-        sudo apt-get install xvfb freeglut3-dev
+        sudo apt-get install xvfb freeglut3-dev libxkbcommon-x11-0
         sudo apt update
         sudo apt install ffmpeg
         python -m pip install --upgrade pip
@@ -42,5 +42,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         export HEADLESS=True
-        coverage run --source=src --omit=src/rlai/meta/* -m pytest ./test
+        sudo Xvfb :1 -screen 0 1024x768x24 </dev/null &
+        export DISPLAY=":1"
+        xvfb-run coverage run --source=src --omit=src/rlai/meta/* -m pytest ./test
         coveralls
