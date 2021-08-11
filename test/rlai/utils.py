@@ -68,15 +68,17 @@ def init_virtual_display():
     Initialize a new virtual display if running in headless mode.
     """
 
-    global VIRTUAL_DISPLAY_INITIALIZED
+    # global VIRTUAL_DISPLAY_INITIALIZED
+    #
+    # headless = os.getenv('HEADLESS') == 'True'
+    #
+    # virtual_display = None
+    #
+    # if headless and not VIRTUAL_DISPLAY_INITIALIZED:
+    #     virtual_display = Xvfb(width=1280, height=740, colordepth=16)
+    #     virtual_display.start()
+    #     VIRTUAL_DISPLAY_INITIALIZED = True
+    #
+    # return virtual_display
 
-    headless = os.getenv('HEADLESS') == 'True'
-
-    virtual_display = None
-
-    if headless and not VIRTUAL_DISPLAY_INITIALIZED:
-        virtual_display = Xvfb(width=1280, height=740, colordepth=16)
-        virtual_display.start()
-        VIRTUAL_DISPLAY_INITIALIZED = True
-
-    return virtual_display
+    return None
