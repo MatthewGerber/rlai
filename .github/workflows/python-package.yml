@@ -29,7 +29,7 @@ jobs:
         sudo apt update
         sudo apt install ffmpeg
         python -m pip install --upgrade pip
-        # pip install xvfbwrapper==0.2.9
+        pip install xvfbwrapper==0.2.9
         python -m pip install -e .[test]
     - name: Lint with flake8
       run: |
@@ -42,7 +42,5 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         # export HEADLESS=True
-        sudo Xvfb :1 -screen 0 1024x768x24 </dev/null &
-        export DISPLAY=":1"
         xvfb-run coverage run --source=src --omit=src/rlai/meta/* -m pytest ./test
         coveralls
