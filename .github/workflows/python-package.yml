@@ -26,7 +26,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y ffmpeg xvfb freeglut3-dev
+        sudo apt-get install -y ffmpeg xvfb freeglut3-dev libxcb-xinerama0
         python -m pip install --upgrade pip
         python -m pip install -e .[test]
     - name: Lint with flake8
