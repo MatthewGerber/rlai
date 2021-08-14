@@ -42,7 +42,15 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
+
+        # run without display
         export HEADLESS=True
-        export QT_DEBUG_PLUGINS=1
-        coverage run --source=src --omit=src/rlai/meta/* -m pytest -s ./test
+
+        # uncomment below and add -s after pytest to show all debug output
+        # export QT_DEBUG_PLUGINS=1
+
+        # run tests
+        coverage run --source=src --omit=src/rlai/meta/* -m pytest ./test
+
+        # upload results to coveralls using github token above
         coveralls --service=github
