@@ -15,7 +15,7 @@ from test.rlai.utils import start_virtual_display_if_headless
 
 def test_resume_gym_valid_environment():
 
-    virtual_display = start_virtual_display_if_headless()
+    start_virtual_display_if_headless()
 
     def resume_args_mutator(
             resume_args: Dict
@@ -43,6 +43,8 @@ def test_resume_gym_valid_environment():
         resume_args_mutator=resume_args_mutator
     )
 
+    resume_environment.close()
+
     # uncomment the following line and run test to update fixture
     # with open(f'{os.path.dirname(__file__)}/fixtures/test_resume_gym_valid_environment.pickle', 'wb') as file:
     #     pickle.dump(agent.pi, file)
@@ -51,6 +53,3 @@ def test_resume_gym_valid_environment():
         pi_fixture = pickle.load(file)
 
     assert agent.pi == pi_fixture
-
-    if virtual_display is not None:
-        virtual_display.stop()

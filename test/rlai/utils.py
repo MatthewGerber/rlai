@@ -1,5 +1,5 @@
 import os
-from typing import Dict, Optional
+from typing import Dict
 
 from xvfbwrapper import Xvfb
 
@@ -60,17 +60,16 @@ def tabular_estimator_legacy_eq(
     return True
 
 
-def start_virtual_display_if_headless() -> Optional[Xvfb]:
+VIRTUAL_DISPLAY = None
+
+
+def start_virtual_display_if_headless():
     """
     Start a new virtual display if running in headless mode.
-
-    :return: Virtual display, or None if not running headless.
     """
 
-    virtual_display = None
+    global VIRTUAL_DISPLAY
 
-    if os.getenv('HEADLESS') == 'True':
-        virtual_display = Xvfb()
-        virtual_display.start()
-
-    return virtual_display
+    if os.getenv('HEADLESS') == 'True' and VIRTUAL_DISPLAY is None:
+        VIRTUAL_DISPLAY = Xvfb()
+        VIRTUAL_DISPLAY.start()
