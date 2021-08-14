@@ -1152,7 +1152,7 @@ class RobocodeFeatureExtractor(FeatureExtractor):
         :param heading: Compass heading.
         :return: Slope.
         """
-        
+
         return math.tan(RobocodeFeatureExtractor.compass_to_radians(heading))
 
     @staticmethod

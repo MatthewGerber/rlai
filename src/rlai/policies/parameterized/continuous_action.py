@@ -415,7 +415,7 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
 
         other: ContinuousActionNormalDistributionPolicy
 
-        return np.allclose(self.theta_mean, other.theta_mean, atol=0.001) and np.allclose(self.theta_cov, other.theta_cov, atol=0.001)
+        return np.allclose(self.theta_mean, other.theta_mean, atol=0.0001) and np.allclose(self.theta_cov, other.theta_cov, atol=0.0001)
 
     def __ne__(
             self,
@@ -760,7 +760,7 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
 
         other: ContinuousActionBetaDistributionPolicy
 
-        return np.allclose(self.action_theta_a, other.action_theta_a, atol=0.001) and np.allclose(self.action_theta_b, other.action_theta_b, atol=0.001)
+        return np.allclose(self.action_theta_a, other.action_theta_a, atol=0.0001) and np.allclose(self.action_theta_b, other.action_theta_b, atol=0.0001)
 
     def __ne__(
             self,

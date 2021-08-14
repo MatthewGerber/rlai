@@ -32,7 +32,7 @@ def test_resume_gym_valid_environment():
         args=shlex.split(run_args),
         train_function_args_callback=train_function_args_callback
     )
-    
+
     random_state = RandomState(12345)
     resume_environment = Gym(random_state, None, 'CartPole-v1', None)
     agent = resume_from_checkpoint(

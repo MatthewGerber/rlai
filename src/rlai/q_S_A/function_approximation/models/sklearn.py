@@ -115,7 +115,7 @@ class SKLearnSGD(FunctionApproximationModel, BaseSKLearnSGD):
             curr_coef += num_coefs
 
         if curr_coef != num_dims:  # pragma no cover
-            raise ValueError(f'Failed to extract all coefficients.')
+            raise ValueError('Failed to extract all coefficients.')
 
         # add intercept if we fit one
         if self.model.fit_intercept:

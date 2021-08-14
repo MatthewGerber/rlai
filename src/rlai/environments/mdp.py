@@ -600,7 +600,7 @@ class TrajectorySamplingMdpPlanningEnvironment(MdpPlanningEnvironment):
         parsed_args, unparsed_args = parse_arguments(cls, args)
 
         planning_environment = cls(
-            name=f"trajectory planning",
+            name='trajectory planning',
             random_state=random_state,
             model=StochasticEnvironmentModel(),
             **vars(parsed_args)

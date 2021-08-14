@@ -58,7 +58,6 @@ def test_run():
     with open(f'{os.path.dirname(__file__)}/fixtures/trainer_test.pickle', 'rb') as f:
         run_fixture = pickle.load(f)
 
-    passed_all = True
     for run_args, run_args_fixture in zip(run_args_list, run_fixture.keys()):
 
         print(f'Checking test results for run {run_args}...', end='')
@@ -66,21 +65,14 @@ def test_run():
         checkpoint, agent = run_checkpoint_agent[run_args]
         checkpoint_fixture, agent_fixture = run_fixture[run_args_fixture]
 
-        try:
+        if isinstance(agent.pi, TabularPolicy):
+            assert checkpoint['q_S_A'] == checkpoint_fixture['q_S_A']
+            assert agent.pi == agent_fixture.pi
+        else:
+            assert agent.pi == agent_fixture.pi
 
-            if isinstance(agent.pi, TabularPolicy):
-                assert checkpoint['q_S_A'] == checkpoint_fixture['q_S_A']
-                assert agent.pi == agent_fixture.pi
-            else:
-                assert agent.pi == agent_fixture.pi
+        print('passed.')
 
-            print('passed.')
-
-        except Exception:
-            passed_all = False
-            print(f'failed')
-
-    assert passed_all
     assert len(run_args_list) == len(run_fixture.keys())
 
 

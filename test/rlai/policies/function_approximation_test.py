@@ -7,6 +7,7 @@ from rlai.gpi.temporal_difference.evaluation import Mode
 from rlai.gpi.temporal_difference.iteration import iterate_value_q_pi
 from rlai.q_S_A.function_approximation.estimators import ApproximateStateActionValueEstimator
 from rlai.q_S_A.function_approximation.models.sklearn import SKLearnSGD
+from rlai.states.mdp import MdpState
 
 
 def test_policy_overrides():
@@ -85,7 +86,8 @@ def test_policy_overrides():
         q_S_A=q_S_A_2
     )
     
-    assert mdp_agent_2.most_recent_state in mdp_agent_2.pi
+    assert isinstance(mdp_agent_2.most_recent_state, MdpState) and mdp_agent_2.most_recent_state in mdp_agent_2.pi
+
     with pytest.raises(ValueError, match='Attempted to check for None in policy.'):
         # noinspection PyTypeChecker
         if None in mdp_agent_2.pi:

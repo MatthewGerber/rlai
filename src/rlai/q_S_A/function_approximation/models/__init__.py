@@ -10,10 +10,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 
 from rlai.meta import rl_text
 from rlai.models import FunctionApproximationModel as BaseFunctionApproximationModel
-from rlai.q_S_A.function_approximation.models.feature_extraction import (
-    FeatureExtractor,
-    StateActionInteractionFeatureExtractor
-)
+from rlai.q_S_A.function_approximation.models.feature_extraction import FeatureExtractor
 
 MAX_PLOT_COEFFICIENTS = 50
 MAX_PLOT_ACTIONS = 20
