@@ -270,6 +270,9 @@ class Gym(ContinuousMdpEnvironment):
 
         self.gym_native.close()
 
+        if self.state_reward_scatter_plot is not None:
+            self.state_reward_scatter_plot.close()
+
     def init_gym_native(
             self
     ) -> Union[EnvSpec, TimeLimit]:

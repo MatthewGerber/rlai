@@ -70,6 +70,13 @@ class ParameterizedPolicy(Policy, ABC):
         Commit updates that were previously appended with calls to `append_update`.
         """
 
+    def close(
+            self
+    ):
+        """
+        Close the policy.
+        """
+
     def __init__(
             self
     ):

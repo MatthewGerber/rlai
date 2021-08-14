@@ -77,6 +77,18 @@ class ContinuousActionPolicy(ParameterizedPolicy, ABC):
             else:  # pragma no cover
                 raise ValueError('Expected state to contain a single action of type ContinuousMultiDimensionalAction.')
 
+    def close(
+            self
+    ):
+        """
+        Close the policy.
+        """
+
+        super().close()
+
+        if self.action_scatter_plot is not None:
+            self.action_scatter_plot.close()
+
     def __init__(
             self,
             environment: ContinuousMdpEnvironment,
@@ -608,6 +620,18 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
         ])
 
         return action_value
+
+    def close(
+            self
+    ):
+        """
+        Close the policy.
+        """
+
+        super().close()
+
+        if self.beta_shape_scatter_plot is not None:
+            self.beta_shape_scatter_plot.close()
 
     def __init__(
             self,

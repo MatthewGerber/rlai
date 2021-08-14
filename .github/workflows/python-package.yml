@@ -26,7 +26,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y ffmpeg xvfb freeglut3-dev libxcb-xinerama0
+        sudo apt-get install -y ffmpeg xvfb freeglut3-dev libxcb-xinerama0 libxcb-icccm4 libxcb-image0 libxcb-render-util0 libxcb-xinerama0 libxkbcommon-x11-0 libxcb-keysyms1
         python -m pip install --upgrade pip
         python -m pip install -e .[test]
     - name: Lint with flake8
@@ -39,7 +39,6 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        set -xe
         export HEADLESS=True
         coverage run --source=src --omit=src/rlai/meta/* -m pytest ./test
         coveralls

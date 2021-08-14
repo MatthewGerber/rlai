@@ -574,6 +574,15 @@ class ScatterPlot:
         else:
             self.move_to_bottom_right()
 
+    def close(
+            self
+    ):
+        """
+        Close the scatter plot.
+        """
+
+        self.plot_layout.close()
+
     def __init__(
             self,
             title: str,
