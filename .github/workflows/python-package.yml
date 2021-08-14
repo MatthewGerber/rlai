@@ -45,4 +45,4 @@ jobs:
         export HEADLESS=True
         export QT_DEBUG_PLUGINS=1
         coverage run --source=src --omit=src/rlai/meta/* -m pytest -s ./test
-        coveralls
+        coveralls --service=github
