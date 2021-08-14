@@ -85,7 +85,7 @@ def test_policy_overrides():
         make_final_policy_greedy=True,
         q_S_A=q_S_A_2
     )
-    
+
     assert isinstance(mdp_agent_2.most_recent_state, MdpState) and mdp_agent_2.most_recent_state in mdp_agent_2.pi
 
     with pytest.raises(ValueError, match='Attempted to check for None in policy.'):

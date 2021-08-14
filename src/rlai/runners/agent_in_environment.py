@@ -136,7 +136,7 @@ def run(
         cum_reward_ax.legend(loc='lower right')
 
         optimal_action_ax.set_xlabel('Time step')
-        optimal_action_ax.set_ylabel(f'% optimal action selected')
+        optimal_action_ax.set_ylabel('% optimal action selected')
         optimal_action_ax.grid()
         optimal_action_ax.legend()
 

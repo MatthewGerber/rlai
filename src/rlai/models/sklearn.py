@@ -179,7 +179,7 @@ class SKLearnSGD(FunctionApproximationModel):
         # get loss emitted by sklearn
         fit_line = stdout_tee.buffer[-2]
         if not fit_line.startswith('Norm:'):  # pragma no cover
-            raise ValueError(f'Expected sklearn output to start with Norm:')
+            raise ValueError('Expected sklearn output to start with Norm:')
 
         avg_loss = float(fit_line.rsplit(' ', maxsplit=1)[1])  # example line:  Norm: 6.38, NNZs: 256, Bias: 8.932199, T: 1, Avg. loss: 0.001514
 

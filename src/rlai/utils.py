@@ -428,12 +428,12 @@ def get_nearest_positive_definite_matrix(A):
     # `spacing` will, for Gaussian random matrixes of small dimension, be on
     # othe order of 1e-16. In practice, both ways converge, as the unit test
     # below suggests.
-    I = np.eye(A.shape[0])
+    eye = np.eye(A.shape[0])
     k = 1
 
     while not is_positive_definite(A3):
         mineig = np.min(np.real(la.eigvals(A3)))
-        A3 += I * (-mineig * k**2 + spacing)
+        A3 += eye * (-mineig * k**2 + spacing)
         k += 1
 
     return A3

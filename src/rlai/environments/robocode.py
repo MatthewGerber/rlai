@@ -291,9 +291,7 @@ class RobocodeEnvironment(TcpMdpEnvironment):
         :return: 2-tuple of the state and reward.
         """
 
-        #########################
-        ##### extract state #####
-        #########################
+        # extract state
 
         # pull out robocode game events
         event_type_events: Dict[str, List[Dict]] = client_dict['events']
@@ -392,9 +390,7 @@ class RobocodeEnvironment(TcpMdpEnvironment):
             terminal=terminal
         )
 
-        ############################
-        ##### calculate reward #####
-        ############################
+        # calculate reward
 
         # store bullet firing events so that we can pull out information related to them at a later time step (e.g.,
         # when they hit or miss). add the rlai time step (t) to each event. there is a 1:1 between rlai time steps and
