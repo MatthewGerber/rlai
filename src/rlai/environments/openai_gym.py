@@ -24,7 +24,7 @@ from rlai.q_S_A.function_approximation.models.feature_extraction import (
 )
 from rlai.rewards import Reward
 from rlai.states.mdp import MdpState
-from rlai.utils import parse_arguments, ScatterPlot, ScatterPlotPosition
+from rlai.utils import parse_arguments, ScatterPlot
 from rlai.v_S.function_approximation.models.feature_extraction import StateFeatureExtractor
 
 
