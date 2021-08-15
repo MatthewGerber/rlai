@@ -1,11 +1,14 @@
 import logging
 import warnings
+from typing import Optional
+
+import numpy as np
 
 from rlai.agents.mdp import StochasticMdpAgent
 from rlai.environments.mdp import MdpEnvironment
 from rlai.meta import rl_text
 from rlai.policies.parameterized import ParameterizedPolicy
-from rlai.utils import IncrementalSampleAverager, RunThreadManager
+from rlai.utils import IncrementalSampleAverager, RunThreadManager, ScatterPlot
 from rlai.v_S import StateValueEstimator
 
 
@@ -17,8 +20,9 @@ def improve(
         num_episodes: int,
         update_upon_every_visit: bool,
         alpha: float,
-        v_S: StateValueEstimator,
-        thread_manager: RunThreadManager
+        v_S: Optional[StateValueEstimator],
+        thread_manager: RunThreadManager,
+        plot_state_value: bool
 ):
     """
     Perform Monte Carlo improvement of an agent's policy within an environment via the REINFORCE policy gradient method.
@@ -35,11 +39,16 @@ def improve(
     :param thread_manager: Thread manager. The current function (and the thread running it) will wait on this manager
     before starting each iteration. This provides a mechanism for pausing, resuming, and aborting training. Omit for no
     waiting.
-    :param v_S: Baseline state-value estimator.
+    :param plot_state_value: Whether or not to plot the state-value.
+    :param v_S: Baseline state-value estimator, or None for no baseline.
     """
 
     if thread_manager is not None:
         warnings.warn('This optimization method will ignore the thread_manager.')
+
+    state_value_plot = None
+    if plot_state_value and v_S is not None:
+        state_value_plot = ScatterPlot('REINFORCE:  State Value', ['Estimate'], None)
 
     logging.info(f'Running Monte Carlo-based REINFORCE improvement for {num_episodes} episode(s).')
 
@@ -62,6 +71,9 @@ def improve(
 
             a = agent.act(t)
             state_a = (state, a)
+
+            if state_value_plot is not None:
+                state_value_plot.update(np.array([v_S[state].get_value()]))
 
             # mark time step of first visit, if we're doing first-visit evaluation.
             if state_action_first_t is not None and state_a not in state_action_first_t:
@@ -97,7 +109,8 @@ def improve(
                 else:
                     v_S[state].update(g)
                     v_S.improve()
-                    update_target = g - v_S[state].get_value()
+                    estimate = v_S[state].get_value()
+                    update_target = g - estimate
 
                 policy.append_update(a, state, alpha, update_target)
 

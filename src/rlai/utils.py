@@ -477,6 +477,8 @@ class ScatterPlot:
     General-purpose scatter plot that supports real-time plot updates.
     """
 
+    next_position = ScatterPlotPosition.TOP_LEFT
+
     def update(
             self,
             y_values: np.ndarray
@@ -587,15 +589,26 @@ class ScatterPlot:
             self,
             title: str,
             x_tick_labels: List[str],
-            position: ScatterPlotPosition
+            position: Optional[ScatterPlotPosition]
     ):
         """
         Initialize the scatter plot.
 
         :param title: Title.
         :param x_tick_labels: Labels for the x-axis ticks.
-        :param position: Position.
+        :param position: Position, or None to place the plot automatically on the screen.
         """
+
+        if position is None:
+            position = ScatterPlot.next_position
+            if position == ScatterPlotPosition.TOP_LEFT:
+                ScatterPlot.next_position = ScatterPlotPosition.TOP_RIGHT
+            elif position == ScatterPlotPosition.TOP_RIGHT:
+                ScatterPlot.next_position = ScatterPlotPosition.BOTTOM_RIGHT
+            elif position == ScatterPlotPosition.BOTTOM_RIGHT:
+                ScatterPlot.next_position = ScatterPlotPosition.BOTTOM_LEFT
+            else:
+                ScatterPlot.next_position = ScatterPlotPosition.TOP_LEFT
 
         self.title = title
         self.x_tick_labels = x_tick_labels

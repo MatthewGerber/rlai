@@ -426,7 +426,7 @@ class Gym(ContinuousMdpEnvironment):
             self.state_reward_scatter_plot = ScatterPlot(
                 f'{self.gym_id}:  State and Reward',
                 self.get_state_dimension_names() + ['reward'],
-                ScatterPlotPosition.TOP_LEFT
+                None
             )
 
         self.gym_native = self.init_gym_native()

@@ -18,7 +18,7 @@ from rlai.meta import rl_text
 from rlai.policies import Policy
 from rlai.policies.parameterized import ParameterizedPolicy
 from rlai.states.mdp import MdpState
-from rlai.utils import parse_arguments, load_class, is_positive_definite, ScatterPlot, ScatterPlotPosition
+from rlai.utils import parse_arguments, load_class, is_positive_definite, ScatterPlot
 from rlai.v_S.function_approximation.models.feature_extraction import StateFeatureExtractor
 
 
@@ -110,7 +110,7 @@ class ContinuousActionPolicy(ParameterizedPolicy, ABC):
         self.plot_policy = plot_policy
         self.action_scatter_plot = None
         if self.plot_policy:
-            self.action_scatter_plot = ScatterPlot('Actions', self.environment.get_action_dimension_names(), ScatterPlotPosition.TOP_RIGHT)
+            self.action_scatter_plot = ScatterPlot('Actions', self.environment.get_action_dimension_names(), None)
 
         self.action = None  # we'll fill this in upon the first call to __getitem__, where we have access to a state and its actions
         self.random_state = RandomState(12345)
@@ -668,7 +668,7 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
                 for action_name in self.environment.get_action_dimension_names()
                 for label in [f'{action_name} a', f'{action_name} b']
             ]
-            self.beta_shape_scatter_plot = ScatterPlot('Beta Distribution Shape', self.beta_shape_scatter_plot_x_tick_labels, ScatterPlotPosition.BOTTOM_RIGHT)
+            self.beta_shape_scatter_plot = ScatterPlot('Beta Distribution Shape', self.beta_shape_scatter_plot_x_tick_labels, None)
 
     def __getitem__(
             self,

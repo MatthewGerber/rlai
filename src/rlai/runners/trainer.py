@@ -378,6 +378,12 @@ def get_argument_parser_for_train_function(
         help='Path where a PDF of all plots is to be saved.'
     )
 
+    filter_add_argument(
+        '--plot-state-value',
+        action='store_true',
+        help='Pass this flag to plot the state value.'
+    )
+
     return argument_parser
 
 
