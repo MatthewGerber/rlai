@@ -7,7 +7,7 @@ Function approximation model.
 ```
 Feature extractor.
 ```
-### [rlai.q_S_A.function_approximation.models.FunctionApproximationModel](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/q_S_A/function_approximation/models.py#L23)
+### [rlai.q_S_A.function_approximation.models.FunctionApproximationModel](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/q_S_A/function_approximation/models.py#L20)
 ```
 Function approximation model.
 ```

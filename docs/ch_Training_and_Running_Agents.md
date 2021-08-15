@@ -12,7 +12,7 @@ Run RLAI.
     :param args: Arguments.
     :return: Return value of specified function.
 ```
-### [rlai.runners.trainer.run](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/runners/trainer.py#L22)
+### [rlai.runners.trainer.run](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/runners/trainer.py#L23)
 ```
 Train an agent in an environment.
 
