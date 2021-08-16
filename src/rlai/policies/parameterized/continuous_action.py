@@ -54,7 +54,7 @@ class ContinuousActionPolicy(ParameterizedPolicy, ABC):
         parser.add_argument(
             '--plot-policy',
             action='store_true',
-            help='Pass this flag to plot policy values (e.g., action).'
+            help='Pass this flag to plot policy values (e.g., actions taken and their parameters).'
         )
 
         return parser
@@ -81,7 +81,7 @@ class ContinuousActionPolicy(ParameterizedPolicy, ABC):
             self
     ):
         """
-        Close the policy.
+        Close the policy, releasing any resources that it holds (e.g., display windows for plotting).
         """
 
         super().close()
@@ -112,7 +112,7 @@ class ContinuousActionPolicy(ParameterizedPolicy, ABC):
         if self.plot_policy:
             self.action_scatter_plot = ScatterPlot('Actions', self.environment.get_action_dimension_names(), None)
 
-        self.action = None  # we'll fill this in upon the first call to __getitem__, where we have access to a state and its actions
+        self.action = None  # we'll fill this in upon the first call to __getitem__, where we have access to a state and its actions.
         self.random_state = RandomState(12345)
 
     def __contains__(
@@ -210,12 +210,12 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
             self.update_batch_s,
             intercept_state_feature_matrix,
             self.update_batch_alpha,
-            self.update_batch_discounted_return,
+            self.update_batch_target,
             action_density_gradients_wrt_theta_mean,
             action_density_gradients_wrt_theta_cov
         )
 
-        for a, s, state_features, alpha, discounted_return, action_density_gradient_wrt_theta_mean, action_density_gradient_wrt_theta_cov in updates:
+        for a, s, state_features, alpha, target, action_density_gradient_wrt_theta_mean, action_density_gradient_wrt_theta_cov in updates:
 
             # TODO:  This is always 1. How to estimate it from the PDF? The multivariate_normal class has a CDF.
             p_a_s = self[s][a]
@@ -227,14 +227,14 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
 
                 # check whether the covariance matrix resulting from the updated parameters will be be positive
                 # definite, as the multivariate normal distribution requires this. assign the update only if it is so.
-                new_theta_cov = self.theta_cov + alpha * discounted_return * (action_density_gradient_wrt_theta_cov / p_a_s)
+                new_theta_cov = self.theta_cov + alpha * target * (action_density_gradient_wrt_theta_cov / p_a_s)
                 new_cov = self.get_covariance_matrix(
                     new_theta_cov,
                     state_features
                 )
 
                 if is_positive_definite(new_cov):
-                    self.theta_mean += alpha * discounted_return * (action_density_gradient_wrt_theta_mean / p_a_s)
+                    self.theta_mean += alpha * target * (action_density_gradient_wrt_theta_mean / p_a_s)
                     self.theta_cov = new_theta_cov
                 else:  # pragma no cover
                     warnings.warn('The updated covariance theta parameters will produce a covariance matrix that is not positive definite. Skipping update.')
@@ -415,6 +415,7 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
 
         other: ContinuousActionNormalDistributionPolicy
 
+        # using the default values for allclose is too strict to achieve cross-platform testing success. back off a little with atol.
         return np.allclose(self.theta_mean, other.theta_mean, atol=0.0001) and np.allclose(self.theta_cov, other.theta_cov, atol=0.0001)
 
     def __ne__(
@@ -492,13 +493,15 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
         intercept_state_feature_matrix = np.ones(shape=np.add(state_feature_matrix.shape, (0, 1)))
         intercept_state_feature_matrix[:, 1:] = state_feature_matrix
 
-        # invert actions back to [0.0, 1.0] (the domain of the beta distribution)
+        # invert action values back to [0.0, 1.0] (the domain of the beta distribution)
         action_matrix = np.array([
-            self.rescale_inv(a.value)
+            self.invert_rescale(a.value)
             for a in self.update_batch_a
         ])
 
         # perform updates per-action, since we model the distribution of each action independently of the other actions.
+        # we use the transpose of the action matrix so that each iteration of the for-loop contains all experienced
+        # values of the action (in action_i_values).
         for action_i, (action_i_theta_a, action_i_theta_b, action_i_values) in enumerate(zip(self.action_theta_a, self.action_theta_b, action_matrix.T)):
 
             # calculate per-update gradients for the current action
@@ -514,12 +517,12 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
                 self.update_batch_a,
                 self.update_batch_s,
                 self.update_batch_alpha,
-                self.update_batch_discounted_return,
+                self.update_batch_target,
                 action_density_gradients_wrt_theta_a,
                 action_density_gradients_wrt_theta_b
             )
 
-            for a, s, alpha, discounted_return, action_density_gradient_wrt_theta_a, action_density_gradient_wrt_theta_b in updates:
+            for a, s, alpha, target, action_density_gradient_wrt_theta_a, action_density_gradient_wrt_theta_b in updates:
 
                 # TODO:  This is always 1 but should be calculated per the text. How to estimate it from the PDF?
                 p_a_s = self[s][a]
@@ -528,8 +531,8 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
                 if np.isnan(action_density_gradient_wrt_theta_a).any() or np.isnan(action_density_gradient_wrt_theta_b).any():  # pragma no cover
                     warnings.warn('Gradients contain np.nan value(s). Skipping update.')
                 else:
-                    self.action_theta_a[action_i, :] += alpha * discounted_return * (action_density_gradient_wrt_theta_a / p_a_s)
-                    self.action_theta_b[action_i, :] += alpha * discounted_return * (action_density_gradient_wrt_theta_b / p_a_s)
+                    self.action_theta_a[action_i, :] += alpha * target * (action_density_gradient_wrt_theta_a / p_a_s)
+                    self.action_theta_b[action_i, :] += alpha * target * (action_density_gradient_wrt_theta_b / p_a_s)
 
         if self.plot_policy:
             self.action_scatter_plot.reset_y_range()
@@ -567,10 +570,10 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
         """
 
         a_x = jnp.dot(theta_a, state_features)
-        a = 1.0 + (1.0 / (1.0 + jnp.exp(-a_x))) * ContinuousActionBetaDistributionPolicy.MAX_BETA_SHAPE_VALUE
+        a = 1.0 + (1.0 / (1.0 + jnp.exp(-a_x))) * (ContinuousActionBetaDistributionPolicy.MAX_BETA_SHAPE_VALUE - 1.0)
 
         b_x = jnp.dot(theta_b, state_features)
-        b = 1.0 + (1.0 / (1.0 + jnp.exp(-b_x))) * ContinuousActionBetaDistributionPolicy.MAX_BETA_SHAPE_VALUE
+        b = 1.0 + (1.0 / (1.0 + jnp.exp(-b_x))) * (ContinuousActionBetaDistributionPolicy.MAX_BETA_SHAPE_VALUE - 1.0)
 
         return jstats.beta.pdf(x=action_value, a=a, b=b, loc=0.0, scale=1.0)
 
@@ -597,7 +600,7 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
 
         return rescaled_action_value
 
-    def rescale_inv(
+    def invert_rescale(
             self,
             rescaled_action_value: np.ndarray
     ) -> np.ndarray:
@@ -625,7 +628,7 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
             self
     ):
         """
-        Close the policy.
+        Close the policy, releasing any resources that it holds (e.g., display windows for plotting).
         """
 
         super().close()
@@ -658,6 +661,8 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
         self.action_theta_a = np.zeros(shape=(self.environment.get_action_space_dimensionality(), self.environment.get_state_space_dimensionality() + 1))
         self.action_theta_b = np.zeros(shape=(self.environment.get_action_space_dimensionality(), self.environment.get_state_space_dimensionality() + 1))
 
+        # get jax function for gradients with respect to theta_a and theta_b. vectorize the gradient calculation over
+        # input arrays for state and action values.
         self.get_action_density_gradients = jit(grad(self.get_action_density, argnums=(0, 1)))
         self.get_action_density_gradients_vmap = jit(vmap(self.get_action_density_gradients, in_axes=(None, None, 0, 0)))
 
@@ -685,20 +690,20 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
 
         intercept_state_features = np.append([1.0], self.feature_extractor.extract(state))
 
-        # calculate the modeled shape parameters of the n-dimensional action
-        a_x_values = self.action_theta_a.dot(intercept_state_features)
-        a_values = 1.0 + (1.0 / (1.0 + np.exp(-a_x_values))) * (ContinuousActionBetaDistributionPolicy.MAX_BETA_SHAPE_VALUE - 1.0)
+        # calculate the modeled shape parameters of each action dimension
+        action_a_x = self.action_theta_a.dot(intercept_state_features)
+        action_a = 1.0 + (1.0 / (1.0 + np.exp(-action_a_x))) * (ContinuousActionBetaDistributionPolicy.MAX_BETA_SHAPE_VALUE - 1.0)
 
-        b_x_values = self.action_theta_b.dot(intercept_state_features)
-        b_values = 1.0 + (1.0 / (1.0 + np.exp(-b_x_values))) * (ContinuousActionBetaDistributionPolicy.MAX_BETA_SHAPE_VALUE - 1.0)
+        action_b_x = self.action_theta_b.dot(intercept_state_features)
+        action_b = 1.0 + (1.0 / (1.0 + np.exp(-action_b_x))) * (ContinuousActionBetaDistributionPolicy.MAX_BETA_SHAPE_VALUE - 1.0)
 
-        # sample each of the n dimensions and then rescale
-        action_value = np.array([
-            stats.beta.rvs(a=a, b=b, loc=0.0, scale=1.0, random_state=self.random_state)
-            for a, b in zip(a_values, b_values)
-        ])
-
-        action_value = self.rescale(action_value)
+        # sample each of the n action dimensions and rescale
+        action_value = self.rescale(
+            np.array([
+                stats.beta.rvs(a=a, b=b, loc=0.0, scale=1.0, random_state=self.random_state)
+                for a, b in zip(action_a, action_b)
+            ])
+        )
 
         a = ContinuousMultiDimensionalAction(
             value=action_value,
@@ -710,7 +715,7 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
             self.action_scatter_plot.update(action_value)
             self.beta_shape_scatter_plot.update(np.array([
                 v
-                for a, b in zip(a_values, b_values)
+                for a, b in zip(action_a, action_b)
                 for v in [a, b]
             ]))
 
@@ -760,6 +765,7 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
 
         other: ContinuousActionBetaDistributionPolicy
 
+        # using the default values for allclose is too strict to achieve cross-platform testing success. back off a little with atol.
         return np.allclose(self.action_theta_a, other.action_theta_a, atol=0.0001) and np.allclose(self.action_theta_b, other.action_theta_b, atol=0.0001)
 
     def __ne__(

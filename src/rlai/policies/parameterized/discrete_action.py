@@ -19,9 +19,9 @@ from rlai.utils import parse_arguments, load_class
 class SoftMaxInActionPreferencesPolicy(ParameterizedPolicy):
     """
     Parameterized policy that implements a soft-max over action preferences. The policy gradient calculation is coded up
-    manually. See the `JaxSoftMaxInActionPreferencesPolicy` for a similar policy in which the gradient is calculated
+    manually. See the `SoftMaxInActionPreferencesJaxPolicy` for a similar policy in which the gradient is calculated
     using the JAX library. This is only compatible with feature extractors derived from
-    `rlai.q_S_A.function_approximation.models.feature_extraction.FeatureExtractor`, which returns state-action feature
+    `rlai.q_S_A.function_approximation.models.feature_extraction.FeatureExtractor`, which return state-action feature
     vectors.
     """
 
@@ -143,13 +143,13 @@ class SoftMaxInActionPreferencesPolicy(ParameterizedPolicy):
             self.update_batch_a,
             self.update_batch_s,
             self.update_batch_alpha,
-            self.update_batch_discounted_return
+            self.update_batch_target
         )
 
-        for a, s, alpha, discounted_return in updates:
+        for a, s, alpha, target in updates:
             gradient_a_s = self.gradient(a, s)
             p_a_s = self[s][a]
-            self.theta += alpha * discounted_return * (gradient_a_s / p_a_s)
+            self.theta += alpha * target * (gradient_a_s / p_a_s)
 
     def __init__(
             self,
@@ -242,7 +242,7 @@ class SoftMaxInActionPreferencesJaxPolicy(ParameterizedPolicy):
     """
     Parameterized policy that implements a soft-max over action preferences. The policy gradient calculation is
     performed using the JAX library. This is only compatible with feature extractors derived from
-    `rlai.q_S_A.function_approximation.models.feature_extraction.FeatureExtractor`, which returns state-action feature
+    `rlai.q_S_A.function_approximation.models.feature_extraction.FeatureExtractor`, which return state-action feature
     vectors.
     """
 
@@ -371,13 +371,13 @@ class SoftMaxInActionPreferencesJaxPolicy(ParameterizedPolicy):
             self.update_batch_a,
             self.update_batch_s,
             self.update_batch_alpha,
-            self.update_batch_discounted_return
+            self.update_batch_target
         )
 
-        for a, s, alpha, discounted_return in updates:
+        for a, s, alpha, target in updates:
             gradient_a_s = self.gradient(a, s)
             p_a_s = self[s][a]
-            self.theta += alpha * discounted_return * (gradient_a_s / p_a_s)
+            self.theta += alpha * target * (gradient_a_s / p_a_s)
 
     def __init__(
             self,

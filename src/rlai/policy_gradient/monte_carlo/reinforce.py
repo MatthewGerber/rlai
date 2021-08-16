@@ -102,17 +102,17 @@ def improve(
 
                 # if we don't have a baseline, then the target is the return.
                 if v_S is None:
-                    update_target = g
+                    target = g
 
-                # otherwise, update the baseline state-value estimator and target the return's difference with the
-                # resulting estimate.
+                # otherwise, update the baseline state-value estimator and set the target to be the difference between
+                # observed return and the baseline.
                 else:
                     v_S[state].update(g)
                     v_S.improve()
                     estimate = v_S[state].get_value()
-                    update_target = g - estimate
+                    target = g - estimate
 
-                policy.append_update(a, state, alpha, update_target)
+                policy.append_update(a, state, alpha, target)
 
         policy.commit_updates()
 

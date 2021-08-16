@@ -182,7 +182,7 @@ class Gym(ContinuousMdpEnvironment):
 
         # override reward per environment
         if self.gym_id == 'LunarLanderContinuous-v2':
-            reward = 2.0 - np.abs(observation[0:5]).sum()
+            reward = -np.abs(observation[0:6]).sum() if done else 0.0
 
         # call render if rendering manually
         if self.check_render_current_episode(True):
@@ -791,7 +791,10 @@ class ContinuousFeatureExtractor(StateFeatureExtractor):
         :return: State-feature vector.
         """
 
-        return state.observation
+        return self.feature_scaler.scale_features(
+            np.array([state.observation]),
+            for_fitting=True
+        )[0]
 
     def __init__(
             self
@@ -801,3 +804,9 @@ class ContinuousFeatureExtractor(StateFeatureExtractor):
         """
 
         super().__init__()
+
+        self.feature_scaler = NonstationaryFeatureScaler(
+                num_observations_refit_feature_scaler=2000,
+                refit_history_length=10000,
+                refit_weight_decay=0.99999
+            )

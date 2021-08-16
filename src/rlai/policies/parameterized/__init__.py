@@ -31,22 +31,22 @@ class ParameterizedPolicy(Policy, ABC):
             a: Action,
             s: MdpState,
             alpha: float,
-            discounted_return: float
+            target: float
     ):
         """
-        Append an update for an action in a state using a discounted return and a step size. All appended updates will
+        Append an update for an action in a state using a target and a step size. All appended updates will
         be commited to the policy when `commit_updates` is called.
 
         :param a: Action.
         :param s: State.
         :param alpha: Step size.
-        :param discounted_return: Discounted return.
+        :param target: Update target.
         """
 
         self.update_batch_a.append(a)
         self.update_batch_s.append(s)
         self.update_batch_alpha.append(alpha)
-        self.update_batch_discounted_return.append(discounted_return)
+        self.update_batch_target.append(target)
 
     def commit_updates(
             self
@@ -60,7 +60,7 @@ class ParameterizedPolicy(Policy, ABC):
         self.update_batch_a.clear()
         self.update_batch_s.clear()
         self.update_batch_alpha.clear()
-        self.update_batch_discounted_return.clear()
+        self.update_batch_target.clear()
 
     @abstractmethod
     def __commit_updates__(
@@ -74,7 +74,7 @@ class ParameterizedPolicy(Policy, ABC):
             self
     ):
         """
-        Close the policy.
+        Close the policy, releasing any resources that it holds (e.g., display windows for plotting).
         """
 
     def __init__(
@@ -87,4 +87,4 @@ class ParameterizedPolicy(Policy, ABC):
         self.update_batch_a = []
         self.update_batch_s = []
         self.update_batch_alpha = []
-        self.update_batch_discounted_return = []
+        self.update_batch_target = []
