@@ -152,8 +152,8 @@ class NonstationaryFeatureScaler:
         Initializer the scaler.
 
         :param num_observations_refit_feature_scaler: Number of observations to collect before refitting.
-        :param refit_history_length: Number of observations to use in the refitting.
-        :param refit_weight_decay: Exponential weight decay for the observations used in the refitting.
+        :param refit_history_length: Number of observations to use when refitting the feature scaler.
+        :param refit_weight_decay: Exponential weight decay for the observations used in refitting the feature scaler.
         """
 
         self.num_observations_refit_feature_scaler = num_observations_refit_feature_scaler

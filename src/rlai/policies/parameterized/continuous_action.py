@@ -77,6 +77,29 @@ class ContinuousActionPolicy(ParameterizedPolicy, ABC):
             else:  # pragma no cover
                 raise ValueError('Expected state to contain a single action of type ContinuousMultiDimensionalAction.')
 
+    def update_action_scatter_plot(
+            self,
+            action: ContinuousMultiDimensionalAction
+    ):
+        """
+        Update the action scatter plot.
+
+        :param action: Action.
+        """
+
+        if self.action_scatter_plot is not None:
+            self.action_scatter_plot.update(action.value)
+
+    def reset_action_scatter_plot_y_range(
+            self
+    ):
+        """
+        Reset the y-range in the action scatter plot.
+        """
+
+        if self.action_scatter_plot is not None:
+            self.action_scatter_plot.reset_y_range()
+
     def close(
             self
     ):
@@ -108,6 +131,7 @@ class ContinuousActionPolicy(ParameterizedPolicy, ABC):
         self.environment = environment
         self.feature_extractor = feature_extractor
         self.plot_policy = plot_policy
+
         self.action_scatter_plot = None
         if self.plot_policy:
             self.action_scatter_plot = ScatterPlot('Actions', self.environment.get_action_dimension_names(), None)
@@ -197,7 +221,10 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
         ])
 
         # calculate per-update gradients
-        action_density_gradients_wrt_theta_mean, action_density_gradients_wrt_theta_cov = self.get_action_density_gradients_vmap(
+        (
+            action_density_gradients_wrt_theta_mean,
+            action_density_gradients_wrt_theta_cov
+        ) = self.get_action_density_gradients_vmap(
             self.theta_mean,
             self.theta_cov,
             intercept_state_feature_matrix,
@@ -366,8 +393,7 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
             max_values=None
         )
 
-        if self.plot_policy:
-            self.action_scatter_plot.update(action_value)
+        self.update_action_scatter_plot(a)
 
         return {a: 1.0}
 
@@ -441,8 +467,6 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
     by an extractor derived from `rlai.v_S.function_approximation.models.feature_extraction.StateFeatureExtractor`.
     """
 
-    MAX_BETA_SHAPE_VALUE = 50.0
-
     @classmethod
     def init_from_arguments(
             cls,
@@ -505,7 +529,10 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
         for action_i, (action_i_theta_a, action_i_theta_b, action_i_values) in enumerate(zip(self.action_theta_a, self.action_theta_b, action_matrix.T)):
 
             # calculate per-update gradients for the current action
-            action_density_gradients_wrt_theta_a, action_density_gradients_wrt_theta_b = self.get_action_density_gradients_vmap(
+            (
+                action_density_gradients_wrt_theta_a,
+                action_density_gradients_wrt_theta_b
+            ) = self.get_action_density_gradients_vmap(
                 action_i_theta_a,
                 action_i_theta_b,
                 intercept_state_feature_matrix,
@@ -534,9 +561,7 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
                     self.action_theta_a[action_i, :] += alpha * target * (action_density_gradient_wrt_theta_a / p_a_s)
                     self.action_theta_b[action_i, :] += alpha * target * (action_density_gradient_wrt_theta_b / p_a_s)
 
-        if self.plot_policy:
-            self.action_scatter_plot.reset_y_range()
-            self.beta_shape_scatter_plot.reset_y_range()
+        self.reset_action_scatter_plot_y_range()
 
         if logging.getLogger().level <= logging.DEBUG:
             row_names = [
@@ -551,6 +576,18 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
                 for row in [theta_a_row, theta_b_row]
             ], index=row_names, columns=col_names)
             logging.debug(f'Per-action beta hyperparameters:\n{tabulate(theta_df, headers="keys", tablefmt="psql")}')
+
+    def reset_action_scatter_plot_y_range(
+            self
+    ):
+        """
+        Reset the y-range in the scatter plot.
+        """
+
+        super().reset_action_scatter_plot_y_range()
+
+        if self.beta_shape_scatter_plot is not None:
+            self.beta_shape_scatter_plot.reset_y_range()
 
     @staticmethod
     def get_action_density(
@@ -569,11 +606,8 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
         :return: Value of the PDF.
         """
 
-        a_x = jnp.dot(theta_a, state_features)
-        a = 1.0 + (1.0 / (1.0 + jnp.exp(-a_x))) * (ContinuousActionBetaDistributionPolicy.MAX_BETA_SHAPE_VALUE - 1.0)
-
-        b_x = jnp.dot(theta_b, state_features)
-        b = 1.0 + (1.0 / (1.0 + jnp.exp(-b_x))) * (ContinuousActionBetaDistributionPolicy.MAX_BETA_SHAPE_VALUE - 1.0)
+        a = 1.0 + jnp.exp(jnp.dot(theta_a, state_features))
+        b = 1.0 + jnp.exp(jnp.dot(theta_b, state_features))
 
         return jstats.beta.pdf(x=action_value, a=a, b=b, loc=0.0, scale=1.0)
 
@@ -691,13 +725,10 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
         intercept_state_features = np.append([1.0], self.feature_extractor.extract(state))
 
         # calculate the modeled shape parameters of each action dimension
-        action_a_x = self.action_theta_a.dot(intercept_state_features)
-        action_a = 1.0 + (1.0 / (1.0 + np.exp(-action_a_x))) * (ContinuousActionBetaDistributionPolicy.MAX_BETA_SHAPE_VALUE - 1.0)
+        action_a = 1.0 + np.exp(self.action_theta_a.dot(intercept_state_features))
+        action_b = 1.0 + np.exp(self.action_theta_b.dot(intercept_state_features))
 
-        action_b_x = self.action_theta_b.dot(intercept_state_features)
-        action_b = 1.0 + (1.0 / (1.0 + np.exp(-action_b_x))) * (ContinuousActionBetaDistributionPolicy.MAX_BETA_SHAPE_VALUE - 1.0)
-
-        # sample each of the n action dimensions and rescale
+        # sample each of the action dimensions and rescale
         action_value = self.rescale(
             np.array([
                 stats.beta.rvs(a=a, b=b, loc=0.0, scale=1.0, random_state=self.random_state)
@@ -712,7 +743,7 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
         )
 
         if self.plot_policy:
-            self.action_scatter_plot.update(action_value)
+            self.update_action_scatter_plot(a)
             self.beta_shape_scatter_plot.update(np.array([
                 v
                 for a, b in zip(action_a, action_b)

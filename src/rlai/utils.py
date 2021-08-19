@@ -489,7 +489,7 @@ class ScatterPlot:
         :param y_values: New y values.
         """
 
-        if np.isinf(y_values).any():
+        if np.isinf(y_values).any() or np.isnan(y_values).any():
             return
 
         # expand y range if needed. never shrink it. this helps to keep the visual interpretable.
