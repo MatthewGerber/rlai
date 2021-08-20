@@ -182,7 +182,7 @@ class Gym(ContinuousMdpEnvironment):
 
         # override reward per environment
         if self.gym_id == 'LunarLanderContinuous-v2':
-            reward = -np.abs(observation[0:6]).sum() if done else 0.0
+            reward = -np.abs(observation[0:6]).sum()
 
         # call render if rendering manually
         if self.check_render_current_episode(True):

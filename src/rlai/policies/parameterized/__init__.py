@@ -48,6 +48,15 @@ class ParameterizedPolicy(Policy, ABC):
         self.update_batch_alpha.append(alpha)
         self.update_batch_target.append(target)
 
+    def updates_available(
+            self
+    ) -> bool:
+        """
+        Check whether updates are available.
+        """
+
+        return len(self.update_batch_a) > 0
+
     def commit_updates(
             self
     ):
@@ -55,12 +64,12 @@ class ParameterizedPolicy(Policy, ABC):
         Commit updates that were previously appended with calls to `append_update`.
         """
 
-        self.__commit_updates__()
-
-        self.update_batch_a.clear()
-        self.update_batch_s.clear()
-        self.update_batch_alpha.clear()
-        self.update_batch_target.clear()
+        if self.updates_available():
+            self.__commit_updates__()
+            self.update_batch_a.clear()
+            self.update_batch_s.clear()
+            self.update_batch_alpha.clear()
+            self.update_batch_target.clear()
 
     @abstractmethod
     def __commit_updates__(
