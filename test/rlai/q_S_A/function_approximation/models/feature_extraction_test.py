@@ -8,8 +8,7 @@ from numpy.random import RandomState
 
 from rlai.actions import Action
 from rlai.environments.gridworld import GridworldFeatureExtractor, Gridworld
-from rlai.models.feature_extraction import NonstationaryFeatureScaler
-from rlai.q_S_A.function_approximation.models.feature_extraction import OneHotCategoricalFeatureInteracter
+from rlai.models.feature_extraction import NonstationaryFeatureScaler, OneHotCategoricalFeatureInteracter
 from rlai.states.mdp import MdpState
 
 

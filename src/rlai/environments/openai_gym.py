@@ -17,10 +17,10 @@ from rlai.actions import Action, DiscretizedAction, ContinuousMultiDimensionalAc
 from rlai.agents.mdp import MdpAgent
 from rlai.environments.mdp import ContinuousMdpEnvironment
 from rlai.meta import rl_text
-from rlai.models.feature_extraction import NonstationaryFeatureScaler, FeatureExtractor
+from rlai.models.feature_extraction import NonstationaryFeatureScaler, FeatureExtractor, \
+    OneHotCategoricalFeatureInteracter, OneHotCategory
 from rlai.q_S_A.function_approximation.models.feature_extraction import (
-    StateActionInteractionFeatureExtractor,
-    OneHotCategoricalFeatureInteracter
+    StateActionInteractionFeatureExtractor
 )
 from rlai.rewards import Reward
 from rlai.states.mdp import MdpState
@@ -581,6 +581,7 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
 
         self.check_state_and_action_lists(states, actions)
 
+        # extract and scale features
         X = np.array([
             np.append(state.observation, state.observation ** 2)
             for state in states
@@ -588,18 +589,18 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
 
         X = self.feature_scaler.scale_features(X, for_fitting)
 
-        contexts = [
-            CartpoleFeatureContext(
-                cart_left_of_center=state.observation[0] < 0,
-                cart_moving_left=state.observation[1] < 0,
-                pole_left_of_vertical=state.observation[2] < 0,
-                pole_rotating_left=state.observation[3] < 0
-            )
+        # interacct feature vectors per state category
+        state_categories = [
+            OneHotCategory(*[
+                obs_feature < 0.0
+                for obs_feature in state.observation
+            ])
             for state in states
         ]
 
-        X = self.context_interacter.interact(X, contexts)
+        X = self.state_category_interacter.interact(X, state_categories)
 
+        # interact features per action
         X = self.interact(
             state_features=X,
             actions=actions
@@ -637,98 +638,17 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
             ]
         )
 
-        self.contexts = [
-            CartpoleFeatureContext(*context_bools)
-            for context_bools in product([True, False], [True, False], [True, False], [True, False])
-        ]
-
-        self.context_interacter = OneHotCategoricalFeatureInteracter(self.contexts)
+        # interact features with relevant state categories
+        self.state_category_interacter = OneHotCategoricalFeatureInteracter([
+            OneHotCategory(*category_args)
+            for category_args in product([True, False], [True, False], [True, False], [True, False])
+        ])
 
         self.feature_scaler = NonstationaryFeatureScaler(
             num_observations_refit_feature_scaler=2000,
             refit_history_length=100000,
             refit_weight_decay=0.99999
         )
-
-
-class CartpoleFeatureContext:
-    """
-    Categorical context within with a feature explains an outcome independently of its explanation in another context.
-    This works quite similarly to traditional categorical interactions, except that they are specified programmatically
-    by this class.
-    """
-
-    def __init__(
-            self,
-            cart_left_of_center: bool,
-            cart_moving_left: bool,
-            pole_left_of_vertical: bool,
-            pole_rotating_left: bool
-    ):
-        """
-        Initialize the context.
-
-        :param cart_left_of_center: Left of center.
-        :param cart_moving_left: Moving left.
-        :param pole_left_of_vertical: Left of vertical.
-        :param pole_rotating_left: Rotating left.
-        """
-
-        self.cart_left_of_center = cart_left_of_center
-        self.cart_moving_left = cart_moving_left
-        self.pole_left_of_vertical = pole_left_of_vertical
-        self.pole_rotating_left = pole_rotating_left
-        self.id = str(self)
-
-    def __eq__(
-            self,
-            other
-    ) -> bool:
-        """
-        Check equality.
-
-        :param other: Other context.
-        :return: True if equal and False otherwise.
-        """
-
-        other: CartpoleFeatureContext
-
-        return self.id == other.id
-
-    def __ne__(
-            self,
-            other
-    ) -> bool:
-        """
-        Check inequality.
-
-        :param other: Other context.
-        :return: True if unequal and False otherwise.
-        """
-
-        return not (self == other)
-
-    def __hash__(
-            self
-    ) -> int:
-        """
-        Get hash code.
-
-        :return: Hash code.
-        """
-
-        return hash(self.id)
-
-    def __str__(
-            self
-    ) -> str:
-        """
-        Get string.
-
-        :return: String.
-        """
-
-        return f'{self.cart_left_of_center}_{self.cart_moving_left}_{self.pole_left_of_vertical}_{self.pole_rotating_left}'
 
 
 @rl_text(chapter='Feature Extractors', page=1)
@@ -810,3 +730,47 @@ class ContinuousFeatureExtractor(StateFeatureExtractor):
                 refit_history_length=10000,
                 refit_weight_decay=0.99999
             )
+
+
+class ContinuousLunarLanderFeatureExtractor(ContinuousFeatureExtractor):
+    """
+    Feature extractor for the continuous lunar lander.
+    """
+
+    def extract(
+            self,
+            state: GymState,
+    ) -> np.ndarray:
+
+        X = super().extract(state)
+
+        coded_idxs = [0, 2, 3, 4, 5]
+
+        values_to_code = X[coded_idxs]
+
+        # interact feature vectors per state category
+        state_category = OneHotCategory(*[
+            obs_feature < 0.0
+            for obs_feature in state.observation[coded_idxs]
+        ])
+
+        coded_features = self.state_category_interacter.interact(np.array([values_to_code]), [state_category])[0]
+
+        X = np.append(coded_features, X[[1, 6, 7]])
+
+        return X
+
+    def __init__(
+            self
+    ):
+        """
+        Initialize the feature extractor.
+        """
+
+        super().__init__()
+
+        # interact features with relevant state categories
+        self.state_category_interacter = OneHotCategoricalFeatureInteracter([
+            OneHotCategory(*category_args)
+            for category_args in product([True, False], [True, False], [True, False], [True, False], [True, False])
+        ])

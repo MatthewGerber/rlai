@@ -563,19 +563,19 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
 
         self.reset_action_scatter_plot_y_range()
 
-        if logging.getLogger().level <= logging.DEBUG:
-            row_names = [
-                f'{action_name}_{p}'
-                for action_name in self.environment.get_action_dimension_names()
-                for p in ['a', 'b']
-            ]
-            col_names = ['intercept'] + self.environment.get_state_dimension_names()
-            theta_df = pd.DataFrame([
-                row
-                for theta_a_row, theta_b_row in zip(self.action_theta_a, self.action_theta_b)
-                for row in [theta_a_row, theta_b_row]
-            ], index=row_names, columns=col_names)
-            logging.debug(f'Per-action beta hyperparameters:\n{tabulate(theta_df, headers="keys", tablefmt="psql")}')
+        # if logging.getLogger().level <= logging.DEBUG:
+        #     row_names = [
+        #         f'{action_name}_{p}'
+        #         for action_name in self.environment.get_action_dimension_names()
+        #         for p in ['a', 'b']
+        #     ]
+        #     col_names = ['intercept'] + self.environment.get_state_dimension_names()
+        #     theta_df = pd.DataFrame([
+        #         row
+        #         for theta_a_row, theta_b_row in zip(self.action_theta_a, self.action_theta_b)
+        #         for row in [theta_a_row, theta_b_row]
+        #     ], index=row_names, columns=col_names)
+        #     logging.debug(f'Per-action beta hyperparameters:\n{tabulate(theta_df, headers="keys", tablefmt="psql")}')
 
     def reset_action_scatter_plot_y_range(
             self
@@ -690,10 +690,9 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
             plot_policy=plot_policy
         )
 
-        # coefficients for shape parameters a and b:  one row per action and one column per state feature (plus 1 for
-        # the bias/intercept).
-        self.action_theta_a = np.zeros(shape=(self.environment.get_action_space_dimensionality(), self.environment.get_state_space_dimensionality() + 1))
-        self.action_theta_b = np.zeros(shape=(self.environment.get_action_space_dimensionality(), self.environment.get_state_space_dimensionality() + 1))
+        # coefficients for shape parameters a and b:
+        self.action_theta_a = None
+        self.action_theta_b = None
 
         # get jax function for gradients with respect to theta_a and theta_b. vectorize the gradient calculation over
         # input arrays for state and action values.
@@ -723,6 +722,13 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
         self.set_action(state)
 
         intercept_state_features = np.append([1.0], self.feature_extractor.extract(state))
+
+        # coefficients for shape parameters a and b
+        if self.action_theta_a is None:
+            self.action_theta_a = np.zeros(shape=(self.environment.get_action_space_dimensionality(), intercept_state_features.shape[0]))
+
+        if self.action_theta_b is None:
+            self.action_theta_b = np.zeros(shape=(self.environment.get_action_space_dimensionality(), intercept_state_features.shape[0]))
 
         # calculate the modeled shape parameters of each action dimension
         action_a = 1.0 + np.exp(self.action_theta_a.dot(intercept_state_features))

@@ -1,10 +1,11 @@
 from abc import ABC, abstractmethod
 from argparse import ArgumentParser
+from itertools import product
 from typing import List, Tuple, Any, Optional
 
 import numpy as np
 from sklearn.exceptions import NotFittedError
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
 
 from rlai.environments.mdp import MdpEnvironment
 from rlai.meta import rl_text
@@ -163,3 +164,125 @@ class NonstationaryFeatureScaler:
         self.refit_history: Optional[np.ndarray] = None
         self.feature_scaler = StandardScaler()
         self.num_observations = 0
+
+
+@rl_text(chapter='Feature Extractors', page=1)
+class OneHotCategoricalFeatureInteracter:
+    """
+    Feature interacter for one-hot encoded categorical values.
+    """
+
+    def interact(
+            self,
+            feature_matrix: np.ndarray,
+            categorical_values: List[Any]
+    ) -> np.ndarray:
+        """
+        Perform one-hot interaction of a matrix of feature vectors with associated categorical levels.
+
+        :param feature_matrix: Feature matrix (#obs, #features).
+        :param categorical_values: List of categorical levels, with length equal to #obs.
+        :return: Interacted feature matrix (#obs, #features * #levels).
+        """
+
+        num_rows = feature_matrix.shape[0]
+        num_cats = len(categorical_values)
+        if num_rows != num_cats:
+            raise ValueError(f'Expected {num_rows} categorical values but got {num_cats}')
+
+        categorical_array = np.array(categorical_values).reshape(-1, 1)
+        encoded_categoricals = self.category_encoder.transform(categorical_array).toarray()
+
+        # interact each feature-vector with its associated one-hot encoded categorical vector
+        interacted_state_features = np.array([
+            [level * value for level, value in product(encoded_categorical, features_vector)]
+            for features_vector, encoded_categorical in zip(feature_matrix, encoded_categoricals)
+        ])
+
+        return interacted_state_features
+
+    def __init__(
+            self,
+            categories: List[Any]
+    ):
+        """
+        Initialize the interacter.
+
+        :param categories: List of categories that will be one-hot encoded. These can be of any type that is hashable.
+        See `rlai.models.feature_extraction.OneHotCategory` for a general-purpose category class.
+        """
+
+        category_array = np.array([categories])
+        self.category_encoder = OneHotEncoder(categories=category_array)
+        self.category_encoder.fit(category_array.reshape(-1, 1))
+
+
+@rl_text(chapter='Feature Extractors', page=1)
+class OneHotCategory:
+    """
+    General-purpose category specification. Instances of this class are passed to
+    `rlai.models.feature_extraction.OneHotCategoricalFeatureInteracter` to achieve one-hot encoding of feature vectors.
+    """
+
+    def __init__(
+            self,
+            *args
+    ):
+        """
+        Initialize the category.
+
+        :param args: Arguments that comprise the category. Each argument will be cast to a string, and the resulting
+        strings will be concatenated to form the category identifier.
+        """
+
+        self.id = '_'.join(str(arg) for arg in args)
+
+    def __eq__(
+            self,
+            other
+    ) -> bool:
+        """
+        Check equality.
+
+        :param other: Other category.
+        :return: True if equal and False otherwise.
+        """
+
+        other: OneHotCategory
+
+        return self.id == other.id
+
+    def __ne__(
+            self,
+            other
+    ) -> bool:
+        """
+        Check inequality.
+
+        :param other: Other category.
+        :return: True if unequal and False otherwise.
+        """
+
+        return not (self == other)
+
+    def __hash__(
+            self
+    ) -> int:
+        """
+        Get hash code.
+
+        :return: Hash code.
+        """
+
+        return hash(self.id)
+
+    def __str__(
+            self
+    ) -> str:
+        """
+        Get string.
+
+        :return: String.
+        """
+
+        return self.id
