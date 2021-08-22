@@ -347,13 +347,10 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
             plot_policy=plot_policy
         )
 
-        # coefficients for multi-dimensional mean:  one row per action and one column per state feature (plus 1 for the
-        # bias/intercept).
-        self.theta_mean = np.zeros(shape=(self.environment.get_action_space_dimensionality(), self.environment.get_state_space_dimensionality() + 1))
-
-        # coefficients for multi-dimensional covariance:  one row per entry in the covariance matrix (a square matrix
-        # with each action along each dimension) and one column per state feature (plus 1 for the bias/intercept).
-        self.theta_cov = np.zeros(shape=(self.environment.get_action_space_dimensionality() ** 2, self.environment.get_state_space_dimensionality() + 1))
+        # coefficients for mean and covariance. these will be initialized upon the first call to the feature extractor
+        # within __getitem__.
+        self.theta_mean = None
+        self.theta_cov = None
 
         self.get_action_density_gradients = jit(grad(self.get_action_density, argnums=(0, 1)))
         self.get_action_density_gradients_vmap = jit(vmap(self.get_action_density_gradients, in_axes=(None, None, 0, 0)))
@@ -373,6 +370,13 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
 
         intercept_state_features = np.append([1.0], self.feature_extractor.extract(state))
 
+        # initialize coefficients for mean and covariance
+        if self.theta_mean is None:
+            self.theta_mean = np.zeros(shape=(self.environment.get_action_space_dimensionality(), intercept_state_features.shape[0]))
+
+        if self.theta_cov is None:
+            self.theta_cov = np.zeros(shape=(self.environment.get_action_space_dimensionality() ** 2, intercept_state_features.shape[0]))
+
         # calculate the modeled mean and covariance of the n-dimensional action
         mean = self.theta_mean.dot(intercept_state_features)
         cov = self.get_covariance_matrix(
@@ -387,15 +391,15 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
         if np.isscalar(action_value):
             action_value = np.array([action_value])
 
-        a = ContinuousMultiDimensionalAction(
+        action = ContinuousMultiDimensionalAction(
             value=action_value,
             min_values=None,
             max_values=None
         )
 
-        self.update_action_scatter_plot(a)
+        self.update_action_scatter_plot(action)
 
-        return {a: 1.0}
+        return {action: 1.0}
 
     def __getstate__(
             self
@@ -563,19 +567,23 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
 
         self.reset_action_scatter_plot_y_range()
 
-        # if logging.getLogger().level <= logging.DEBUG:
-        #     row_names = [
-        #         f'{action_name}_{p}'
-        #         for action_name in self.environment.get_action_dimension_names()
-        #         for p in ['a', 'b']
-        #     ]
-        #     col_names = ['intercept'] + self.environment.get_state_dimension_names()
-        #     theta_df = pd.DataFrame([
-        #         row
-        #         for theta_a_row, theta_b_row in zip(self.action_theta_a, self.action_theta_b)
-        #         for row in [theta_a_row, theta_b_row]
-        #     ], index=row_names, columns=col_names)
-        #     logging.debug(f'Per-action beta hyperparameters:\n{tabulate(theta_df, headers="keys", tablefmt="psql")}')
+        # only output the hyperparameter table if we have a state-dimension name for each feature. some feature
+        # extractors expand the feature space beyond the dimensions, and we don't have a good way to generate names for
+        # these extra dimensions. such extractors also tend to generate large feature spaces for which tabular output
+        # isn't readable.
+        if logging.getLogger().level <= logging.DEBUG and self.action_theta_a.shape[1] == len(self.environment.get_state_dimension_names()) + 1:
+            row_names = [
+                f'{action_name}_{p}'
+                for action_name in self.environment.get_action_dimension_names()
+                for p in ['a', 'b']
+            ]
+            col_names = ['intercept'] + self.environment.get_state_dimension_names()
+            theta_df = pd.DataFrame([
+                row
+                for theta_a_row, theta_b_row in zip(self.action_theta_a, self.action_theta_b)
+                for row in [theta_a_row, theta_b_row]
+            ], index=row_names, columns=col_names)
+            logging.debug(f'Per-action beta hyperparameters:\n{tabulate(theta_df, headers="keys", tablefmt="psql")}')
 
     def reset_action_scatter_plot_y_range(
             self
@@ -690,7 +698,8 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
             plot_policy=plot_policy
         )
 
-        # coefficients for shape parameters a and b:
+        # coefficients for shape parameters a and b. these will be initialized upon the first call to the feature
+        # extractor within __getitem__.
         self.action_theta_a = None
         self.action_theta_b = None
 
@@ -723,7 +732,7 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
 
         intercept_state_features = np.append([1.0], self.feature_extractor.extract(state))
 
-        # coefficients for shape parameters a and b
+        # initialize coefficients for shape parameters a and b
         if self.action_theta_a is None:
             self.action_theta_a = np.zeros(shape=(self.environment.get_action_space_dimensionality(), intercept_state_features.shape[0]))
 
@@ -742,21 +751,21 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
             ])
         )
 
-        a = ContinuousMultiDimensionalAction(
+        action = ContinuousMultiDimensionalAction(
             value=action_value,
             min_values=self.action.min_values,
             max_values=self.action.max_values
         )
 
         if self.plot_policy:
-            self.update_action_scatter_plot(a)
+            self.update_action_scatter_plot(action)
             self.beta_shape_scatter_plot.update(np.array([
                 v
                 for a, b in zip(action_a, action_b)
                 for v in [a, b]
             ]))
 
-        return {a: 1.0}
+        return {action: 1.0}
 
     def __getstate__(
             self

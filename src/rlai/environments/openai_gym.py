@@ -17,8 +17,12 @@ from rlai.actions import Action, DiscretizedAction, ContinuousMultiDimensionalAc
 from rlai.agents.mdp import MdpAgent
 from rlai.environments.mdp import ContinuousMdpEnvironment
 from rlai.meta import rl_text
-from rlai.models.feature_extraction import NonstationaryFeatureScaler, FeatureExtractor, \
-    OneHotCategoricalFeatureInteracter, OneHotCategory
+from rlai.models.feature_extraction import (
+    NonstationaryFeatureScaler,
+    FeatureExtractor,
+    OneHotCategoricalFeatureInteracter,
+    OneHotCategory
+)
 from rlai.q_S_A.function_approximation.models.feature_extraction import (
     StateActionInteractionFeatureExtractor
 )
@@ -182,7 +186,7 @@ class Gym(ContinuousMdpEnvironment):
 
         # override reward per environment
         if self.gym_id == 'LunarLanderContinuous-v2':
-            reward = -np.abs(observation[0:6]).sum()
+            reward = -np.abs(observation[0:6]).sum() if done else 0.0
 
         # call render if rendering manually
         if self.check_render_current_episode(True):
@@ -638,10 +642,10 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
             ]
         )
 
-        # interact features with relevant state categories
+        # create interacter over cartesian product of state categories
         self.state_category_interacter = OneHotCategoricalFeatureInteracter([
-            OneHotCategory(*category_args)
-            for category_args in product([True, False], [True, False], [True, False], [True, False])
+            OneHotCategory(*args)
+            for args in product([True, False], [True, False], [True, False], [True, False])
         ])
 
         self.feature_scaler = NonstationaryFeatureScaler(
@@ -727,11 +731,12 @@ class ContinuousFeatureExtractor(StateFeatureExtractor):
 
         self.feature_scaler = NonstationaryFeatureScaler(
                 num_observations_refit_feature_scaler=2000,
-                refit_history_length=10000,
+                refit_history_length=100000,
                 refit_weight_decay=0.99999
             )
 
 
+@rl_text(chapter='Feature Extractors', page=1)
 class ContinuousLunarLanderFeatureExtractor(ContinuousFeatureExtractor):
     """
     Feature extractor for the continuous lunar lander.
@@ -741,24 +746,34 @@ class ContinuousLunarLanderFeatureExtractor(ContinuousFeatureExtractor):
             self,
             state: GymState,
     ) -> np.ndarray:
+        """
+        Extract state features.
 
-        X = super().extract(state)
+        :param state: State.
+        :return: State-feature vector.
+        """
 
-        coded_idxs = [0, 2, 3, 4, 5]
+        # extract raw feature values
+        raw_feature_values = super().extract(state)
 
-        values_to_code = X[coded_idxs]
-
-        # interact feature vectors per state category
+        # features 0 (x pos), 2 (x velocity), 3 (y velocity), 4 (angle), and 5 (angular velocity) are signed and can be
+        # encoded categorically.
+        encoded_feature_idxs = [0, 2, 3, 4, 5]
+        feature_values_to_encode = raw_feature_values[encoded_feature_idxs]
         state_category = OneHotCategory(*[
             obs_feature < 0.0
-            for obs_feature in state.observation[coded_idxs]
+            for obs_feature in state.observation[encoded_feature_idxs]
         ])
 
-        coded_features = self.state_category_interacter.interact(np.array([values_to_code]), [state_category])[0]
+        encoded_feature_values = self.state_category_interacter.interact(
+            np.array([feature_values_to_encode]),
+            [state_category]
+        )[0]
 
-        X = np.append(coded_features, X[[1, 6, 7]])
+        # combine encoded and unencoded feature values
+        final_feature_values = np.append(encoded_feature_values, raw_feature_values[[1, 6, 7]])
 
-        return X
+        return final_feature_values
 
     def __init__(
             self
