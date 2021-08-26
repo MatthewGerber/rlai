@@ -248,8 +248,8 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
             p_a_s = self[s][a]
 
             # check for nans in the gradients and skip the update if any are found
-            if np.isnan(action_density_gradient_wrt_theta_mean).any() or np.isnan(action_density_gradient_wrt_theta_cov).any():  # pragma no cover
-                warnings.warn('Gradients contain np.nan value(s). Skipping update.')
+            if np.isinf(action_density_gradient_wrt_theta_mean).any() or np.isnan(action_density_gradient_wrt_theta_mean).any() or np.isinf(action_density_gradient_wrt_theta_cov).any() or np.isnan(action_density_gradient_wrt_theta_cov).any():  # pragma no cover
+                warnings.warn('Gradients contain np.inf or np.nan value(s). Skipping update.')
             else:
 
                 # check whether the covariance matrix resulting from the updated parameters will be be positive
@@ -559,8 +559,8 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
                 p_a_s = self[s][a]
 
                 # check for nans in the gradients and skip the update if any are found
-                if np.isnan(action_density_gradient_wrt_theta_a).any() or np.isnan(action_density_gradient_wrt_theta_b).any():  # pragma no cover
-                    warnings.warn('Gradients contain np.nan value(s). Skipping update.')
+                if np.isinf(action_density_gradient_wrt_theta_a).any() or np.isnan(action_density_gradient_wrt_theta_a).any() or np.isinf(action_density_gradient_wrt_theta_b).any() or np.isnan(action_density_gradient_wrt_theta_b).any():  # pragma no cover
+                    warnings.warn('Gradients contain np.inf or np.nan value(s). Skipping update.')
                 else:
                     self.action_theta_a[action_i, :] += alpha * target * (action_density_gradient_wrt_theta_a / p_a_s)
                     self.action_theta_b[action_i, :] += alpha * target * (action_density_gradient_wrt_theta_b / p_a_s)
@@ -614,8 +614,8 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
         :return: Value of the PDF.
         """
 
-        a = 1.0 + jnp.exp(jnp.dot(theta_a, state_features))
-        b = 1.0 + jnp.exp(jnp.dot(theta_b, state_features))
+        a = jnp.exp(jnp.dot(theta_a, state_features))
+        b = jnp.exp(jnp.dot(theta_b, state_features))
 
         return jstats.beta.pdf(x=action_value, a=a, b=b, loc=0.0, scale=1.0)
 
@@ -734,14 +734,14 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
 
         # initialize coefficients for shape parameters a and b
         if self.action_theta_a is None:
-            self.action_theta_a = np.zeros(shape=(self.environment.get_action_space_dimensionality(), intercept_state_features.shape[0]))
+            self.action_theta_a = -1.0 * np.ones(shape=(self.environment.get_action_space_dimensionality(), intercept_state_features.shape[0]))
 
         if self.action_theta_b is None:
-            self.action_theta_b = np.zeros(shape=(self.environment.get_action_space_dimensionality(), intercept_state_features.shape[0]))
+            self.action_theta_b = -1.0 * np.ones(shape=(self.environment.get_action_space_dimensionality(), intercept_state_features.shape[0]))
 
         # calculate the modeled shape parameters of each action dimension
-        action_a = 1.0 + np.exp(self.action_theta_a.dot(intercept_state_features))
-        action_b = 1.0 + np.exp(self.action_theta_b.dot(intercept_state_features))
+        action_a = np.exp(self.action_theta_a.dot(intercept_state_features))
+        action_b = np.exp(self.action_theta_b.dot(intercept_state_features))
 
         # sample each of the action dimensions and rescale
         action_value = self.rescale(

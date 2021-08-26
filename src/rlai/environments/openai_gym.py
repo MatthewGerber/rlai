@@ -71,6 +71,9 @@ class Gym(ContinuousMdpEnvironment):
     Generalized Gym environment. Any OpenAI Gym environment can be executed by supplying the appropriate identifier.
     """
 
+    LUNAR_LANDER_CONTINUOUS_V2 = 'LunarLanderContinuous-v2'
+    MOUNTAIN_CAR_CONTINUOUS_V0 = 'MountainCarContinuous-v0'
+
     @classmethod
     def get_argument_parser(
             cls,
@@ -185,7 +188,7 @@ class Gym(ContinuousMdpEnvironment):
         observation, reward, done, _ = self.gym_native.step(action=gym_action)
 
         # override reward per environment
-        if self.gym_id == 'LunarLanderContinuous-v2':
+        if self.gym_id == Gym.LUNAR_LANDER_CONTINUOUS_V2:
             reward = -np.abs(observation[0:6]).sum() if done else 0.0
 
         # call render if rendering manually
@@ -332,7 +335,7 @@ class Gym(ContinuousMdpEnvironment):
         :return: List of names.
         """
 
-        if self.gym_id == 'LunarLanderContinuous-v2':
+        if self.gym_id == Gym.LUNAR_LANDER_CONTINUOUS_V2:
             names = [
                 'posX',
                 'posY',
@@ -342,6 +345,11 @@ class Gym(ContinuousMdpEnvironment):
                 'angV',
                 'leg1Con',
                 'leg2Con'
+            ]
+        elif self.gym_id == Gym.MOUNTAIN_CAR_CONTINUOUS_V0:
+            names = [
+                'position',
+                'velocity'
             ]
         else:  # pragma no cover
             warnings.warn(f'The state dimension names for {self.gym_id} are unknown. Defaulting to numbers.')
@@ -369,10 +377,14 @@ class Gym(ContinuousMdpEnvironment):
         :return: List of names.
         """
 
-        if self.gym_id == 'LunarLanderContinuous-v2':
+        if self.gym_id == Gym.LUNAR_LANDER_CONTINUOUS_V2:
             names = [
                 'main',
                 'side'
+            ]
+        elif self.gym_id == Gym.MOUNTAIN_CAR_CONTINUOUS_V0:
+            names = [
+                'throttle'
             ]
         else:  # pragma no cover
             warnings.warn(f'The action names for {self.gym_id} are unknown. Defaulting to numbers.')
@@ -424,6 +436,7 @@ class Gym(ContinuousMdpEnvironment):
         self.video_directory = video_directory
         self.force = force
         self.steps_per_second = steps_per_second
+        self.gym_native = self.init_gym_native()
         self.plot_environment = plot_environment
         self.state_reward_scatter_plot = None
         if self.plot_environment:
@@ -432,8 +445,6 @@ class Gym(ContinuousMdpEnvironment):
                 self.get_state_dimension_names() + ['reward'],
                 None
             )
-
-        self.gym_native = self.init_gym_native()
 
         if self.continuous_action_discretization_resolution is not None and not isinstance(self.gym_native.action_space, Box):
             raise ValueError('Continuous-action discretization is only valid for Box action-space environments.')
@@ -788,4 +799,53 @@ class ContinuousLunarLanderFeatureExtractor(ContinuousFeatureExtractor):
         self.state_category_interacter = OneHotCategoricalFeatureInteracter([
             OneHotCategory(*category_args)
             for category_args in product([True, False], [True, False], [True, False], [True, False], [True, False])
+        ])
+
+
+@rl_text(chapter='Feature Extractors', page=1)
+class ContinuousMountainCarFeatureExtractor(ContinuousFeatureExtractor):
+    """
+    Feature extractor for the continuous lunar lander.
+    """
+
+    def extract(
+            self,
+            state: GymState,
+    ) -> np.ndarray:
+        """
+        Extract state features.
+
+        :param state: State.
+        :return: State-feature vector.
+        """
+
+        # extract raw feature values
+        raw_feature_values = super().extract(state)
+
+        # encode features
+        state_category = OneHotCategory(*[
+            obs_feature < 0.0
+            for obs_feature in state.observation
+        ])
+
+        encoded_feature_values = self.state_category_interacter.interact(
+            np.array([raw_feature_values]),
+            [state_category]
+        )[0]
+
+        return encoded_feature_values
+
+    def __init__(
+            self
+    ):
+        """
+        Initialize the feature extractor.
+        """
+
+        super().__init__()
+
+        # interact features with relevant state categories
+        self.state_category_interacter = OneHotCategoricalFeatureInteracter([
+            OneHotCategory(*category_args)
+            for category_args in product([True, False], [True, False])
         ])
