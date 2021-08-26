@@ -184,7 +184,7 @@ class ApproximateStateValueEstimator(StateValueEstimator):
         # if we have pending experience, then fit the model and reset the data.
         if self.experience_pending:
 
-            X = self.get_X(self.experience_states)
+            X = self.get_X(self.experience_states, True)
 
             # feature extractors may return a matrix with no columns if extraction was not possible
             if X.shape[1] > 0:
@@ -207,7 +207,7 @@ class ApproximateStateValueEstimator(StateValueEstimator):
         """
 
         # get feature vector
-        X = self.get_X([state])
+        X = self.get_X([state], False)
 
         # feature extractors may return a matrix with no columns if extraction was not possible
         if X.shape[1] == 0:  # pragma no cover
@@ -217,17 +217,19 @@ class ApproximateStateValueEstimator(StateValueEstimator):
 
     def get_X(
             self,
-            states: List[MdpState]
+            states: List[MdpState],
+            refit_scaler: bool
     ) -> np.ndarray:
         """
         Extract features for states.
 
         :param states: States.
+        :param refit_scaler: Whether or not to refit the feature scaler before scaling the extracted features.
         :return: State-feature numpy.ndarray.
         """
 
         return np.array([
-            self.feature_extractor.extract(state)
+            self.feature_extractor.extract(state, refit_scaler)
             for state in states
         ])
 

@@ -207,7 +207,7 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
 
         # extract state-feature matrix
         state_feature_matrix = np.array([
-            self.feature_extractor.extract(s)
+            self.feature_extractor.extract(s, False)
             for s in self.update_batch_s
         ])
 
@@ -244,8 +244,8 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
 
         for a, s, state_features, alpha, target, action_density_gradient_wrt_theta_mean, action_density_gradient_wrt_theta_cov in updates:
 
-            # TODO:  This is always 1. How to estimate it from the PDF? The multivariate_normal class has a CDF.
-            p_a_s = self[s][a]
+            # TODO:  How to estimate this from the PDF? The multivariate_normal class has a CDF.
+            p_a_s = 1.0
 
             # check for nans in the gradients and skip the update if any are found
             if np.isinf(action_density_gradient_wrt_theta_mean).any() or np.isnan(action_density_gradient_wrt_theta_mean).any() or np.isinf(action_density_gradient_wrt_theta_cov).any() or np.isnan(action_density_gradient_wrt_theta_cov).any():  # pragma no cover
@@ -368,7 +368,7 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
 
         self.set_action(state)
 
-        intercept_state_features = np.append([1.0], self.feature_extractor.extract(state))
+        intercept_state_features = np.append([1.0], self.feature_extractor.extract(state, True))
 
         # initialize coefficients for mean and covariance
         if self.theta_mean is None:
@@ -513,7 +513,7 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
 
         # extract state-feature matrix
         state_feature_matrix = np.array([
-            self.feature_extractor.extract(s)
+            self.feature_extractor.extract(s, False)
             for s in self.update_batch_s
         ])
 
@@ -555,8 +555,8 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
 
             for a, s, alpha, target, action_density_gradient_wrt_theta_a, action_density_gradient_wrt_theta_b in updates:
 
-                # TODO:  This is always 1 but should be calculated per the text. How to estimate it from the PDF?
-                p_a_s = self[s][a]
+                # TODO:  How to estimate this from the PDF?
+                p_a_s = 1.0
 
                 # check for nans in the gradients and skip the update if any are found
                 if np.isinf(action_density_gradient_wrt_theta_a).any() or np.isnan(action_density_gradient_wrt_theta_a).any() or np.isinf(action_density_gradient_wrt_theta_b).any() or np.isnan(action_density_gradient_wrt_theta_b).any():  # pragma no cover
@@ -730,14 +730,14 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
 
         self.set_action(state)
 
-        intercept_state_features = np.append([1.0], self.feature_extractor.extract(state))
+        intercept_state_features = np.append([1.0], self.feature_extractor.extract(state, True))
 
         # initialize coefficients for shape parameters a and b
         if self.action_theta_a is None:
-            self.action_theta_a = -1.0 * np.ones(shape=(self.environment.get_action_space_dimensionality(), intercept_state_features.shape[0]))
+            self.action_theta_a = -1.0 * np.ones(shape=(self.environment.get_action_space_dimensionality(), intercept_state_features.shape[0])) / intercept_state_features.shape[0]
 
         if self.action_theta_b is None:
-            self.action_theta_b = -1.0 * np.ones(shape=(self.environment.get_action_space_dimensionality(), intercept_state_features.shape[0]))
+            self.action_theta_b = -1.0 * np.ones(shape=(self.environment.get_action_space_dimensionality(), intercept_state_features.shape[0])) / intercept_state_features.shape[0]
 
         # calculate the modeled shape parameters of each action dimension
         action_a = np.exp(self.action_theta_a.dot(intercept_state_features))

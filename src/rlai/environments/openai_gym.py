@@ -583,14 +583,14 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
             self,
             states: List[MdpState],
             actions: List[Action],
-            for_fitting: bool
+            refit_scaler: bool
     ) -> np.ndarray:
         """
         Extract features for state-action pairs.
 
         :param states: States.
         :param actions: Actions.
-        :param for_fitting: Whether the extracted features will be used for fitting (True) or prediction (False).
+        :param refit_scaler: Whether or not to refit the feature scaler before scaling the extracted features.
         :return: State-feature numpy.ndarray.
         """
 
@@ -602,7 +602,7 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
             for state in states
         ])
 
-        X = self.feature_scaler.scale_features(X, for_fitting)
+        X = self.feature_scaler.scale_features(X, refit_scaler)
 
         # interacct feature vectors per state category
         state_categories = [
@@ -718,17 +718,19 @@ class ContinuousFeatureExtractor(StateFeatureExtractor):
     def extract(
             self,
             state: GymState,
+            refit_scaler: bool
     ) -> np.ndarray:
         """
         Extract state features.
 
         :param state: State.
+        :param refit_scaler: Whether or not to refit the feature scaler before scaling the extracted features.
         :return: State-feature vector.
         """
 
         return self.feature_scaler.scale_features(
             np.array([state.observation]),
-            for_fitting=True
+            refit_before_scaling=refit_scaler
         )[0]
 
     def __init__(
@@ -756,16 +758,18 @@ class ContinuousLunarLanderFeatureExtractor(ContinuousFeatureExtractor):
     def extract(
             self,
             state: GymState,
+            refit_scaler: bool
     ) -> np.ndarray:
         """
         Extract state features.
 
         :param state: State.
+        :param refit_scaler: Whether or not to refit the feature scaler before scaling the extracted features.
         :return: State-feature vector.
         """
 
         # extract raw feature values
-        raw_feature_values = super().extract(state)
+        raw_feature_values = super().extract(state, refit_scaler)
 
         # features 0 (x pos), 2 (x velocity), 3 (y velocity), 4 (angle), and 5 (angular velocity) are signed and can be
         # encoded categorically.
@@ -811,16 +815,18 @@ class ContinuousMountainCarFeatureExtractor(ContinuousFeatureExtractor):
     def extract(
             self,
             state: GymState,
+            refit_scaler: bool
     ) -> np.ndarray:
         """
         Extract state features.
 
         :param state: State.
+        :param refit_scaler: Whether or not to refit the feature scaler before scaling the extracted features.
         :return: State-feature vector.
         """
 
         # extract raw feature values
-        raw_feature_values = super().extract(state)
+        raw_feature_values = super().extract(state, refit_scaler)
 
         # encode features
         state_category = OneHotCategory(*[

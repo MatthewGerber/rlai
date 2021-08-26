@@ -46,10 +46,10 @@ def test_nonstationary_feature_scaler():
 
     for i in range(20):
         X = numpy.random.rand(10, 5)
-        scaler.scale_features(X, for_fitting=True)
+        scaler.scale_features(X, refit_before_scaling=True)
 
     X = numpy.random.rand(10, 5)
-    X_scaled = scaler.scale_features(X, for_fitting=False)
+    X_scaled = scaler.scale_features(X, refit_before_scaling=False)
 
     # uncomment the following line and run test to update fixture
     # with open(f'{os.path.dirname(__file__)}/fixtures/test_nonstationary_feature_scaler.pickle', 'wb') as file:

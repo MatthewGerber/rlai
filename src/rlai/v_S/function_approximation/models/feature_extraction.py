@@ -17,10 +17,12 @@ class StateFeatureExtractor(FeatureExtractor, ABC):
     def extract(
             self,
             state: MdpState,
+            refit_scaler: bool
     ) -> np.ndarray:
         """
         Extract state features.
 
         :param state: State.
+        :param refit_scaler: Whether or not to refit the feature scaler before scaling the extracted features.
         :return: State-feature vector.
         """

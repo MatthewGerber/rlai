@@ -34,14 +34,14 @@ class FeatureExtractor(BaseFeatureExtractor):
             self,
             states: List[MdpState],
             actions: List[Action],
-            for_fitting: bool
+            refit_scaler: bool
     ) -> Union[pd.DataFrame, np.ndarray]:
         """
         Extract features for state-action pairs.
 
         :param states: States.
         :param actions: Actions.
-        :param for_fitting: Whether the extracted features will be used for fitting (True) or prediction (False).
+        :param refit_scaler: Whether or not to refit the feature scaler before scaling the extracted features.
         :return: State-feature pandas.DataFrame, numpy.ndarray. A DataFrame is only valid with Patsy-style formula
         designs.
         """
@@ -210,14 +210,14 @@ class StateActionIdentityFeatureExtractor(FeatureExtractor):
             self,
             states: List[MdpState],
             actions: List[Action],
-            for_fitting: bool
+            refit_scaler: bool
     ) -> pd.DataFrame:
         """
         Extract features for state-action pairs.
 
         :param states: States.
         :param actions: Actions.
-        :param for_fitting: Whether the extracted features will be used for fitting (True) or prediction (False).
+        :param refit_scaler: Whether or not to refit the feature scaler before scaling the extracted features.
         :return: State-feature pandas.DataFrame.
         """
 

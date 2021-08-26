@@ -80,20 +80,17 @@ class NonstationaryFeatureScaler:
     def scale_features(
             self,
             X: np.ndarray,
-            for_fitting: bool
+            refit_before_scaling: bool
     ) -> np.ndarray:
         """
         Scale features.
 
         :param X: Feature matrix.
-        :param for_fitting: Whether the extracted features will be used for fitting (True) or prediction (False).
+        :param refit_before_scaling: Whether or not to refit the scaler using `X` before scaling.
         :return: Scaled feature matrix.
         """
 
-        # only fit the scaler if the features will be for fitting the model. if they will be for prediction, then we
-        # should use whatever scaling parameters were obtained for fitting, as that's what the model coefficients are
-        # calibrated for.
-        if for_fitting:
+        if refit_before_scaling:
 
             # append feature matrix to the refit history
             if self.refit_history is None:
