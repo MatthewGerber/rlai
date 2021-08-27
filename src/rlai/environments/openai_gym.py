@@ -187,9 +187,16 @@ class Gym(ContinuousMdpEnvironment):
 
         observation, reward, done, _ = self.gym_native.step(action=gym_action)
 
-        # override reward per environment
+        # override reward per environment. in the case of the continuous lunar lander, the ideal landing is zeros across
+        # the board.
         if self.gym_id == Gym.LUNAR_LANDER_CONTINUOUS_V2:
             reward = -np.abs(observation[0:6]).sum() if done else 0.0
+
+        # continuous mountain car:  reward at apex of the climb
+        elif self.gym_id == Gym.MOUNTAIN_CAR_CONTINUOUS_V0:
+            reward = 0.0
+            if self.previous_observation is not None and self.previous_observation[1] > 0.0 and observation[1] <= 0.0 and observation[0] >= -0.4:
+                reward = (observation[0] + 0.4) / (0.45 + 0.4)
 
         # call render if rendering manually
         if self.check_render_current_episode(True):
@@ -210,6 +217,8 @@ class Gym(ContinuousMdpEnvironment):
             terminal=done,
             agent=agent
         )
+
+        self.previous_observation = observation
 
         return self.state, Reward(i=None, r=reward)
 
@@ -437,6 +446,7 @@ class Gym(ContinuousMdpEnvironment):
         self.force = force
         self.steps_per_second = steps_per_second
         self.gym_native = self.init_gym_native()
+        self.previous_observation = None
         self.plot_environment = plot_environment
         self.state_reward_scatter_plot = None
         if self.plot_environment:

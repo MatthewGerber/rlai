@@ -734,10 +734,10 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
 
         # initialize coefficients for shape parameters a and b
         if self.action_theta_a is None:
-            self.action_theta_a = -1.0 * np.ones(shape=(self.environment.get_action_space_dimensionality(), intercept_state_features.shape[0])) / intercept_state_features.shape[0]
+            self.action_theta_a = np.zeros(shape=(self.environment.get_action_space_dimensionality(), intercept_state_features.shape[0]))
 
         if self.action_theta_b is None:
-            self.action_theta_b = -1.0 * np.ones(shape=(self.environment.get_action_space_dimensionality(), intercept_state_features.shape[0])) / intercept_state_features.shape[0]
+            self.action_theta_b = np.zeros(shape=(self.environment.get_action_space_dimensionality(), intercept_state_features.shape[0]))
 
         # calculate the modeled shape parameters of each action dimension
         action_a = np.exp(self.action_theta_a.dot(intercept_state_features))
