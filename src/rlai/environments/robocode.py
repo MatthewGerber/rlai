@@ -674,14 +674,14 @@ class RobocodeFeatureExtractor(FeatureExtractor):
             self,
             states: List[RobocodeState],
             actions: List[Action],
-            for_fitting: bool
+            refit_scaler: bool
     ) -> np.ndarray:
         """
         Extract features for state-action pairs.
 
         :param states: States.
         :param actions: Actions.
-        :param for_fitting: Whether the extracted features will be used for fitting (True) or prediction (False).
+        :param refit_scaler: Whether or not to refit the feature scaler before scaling the extracted features.
         :return: State-feature numpy.ndarray.
         """
 

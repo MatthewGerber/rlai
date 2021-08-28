@@ -207,7 +207,7 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
 
         # extract state-feature matrix
         state_feature_matrix = np.array([
-            self.feature_extractor.extract(s)
+            self.feature_extractor.extract(s, False)
             for s in self.update_batch_s
         ])
 
@@ -244,12 +244,12 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
 
         for a, s, state_features, alpha, target, action_density_gradient_wrt_theta_mean, action_density_gradient_wrt_theta_cov in updates:
 
-            # TODO:  This is always 1. How to estimate it from the PDF? The multivariate_normal class has a CDF.
-            p_a_s = self[s][a]
+            # TODO:  How to estimate this from the PDF? The multivariate_normal class has a CDF.
+            p_a_s = 1.0
 
             # check for nans in the gradients and skip the update if any are found
-            if np.isnan(action_density_gradient_wrt_theta_mean).any() or np.isnan(action_density_gradient_wrt_theta_cov).any():  # pragma no cover
-                warnings.warn('Gradients contain np.nan value(s). Skipping update.')
+            if np.isinf(action_density_gradient_wrt_theta_mean).any() or np.isnan(action_density_gradient_wrt_theta_mean).any() or np.isinf(action_density_gradient_wrt_theta_cov).any() or np.isnan(action_density_gradient_wrt_theta_cov).any():  # pragma no cover
+                warnings.warn('Gradients contain np.inf or np.nan value(s). Skipping update.')
             else:
 
                 # check whether the covariance matrix resulting from the updated parameters will be be positive
@@ -347,13 +347,10 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
             plot_policy=plot_policy
         )
 
-        # coefficients for multi-dimensional mean:  one row per action and one column per state feature (plus 1 for the
-        # bias/intercept).
-        self.theta_mean = np.zeros(shape=(self.environment.get_action_space_dimensionality(), self.environment.get_state_space_dimensionality() + 1))
-
-        # coefficients for multi-dimensional covariance:  one row per entry in the covariance matrix (a square matrix
-        # with each action along each dimension) and one column per state feature (plus 1 for the bias/intercept).
-        self.theta_cov = np.zeros(shape=(self.environment.get_action_space_dimensionality() ** 2, self.environment.get_state_space_dimensionality() + 1))
+        # coefficients for mean and covariance. these will be initialized upon the first call to the feature extractor
+        # within __getitem__.
+        self.theta_mean = None
+        self.theta_cov = None
 
         self.get_action_density_gradients = jit(grad(self.get_action_density, argnums=(0, 1)))
         self.get_action_density_gradients_vmap = jit(vmap(self.get_action_density_gradients, in_axes=(None, None, 0, 0)))
@@ -371,7 +368,14 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
 
         self.set_action(state)
 
-        intercept_state_features = np.append([1.0], self.feature_extractor.extract(state))
+        intercept_state_features = np.append([1.0], self.feature_extractor.extract(state, True))
+
+        # initialize coefficients for mean and covariance
+        if self.theta_mean is None:
+            self.theta_mean = np.zeros(shape=(self.environment.get_action_space_dimensionality(), intercept_state_features.shape[0]))
+
+        if self.theta_cov is None:
+            self.theta_cov = np.zeros(shape=(self.environment.get_action_space_dimensionality() ** 2, intercept_state_features.shape[0]))
 
         # calculate the modeled mean and covariance of the n-dimensional action
         mean = self.theta_mean.dot(intercept_state_features)
@@ -387,15 +391,15 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
         if np.isscalar(action_value):
             action_value = np.array([action_value])
 
-        a = ContinuousMultiDimensionalAction(
+        action = ContinuousMultiDimensionalAction(
             value=action_value,
             min_values=None,
             max_values=None
         )
 
-        self.update_action_scatter_plot(a)
+        self.update_action_scatter_plot(action)
 
-        return {a: 1.0}
+        return {action: 1.0}
 
     def __getstate__(
             self
@@ -509,7 +513,7 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
 
         # extract state-feature matrix
         state_feature_matrix = np.array([
-            self.feature_extractor.extract(s)
+            self.feature_extractor.extract(s, False)
             for s in self.update_batch_s
         ])
 
@@ -551,19 +555,23 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
 
             for a, s, alpha, target, action_density_gradient_wrt_theta_a, action_density_gradient_wrt_theta_b in updates:
 
-                # TODO:  This is always 1 but should be calculated per the text. How to estimate it from the PDF?
-                p_a_s = self[s][a]
+                # TODO:  How to estimate this from the PDF?
+                p_a_s = 1.0
 
                 # check for nans in the gradients and skip the update if any are found
-                if np.isnan(action_density_gradient_wrt_theta_a).any() or np.isnan(action_density_gradient_wrt_theta_b).any():  # pragma no cover
-                    warnings.warn('Gradients contain np.nan value(s). Skipping update.')
+                if np.isinf(action_density_gradient_wrt_theta_a).any() or np.isnan(action_density_gradient_wrt_theta_a).any() or np.isinf(action_density_gradient_wrt_theta_b).any() or np.isnan(action_density_gradient_wrt_theta_b).any():  # pragma no cover
+                    warnings.warn('Gradients contain np.inf or np.nan value(s). Skipping update.')
                 else:
                     self.action_theta_a[action_i, :] += alpha * target * (action_density_gradient_wrt_theta_a / p_a_s)
                     self.action_theta_b[action_i, :] += alpha * target * (action_density_gradient_wrt_theta_b / p_a_s)
 
         self.reset_action_scatter_plot_y_range()
 
-        if logging.getLogger().level <= logging.DEBUG:
+        # only output the hyperparameter table if we have a state-dimension name for each feature. some feature
+        # extractors expand the feature space beyond the dimensions, and we don't have a good way to generate names for
+        # these extra dimensions. such extractors also tend to generate large feature spaces for which tabular output
+        # isn't readable.
+        if logging.getLogger().level <= logging.DEBUG and self.action_theta_a.shape[1] == len(self.environment.get_state_dimension_names()) + 1:
             row_names = [
                 f'{action_name}_{p}'
                 for action_name in self.environment.get_action_dimension_names()
@@ -606,8 +614,8 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
         :return: Value of the PDF.
         """
 
-        a = 1.0 + jnp.exp(jnp.dot(theta_a, state_features))
-        b = 1.0 + jnp.exp(jnp.dot(theta_b, state_features))
+        a = jnp.exp(jnp.dot(theta_a, state_features))
+        b = jnp.exp(jnp.dot(theta_b, state_features))
 
         return jstats.beta.pdf(x=action_value, a=a, b=b, loc=0.0, scale=1.0)
 
@@ -690,10 +698,10 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
             plot_policy=plot_policy
         )
 
-        # coefficients for shape parameters a and b:  one row per action and one column per state feature (plus 1 for
-        # the bias/intercept).
-        self.action_theta_a = np.zeros(shape=(self.environment.get_action_space_dimensionality(), self.environment.get_state_space_dimensionality() + 1))
-        self.action_theta_b = np.zeros(shape=(self.environment.get_action_space_dimensionality(), self.environment.get_state_space_dimensionality() + 1))
+        # coefficients for shape parameters a and b. these will be initialized upon the first call to the feature
+        # extractor within __getitem__.
+        self.action_theta_a = None
+        self.action_theta_b = None
 
         # get jax function for gradients with respect to theta_a and theta_b. vectorize the gradient calculation over
         # input arrays for state and action values.
@@ -722,11 +730,18 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
 
         self.set_action(state)
 
-        intercept_state_features = np.append([1.0], self.feature_extractor.extract(state))
+        intercept_state_features = np.append([1.0], self.feature_extractor.extract(state, True))
+
+        # initialize coefficients for shape parameters a and b
+        if self.action_theta_a is None:
+            self.action_theta_a = np.zeros(shape=(self.environment.get_action_space_dimensionality(), intercept_state_features.shape[0]))
+
+        if self.action_theta_b is None:
+            self.action_theta_b = np.zeros(shape=(self.environment.get_action_space_dimensionality(), intercept_state_features.shape[0]))
 
         # calculate the modeled shape parameters of each action dimension
-        action_a = 1.0 + np.exp(self.action_theta_a.dot(intercept_state_features))
-        action_b = 1.0 + np.exp(self.action_theta_b.dot(intercept_state_features))
+        action_a = np.exp(self.action_theta_a.dot(intercept_state_features))
+        action_b = np.exp(self.action_theta_b.dot(intercept_state_features))
 
         # sample each of the action dimensions and rescale
         action_value = self.rescale(
@@ -736,21 +751,21 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
             ])
         )
 
-        a = ContinuousMultiDimensionalAction(
+        action = ContinuousMultiDimensionalAction(
             value=action_value,
             min_values=self.action.min_values,
             max_values=self.action.max_values
         )
 
         if self.plot_policy:
-            self.update_action_scatter_plot(a)
+            self.update_action_scatter_plot(action)
             self.beta_shape_scatter_plot.update(np.array([
                 v
                 for a, b in zip(action_a, action_b)
                 for v in [a, b]
             ]))
 
-        return {a: 1.0}
+        return {action: 1.0}
 
     def __getstate__(
             self

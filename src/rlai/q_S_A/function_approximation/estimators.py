@@ -374,18 +374,18 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
             self,
             states: List[MdpState],
             actions: List[Action],
-            for_fitting: bool
+            refit_scaler: bool
     ) -> np.ndarray:
         """
         Extract features for state-action pairs.
 
         :param states: States.
         :param actions: Actions.
-        :param for_fitting: Whether the extracted features will be used for fitting (True) or prediction (False).
+        :param refit_scaler: Whether or not to refit the feature scaler before scaling the extracted features.
         :return: State-feature numpy.ndarray.
         """
 
-        X = self.feature_extractor.extract(states, actions, for_fitting)
+        X = self.feature_extractor.extract(states, actions, refit_scaler)
 
         # if no formula, then the feature extraction result must be a numpy.ndarray to be used directly.
         if self.formula is None:

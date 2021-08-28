@@ -17,10 +17,14 @@ from rlai.actions import Action, DiscretizedAction, ContinuousMultiDimensionalAc
 from rlai.agents.mdp import MdpAgent
 from rlai.environments.mdp import ContinuousMdpEnvironment
 from rlai.meta import rl_text
-from rlai.models.feature_extraction import NonstationaryFeatureScaler, FeatureExtractor
+from rlai.models.feature_extraction import (
+    NonstationaryFeatureScaler,
+    FeatureExtractor,
+    OneHotCategoricalFeatureInteracter,
+    OneHotCategory
+)
 from rlai.q_S_A.function_approximation.models.feature_extraction import (
-    StateActionInteractionFeatureExtractor,
-    OneHotCategoricalFeatureInteracter
+    StateActionInteractionFeatureExtractor
 )
 from rlai.rewards import Reward
 from rlai.states.mdp import MdpState
@@ -66,6 +70,11 @@ class Gym(ContinuousMdpEnvironment):
     """
     Generalized Gym environment. Any OpenAI Gym environment can be executed by supplying the appropriate identifier.
     """
+
+    LUNAR_LANDER_CONTINUOUS_V2 = 'LunarLanderContinuous-v2'
+    MOUNTAIN_CAR_CONTINUOUS_V0 = 'MountainCarContinuous-v0'
+    MOUNTAIN_CAR_CONTINUOUS_V0_TROUGH_X_POSITION = -0.5
+    MOUNTAIN_CAR_CONTINUOUS_V0_GOAL_X_POSITION = 0.45
 
     @classmethod
     def get_argument_parser(
@@ -180,9 +189,16 @@ class Gym(ContinuousMdpEnvironment):
 
         observation, reward, done, _ = self.gym_native.step(action=gym_action)
 
-        # override reward per environment
-        if self.gym_id == 'LunarLanderContinuous-v2':
-            reward = -np.abs(observation[0:6]).sum()
+        # override reward per environment. in the case of the continuous lunar lander, the ideal landing is zeros across
+        # the board.
+        if self.gym_id == Gym.LUNAR_LANDER_CONTINUOUS_V2:
+            reward = -np.abs(observation[0:6]).sum() if done else 0.0
+
+        # continuous mountain car:  reward at apex of the climb
+        elif self.gym_id == Gym.MOUNTAIN_CAR_CONTINUOUS_V0:
+            reward = 0.0
+            if self.previous_observation is not None and self.previous_observation[1] > 0.0 and observation[1] <= 0.0 and observation[0] >= Gym.MOUNTAIN_CAR_CONTINUOUS_V0_TROUGH_X_POSITION:
+                reward = (observation[0] - Gym.MOUNTAIN_CAR_CONTINUOUS_V0_TROUGH_X_POSITION) / (Gym.MOUNTAIN_CAR_CONTINUOUS_V0_GOAL_X_POSITION - Gym.MOUNTAIN_CAR_CONTINUOUS_V0_TROUGH_X_POSITION)
 
         # call render if rendering manually
         if self.check_render_current_episode(True):
@@ -203,6 +219,8 @@ class Gym(ContinuousMdpEnvironment):
             terminal=done,
             agent=agent
         )
+
+        self.previous_observation = observation
 
         return self.state, Reward(i=None, r=reward)
 
@@ -328,7 +346,7 @@ class Gym(ContinuousMdpEnvironment):
         :return: List of names.
         """
 
-        if self.gym_id == 'LunarLanderContinuous-v2':
+        if self.gym_id == Gym.LUNAR_LANDER_CONTINUOUS_V2:
             names = [
                 'posX',
                 'posY',
@@ -338,6 +356,11 @@ class Gym(ContinuousMdpEnvironment):
                 'angV',
                 'leg1Con',
                 'leg2Con'
+            ]
+        elif self.gym_id == Gym.MOUNTAIN_CAR_CONTINUOUS_V0:
+            names = [
+                'position',
+                'velocity'
             ]
         else:  # pragma no cover
             warnings.warn(f'The state dimension names for {self.gym_id} are unknown. Defaulting to numbers.')
@@ -365,10 +388,14 @@ class Gym(ContinuousMdpEnvironment):
         :return: List of names.
         """
 
-        if self.gym_id == 'LunarLanderContinuous-v2':
+        if self.gym_id == Gym.LUNAR_LANDER_CONTINUOUS_V2:
             names = [
                 'main',
                 'side'
+            ]
+        elif self.gym_id == Gym.MOUNTAIN_CAR_CONTINUOUS_V0:
+            names = [
+                'throttle'
             ]
         else:  # pragma no cover
             warnings.warn(f'The action names for {self.gym_id} are unknown. Defaulting to numbers.')
@@ -420,6 +447,8 @@ class Gym(ContinuousMdpEnvironment):
         self.video_directory = video_directory
         self.force = force
         self.steps_per_second = steps_per_second
+        self.gym_native = self.init_gym_native()
+        self.previous_observation = None
         self.plot_environment = plot_environment
         self.state_reward_scatter_plot = None
         if self.plot_environment:
@@ -428,8 +457,6 @@ class Gym(ContinuousMdpEnvironment):
                 self.get_state_dimension_names() + ['reward'],
                 None
             )
-
-        self.gym_native = self.init_gym_native()
 
         if self.continuous_action_discretization_resolution is not None and not isinstance(self.gym_native.action_space, Box):
             raise ValueError('Continuous-action discretization is only valid for Box action-space environments.')
@@ -568,38 +595,39 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
             self,
             states: List[MdpState],
             actions: List[Action],
-            for_fitting: bool
+            refit_scaler: bool
     ) -> np.ndarray:
         """
         Extract features for state-action pairs.
 
         :param states: States.
         :param actions: Actions.
-        :param for_fitting: Whether the extracted features will be used for fitting (True) or prediction (False).
+        :param refit_scaler: Whether or not to refit the feature scaler before scaling the extracted features.
         :return: State-feature numpy.ndarray.
         """
 
         self.check_state_and_action_lists(states, actions)
 
+        # extract and scale features
         X = np.array([
             np.append(state.observation, state.observation ** 2)
             for state in states
         ])
 
-        X = self.feature_scaler.scale_features(X, for_fitting)
+        X = self.feature_scaler.scale_features(X, refit_scaler)
 
-        contexts = [
-            CartpoleFeatureContext(
-                cart_left_of_center=state.observation[0] < 0,
-                cart_moving_left=state.observation[1] < 0,
-                pole_left_of_vertical=state.observation[2] < 0,
-                pole_rotating_left=state.observation[3] < 0
-            )
+        # interacct feature vectors per state category
+        state_categories = [
+            OneHotCategory(*[
+                obs_feature < 0.0
+                for obs_feature in state.observation
+            ])
             for state in states
         ]
 
-        X = self.context_interacter.interact(X, contexts)
+        X = self.state_category_interacter.interact(X, state_categories)
 
+        # interact features per action
         X = self.interact(
             state_features=X,
             actions=actions
@@ -637,98 +665,17 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
             ]
         )
 
-        self.contexts = [
-            CartpoleFeatureContext(*context_bools)
-            for context_bools in product([True, False], [True, False], [True, False], [True, False])
-        ]
-
-        self.context_interacter = OneHotCategoricalFeatureInteracter(self.contexts)
+        # create interacter over cartesian product of state categories
+        self.state_category_interacter = OneHotCategoricalFeatureInteracter([
+            OneHotCategory(*args)
+            for args in product([True, False], [True, False], [True, False], [True, False])
+        ])
 
         self.feature_scaler = NonstationaryFeatureScaler(
             num_observations_refit_feature_scaler=2000,
             refit_history_length=100000,
             refit_weight_decay=0.99999
         )
-
-
-class CartpoleFeatureContext:
-    """
-    Categorical context within with a feature explains an outcome independently of its explanation in another context.
-    This works quite similarly to traditional categorical interactions, except that they are specified programmatically
-    by this class.
-    """
-
-    def __init__(
-            self,
-            cart_left_of_center: bool,
-            cart_moving_left: bool,
-            pole_left_of_vertical: bool,
-            pole_rotating_left: bool
-    ):
-        """
-        Initialize the context.
-
-        :param cart_left_of_center: Left of center.
-        :param cart_moving_left: Moving left.
-        :param pole_left_of_vertical: Left of vertical.
-        :param pole_rotating_left: Rotating left.
-        """
-
-        self.cart_left_of_center = cart_left_of_center
-        self.cart_moving_left = cart_moving_left
-        self.pole_left_of_vertical = pole_left_of_vertical
-        self.pole_rotating_left = pole_rotating_left
-        self.id = str(self)
-
-    def __eq__(
-            self,
-            other
-    ) -> bool:
-        """
-        Check equality.
-
-        :param other: Other context.
-        :return: True if equal and False otherwise.
-        """
-
-        other: CartpoleFeatureContext
-
-        return self.id == other.id
-
-    def __ne__(
-            self,
-            other
-    ) -> bool:
-        """
-        Check inequality.
-
-        :param other: Other context.
-        :return: True if unequal and False otherwise.
-        """
-
-        return not (self == other)
-
-    def __hash__(
-            self
-    ) -> int:
-        """
-        Get hash code.
-
-        :return: Hash code.
-        """
-
-        return hash(self.id)
-
-    def __str__(
-            self
-    ) -> str:
-        """
-        Get string.
-
-        :return: String.
-        """
-
-        return f'{self.cart_left_of_center}_{self.cart_moving_left}_{self.pole_left_of_vertical}_{self.pole_rotating_left}'
 
 
 @rl_text(chapter='Feature Extractors', page=1)
@@ -783,17 +730,19 @@ class ContinuousFeatureExtractor(StateFeatureExtractor):
     def extract(
             self,
             state: GymState,
+            refit_scaler: bool
     ) -> np.ndarray:
         """
         Extract state features.
 
         :param state: State.
+        :param refit_scaler: Whether or not to refit the feature scaler before scaling the extracted features.
         :return: State-feature vector.
         """
 
         return self.feature_scaler.scale_features(
             np.array([state.observation]),
-            for_fitting=True
+            refit_before_scaling=refit_scaler
         )[0]
 
     def __init__(
@@ -807,6 +756,114 @@ class ContinuousFeatureExtractor(StateFeatureExtractor):
 
         self.feature_scaler = NonstationaryFeatureScaler(
                 num_observations_refit_feature_scaler=2000,
-                refit_history_length=10000,
+                refit_history_length=100000,
                 refit_weight_decay=0.99999
             )
+
+
+@rl_text(chapter='Feature Extractors', page=1)
+class ContinuousLunarLanderFeatureExtractor(ContinuousFeatureExtractor):
+    """
+    Feature extractor for the continuous lunar lander.
+    """
+
+    def extract(
+            self,
+            state: GymState,
+            refit_scaler: bool
+    ) -> np.ndarray:
+        """
+        Extract state features.
+
+        :param state: State.
+        :param refit_scaler: Whether or not to refit the feature scaler before scaling the extracted features.
+        :return: State-feature vector.
+        """
+
+        # extract raw feature values
+        raw_feature_values = super().extract(state, refit_scaler)
+
+        # features 0 (x pos), 2 (x velocity), 3 (y velocity), 4 (angle), and 5 (angular velocity) are signed and can be
+        # encoded categorically.
+        encoded_feature_idxs = [0, 2, 3, 4, 5]
+        feature_values_to_encode = raw_feature_values[encoded_feature_idxs]
+        state_category = OneHotCategory(*[
+            obs_feature < 0.0
+            for obs_feature in state.observation[encoded_feature_idxs]
+        ])
+
+        encoded_feature_values = self.state_category_interacter.interact(
+            np.array([feature_values_to_encode]),
+            [state_category]
+        )[0]
+
+        # combine encoded and unencoded feature values
+        final_feature_values = np.append(encoded_feature_values, raw_feature_values[[1, 6, 7]])
+
+        return final_feature_values
+
+    def __init__(
+            self
+    ):
+        """
+        Initialize the feature extractor.
+        """
+
+        super().__init__()
+
+        # interact features with relevant state categories
+        self.state_category_interacter = OneHotCategoricalFeatureInteracter([
+            OneHotCategory(*category_args)
+            for category_args in product([True, False], [True, False], [True, False], [True, False], [True, False])
+        ])
+
+
+@rl_text(chapter='Feature Extractors', page=1)
+class ContinuousMountainCarFeatureExtractor(ContinuousFeatureExtractor):
+    """
+    Feature extractor for the continuous lunar lander.
+    """
+
+    def extract(
+            self,
+            state: GymState,
+            refit_scaler: bool
+    ) -> np.ndarray:
+        """
+        Extract state features.
+
+        :param state: State.
+        :param refit_scaler: Whether or not to refit the feature scaler before scaling the extracted features.
+        :return: State-feature vector.
+        """
+
+        # extract raw feature values
+        raw_feature_values = super().extract(state, refit_scaler)
+
+        # encode features
+        state_category = OneHotCategory(*[
+            obs_feature < Gym.MOUNTAIN_CAR_CONTINUOUS_V0_TROUGH_X_POSITION if i == 0 else obs_feature < 0.0
+            for i, obs_feature in enumerate(state.observation)
+        ])
+
+        encoded_feature_values = self.state_category_interacter.interact(
+            np.array([raw_feature_values]),
+            [state_category]
+        )[0]
+
+        return encoded_feature_values
+
+    def __init__(
+            self
+    ):
+        """
+        Initialize the feature extractor.
+        """
+
+        super().__init__()
+
+        # interact features with relevant state categories
+        self.state_category_interacter = OneHotCategoricalFeatureInteracter([
+            OneHotCategory(*category_args)
+            for category_args in product([True, False], [True, False])
+        ])
