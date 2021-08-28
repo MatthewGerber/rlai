@@ -73,6 +73,8 @@ class Gym(ContinuousMdpEnvironment):
 
     LUNAR_LANDER_CONTINUOUS_V2 = 'LunarLanderContinuous-v2'
     MOUNTAIN_CAR_CONTINUOUS_V0 = 'MountainCarContinuous-v0'
+    MOUNTAIN_CAR_CONTINUOUS_V0_TROUGH_X_POSITION = -0.5
+    MOUNTAIN_CAR_CONTINUOUS_V0_GOAL_X_POSITION = 0.45
 
     @classmethod
     def get_argument_parser(
@@ -195,8 +197,8 @@ class Gym(ContinuousMdpEnvironment):
         # continuous mountain car:  reward at apex of the climb
         elif self.gym_id == Gym.MOUNTAIN_CAR_CONTINUOUS_V0:
             reward = 0.0
-            if self.previous_observation is not None and self.previous_observation[1] > 0.0 and observation[1] <= 0.0 and observation[0] >= -0.4:
-                reward = (observation[0] + 0.4) / (0.45 + 0.4)
+            if self.previous_observation is not None and self.previous_observation[1] > 0.0 and observation[1] <= 0.0 and observation[0] >= Gym.MOUNTAIN_CAR_CONTINUOUS_V0_TROUGH_X_POSITION:
+                reward = (observation[0] - Gym.MOUNTAIN_CAR_CONTINUOUS_V0_TROUGH_X_POSITION) / (Gym.MOUNTAIN_CAR_CONTINUOUS_V0_GOAL_X_POSITION - Gym.MOUNTAIN_CAR_CONTINUOUS_V0_TROUGH_X_POSITION)
 
         # call render if rendering manually
         if self.check_render_current_episode(True):
@@ -840,8 +842,8 @@ class ContinuousMountainCarFeatureExtractor(ContinuousFeatureExtractor):
 
         # encode features
         state_category = OneHotCategory(*[
-            obs_feature < 0.0
-            for obs_feature in state.observation
+            obs_feature < Gym.MOUNTAIN_CAR_CONTINUOUS_V0_TROUGH_X_POSITION if i == 0 else obs_feature < 0.0
+            for i, obs_feature in enumerate(state.observation)
         ])
 
         encoded_feature_values = self.state_category_interacter.interact(
