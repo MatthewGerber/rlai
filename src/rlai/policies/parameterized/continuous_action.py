@@ -559,11 +559,15 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
                 p_a_s = 1.0
 
                 # check for nans in the gradients and skip the update if any are found
-                if np.isinf(action_density_gradient_wrt_theta_a).any() or np.isnan(action_density_gradient_wrt_theta_a).any() or np.isinf(action_density_gradient_wrt_theta_b).any() or np.isnan(action_density_gradient_wrt_theta_b).any():  # pragma no cover
-                    warnings.warn('Gradients contain np.inf or np.nan value(s). Skipping update.')
+                if np.isnan(action_density_gradient_wrt_theta_a).any() or np.isnan(action_density_gradient_wrt_theta_b).any():  # pragma no cover
+                    warnings.warn('Gradients contain np.nan value(s). Skipping update.')
                 else:
-                    self.action_theta_a[action_i, :] += alpha * target * (action_density_gradient_wrt_theta_a / p_a_s)
-                    self.action_theta_b[action_i, :] += alpha * target * (action_density_gradient_wrt_theta_b / p_a_s)
+
+                    # squash gradients into [-1.0, 1.0] to handle scaling issues when actions are chosen at the
+                    # tails of the beta distribution where the gradients are very large. this also addresses cases of
+                    # positive/negative infinite gradients.
+                    self.action_theta_a[action_i, :] += alpha * target * (np.tanh(action_density_gradient_wrt_theta_a) / p_a_s)
+                    self.action_theta_b[action_i, :] += alpha * target * (np.tanh(action_density_gradient_wrt_theta_b) / p_a_s)
 
         self.reset_action_scatter_plot_y_range()
 

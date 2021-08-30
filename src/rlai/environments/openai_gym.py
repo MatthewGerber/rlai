@@ -187,6 +187,15 @@ class Gym(ContinuousMdpEnvironment):
         else:
             gym_action = a.i
 
+        # continuous mountain car:  cap energy expenditure at fuel level
+        if self.gym_id == Gym.MOUNTAIN_CAR_CONTINUOUS_V0:
+            fuel_level = state.observation[2]
+            throttle = gym_action[0]
+            fuel_consumption = abs(throttle) / 3.0
+            fuel_remaining = fuel_level * 100.0
+            actual_fuel_consumption = min(fuel_remaining, fuel_consumption)
+            gym_action[0] = np.sign(throttle) * actual_fuel_consumption * 3.0
+
         observation, reward, done, _ = self.gym_native.step(action=gym_action)
 
         # override reward per environment. in the case of the continuous lunar lander, the ideal landing is zeros across
@@ -194,8 +203,15 @@ class Gym(ContinuousMdpEnvironment):
         if self.gym_id == Gym.LUNAR_LANDER_CONTINUOUS_V2:
             reward = -np.abs(observation[0:6]).sum() if done else 0.0
 
-        # continuous mountain car:  reward at apex of the climb
+        # continuous mountain car
         elif self.gym_id == Gym.MOUNTAIN_CAR_CONTINUOUS_V0:
+
+            # append fuel level to state
+            fuel_consumed = abs(gym_action[0]) / 3.0
+            percent_consumed = fuel_consumed / 100.0
+            observation = np.append(observation, max(0.0, state.observation[2] - percent_consumed))
+
+            # reward at apex of the climb
             reward = 0.0
             if self.previous_observation is not None and self.previous_observation[1] > 0.0 and observation[1] <= 0.0 and observation[0] >= Gym.MOUNTAIN_CAR_CONTINUOUS_V0_TROUGH_X_POSITION:
                 reward = (observation[0] - Gym.MOUNTAIN_CAR_CONTINUOUS_V0_TROUGH_X_POSITION) / (Gym.MOUNTAIN_CAR_CONTINUOUS_V0_GOAL_X_POSITION - Gym.MOUNTAIN_CAR_CONTINUOUS_V0_TROUGH_X_POSITION)
@@ -241,6 +257,10 @@ class Gym(ContinuousMdpEnvironment):
             self.state_reward_scatter_plot.reset_y_range()
 
         observation = self.gym_native.reset()
+
+        # append fuel level to state of continuous mountain car
+        if self.gym_id == Gym.MOUNTAIN_CAR_CONTINUOUS_V0:
+            observation = np.append(observation, 1.0)
 
         # call render if rendering manually
         if self.check_render_current_episode(True):
@@ -360,7 +380,8 @@ class Gym(ContinuousMdpEnvironment):
         elif self.gym_id == Gym.MOUNTAIN_CAR_CONTINUOUS_V0:
             names = [
                 'position',
-                'velocity'
+                'velocity',
+                'fuel_level'
             ]
         else:  # pragma no cover
             warnings.warn(f'The state dimension names for {self.gym_id} are unknown. Defaulting to numbers.')
@@ -668,7 +689,7 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
         # create interacter over cartesian product of state categories
         self.state_category_interacter = OneHotCategoricalFeatureInteracter([
             OneHotCategory(*args)
-            for args in product([True, False], [True, False], [True, False], [True, False])
+            for args in product(*([[True, False]] * 4))
         ])
 
         self.feature_scaler = NonstationaryFeatureScaler(
@@ -814,7 +835,7 @@ class ContinuousLunarLanderFeatureExtractor(ContinuousFeatureExtractor):
         # interact features with relevant state categories
         self.state_category_interacter = OneHotCategoricalFeatureInteracter([
             OneHotCategory(*category_args)
-            for category_args in product([True, False], [True, False], [True, False], [True, False], [True, False])
+            for category_args in product(*([[True, False]] * 5))
         ])
 
 
@@ -865,5 +886,5 @@ class ContinuousMountainCarFeatureExtractor(ContinuousFeatureExtractor):
         # interact features with relevant state categories
         self.state_category_interacter = OneHotCategoricalFeatureInteracter([
             OneHotCategory(*category_args)
-            for category_args in product([True, False], [True, False])
+            for category_args in product(*([[True, False]] * 3))
         ])
