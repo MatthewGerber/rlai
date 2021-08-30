@@ -71,10 +71,11 @@ class Gym(ContinuousMdpEnvironment):
     Generalized Gym environment. Any OpenAI Gym environment can be executed by supplying the appropriate identifier.
     """
 
-    LUNAR_LANDER_CONTINUOUS_V2 = 'LunarLanderContinuous-v2'
-    MOUNTAIN_CAR_CONTINUOUS_V0 = 'MountainCarContinuous-v0'
-    MOUNTAIN_CAR_CONTINUOUS_V0_TROUGH_X_POSITION = -0.5
-    MOUNTAIN_CAR_CONTINUOUS_V0_GOAL_X_POSITION = 0.45
+    LLC_V2 = 'LunarLanderContinuous-v2'
+    MCC_V0 = 'MountainCarContinuous-v0'
+    MMC_V0_TROUGH_X_POS = -0.5
+    MMC_V0_GOAL_X_POS = 0.45
+    MMC_V0_FUEL_CONSUMPTION_FULL_THROTTLE = 1.0 / 300.0
 
     @classmethod
     def get_argument_parser(
@@ -188,33 +189,33 @@ class Gym(ContinuousMdpEnvironment):
             gym_action = a.i
 
         # continuous mountain car:  cap energy expenditure at fuel level
-        if self.gym_id == Gym.MOUNTAIN_CAR_CONTINUOUS_V0:
+        if self.gym_id == Gym.MCC_V0:
             fuel_level = state.observation[2]
-            throttle = gym_action[0]
-            fuel_consumption = abs(throttle) / 3.0
-            fuel_remaining = fuel_level * 100.0
-            actual_fuel_consumption = min(fuel_remaining, fuel_consumption)
-            gym_action[0] = np.sign(throttle) * actual_fuel_consumption * 3.0
+            fuel_max_throttle = fuel_level / Gym.MMC_V0_FUEL_CONSUMPTION_FULL_THROTTLE
+            desired_throttle = gym_action[0]
+            effective_throttle = min(fuel_max_throttle, abs(desired_throttle))
+            gym_action[0] = np.sign(desired_throttle) * effective_throttle
 
         observation, reward, done, _ = self.gym_native.step(action=gym_action)
 
-        # override reward per environment. in the case of the continuous lunar lander, the ideal landing is zeros across
-        # the board.
-        if self.gym_id == Gym.LUNAR_LANDER_CONTINUOUS_V2:
+        # override reward per environment. continuous lunar lander:  the ideal landing is zeros across the board.
+        if self.gym_id == Gym.LLC_V2:
             reward = -np.abs(observation[0:6]).sum() if done else 0.0
 
         # continuous mountain car
-        elif self.gym_id == Gym.MOUNTAIN_CAR_CONTINUOUS_V0:
+        elif self.gym_id == Gym.MCC_V0:
 
             # append fuel level to state
-            fuel_consumed = abs(gym_action[0]) / 3.0
-            percent_consumed = fuel_consumed / 100.0
-            observation = np.append(observation, max(0.0, state.observation[2] - percent_consumed))
+            fuel_consumed = abs(gym_action[0]) * Gym.MMC_V0_FUEL_CONSUMPTION_FULL_THROTTLE
+            fuel_level = state.observation[2]
+            fuel_remaining = max(0.0, fuel_level - fuel_consumed)
+            observation = np.append(observation, fuel_remaining)
 
-            # reward at apex of the climb
+            # reward at apex of the climb, only if we have fuel left.
             reward = 0.0
-            if self.previous_observation is not None and self.previous_observation[1] > 0.0 and observation[1] <= 0.0 and observation[0] >= Gym.MOUNTAIN_CAR_CONTINUOUS_V0_TROUGH_X_POSITION:
-                reward = (observation[0] - Gym.MOUNTAIN_CAR_CONTINUOUS_V0_TROUGH_X_POSITION) / (Gym.MOUNTAIN_CAR_CONTINUOUS_V0_GOAL_X_POSITION - Gym.MOUNTAIN_CAR_CONTINUOUS_V0_TROUGH_X_POSITION)
+            if self.previous_observation is not None and self.previous_observation[1] > 0.0 and observation[1] <= 0.0 and observation[0] >= Gym.MMC_V0_TROUGH_X_POS and fuel_remaining > 0.0:
+                percent_to_goal = (observation[0] - Gym.MMC_V0_TROUGH_X_POS) / (Gym.MMC_V0_GOAL_X_POS - Gym.MMC_V0_TROUGH_X_POS)
+                reward = fuel_remaining * percent_to_goal
 
         # call render if rendering manually
         if self.check_render_current_episode(True):
@@ -259,7 +260,7 @@ class Gym(ContinuousMdpEnvironment):
         observation = self.gym_native.reset()
 
         # append fuel level to state of continuous mountain car
-        if self.gym_id == Gym.MOUNTAIN_CAR_CONTINUOUS_V0:
+        if self.gym_id == Gym.MCC_V0:
             observation = np.append(observation, 1.0)
 
         # call render if rendering manually
@@ -366,7 +367,7 @@ class Gym(ContinuousMdpEnvironment):
         :return: List of names.
         """
 
-        if self.gym_id == Gym.LUNAR_LANDER_CONTINUOUS_V2:
+        if self.gym_id == Gym.LLC_V2:
             names = [
                 'posX',
                 'posY',
@@ -377,7 +378,7 @@ class Gym(ContinuousMdpEnvironment):
                 'leg1Con',
                 'leg2Con'
             ]
-        elif self.gym_id == Gym.MOUNTAIN_CAR_CONTINUOUS_V0:
+        elif self.gym_id == Gym.MCC_V0:
             names = [
                 'position',
                 'velocity',
@@ -409,12 +410,12 @@ class Gym(ContinuousMdpEnvironment):
         :return: List of names.
         """
 
-        if self.gym_id == Gym.LUNAR_LANDER_CONTINUOUS_V2:
+        if self.gym_id == Gym.LLC_V2:
             names = [
                 'main',
                 'side'
             ]
-        elif self.gym_id == Gym.MOUNTAIN_CAR_CONTINUOUS_V0:
+        elif self.gym_id == Gym.MCC_V0:
             names = [
                 'throttle'
             ]
@@ -863,7 +864,9 @@ class ContinuousMountainCarFeatureExtractor(ContinuousFeatureExtractor):
 
         # encode features
         state_category = OneHotCategory(*[
-            obs_feature < Gym.MOUNTAIN_CAR_CONTINUOUS_V0_TROUGH_X_POSITION if i == 0 else obs_feature < 0.0
+            obs_feature < Gym.MMC_V0_TROUGH_X_POS if i == 0 else  # shift the x midpoint to the trough
+            obs_feature <= 0.0 if i == 2 else  # fuel bottoms out at zero
+            obs_feature < 0.0
             for i, obs_feature in enumerate(state.observation)
         ])
 
