@@ -563,8 +563,8 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
                     warnings.warn('Gradients contain np.nan value(s). Skipping update.')
                 else:
 
-                    # squash gradients into [-1.0, 1.0] to handle scaling issues when actions are chosen at the
-                    # tails of the beta distribution where the gradients are very large. this also addresses cases of
+                    # squash gradients into [-1.0, 1.0] to handle scaling issues when actions are chosen at the tails of
+                    # the beta distribution where the gradients are very large. this also addresses cases of
                     # positive/negative infinite gradients.
                     self.action_theta_a[action_i, :] += alpha * target * (np.tanh(action_density_gradient_wrt_theta_a) / p_a_s)
                     self.action_theta_b[action_i, :] += alpha * target * (np.tanh(action_density_gradient_wrt_theta_b) / p_a_s)
