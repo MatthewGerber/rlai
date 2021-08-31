@@ -211,10 +211,11 @@ class Gym(ContinuousMdpEnvironment):
             fuel_remaining = max(0.0, fuel_level - fuel_consumed)
             observation = np.append(observation, fuel_remaining)
 
+            fraction_to_goal = (observation[0] - Gym.MMC_V0_TROUGH_X_POS) / (Gym.MMC_V0_GOAL_X_POS - Gym.MMC_V0_TROUGH_X_POS)
+
             # reward at apex of the climb
-            reward = 1.0 if observation[0] >= Gym.MMC_V0_GOAL_X_POS else 0.0
+            reward = fraction_to_goal + fuel_remaining if fraction_to_goal >= 1.0 else 0.0
             if self.previous_observation is not None and self.previous_observation[1] > 0.0 and observation[1] <= 0.0 and observation[0] >= Gym.MMC_V0_TROUGH_X_POS:
-                fraction_to_goal = (observation[0] - Gym.MMC_V0_TROUGH_X_POS) / (Gym.MMC_V0_GOAL_X_POS - Gym.MMC_V0_TROUGH_X_POS)
                 reward = fuel_remaining * fraction_to_goal
 
         # call render if rendering manually
