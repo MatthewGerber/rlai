@@ -3,7 +3,7 @@
 ```
 State of the mancala game. In charge of representing the entirety of the game state and advancing to the next state.
 ```
-### [rlai.environments.openai_gym.GymState](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/openai_gym.py#L32)
+### [rlai.environments.openai_gym.GymState](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/openai_gym.py#L36)
 ```
 State of a Gym environment.
 ```
