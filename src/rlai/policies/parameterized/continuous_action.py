@@ -527,7 +527,7 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
             for a in self.update_batch_a
         ])
 
-        # perform updates per-action, since we model the distribution of each action independently of the other actions.
+        # perform updates per action, since we model the distribution of each action independently of the other actions.
         # we use the transpose of the action matrix so that each iteration of the for-loop contains all experienced
         # values of the action (in action_i_values).
         for action_i, (action_i_theta_a, action_i_theta_b, action_i_values) in enumerate(zip(self.action_theta_a, self.action_theta_b, action_matrix.T)):

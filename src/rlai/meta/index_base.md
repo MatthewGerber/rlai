@@ -75,6 +75,7 @@ robotics. Case studies have been developed for the OpenAI Gym environment listed
 * [Inverted Pendulum](https://matthewgerber.github.io/rlai/case_studies/inverted_pendulum.html)
 * [Acrobot](https://matthewgerber.github.io/rlai/case_studies/acrobot.html)
 * [Mountain Car](https://matthewgerber.github.io/rlai/case_studies/mountain_car.html)
+* [Mountain Car with Continuous Control](https://matthewgerber.github.io/rlai/case_studies/mountain_car_continuous.html)
 
 ## Robocode
 [Robocode](https://github.com/robo-code/robocode) is a simulation-based robotic combat programming game with a 
