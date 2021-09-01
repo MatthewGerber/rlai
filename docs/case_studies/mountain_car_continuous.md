@@ -7,7 +7,7 @@
 ## The Environment
 This is similar to the [discrete-control mountain car](./mountain_car.md) except that, here, control is achieved through
 continuous-valued forward and backward acceleration. You can read more about this environment 
-[here](https://gym.openai.com/envs/MountainCar-v0/). The need for continuous control complicates the use of action-value
+[here](https://gym.openai.com/envs/MountainCarContinuous-v0/). The need for continuous control complicates the use of action-value
 estimation, which assumes that actions can be enumerated from a discrete set. Although it is possible to discretize the
 continuous action space and then apply action-value methods to the discretized space, the resulting estimator will need
 to cover an arbitrarily high dimensionality that is only limited by the discretization resolution. A fundamentally 
@@ -103,14 +103,22 @@ a  = a + alpha * discounted_return * gradient_at_x
 where `alpha` is the step size, `discounted_return` is the signed discounted return obtained for an action `x`, and 
 `gradient_at_x` is the gradient of the beta PDF at `x` with respect to shape parameter `a`. 
 
+Note that we have been referring to the gradient of the beta PDF with respect to the shape parameters `a` and `b`. This
+keeps things simple. However, as mentioned above, `a` and `b` are modeled as linear functions of the state features. The 
+coefficients in these linear functions are the real focus, as the shape of the action distribution is ultimately 
+determined by the state of the environment. So, instead of talking about the gradient of the beta PDF at `x` with 
+respect to `a` or `b`, we talk about the gradients with respect to the parameters of these linear functions. The 
+resulting concepts and code are much the same as what is shown above.
+
 This high-level summary leaves open many questions:
 * What step size should we use?
 * How should we handle gradients near the boundaries of the beta PDF, which are likely to be large?
 * How do we incorporate a "baseline" value function as described in the textbook?
 * How do we model shape parameters as linear functions of state features?
 
-All of these questions and more have been answered in the policy gradient methods implemented by `rlai`, and I won't 
-attempt to address them here.
+All of these questions and more have been answered in code for the 
+[policy gradient optimizer](https://github.com/MatthewGerber/rlai/blob/53152aae7738f5bd97b9fb5e24d39b8b93a4760c/src/rlai/policy_gradient/monte_carlo/reinforce.py#L16)
+and the [beta distribution policy](https://github.com/MatthewGerber/rlai/blob/53152aae7738f5bd97b9fb5e24d39b8b93a4760c/src/rlai/policies/parameterized/continuous_action.py#L466).
 
 # Training
 
