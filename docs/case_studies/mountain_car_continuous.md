@@ -120,7 +120,7 @@ All of these questions and more have been answered in code for the
 and the [beta distribution policy](https://github.com/MatthewGerber/rlai/blob/53152aae7738f5bd97b9fb5e24d39b8b93a4760c/src/rlai/policies/parameterized/continuous_action.py#L466).
 
 # Development
-A few key points of development are worth mentioning:
+A few key points of development are worth mentioning.
 
 ## Graphical Instrumentation
 The approach taken here is substantially more complicated than, say, tabular action-value methods. We've got to 
@@ -137,17 +137,35 @@ rendering OpenAI environments. An example screenshot is shown below:
 * Bottom left:  State-value estimate, which is used as a baseline in the REINFORCE policy gradient algorithm.
 * Bottom right:  Shape parameters `a` and `b` for the beta PDF.
 
-## Reward
-By default, OpenAI only provides a reward when the car reaches the goal. There is a default time limit of 200 steps, and 
-the episode terminates upon reaching this limit. In this setup, a random policy can take many episodes to reach the goal 
-within 200 steps. By providing intermediate rewards for partial climbs, the agent can learn more quickly.
-
-## Gradient
-
 ## Fuel Level
-The mountain car environment does not include the concept of fuel. This isn't problematic, and the control agent will 
-necessarily need to learn to climb to the goal quickly to satisfy the time constraint. However, there are reasons why 
-the concepts of fuel and a fuel level might be helpful.
+The mountain car environment does not include the concept of fuel. Instead the reward value is reduced based on how much 
+fuel is used. This isn't problematic, as the control agent will necessarily need to learn to climb to the goal quickly 
+and efficiently to maximize reward. However, introducing a fuel level into the state and removing it from the reward is 
+conceptually cleaner and better reflects actual driving. Within RLAI, an initial fuel level of 1.0 is set at the start 
+of each episode, and throttle use depletes the fuel level accordingly. All rewards become zero once fuel runs out (see 
+[here](https://github.com/MatthewGerber/rlai/blob/638c9a9e30036cb4d7feed7b9b4c0e61ef886884/src/rlai/environments/openai_gym.py#L191)
+for details).
+
+## Reward
+By default, OpenAI only provides a positive reward when the car reaches the goal. Each step prior to the goal receives a
+negative reward for fuel use. There is a default time limit of 200 steps, and the episode terminates upon reaching this 
+limit. In this setup, a random policy might take many episodes to receive a positive reward. By providing intermediate 
+rewards for partial climbs, the agent can learn more quickly. Within RLAI, this is done by rewarding the agent at the
+apex of each climb up the right-side hill. The reward is the product of the fuel level and the percentage to goal at the 
+apex of each climb. All intermediate rewards are therefore zero once all fuel is depleted. Upon reaching the goal, the 
+reward is the _sum_ of the fuel level and the percentage to goal, the latter being 1.0 since the goal is reached. The 
+sum is used for the goal reward to distinguish it from intermediate rewards.
+
+## Gradient Transformations
+The gradient of the beta PDF near its boundaries (with respect to it shape parameters `a` and `b`) can be much larger 
+than the gradient at other `x` locations. This can cause problems because the step size `alpha` is constant. As usual in 
+stochastic gradient descent (SGD), the step size must be sufficiently small to generate reasonable updates for all 
+gradients. This is why we standardize the state-feature values in traditional SGD applications. However, standardizing 
+the state-feature values does not keep the gradients with respect to the shape parameters `a` and `b` within manageable 
+ranges. I ran each gradient through the hyperbolic tangent function (`tanh`) to ensure that all gradients are within 
+[-1, +1]. This seemed like a hack, and I'm not sure what effect this has on the theoretical properties of the method. 
+However, it does appear to work.
+
 
 # Training
 
