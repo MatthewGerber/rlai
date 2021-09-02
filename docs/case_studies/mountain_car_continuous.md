@@ -112,13 +112,42 @@ resulting concepts and code are much the same as what is shown above.
 
 This high-level summary leaves open many questions:
 * What step size should we use?
-* How should we handle gradients near the boundaries of the beta PDF, which are likely to be large?
 * How do we incorporate a "baseline" value function as described in the textbook?
 * How do we model shape parameters as linear functions of state features?
 
 All of these questions and more have been answered in code for the 
 [policy gradient optimizer](https://github.com/MatthewGerber/rlai/blob/53152aae7738f5bd97b9fb5e24d39b8b93a4760c/src/rlai/policy_gradient/monte_carlo/reinforce.py#L16)
 and the [beta distribution policy](https://github.com/MatthewGerber/rlai/blob/53152aae7738f5bd97b9fb5e24d39b8b93a4760c/src/rlai/policies/parameterized/continuous_action.py#L466).
+
+# Development
+A few key points of development are worth mentioning:
+
+## Graphical Instrumentation
+The approach taken here is substantially more complicated than, say, tabular action-value methods. We've got to 
+understand how state features determine PDF shape parameters, how the shape parameters determine actions, and how 
+actions generate returns that deviate from baseline state-value estimates that are estimated separately using 
+traditional function approximation methods. RLAI instruments and displays many of these values in real time while
+rendering OpenAI environments. An example screenshot is shown below:
+
+![displays](./mountain-car-continuous-figs/displays.png)
+
+* Top left:  Environment state features and reward value.
+* Top middle:  Environment rendering.
+* Top right:  Action values.
+* Bottom left:  State-value estimate, which is used as a baseline in the REINFORCE policy gradient algorithm.
+* Bottom right:  Shape parameters `a` and `b` for the beta PDF.
+
+## Reward
+By default, OpenAI only provides a reward when the car reaches the goal. There is a default time limit of 200 steps, and 
+the episode terminates upon reaching this limit. In this setup, a random policy can take many episodes to reach the goal 
+within 200 steps. By providing intermediate rewards for partial climbs, the agent can learn more quickly.
+
+## Gradient
+
+## Fuel Level
+The mountain car environment does not include the concept of fuel. This isn't problematic, and the control agent will 
+necessarily need to learn to climb to the goal quickly to satisfy the time constraint. However, there are reasons why 
+the concepts of fuel and a fuel level might be helpful.
 
 # Training
 

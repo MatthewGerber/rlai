@@ -7,6 +7,18 @@ Diagnostic and interpretation tools are standard issue for statistical models, t
 developed and covered within RL. These tools are particularly important when value functions are approximated with 
 models rather than calculated directly in tabular fashion.
 
+# OpenAI Gym Displays
+RLAI instruments and displays many values in real time while rendering OpenAI environments. An example screenshot is 
+shown below (see [continuous mountain car](./case_studies/mountain_car_continuous.md) for more information):
+
+![displays](./case_studies/mountain-car-continuous-figs/displays.png)
+
+* Top left:  Environment state features and reward value.
+* Top middle:  Environment rendering.
+* Top right:  Action values.
+* Bottom left:  State-value estimate, which is used as a baseline in the REINFORCE policy gradient algorithm.
+* Bottom right:  Shape parameters `a` and `b` for the beta PDF.
+* 
 # Model Coefficient Plots
 Consider the gridworld of Example 4.1 solved with temporal-difference q-learning and stochastic gradient descent based 
 on the four features extracted by 
