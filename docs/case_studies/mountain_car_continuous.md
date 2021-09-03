@@ -168,8 +168,60 @@ However, it does appear to work.
 
 
 # Training
+The following command trains an agent for the continuous mountain car environment using policy gradient optimization:
 
-Coming soon...
+```
+rlai train --random-seed 12345 --agent rlai.agents.mdp.StochasticMdpAgent --gamma 0.99 --environment rlai.environments.openai_gym.Gym --gym-id MountainCarContinuous-v0 --render-every-nth-episode 50 --video-directory ~/Desktop/mountaincar_continuous_videos --force --T 1000 --plot-environment --train-function rlai.policy_gradient.monte_carlo.reinforce.improve --num-episodes 500 --plot-state-value --v-S rlai.v_S.function_approximation.estimators.ApproximateStateValueEstimator --feature-extractor rlai.environments.openai_gym.ContinuousMountainCarFeatureExtractor --function-approximation-model rlai.models.sklearn.SKLearnSGD --loss squared_loss --sgd-alpha 0.0 --learning-rate constant --eta0 0.01 --policy rlai.policies.parameterized.continuous_action.ContinuousActionBetaDistributionPolicy --policy-feature-extractor rlai.environments.openai_gym.ContinuousMountainCarFeatureExtractor --alpha 0.01 --update-upon-every-visit True --plot-policy --save-agent-path ~/Desktop/mountaincar_continuous_agent.pickle
+```
+
+### RLAI
+* `train`:  Train the agent. 
+
+### Agent
+* `--agent rlai.agents.mdp.StochasticMdpAgent`:  Standard stochastic MDP agent. 
+* `--gamma 0.99`:  Slight discount, since episodes can be long and returns need to be bounded.
+
+### Environment
+* `--environment rlai.environments.openai_gym.Gym`:  Environment class.
+* `--gym-id MountainCarContinuous-v0`:  OpenAI Gym environment identifier.
+* `--render-every-nth-episode 50`:  Render a video every 50 episodes.
+* `--video-directory ~/Desktop/mountaincar_continuous_videos`:  Where to store rendered videos.
+* `--force`:  Overwrite videos in the video directory.
+* `--T 1000`:  Limit episodes to 1000 steps.
+* `--plot-environment`:  Show a real-time plot of state and reward values.
+
+### Policy Gradient Optimization
+
+#### General
+* `--train-function rlai.policy_gradient.monte_carlo.reinforce.improve`:  Run the REINFORCE policy gradient optimization
+algorithm.
+* `--num-episodes 500`:  Run 500 episodes.  
+* `--plot-state-value`:  Show a real-time plot of the estimated state value (i.e., the baseline).
+
+#### Baseline State-Value Estimator
+* `--v-S rlai.v_S.function_approximation.estimators.ApproximateStateValueEstimator`:  Baseline state-value estimator.  
+* `--feature-extractor rlai.environments.openai_gym.ContinuousMountainCarFeatureExtractor`:  Feature extractor for the
+baseline state-value estimator.
+* `--function-approximation-model rlai.models.sklearn.SKLearnSGD`:  Use the SKLearn SGD for the baseline state-value 
+estimator.
+* `--loss squared_loss`:  Use a squared loss within the baseline state-value estimator.
+* `--sgd-alpha 0.0`:  Do not use regularization.
+* `--learning-rate constant`:  Use a constant learning rate schedule.
+* `--eta0 0.01`:  Learning rate
+
+#### Policy
+* `--policy rlai.policies.parameterized.continuous_action.ContinuousActionBetaDistributionPolicy`:  Use the beta
+distribution to model the action-density distribution within the policy.
+* `--policy-feature-extractor rlai.environments.openai_gym.ContinuousMountainCarFeatureExtractor`:  Feature extractor
+for the policy gradient optimizer.
+* `--alpha 0.01`:  Learning rate for policy gradient updates.
+* `--update-upon-every-visit True`:  Update the policy's action-density distribution every time a state is encountered
+  (as opposed to the first visit only).
+* `--plot-policy`:  Show a real-time display of the action that is selected at each step.
+
+### Other Parameters
+* `--random-seed 12345`:  For reproducibility.
+* `-save-agent-path ~/Desktop/mountaincar_continuous_agent.pickle`:  Where to save the final agent.
 
 # Results
 
