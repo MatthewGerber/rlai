@@ -4,7 +4,7 @@
 
 # Introduction
 
-### The Environment
+### Environment
 This is similar to the [discrete-control mountain car](./mountain_car.md) except that, here, control is achieved through
 continuous-valued forward and backward acceleration. You can read more about this environment 
 [here](https://gym.openai.com/envs/MountainCarContinuous-v0/). Continuous control complicates the use of action-value 
@@ -17,12 +17,13 @@ only one action dimension:  accelerate with force ranging from [-1, +1], where n
 and positive forces accelerate to the right. The task for policy gradient methods is to model the action distribution 
 (e.g., car acceleration) in terms of the state features (e.g., position and velocity of the car).
 
-### The Beta Distribution
+### Beta Distribution
 In the case of the continuous mountain car, the action distribution can be modeled with a 
 [beta distribution](https://en.wikipedia.org/wiki/Beta_distribution) by rescaling the (0.0, 1.0) domain of the 
 distribution to be (-1.0, 1.0). We'll proceed with the (0.0, 1.0) domain in our explanation, but keep in mind that this 
 domain can be rescaled to any bounded interval. The beta distribution has two shape parameters `a` and `b` that can be 
-used to generate a wide range of distributions. A few examples are shown below:
+used to generate a wide range of distributions. A few examples are shown below (code for generating this and subsequent
+figures can be found [here](https://github.com/MatthewGerber/rlai/blob/2e69a8268942aa1ffbf0b3cf42704cf1b2323db3/docs/case_studies/mountain-car-continuous-figs/beta-dist.py)):
 
 ![beta-distribution](./mountain-car-continuous-figs/beta-dist.png)
 
