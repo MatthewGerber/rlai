@@ -248,10 +248,6 @@ Episode 50:
 
 {% include youtubePlayer.html id="a369ebQM-j4" %}
 
-Episode 250:
-
-{% include youtubePlayer.html id="SOE1RMIEJbY" %}
-
 Episode 450:
 
 {% include youtubePlayer.html id="uL_hsT6d83c" %}
