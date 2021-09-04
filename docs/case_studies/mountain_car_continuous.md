@@ -240,18 +240,28 @@ for the policy gradient optimizer.
 
 The following videos show snapshots of the training process.
 
-Episode 0:
+Episode 0:  The values of `theta_a` and `theta_b` are initialized to zero. These coefficients are always passed through
+`np.exp` to ensure that the shape parameters `a` and `b` remain positive. Thus, in the first episode, the agent selects
+a throttle position from the uniform distribution over (-1, 1.0) at each time step. The episode terminates after the 
+1000 time-step limit:
 
 {% include youtubePlayer.html id="fFgHtDLKxUY" %}
 
-Episode 50:
+Episode 50:  The agent has acquired the rocking motion but is not sufficiently aggressive and so takes a few 
+oscillations to reach the goal:
 
 {% include youtubePlayer.html id="a369ebQM-j4" %}
 
-Episode 250:
-
-{% include youtubePlayer.html id="SOE1RMIEJbY" %}
+Episode 250:  The agent performs about as well as possible, with a single backward movement before reaching the goal:
 
 # Results
 
-Coming soon...
+The following video shows the final agent after 500 training episodes along with the instrumentation displays described 
+above:
+
+{% include youtubePlayer.html id="o7fQ_tLBMBs" %}
+
+Much can be learned from the instrumentation displays, particularly the lower-right display, which shows the beta PDF
+shape parameters `a` and `b`. The shape parameters respond to the car state such that negative force is applied the 
+instant the car begins to fall backward down the right slope. When moving to the right through the trough, positive 
+force is reduced since there is typically sufficient rightward momentum to carry the car to the goal.
