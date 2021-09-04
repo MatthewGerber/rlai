@@ -4,7 +4,7 @@
 
 # Introduction
 
-## The Environment
+### The Environment
 This is similar to the [discrete-control mountain car](./mountain_car.md) except that, here, control is achieved through
 continuous-valued forward and backward acceleration. You can read more about this environment 
 [here](https://gym.openai.com/envs/MountainCarContinuous-v0/). Continuous control complicates the use of action-value 
@@ -17,7 +17,7 @@ only one action dimension:  accelerate with force ranging from [-1, +1], where n
 and positive forces accelerate to the right. The task for policy gradient methods is to model the action distribution 
 (e.g., car acceleration) in terms of the state features (e.g., position and velocity of the car).
 
-## The Beta Distribution
+### The Beta Distribution
 In the case of the continuous mountain car, the action distribution can be modeled with a 
 [beta distribution](https://en.wikipedia.org/wiki/Beta_distribution) by rescaling the (0.0, 1.0) domain of the 
 distribution to be (-1.0, 1.0). We'll proceed with the (0.0, 1.0) domain in our explanation, but keep in mind that this 
@@ -52,7 +52,7 @@ actions). In this way, the state of the car determines the shape of the beta PDF
 determined by sampling this distribution. Everything hinges upon the identification of appropriate values for `theta_a`
 and `theta_b`.
 
-## Learning a Beta Distribution from Experience
+### Learning a Beta Distribution from Experience
 How do we adapt the beta PDF's shape parameters in response to experience? As the name suggests, policy gradient methods
 operate by calculating the gradient of the policy (e.g., the action's beta PDF) with respect to its shape parameters. 
 As an example, consider the following beta distribution and imagine that we just sampled an action corresponding to 
@@ -76,7 +76,7 @@ As shown above, the revised distribution has greater density near our hypothetic
 shape of the beta PDF has changed dramatically. Sampling the revised distribution will tend to produce actions less than
 0.5.
 
-## Automatic Differentiation with JAX
+### Automatic Differentiation with JAX
 Above, we saw how the value of the beta PDF at `x=0.1` might change if we increase or decrease the shape parameters. In 
 calculus terms, we are investigating the _gradient_ of the beta PDF at `x=0.1` _with respect to_ `a` and `b`. One could 
 certainly apply the rules of differentiation to the beta PDF in order to arrive at functions for these gradients. 
@@ -136,7 +136,7 @@ and the [beta distribution policy](https://github.com/MatthewGerber/rlai/blob/53
 # Development
 A few key points of development are worth mentioning.
 
-## Graphical Instrumentation
+### Graphical Instrumentation
 The approach taken here is substantially more complicated than, say, tabular action-value methods. We've got to 
 understand how state features determine PDF shape parameters, how the shape parameters determine actions, and how 
 actions generate returns that deviate from baseline state-value estimates that are estimated separately using 
@@ -151,7 +151,7 @@ rendering OpenAI environments. An example screenshot is shown below:
 * Bottom left:  State-value estimate, which is used as a baseline in the REINFORCE policy gradient algorithm.
 * Bottom right:  Shape parameters `a` and `b` for the beta PDF.
 
-## Fuel Level
+### Fuel Level
 The mountain car environment does not include the concept of fuel. Instead, the reward value is reduced based on how 
 much fuel is used. This isn't problematic, as the control agent will necessarily need to learn to climb to the goal 
 quickly and efficiently to maximize reward. However, introducing a fuel level into the state is conceptually cleaner and 
@@ -160,7 +160,7 @@ and throttle use depletes the fuel level accordingly. All rewards become zero on
 [here](https://github.com/MatthewGerber/rlai/blob/638c9a9e30036cb4d7feed7b9b4c0e61ef886884/src/rlai/environments/openai_gym.py#L191)
 for details).
 
-## Reward
+### Reward
 By default, OpenAI only provides a positive reward when the car reaches the goal. Each step prior to the goal receives a
 negative reward for fuel use. There is a default time limit of 200 steps, and the episode terminates upon reaching this 
 limit. In this setup, a random policy might take many episodes to receive a positive reward. By providing intermediate 
@@ -170,7 +170,7 @@ to goal at the apex of each climb. All intermediate rewards are therefore zero o
 the goal, the reward is the _sum_ of the fuel level and the percentage to goal, the latter being 1.0 since the goal is 
 reached. The sum (instead of product) is used for the goal reward to distinguish it from intermediate rewards.
 
-## Gradient Transformations
+### Gradient Transformations
 The gradients of the beta PDF near its boundaries (with respect to `theta_a` and `theta_b`) can be much larger than the 
 gradients at other `x` locations. This can cause problems because the step size `alpha` is constant. As usual in 
 stochastic gradient descent (SGD), the step size must be sufficiently small to generate reasonable updates for all 
@@ -208,15 +208,13 @@ start of the episode.
 * `--T 1000`:  Limit episodes to 1000 steps.
 * `--plot-environment`:  Show a real-time plot of state and reward values.
 
-### Policy Gradient Optimization
-
-#### General
+### Training Function and Episodes
 * `--train-function rlai.policy_gradient.monte_carlo.reinforce.improve`:  Run the REINFORCE policy gradient optimization
 algorithm.
-* `--num-episodes 500`:  Run 500 episodes.  
-* `--plot-state-value`:  Show a real-time plot of the estimated state value (i.e., the baseline).
+* `--num-episodes 500`:  Run 500 episodes.
 
-#### Baseline State-Value Estimator
+### Baseline State-Value Estimator
+* `--plot-state-value`:  Show a real-time plot of the estimated baseline state value.
 * `--v-S rlai.v_S.function_approximation.estimators.ApproximateStateValueEstimator`:  Baseline state-value estimator.  
 * `--feature-extractor rlai.environments.openai_gym.ContinuousMountainCarFeatureExtractor`:  Feature extractor for the
 baseline state-value estimator.
@@ -227,7 +225,7 @@ estimator.
 * `--learning-rate constant`:  Use a constant learning rate schedule.
 * `--eta0 0.01`:  Learning rate
 
-#### Policy
+### Policy
 * `--policy rlai.policies.parameterized.continuous_action.ContinuousActionBetaDistributionPolicy`:  Use the beta
 distribution to model the action-density distribution within the policy.
 * `--policy-feature-extractor rlai.environments.openai_gym.ContinuousMountainCarFeatureExtractor`:  Feature extractor
@@ -239,6 +237,24 @@ for the policy gradient optimizer.
 
 ### Output
 * `-save-agent-path ~/Desktop/mountaincar_continuous_agent.pickle`:  Where to save the final agent.
+
+The following videos show snapshots of the training process.
+
+Episode 0:
+
+{% include youtubePlayer.html id="fFgHtDLKxUY" %}
+
+Episode 50:
+
+{% include youtubePlayer.html id="a369ebQM-j4" %}
+
+Episode 250:
+
+{% include youtubePlayer.html id="SOE1RMIEJbY" %}
+
+Episode 450:
+
+{% include youtubePlayer.html id="uL_hsT6d83c" %}
 
 # Results
 
