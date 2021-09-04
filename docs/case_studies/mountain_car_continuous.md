@@ -254,6 +254,8 @@ oscillations to reach the goal:
 
 Episode 250:  The agent performs about as well as possible, with a single backward movement before reaching the goal:
 
+{% include youtubePlayer.html id="SOE1RMIEJbY" %}
+
 # Results
 
 The following video shows the final agent after 500 training episodes along with the instrumentation displays described 
