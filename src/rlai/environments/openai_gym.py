@@ -72,6 +72,9 @@ class Gym(ContinuousMdpEnvironment):
     """
 
     LLC_V2 = 'LunarLanderContinuous-v2'
+    LLC_V2_FUEL_CONSUMPTION_FULL_THROTTLE_MAIN = 1 / 150.0
+    LLC_V2_FUEL_CONSUMPTION_FULL_THROTTLE_SIDE = 1 / 300.0
+
     MCC_V0 = 'MountainCarContinuous-v0'
     MMC_V0_TROUGH_X_POS = -0.5
     MMC_V0_GOAL_X_POS = 0.45
@@ -188,35 +191,59 @@ class Gym(ContinuousMdpEnvironment):
         else:
             gym_action = a.i
 
+        # fuel-based modification
+        fuel_used = None
+        if self.gym_id == Gym.LLC_V2:
+            main_throttle, side_throttle = gym_action[:]
+            required_main_fuel = Gym.LLC_V2_FUEL_CONSUMPTION_FULL_THROTTLE_MAIN * (0.5 + 0.5 * main_throttle if main_throttle >= 0.0 else 0.0)
+            required_side_fuel = Gym.LLC_V2_FUEL_CONSUMPTION_FULL_THROTTLE_SIDE * abs(side_throttle) if abs(side_throttle) >= 0.5 else 0.0
+            required_total_fuel = required_main_fuel + required_side_fuel
+            fuel_level = state.observation[-1]
+            if required_total_fuel > fuel_level:
+                gym_action[:] *= fuel_level / required_total_fuel
+                fuel_used = fuel_level
+            else:
+                fuel_used = required_total_fuel
+
         # continuous mountain car:  cap energy expenditure at fuel level
-        if self.gym_id == Gym.MCC_V0:
-            fuel_level = state.observation[2]
-            fuel_max_throttle = fuel_level / Gym.MMC_V0_FUEL_CONSUMPTION_FULL_THROTTLE
-            desired_throttle = gym_action[0]
-            effective_throttle = min(fuel_max_throttle, abs(desired_throttle))
-            gym_action[0] = np.sign(desired_throttle) * effective_throttle
+        elif self.gym_id == Gym.MCC_V0:
+            throttle = gym_action[0]
+            required_fuel = abs(throttle) * Gym.MMC_V0_FUEL_CONSUMPTION_FULL_THROTTLE
+            fuel_level = state.observation[-1]
+            if required_fuel > fuel_level:
+                gym_action[:] *= fuel_level / required_fuel
+                fuel_used = fuel_level
+            else:
+                fuel_used = required_fuel
 
         observation, reward, done, _ = self.gym_native.step(action=gym_action)
 
-        # override reward per environment. continuous lunar lander:  the ideal landing is zeros across the board.
-        if self.gym_id == Gym.LLC_V2:
-            reward = -np.abs(observation[0:6]).sum() if done else 0.0
-
-        # continuous mountain car
-        elif self.gym_id == Gym.MCC_V0:
-
-            # append fuel level to state
-            fuel_consumed = abs(gym_action[0]) * Gym.MMC_V0_FUEL_CONSUMPTION_FULL_THROTTLE
-            fuel_level = state.observation[2]
-            fuel_remaining = max(0.0, fuel_level - fuel_consumed)
+        # update fuel remaining if needed
+        fuel_remaining = None
+        if fuel_used is not None:
+            fuel_remaining = max(0.0, state.observation[-1] - fuel_used)
             observation = np.append(observation, fuel_remaining)
+
+        if self.gym_id == Gym.LLC_V2:
+
+            # the ideal state is zeros across the board and fuel remaining
+            reward = -np.abs(observation[0:6]).sum() + fuel_remaining if done else 0.0
+
+        elif self.gym_id == Gym.MCC_V0:
 
             fraction_to_goal = (observation[0] - Gym.MMC_V0_TROUGH_X_POS) / (Gym.MMC_V0_GOAL_X_POS - Gym.MMC_V0_TROUGH_X_POS)
 
-            # reward at apex of the climb
-            reward = fraction_to_goal + fuel_remaining if fraction_to_goal >= 1.0 else 0.0
-            if self.previous_observation is not None and self.previous_observation[1] > 0.0 and observation[1] <= 0.0 and observation[0] >= Gym.MMC_V0_TROUGH_X_POS:
+            # if goal is reached, then reward with full fraction to goal plus any fuel remaining.
+            if fraction_to_goal >= 1.0:
+                reward = 1.0 + fuel_remaining
+
+            # if the car has transitioned to sliding leftward down the hill, reward with fuel times fraction to goal.
+            elif self.previous_observation is not None and self.previous_observation[1] > 0.0 and observation[1] <= 0.0 and observation[0] >= Gym.MMC_V0_TROUGH_X_POS:
                 reward = fuel_remaining * fraction_to_goal
+
+            # otherwise, no reward.
+            else:
+                reward = 0.0
 
         # call render if rendering manually
         if self.check_render_current_episode(True):
@@ -260,8 +287,8 @@ class Gym(ContinuousMdpEnvironment):
 
         observation = self.gym_native.reset()
 
-        # append fuel level to state of continuous mountain car
-        if self.gym_id == Gym.MCC_V0:
+        # append fuel level to state of continuous mountain car and lunar lander
+        if self.gym_id in [Gym.MCC_V0, Gym.LLC_V2]:
             observation = np.append(observation, 1.0)
 
         # call render if rendering manually
@@ -377,7 +404,8 @@ class Gym(ContinuousMdpEnvironment):
                 'ang',
                 'angV',
                 'leg1Con',
-                'leg2Con'
+                'leg2Con',
+                'fuel_level'
             ]
         elif self.gym_id == Gym.MCC_V0:
             names = [
@@ -806,13 +834,14 @@ class ContinuousLunarLanderFeatureExtractor(ContinuousFeatureExtractor):
         # extract raw feature values
         raw_feature_values = super().extract(state, refit_scaler)
 
-        # features 0 (x pos), 2 (x velocity), 3 (y velocity), 4 (angle), and 5 (angular velocity) are signed and can be
+        # features 0 (x pos), 2 (x velocity), 3 (y velocity), 4 (angle), 5 (angular velocity), and 8  (fuel level) are
         # encoded categorically.
-        encoded_feature_idxs = [0, 2, 3, 4, 5]
+        encoded_feature_idxs = [0, 2, 3, 4, 5, 8]
         feature_values_to_encode = raw_feature_values[encoded_feature_idxs]
         state_category = OneHotCategory(*[
-            obs_feature < 0.0
-            for obs_feature in state.observation[encoded_feature_idxs]
+            obs_feature <= 0.0 if feature_idx == -1 else  # fuel bottoms out at 0.0
+            obs_feature < 0.0  # other features go negative
+            for obs_feature, feature_idx in zip(state.observation[encoded_feature_idxs], encoded_feature_idxs)
         ])
 
         encoded_feature_values = self.state_category_interacter.interact(
@@ -837,7 +866,7 @@ class ContinuousLunarLanderFeatureExtractor(ContinuousFeatureExtractor):
         # interact features with relevant state categories
         self.state_category_interacter = OneHotCategoricalFeatureInteracter([
             OneHotCategory(*category_args)
-            for category_args in product(*([[True, False]] * 5))
+            for category_args in product(*([[True, False]] * 6))
         ])
 
 
