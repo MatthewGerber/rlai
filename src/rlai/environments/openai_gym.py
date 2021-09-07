@@ -72,8 +72,8 @@ class Gym(ContinuousMdpEnvironment):
     """
 
     LLC_V2 = 'LunarLanderContinuous-v2'
-    LLC_V2_FUEL_CONSUMPTION_FULL_THROTTLE_MAIN = 1 / 150.0
-    LLC_V2_FUEL_CONSUMPTION_FULL_THROTTLE_SIDE = 1 / 300.0
+    LLC_V2_FUEL_CONSUMPTION_FULL_THROTTLE_MAIN = 1 / 200.0
+    LLC_V2_FUEL_CONSUMPTION_FULL_THROTTLE_SIDE = 1 / 400.0
 
     MCC_V0 = 'MountainCarContinuous-v0'
     MMC_V0_TROUGH_X_POS = -0.5
@@ -226,8 +226,8 @@ class Gym(ContinuousMdpEnvironment):
 
         if self.gym_id == Gym.LLC_V2:
 
-            # the ideal state is zeros across the board and fuel remaining
-            reward = -np.abs(observation[0:6]).sum() + fuel_remaining if done else 0.0
+            # the ideal state is zeros across the board
+            reward = -np.abs(observation[0:6]).sum() if done else 0.0
 
         elif self.gym_id == Gym.MCC_V0:
 
