@@ -71,6 +71,7 @@ class Gym(ContinuousMdpEnvironment):
     Generalized Gym environment. Any OpenAI Gym environment can be executed by supplying the appropriate identifier.
     """
 
+    # TODO:  Give more fuel and reward for leftover fuel.
     LLC_V2 = 'LunarLanderContinuous-v2'
     LLC_V2_FUEL_CONSUMPTION_FULL_THROTTLE_MAIN = 1 / 200.0
     LLC_V2_FUEL_CONSUMPTION_FULL_THROTTLE_SIDE = 1 / 400.0
