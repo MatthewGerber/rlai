@@ -29,9 +29,9 @@ jobs:
         sudo apt-get install -y ffmpeg xvfb freeglut3-dev libxcb-xinerama0 libxcb-icccm4 libxcb-image0 libxcb-render-util0 libxcb-xinerama0 libxkbcommon-x11-0 libxcb-keysyms1 libxcb-randr0
         python -m pip install --upgrade pip
         python -m pip install -e .[test]
-    - name: Lint with flake8
+    - name: Check source with flake8
       run: |
-        flake8 . --count --extend-ignore=E501 --show-source --statistics
+        flake8 --count --extend-ignore=E501 --show-source --statistics .
     - name: Test with pytest
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
