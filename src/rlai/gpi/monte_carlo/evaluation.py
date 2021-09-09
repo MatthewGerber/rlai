@@ -191,7 +191,7 @@ def evaluate_q_pi(
                 q_S_A[state][a].update(value=g, weight=w)
                 w *= agent.pi[state][a] / episode_generation_agent.pi[state][a]
 
-                # if the importance sampling weight becomes zero (allowing floating-point tolerane), then we're done,
+                # if the importance sampling weight becomes zero (allowing floating-point tolerance), then we're done,
                 # as all subsequent weighted updates (at earlier time steps) will be zero. this is the sense in which
                 # off-policy learning only learns from the "tails" of episodes in which all state-action pairs of the
                 # episode are also greedy with respect to the agent's policy.

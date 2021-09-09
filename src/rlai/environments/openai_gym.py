@@ -318,7 +318,7 @@ class Gym(ContinuousMdpEnvironment):
         """
         Check whether the current episode is to be rendered.
 
-        :param render_manually: Wether the rendering will be done manually with calls to the render function or automatically
+        :param render_manually: Whether the rendering will be done manually with calls to the render function or automatically
         as a result of saving videos via the monitor. Pass None to check whether the episode should be rendered,
         regardless of how the rendering will be done.
         :return: True if rendered and False otherwise.
@@ -528,7 +528,7 @@ class Gym(ContinuousMdpEnvironment):
                 for i in range(self.gym_native.action_space.n)
             ]
 
-        # action space is continuous and we lack a discretization resolution:  initializee a single, multi-dimensional
+        # action space is continuous and we lack a discretization resolution:  initialize a single, multi-dimensional
         # action including the min and max values of the dimensions.
         elif isinstance(self.gym_native.action_space, Box) and self.continuous_action_discretization_resolution is None:
             self.actions = [
@@ -674,7 +674,7 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
 
         X = self.feature_scaler.scale_features(X, refit_scaler)
 
-        # interacct feature vectors per state category
+        # interact feature vectors per state category
         state_categories = [
             OneHotCategory(*[
                 obs_feature < 0.0

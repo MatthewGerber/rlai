@@ -1450,7 +1450,7 @@ class RobocodeFeatureExtractor(FeatureExtractor):
             degrees: float
     ) -> float:
         """
-        Normalizee degress to be [0, 360].
+        Normalize degrees to be [0, 360].
 
         :param degrees: Degrees.
         :return: Normalized degrees.

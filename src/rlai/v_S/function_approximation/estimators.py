@@ -64,7 +64,7 @@ class ApproximateValueEstimator(ValueEstimator):
 @rl_text(chapter='Value Estimation', page=195)
 class ApproximateStateValueEstimator(StateValueEstimator):
     """
-    Approximate state value estimator.
+    Approximate state-value estimator.
     """
 
     @classmethod
@@ -106,12 +106,12 @@ class ApproximateStateValueEstimator(StateValueEstimator):
             environment: MdpEnvironment
     ) -> Tuple[StateValueEstimator, List[str]]:
         """
-        Initialize a state-action value estimator from arguments.
+        Initialize a state-value estimator from arguments.
 
         :param args: Arguments.
         :param random_state: Random state.
         :param environment: Environment.
-        :return: 2-tuple of a state-action value estimator and a list of unparsed arguments.
+        :return: 2-tuple of a state-value estimator and a list of unparsed arguments.
         """
 
         parsed_args, unparsed_args = parse_arguments(cls, args)
@@ -288,7 +288,7 @@ class ApproximateStateValueEstimator(StateValueEstimator):
         Check whether a state is defined by the estimator.
 
         :param state: State.
-        :return: True if defined and False otherise.
+        :return: True if defined and False otherwise.
         """
 
         return True

@@ -237,7 +237,7 @@ def get_argument_parser_for_train_function(
 
     function = import_function(function_name)
 
-    # get argument names actuall expected by the specified training function
+    # get argument names actually expected by the specified training function
     # noinspection PyUnresolvedReferences
     actual_arg_names = function.__code__.co_varnames[:function.__code__.co_argcount]
 

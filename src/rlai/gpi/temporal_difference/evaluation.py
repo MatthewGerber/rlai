@@ -310,7 +310,7 @@ def update_q_S_A(
     :param q_S_A: State-action value estimator.
     :param n_steps: Number of time steps to accumulate actual rewards for before updating a state-action value.
     :param curr_t: Current time step.
-    :param t_state_a_g: Structore of time, state, action, g accumulators. If an n-step update is feasible at the current
+    :param t_state_a_g: Structure of time, state, action, g accumulators. If an n-step update is feasible at the current
     time step (i.e., if we have accumulated sufficient rewards), then the entry corresponding to the n-step update will
     be deleted from this structure.
     :param agent: Agent.
