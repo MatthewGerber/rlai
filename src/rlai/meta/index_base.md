@@ -40,7 +40,7 @@ Looking for a place to dig in? Below are a few ideas organized by area of intere
 
 * Explore new OpenAI Gym environments:  OpenAI Gym provides a wide range of interesting environments, and
   experimenting with them can be as simple as modifying an existing training command (e.g., the one for
-  [inverted pendulum](https://matthewgerber.github.io/rlai/case_studies/inverted_pendulum.html)) and replacing the 
+  [inverted pendulum](case_studies/inverted_pendulum.md)) and replacing the 
   `--gym-id` with something else. Other changes might be needed depending on the environment, but Gym is particularly
   convenient.
 
@@ -72,15 +72,15 @@ understanding how agents are parameterized and rewarded.
 [OpenAI Gym](https://gym.openai.com) is a collection of environments that range from traditional control to advanced 
 robotics. Case studies have been developed for the OpenAI Gym environment listed below:
 
-* [Inverted Pendulum](https://matthewgerber.github.io/rlai/case_studies/inverted_pendulum.html)
-* [Acrobot](https://matthewgerber.github.io/rlai/case_studies/acrobot.html)
-* [Mountain Car](https://matthewgerber.github.io/rlai/case_studies/mountain_car.html)
-* [Mountain Car with Continuous Control](https://matthewgerber.github.io/rlai/case_studies/mountain_car_continuous.html)
+* [Inverted Pendulum](case_studies/inverted_pendulum.md)
+* [Acrobot](case_studies/acrobot.md)
+* [Mountain Car](case_studies/mountain_car.md)
+* [Mountain Car with Continuous Control](case_studies/mountain_car_continuous.md)
 
 ## Robocode
 [Robocode](https://github.com/robo-code/robocode) is a simulation-based robotic combat programming game with a 
 dynamically rich environment, multi-agent teaming, and a large user community. Read more 
-[here](https://matthewgerber.github.io/rlai/case_studies/robocode.html).
+[here](case_studies/robocode.md).
 
 # Figures from the Textbook
 A list of figures can be found [here](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/figures). Most of these 

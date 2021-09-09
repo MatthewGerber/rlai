@@ -2,6 +2,9 @@ from abc import ABC, abstractmethod
 from argparse import ArgumentParser
 from typing import Optional, Tuple, List, Any
 
+from numpy.random import RandomState
+
+from rlai.environments.mdp import MdpEnvironment
 from rlai.meta import rl_text
 from rlai.states.mdp import MdpState
 from rlai.utils import get_base_argument_parser
@@ -51,7 +54,7 @@ class ValueEstimator(ABC):
 @rl_text(chapter='Value Estimation', page=23)
 class StateValueEstimator(ABC):
     """
-    State value estimator.
+    State-value estimator.
     """
 
     @classmethod
@@ -70,13 +73,17 @@ class StateValueEstimator(ABC):
     @abstractmethod
     def init_from_arguments(
             cls,
-            args: List[str]
+            args: List[str],
+            random_state: RandomState,
+            environment: MdpEnvironment
     ) -> Tuple[Any, List[str]]:
         """
-        Initialize a state value estimator from arguments.
+        Initialize a state-value estimator from arguments.
 
         :param args: Arguments.
-        :return: 2-tuple of a state value estimator and a list of unparsed arguments.
+        :param random_state: Random state.
+        :param environment: Environment.
+        :return: 2-tuple of a state-value estimator and a list of unparsed arguments.
         """
 
     def initialize(
@@ -142,7 +149,7 @@ class StateValueEstimator(ABC):
         Check whether a state is defined by the estimator.
 
         :param state: State.
-        :return: True if defined and False otherise.
+        :return: True if defined and False otherwise.
         """
 
     @abstractmethod

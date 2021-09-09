@@ -4,6 +4,7 @@
 Run an agent within an environment.
 
     :param args: Arguments.
+    :return: List of run monitors.
 ```
 ### [rlai.runners.top_level.run](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/runners/top_level.py#L10)
 ```

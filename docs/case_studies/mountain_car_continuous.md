@@ -5,7 +5,7 @@
 # Introduction
 
 ### Environment
-This is similar to the [discrete-control mountain car](./mountain_car.md) except that, here, control is achieved through
+This is similar to the [discrete-control mountain car](mountain_car.md) except that, here, control is achieved through
 continuous-valued forward and backward acceleration. You can read more about this environment 
 [here](https://gym.openai.com/envs/MountainCarContinuous-v0/). Continuous control complicates the use of action-value 
 estimation with tabular and function approximation methods, which assume that actions can be enumerated from a discrete 

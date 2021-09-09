@@ -390,7 +390,7 @@ class TabularStateActionValueEstimator(StateActionValueEstimator):
         Check whether a state is defined by the estimator.
 
         :param state: State.
-        :return: True if defined and False otherise.
+        :return: True if defined and False otherwise.
         """
 
         return state in self.q_S_A

@@ -37,7 +37,7 @@ class MancalaState(MdpState):
 
         agent_is_player_1 = agent_to_sense_state != mancala.player_2
 
-        # get the pits ordered from the perspective of the player that will sense the resulting statea
+        # get the pits ordered from the perspective of the player that will sense the resulting state
         if agent_is_player_1:
             state_pits = mancala.player_1_pockets + [mancala.player_1_store] + mancala.player_2_pockets + [mancala.player_2_store]
         else:

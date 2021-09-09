@@ -72,8 +72,8 @@ class Gym(ContinuousMdpEnvironment):
     """
 
     LLC_V2 = 'LunarLanderContinuous-v2'
-    LLC_V2_FUEL_CONSUMPTION_FULL_THROTTLE_MAIN = 1 / 150.0
-    LLC_V2_FUEL_CONSUMPTION_FULL_THROTTLE_SIDE = 1 / 300.0
+    LLC_V2_FUEL_CONSUMPTION_FULL_THROTTLE_MAIN = 1 / 300.0
+    LLC_V2_FUEL_CONSUMPTION_FULL_THROTTLE_SIDE = 1 / 600.0
 
     MCC_V0 = 'MountainCarContinuous-v0'
     MMC_V0_TROUGH_X_POS = -0.5
@@ -226,8 +226,15 @@ class Gym(ContinuousMdpEnvironment):
 
         if self.gym_id == Gym.LLC_V2:
 
-            # the ideal state is zeros across the board and fuel remaining
-            reward = -np.abs(observation[0:6]).sum() + fuel_remaining if done else 0.0
+            # the ideal state is zeros across the board with fuel left
+            reward = 0.0
+            if done:
+
+                fuel_reward = 0.0
+                if abs(observation[0]) <= 0.2:
+                    fuel_reward = state.observation[-1]
+
+                reward = -np.abs(observation[0:6]).sum() + fuel_reward
 
         elif self.gym_id == Gym.MCC_V0:
 
@@ -311,7 +318,7 @@ class Gym(ContinuousMdpEnvironment):
         """
         Check whether the current episode is to be rendered.
 
-        :param render_manually: Wether the rendering will be done manually with calls to the render function or automatically
+        :param render_manually: Whether the rendering will be done manually with calls to the render function or automatically
         as a result of saving videos via the monitor. Pass None to check whether the episode should be rendered,
         regardless of how the rendering will be done.
         :return: True if rendered and False otherwise.
@@ -521,7 +528,7 @@ class Gym(ContinuousMdpEnvironment):
                 for i in range(self.gym_native.action_space.n)
             ]
 
-        # action space is continuous and we lack a discretization resolution:  initializee a single, multi-dimensional
+        # action space is continuous and we lack a discretization resolution:  initialize a single, multi-dimensional
         # action including the min and max values of the dimensions.
         elif isinstance(self.gym_native.action_space, Box) and self.continuous_action_discretization_resolution is None:
             self.actions = [
@@ -667,7 +674,7 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
 
         X = self.feature_scaler.scale_features(X, refit_scaler)
 
-        # interacct feature vectors per state category
+        # interact feature vectors per state category
         state_categories = [
             OneHotCategory(*[
                 obs_feature < 0.0

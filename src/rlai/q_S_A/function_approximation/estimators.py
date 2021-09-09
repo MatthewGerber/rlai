@@ -473,7 +473,7 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         `test.rlai.gpi.temporal_difference.iteration_test.test_q_learning_iterate_value_q_pi_function_approximation` for
         an example of how this is done. If it is not convenient or possible to specify all state and action levels up
         front, then avoid using categorical variables in the model formula. The variables referenced by the model
-        formula must be extracted with identical names by the feature extractor. Althrough model formulae are convenient
+        formula must be extracted with identical names by the feature extractor. Although model formulae are convenient
         they are also inefficiently processed in the online fashion described above. Patsy introduces significant
         overhead with each call to the formula parser. A faster alternative is to avoid formula specification (pass
         None here) and return the feature matrix directly from the feature extractor as a numpy.ndarray.
@@ -534,7 +534,7 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         Check whether a state is defined by the estimator.
 
         :param state: State.
-        :return: True if defined and False otherise.
+        :return: True if defined and False otherwise.
         """
 
         return True

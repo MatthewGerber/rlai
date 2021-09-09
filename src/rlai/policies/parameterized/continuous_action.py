@@ -287,7 +287,7 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
             # off-diagonal elements can be positive or negative
             else np.dot(theta_cov_row, state_features)
 
-            # iteraate over each row of coefficients
+            # iterate over each row of coefficients
             for i, theta_cov_row in enumerate(theta_cov)
 
         ]).reshape(self.environment.get_action_space_dimensionality(), self.environment.get_action_space_dimensionality())
@@ -320,7 +320,7 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
             # off-diagonal elements can be positive or negative
             else jnp.dot(theta_cov_row, state_features)
 
-            # iteraate over each row of coefficients
+            # iterate over each row of coefficients
             for i, theta_cov_row in enumerate(theta_cov)
 
         ]).reshape(action_space_dimensionality, action_space_dimensionality)
@@ -558,16 +558,15 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
                 # TODO:  How to estimate this from the PDF?
                 p_a_s = 1.0
 
-                # check for nans in the gradients and skip the update if any are found
-                if np.isnan(action_density_gradient_wrt_theta_a).any() or np.isnan(action_density_gradient_wrt_theta_b).any():  # pragma no cover
-                    warnings.warn('Gradients contain np.nan value(s). Skipping update.')
-                else:
+                # squash gradients into [-1.0, 1.0] to handle scaling issues when actions are chosen at the tails of
+                # the beta distribution where the gradients are very large. this also addresses cases of
+                # positive/negative infinite gradients.
 
-                    # squash gradients into [-1.0, 1.0] to handle scaling issues when actions are chosen at the tails of
-                    # the beta distribution where the gradients are very large. this also addresses cases of
-                    # positive/negative infinite gradients.
-                    self.action_theta_a[action_i, :] += alpha * target * (np.tanh(action_density_gradient_wrt_theta_a) / p_a_s)
-                    self.action_theta_b[action_i, :] += alpha * target * (np.tanh(action_density_gradient_wrt_theta_b) / p_a_s)
+                action_density_gradient_wrt_theta_a = np.nan_to_num(action_density_gradient_wrt_theta_a)
+                self.action_theta_a[action_i, :] += alpha * target * (np.tanh(action_density_gradient_wrt_theta_a) / p_a_s)
+
+                action_density_gradient_wrt_theta_b = np.nan_to_num(action_density_gradient_wrt_theta_b)
+                self.action_theta_b[action_i, :] += alpha * target * (np.tanh(action_density_gradient_wrt_theta_b) / p_a_s)
 
         self.reset_action_scatter_plot_y_range()
 

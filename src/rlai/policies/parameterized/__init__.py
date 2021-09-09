@@ -35,7 +35,7 @@ class ParameterizedPolicy(Policy, ABC):
     ):
         """
         Append an update for an action in a state using a target and a step size. All appended updates will
-        be commited to the policy when `commit_updates` is called.
+        be committed to the policy when `commit_updates` is called.
 
         :param a: Action.
         :param s: State.

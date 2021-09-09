@@ -244,6 +244,6 @@ class Human(Agent):
             random_state=None
         )
 
-        # TODO:  This is a hack to make the human agent compatible with tabular methdods, which request state
+        # TODO:  This is a hack to make the human agent compatible with tabular methods, which request state
         # identifiers during operation.
         self.pi = TabularPolicy(None, None)

@@ -426,7 +426,7 @@ def get_nearest_positive_definite_matrix(A):
     # will be much larger than [1]'s `eps(mineig)`, since `mineig` is usually on
     # the order of 1e-16, and `eps(1e-16)` is on the order of 1e-34, whereas
     # `spacing` will, for Gaussian random matrixes of small dimension, be on
-    # othe order of 1e-16. In practice, both ways converge, as the unit test
+    # the order of 1e-16. In practice, both ways converge, as the unit test
     # below suggests.
     eye = np.eye(A.shape[0])
     k = 1
