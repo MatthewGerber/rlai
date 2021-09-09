@@ -6,7 +6,7 @@ Perform iterative policy evaluation of an agent's policy within an environment, 
     :param agent: MDP agent. Must contain a policy `pi` that has been fully initialized with instances of
     `rlai.states.mdp.ModelBasedMdpState`.
     :param environment: Model-based MDP environment to evaluate.
-    :param theta: Minimum tolerated change in state value estimates, below which evaluation terminates. Either `theta`
+    :param theta: Minimum tolerated change in state-value estimates, below which evaluation terminates. Either `theta`
     or `num_iterations` (or both) can be specified, but passing neither will raise an exception.
     :param num_iterations: Number of evaluation iterations to execute.  Either `theta` or `num_iterations` (or both)
     can be specified, but passing neither will raise an exception.
@@ -21,7 +21,7 @@ Perform iterative policy evaluation of an agent's policy within an environment, 
 
     :param agent: MDP agent.
     :param environment: Model-based MDP environment to evaluate.
-    :param theta: Minimum tolerated change in state value estimates, below which evaluation terminates. Either `theta`
+    :param theta: Minimum tolerated change in state-value estimates, below which evaluation terminates. Either `theta`
     or `num_iterations` (or both) can be specified, but passing neither will raise an exception.
     :param num_iterations: Number of evaluation iterations to execute.  Either `theta` or `num_iterations` (or both)
     can be specified, but passing neither will raise an exception.

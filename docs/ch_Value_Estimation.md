@@ -23,11 +23,11 @@ Tabular state-action value estimator.
 ```
 Tabular value estimator.
 ```
-### [rlai.v_S.StateValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/v_S.py#L52)
+### [rlai.v_S.StateValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/v_S.py#L55)
 ```
-State value estimator.
+State-value estimator.
 ```
-### [rlai.v_S.ValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/v_S.py#L11)
+### [rlai.v_S.ValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/v_S.py#L14)
 ```
 Value estimator.
 ```
@@ -45,7 +45,7 @@ Approximate value estimator.
 ```
 ### [rlai.v_S.function_approximation.estimators.ApproximateStateValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/v_S/function_approximation/estimators.py#L65)
 ```
-Approximate state value estimator.
+Approximate state-value estimator.
 ```
 ### [rlai.v_S.function_approximation.estimators.ApproximateValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/v_S/function_approximation/estimators.py#L17)
 ```
