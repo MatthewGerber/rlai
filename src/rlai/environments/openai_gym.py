@@ -71,10 +71,9 @@ class Gym(ContinuousMdpEnvironment):
     Generalized Gym environment. Any OpenAI Gym environment can be executed by supplying the appropriate identifier.
     """
 
-    # TODO:  Give more fuel and reward for leftover fuel.
     LLC_V2 = 'LunarLanderContinuous-v2'
-    LLC_V2_FUEL_CONSUMPTION_FULL_THROTTLE_MAIN = 1 / 200.0
-    LLC_V2_FUEL_CONSUMPTION_FULL_THROTTLE_SIDE = 1 / 400.0
+    LLC_V2_FUEL_CONSUMPTION_FULL_THROTTLE_MAIN = 1 / 300.0
+    LLC_V2_FUEL_CONSUMPTION_FULL_THROTTLE_SIDE = 1 / 600.0
 
     MCC_V0 = 'MountainCarContinuous-v0'
     MMC_V0_TROUGH_X_POS = -0.5
@@ -227,8 +226,15 @@ class Gym(ContinuousMdpEnvironment):
 
         if self.gym_id == Gym.LLC_V2:
 
-            # the ideal state is zeros across the board
-            reward = -np.abs(observation[0:6]).sum() if done else 0.0
+            # the ideal state is zeros across the board with fuel left
+            reward = 0.0
+            if done:
+
+                fuel_reward = 0.0
+                if abs(observation[0]) <= 0.2:
+                    fuel_reward = state.observation[-1]
+
+                reward = -np.abs(observation[0:6]).sum() + fuel_reward
 
         elif self.gym_id == Gym.MCC_V0:
 
