@@ -2,7 +2,7 @@ import os
 import pickle
 import shlex
 import tempfile
-from typing import Dict, List
+from typing import List
 
 import pytest
 from numpy.random import RandomState
@@ -14,83 +14,144 @@ from rlai.runners.agent_in_environment import run
 from rlai.runners.monitor import Monitor
 
 
-def test_run():
+def test_k_armed_bandit_epsilon_greedy_no_resets():
 
-    # create dummy mdp agent for runner
-    stochastic_mdp_agent = StochasticMdpAgent('foo', RandomState(12345), TabularPolicy(None, None), 1.0)
-    agent_path = tempfile.NamedTemporaryFile(delete=False).name
-    with open(agent_path, 'wb') as f:
-        pickle.dump(stochastic_mdp_agent, f)
-
-    run_args_list = [
-        '--random-seed 12345 --T 100 --n-runs 200 --environment rlai.environments.bandit.KArmedBandit --k 10 --agent rlai.agents.q_value.EpsilonGreedy --epsilon 0.2 0.0',
-        '--random-seed 12345 --T 100 --n-runs 200 --environment rlai.environments.bandit.KArmedBandit --k 10 --reset-probability 0.005 --agent rlai.agents.q_value.EpsilonGreedy --epsilon 0.2 0.0',
-        '--random-seed 12345 --T 100 --n-runs 200 --environment rlai.environments.bandit.KArmedBandit --k 10 --reset-probability 0.005 --agent rlai.agents.q_value.EpsilonGreedy --epsilon 0.2 0.0 --alpha 0.1',
-        '--random-seed 12345 --T 100 --n-runs 200 --environment rlai.environments.bandit.KArmedBandit --k 10 --agent rlai.agents.q_value.EpsilonGreedy --epsilon 0.2 0.0 --epsilon-reduction-rate 0.01',
-        '--random-seed 12345 --T 100 --n-runs 200 --environment rlai.environments.bandit.KArmedBandit --k 10 --agent rlai.agents.q_value.EpsilonGreedy --epsilon 0.0 --initial-q-value 5 --alpha 0.1',
-        '--random-seed 12345 --T 100 --n-runs 200 --environment rlai.environments.bandit.KArmedBandit --k 10 --agent rlai.agents.q_value.UpperConfidenceBound --c 0 1',
-        '--random-seed 12345 --T 100 --n-runs 200 --environment rlai.environments.bandit.KArmedBandit --k 10 --q-star-mean 4 --agent rlai.agents.h_value.PreferenceGradient --step-size-alpha 0.1 --use-reward-baseline',
-        '--random-seed 12345 --T 100 --n-runs 200 --environment rlai.environments.bandit.KArmedBandit --k 10 --q-star-mean 4 --agent rlai.agents.h_value.PreferenceGradient --step-size-alpha 0.1',
-        f'--random-seed 12345 --T 100 --n-runs 200 --environment rlai.environments.mancala.Mancala --initial-count 4 --agent {agent_path}',
-        f'--random-seed 12345 --T 100 --n-runs 200 --environment rlai.environments.gamblers_problem.GamblersProblem --p-h 0.4 --agent {agent_path} --log INFO'
-    ]
-
-    run_monitor: Dict[str, List[Monitor]] = dict()
-
-    for run_args in run_args_list:
-        run_monitor[run_args] = run(shlex.split(run_args))
+    monitors = run(shlex.split('--random-seed 12345 --T 100 --n-runs 200 --environment rlai.environments.bandit.KArmedBandit --k 10 --agent rlai.agents.q_value.EpsilonGreedy --epsilon 0.2 0.0'))
 
     # uncomment the following line and run test to update fixture
-    # with open(f'{os.path.dirname(__file__)}/fixtures/agent_in_environment_test.pickle', 'wb') as file:
-    #     pickle.dump(run_monitor, file)
+    # with open(f'{os.path.dirname(__file__)}/fixtures/test_k_armed_bandit_epsilon_greedy_no_resets.pickle', 'wb') as file:
+    #     pickle.dump(monitors, file)
 
-    with open(f'{os.path.dirname(__file__)}/fixtures/agent_in_environment_test.pickle', 'rb') as file:
-        run_monitor_fixture = pickle.load(file)
+    with open(f'{os.path.dirname(__file__)}/fixtures/test_k_armed_bandit_epsilon_greedy_no_resets.pickle', 'rb') as file:
+        monitors_fixture = pickle.load(file)
 
-    assert len(run_args_list) == len(run_monitor_fixture.keys())
+    assert_monitors(monitors, monitors_fixture)
 
-    for run_args, run_args_fixture in zip(run_args_list, run_monitor_fixture.keys()):
 
-        print(f'Checking test results for run {run_args}...', end='')
+def test_k_armed_bandit_epsilon_greedy_resets_no_alpha():
 
-        for monitor, monitor_fixture in zip(run_monitor[run_args], run_monitor_fixture[run_args_fixture]):
+    monitors = run(shlex.split('--random-seed 12345 --T 100 --n-runs 200 --environment rlai.environments.bandit.KArmedBandit --k 10 --reset-probability 0.005 --agent rlai.agents.q_value.EpsilonGreedy --epsilon 0.2 0.0'))
 
-            assert monitor.cumulative_reward == monitor_fixture.cumulative_reward
+    # uncomment the following line and run test to update fixture
+    # with open(f'{os.path.dirname(__file__)}/fixtures/test_k_armed_bandit_epsilon_greedy_resets_no_alpha.pickle', 'wb') as file:
+    #     pickle.dump(monitors, file)
 
-            assert_allclose(
-                [
-                    monitor.t_count_optimal_action[t]
-                    for t in sorted(monitor.t_count_optimal_action)
-                ],
-                [
-                    monitor_fixture.t_count_optimal_action[t]
-                    for t in sorted(monitor_fixture.t_count_optimal_action)
-                ]
-            )
+    with open(f'{os.path.dirname(__file__)}/fixtures/test_k_armed_bandit_epsilon_greedy_resets_no_alpha.pickle', 'rb') as file:
+        monitors_fixture = pickle.load(file)
 
-            assert_allclose(
-                [
-                    monitor.t_average_reward[t].get_value()
-                    for t in sorted(monitor.t_average_reward)
-                ],
-                [
-                    monitor_fixture.t_average_reward[t].get_value()
-                    for t in sorted(monitor_fixture.t_average_reward)
-                ]
-            )
+    assert_monitors(monitors, monitors_fixture)
 
-            assert_allclose(
-                [
-                    monitor.t_average_cumulative_reward[t].get_value()
-                    for t in sorted(monitor.t_average_cumulative_reward)
-                ],
-                [
-                    monitor_fixture.t_average_cumulative_reward[t].get_value()
-                    for t in sorted(monitor_fixture.t_average_cumulative_reward)
-                ]
-            )
 
-        print('passed.')
+def test_k_armed_bandit_epsilon_greedy_resets_with_alpha():
+
+    monitors = run(shlex.split('--random-seed 12345 --T 100 --n-runs 200 --environment rlai.environments.bandit.KArmedBandit --k 10 --reset-probability 0.005 --agent rlai.agents.q_value.EpsilonGreedy --epsilon 0.2 0.0 --alpha 0.1'))
+
+    # uncomment the following line and run test to update fixture
+    # with open(f'{os.path.dirname(__file__)}/fixtures/test_k_armed_bandit_epsilon_greedy_resets_with_alpha.pickle', 'wb') as file:
+    #     pickle.dump(monitors, file)
+
+    with open(f'{os.path.dirname(__file__)}/fixtures/test_k_armed_bandit_epsilon_greedy_resets_with_alpha.pickle', 'rb') as file:
+        monitors_fixture = pickle.load(file)
+
+    assert_monitors(monitors, monitors_fixture)
+
+
+def test_k_armed_bandit_epsilon_greedy_epsilon_reduction():
+
+    monitors = run(shlex.split('--random-seed 12345 --T 100 --n-runs 200 --environment rlai.environments.bandit.KArmedBandit --k 10 --agent rlai.agents.q_value.EpsilonGreedy --epsilon 0.2 0.0 --epsilon-reduction-rate 0.01'))
+
+    # uncomment the following line and run test to update fixture
+    # with open(f'{os.path.dirname(__file__)}/fixtures/test_k_armed_bandit_epsilon_greedy_epsilon_reduction.pickle', 'wb') as file:
+    #     pickle.dump(monitors, file)
+
+    with open(f'{os.path.dirname(__file__)}/fixtures/test_k_armed_bandit_epsilon_greedy_epsilon_reduction.pickle', 'rb') as file:
+        monitors_fixture = pickle.load(file)
+
+    assert_monitors(monitors, monitors_fixture)
+
+
+def test_k_armed_bandit_epsilon_greedy_optimistic():
+
+    monitors = run(shlex.split('--random-seed 12345 --T 100 --n-runs 200 --environment rlai.environments.bandit.KArmedBandit --k 10 --agent rlai.agents.q_value.EpsilonGreedy --epsilon 0.0 --initial-q-value 5 --alpha 0.1'))
+
+    # uncomment the following line and run test to update fixture
+    # with open(f'{os.path.dirname(__file__)}/fixtures/test_k_armed_bandit_epsilon_greedy_optimistic.pickle', 'wb') as file:
+    #     pickle.dump(monitors, file)
+
+    with open(f'{os.path.dirname(__file__)}/fixtures/test_k_armed_bandit_epsilon_greedy_optimistic.pickle', 'rb') as file:
+        monitors_fixture = pickle.load(file)
+
+    assert_monitors(monitors, monitors_fixture)
+
+
+def test_k_armed_bandit_upper_confidence_bound():
+
+    monitors = run(shlex.split('--random-seed 12345 --T 100 --n-runs 200 --environment rlai.environments.bandit.KArmedBandit --k 10 --agent rlai.agents.q_value.UpperConfidenceBound --c 0 1'))
+
+    # uncomment the following line and run test to update fixture
+    # with open(f'{os.path.dirname(__file__)}/fixtures/test_k_armed_bandit_upper_confidence_bound.pickle', 'wb') as file:
+    #     pickle.dump(monitors, file)
+
+    with open(f'{os.path.dirname(__file__)}/fixtures/test_k_armed_bandit_upper_confidence_bound.pickle', 'rb') as file:
+        monitors_fixture = pickle.load(file)
+
+    assert_monitors(monitors, monitors_fixture)
+
+
+def test_k_armed_bandit_preference_gradient_with_baseline():
+
+    monitors = run(shlex.split('--random-seed 12345 --T 100 --n-runs 200 --environment rlai.environments.bandit.KArmedBandit --k 10 --q-star-mean 4 --agent rlai.agents.h_value.PreferenceGradient --step-size-alpha 0.1 --use-reward-baseline'))
+
+    # uncomment the following line and run test to update fixture
+    # with open(f'{os.path.dirname(__file__)}/fixtures/test_k_armed_bandit_preference_gradient_with_baseline.pickle', 'wb') as file:
+    #     pickle.dump(monitors, file)
+
+    with open(f'{os.path.dirname(__file__)}/fixtures/test_k_armed_bandit_preference_gradient_with_baseline.pickle', 'rb') as file:
+        monitors_fixture = pickle.load(file)
+
+    assert_monitors(monitors, monitors_fixture)
+
+
+def test_k_armed_bandit_preference_gradient_without_baseline():
+
+    monitors = run(shlex.split('--random-seed 12345 --T 100 --n-runs 200 --environment rlai.environments.bandit.KArmedBandit --k 10 --q-star-mean 4 --agent rlai.agents.h_value.PreferenceGradient --step-size-alpha 0.1'))
+
+    # uncomment the following line and run test to update fixture
+    # with open(f'{os.path.dirname(__file__)}/fixtures/test_k_armed_bandit_preference_gradient_without_baseline.pickle', 'wb') as file:
+    #     pickle.dump(monitors, file)
+
+    with open(f'{os.path.dirname(__file__)}/fixtures/test_k_armed_bandit_preference_gradient_without_baseline.pickle', 'rb') as file:
+        monitors_fixture = pickle.load(file)
+
+    assert_monitors(monitors, monitors_fixture)
+
+
+def test_mancala():
+
+    monitors = run(shlex.split(f'--random-seed 12345 --T 100 --n-runs 200 --environment rlai.environments.mancala.Mancala --initial-count 4 --agent {dump_agent()}'))
+
+    # uncomment the following line and run test to update fixture
+    # with open(f'{os.path.dirname(__file__)}/fixtures/test_mancala.pickle', 'wb') as file:
+    #     pickle.dump(monitors, file)
+
+    with open(f'{os.path.dirname(__file__)}/fixtures/test_mancala.pickle', 'rb') as file:
+        monitors_fixture = pickle.load(file)
+
+    assert_monitors(monitors, monitors_fixture)
+
+
+def test_gamblers_problem():
+
+    monitors = run(shlex.split(f'--random-seed 12345 --T 100 --n-runs 200 --environment rlai.environments.gamblers_problem.GamblersProblem --p-h 0.4 --agent {dump_agent()} --log INFO'))
+
+    # uncomment the following line and run test to update fixture
+    # with open(f'{os.path.dirname(__file__)}/fixtures/test_gamblers_problem.pickle', 'wb') as file:
+    #     pickle.dump(monitors, file)
+
+    with open(f'{os.path.dirname(__file__)}/fixtures/test_gamblers_problem.pickle', 'rb') as file:
+        monitors_fixture = pickle.load(file)
+
+    assert_monitors(monitors, monitors_fixture)
 
 
 def test_unparsed_args():
@@ -106,3 +167,65 @@ def test_plot():
 
     # with pdf
     run(shlex.split(f'--random-seed 12345 --T 100 --n-runs 200 --environment rlai.environments.bandit.KArmedBandit --k 10 --agent rlai.agents.q_value.EpsilonGreedy --epsilon 0.2 0.0 --plot --pdf-save-path {tempfile.NamedTemporaryFile(delete=False).name}'))
+
+
+def dump_agent() -> str:
+
+    # create dummy mdp agent for runner
+    stochastic_mdp_agent = StochasticMdpAgent('foo', RandomState(12345), TabularPolicy(None, None), 1.0)
+    agent_path = tempfile.NamedTemporaryFile(delete=False).name
+    with open(agent_path, 'wb') as f:
+        pickle.dump(stochastic_mdp_agent, f)
+
+    return agent_path
+
+
+def assert_monitors(
+        monitors: List[Monitor],
+        monitors_fixture: List[Monitor]
+):
+    """
+    Assert test results for a list of monitors and their fixtures.
+
+    :param monitors: Monitors.
+    :param monitors_fixture: Monitors fixture.
+    """
+
+    assert len(monitors) == len(monitors_fixture)
+
+    for monitor, monitor_fixture in zip(monitors, monitors_fixture):
+
+        assert monitor.cumulative_reward == monitor_fixture.cumulative_reward
+
+        assert_allclose(
+            [
+                monitor.t_count_optimal_action[t]
+                for t in sorted(monitor.t_count_optimal_action)
+            ],
+            [
+                monitor_fixture.t_count_optimal_action[t]
+                for t in sorted(monitor_fixture.t_count_optimal_action)
+            ]
+        )
+
+        assert_allclose(
+            [
+                monitor.t_average_reward[t].get_value()
+                for t in sorted(monitor.t_average_reward)
+            ],
+            [
+                monitor_fixture.t_average_reward[t].get_value()
+                for t in sorted(monitor_fixture.t_average_reward)
+            ]
+        )
+
+        assert_allclose(
+            [
+                monitor.t_average_cumulative_reward[t].get_value()
+                for t in sorted(monitor.t_average_cumulative_reward)
+            ],
+            [
+                monitor_fixture.t_average_cumulative_reward[t].get_value()
+                for t in sorted(monitor_fixture.t_average_cumulative_reward)
+            ]
+        )

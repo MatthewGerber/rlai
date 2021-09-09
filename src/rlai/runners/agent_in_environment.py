@@ -18,11 +18,12 @@ from rlai.utils import load_class, get_base_argument_parser
 @rl_text(chapter='Training and Running Agents', page=1)
 def run(
         args: List[str]
-):
+) -> List[Monitor]:
     """
     Run an agent within an environment.
 
     :param args: Arguments.
+    :return: List of run monitors.
     """
 
     parser = get_argument_parser_for_run()
