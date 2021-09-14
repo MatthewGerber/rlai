@@ -839,27 +839,19 @@ class ContinuousLunarLanderFeatureExtractor(ContinuousFeatureExtractor):
         """
 
         # extract raw feature values
-        raw_feature_values = super().extract(state, refit_scaler)
+        feature_values = super().extract(state, refit_scaler)
 
-        # features 0 (x pos), 2 (x velocity), 3 (y velocity), 4 (angle), 5 (angular velocity), and 8  (fuel level) are
-        # encoded categorically.
-        encoded_feature_idxs = [0, 2, 3, 4, 5, 8]
-        feature_values_to_encode = raw_feature_values[encoded_feature_idxs]
         state_category = OneHotCategory(*[
-            obs_feature <= 0.0 if feature_idx == -1 else  # fuel bottoms out at 0.0
-            obs_feature < 0.0  # other features go negative
-            for obs_feature, feature_idx in zip(state.observation[encoded_feature_idxs], encoded_feature_idxs)
+            feature_value <= 0.0  # fuel and leg-contact are minimized at 0.0. others go negative. use <= to cover all.
+            for feature_value in feature_values
         ])
 
-        encoded_feature_values = self.state_category_interacter.interact(
-            np.array([feature_values_to_encode]),
+        feature_values = self.state_category_interacter.interact(
+            np.array([feature_values]),
             [state_category]
         )[0]
 
-        # combine encoded and unencoded feature values
-        final_feature_values = np.append(encoded_feature_values, raw_feature_values[[1, 6, 7]])
-
-        return final_feature_values
+        return feature_values
 
     def __init__(
             self
@@ -873,7 +865,7 @@ class ContinuousLunarLanderFeatureExtractor(ContinuousFeatureExtractor):
         # interact features with relevant state categories
         self.state_category_interacter = OneHotCategoricalFeatureInteracter([
             OneHotCategory(*category_args)
-            for category_args in product(*([[True, False]] * 6))
+            for category_args in product(*([[True, False]] * 9))
         ])
 
 
