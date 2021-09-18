@@ -570,6 +570,14 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
 
         self.reset_action_scatter_plot_y_range()
 
+        if logging.getLogger().level <= logging.DEBUG:
+            action_min_a = np.amin(self.action_theta_a, 1)
+            action_max_a = np.amax(self.action_theta_a, 1)
+            action_min_b = np.amin(self.action_theta_b, 1)
+            action_max_b = np.amax(self.action_theta_b, 1)
+            for i, (min_a, max_a, min_b, max_b) in enumerate(zip(action_min_a, action_max_a, action_min_b, action_max_b)):
+                logging.debug(f'Action {i} [min,max]:\n\ta:  [{min_a},{max_a}]\n\tb:  [{min_b},{max_b}]\n')
+
         # only output the hyperparameter table if we have a state-dimension name for each feature. some feature
         # extractors expand the feature space beyond the dimensions, and we don't have a good way to generate names for
         # these extra dimensions. such extractors also tend to generate large feature spaces for which tabular output

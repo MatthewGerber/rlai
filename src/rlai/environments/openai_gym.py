@@ -226,15 +226,17 @@ class Gym(ContinuousMdpEnvironment):
 
         if self.gym_id == Gym.LLC_V2:
 
-            # the ideal state is zeros across the board with fuel left
             reward = 0.0
             if done:
+
+                # the ideal state is zeros across position/movement, legs in contact, and fuel left; however, fuel only
+                # counts if the lander is within the goal posts.
 
                 fuel_reward = 0.0
                 if abs(observation[0]) <= 0.2:
                     fuel_reward = state.observation[-1]
 
-                reward = -np.abs(observation[0:6]).sum() + fuel_reward
+                reward = -np.abs(observation[0:6]).sum() + observation[6:8].sum() + fuel_reward
 
         elif self.gym_id == Gym.MCC_V0:
 
@@ -839,19 +841,38 @@ class ContinuousLunarLanderFeatureExtractor(ContinuousFeatureExtractor):
         """
 
         # extract raw feature values
-        feature_values = super().extract(state, refit_scaler)
+        raw_feature_values = super().extract(state, refit_scaler)
 
-        state_category = OneHotCategory(*[
-            feature_value <= 0.0  # fuel and leg-contact are minimized at 0.0. others go negative. use <= to cover all.
-            for feature_value in feature_values
-        ])
+        # features:
+        #   0 (x pos)
+        #   1 (y pos)
+        #   2 (x velocity)
+        #   3 (y velocity)
+        #   4 (angle)
+        #   5 (angular velocity)
+        #   6 (leg 1 contact)
+        #   7 (leg 2 contact)
+        #   8 (fuel level)
 
-        feature_values = self.state_category_interacter.interact(
-            np.array([feature_values]),
+        # form the one-hot state category. start by thresholding some feature values.
+        state_category_feature_idxs = [0, 2, 3, 4, 5, 8]
+        state_category_bools = [
+            value <= 0.0 if idx == 8 else  # fuel bottoms out at 0.0
+            value < 0.0  # other features go negative
+            for idx, value in zip(state_category_feature_idxs, state.observation[state_category_feature_idxs])
+        ]
+        state_category_bools.append(all(raw_feature_values[6:8] == 1.0))  # both legs in contact
+        state_category = OneHotCategory(*state_category_bools)
+
+        # encode features
+        encoded_feature_idxs = [0, 1, 2, 3, 4, 5, 8]
+        feature_values_to_encode = raw_feature_values[encoded_feature_idxs]
+        encoded_feature_values = self.state_category_interacter.interact(
+            np.array([feature_values_to_encode]),
             [state_category]
         )[0]
 
-        return feature_values
+        return encoded_feature_values
 
     def __init__(
             self
@@ -865,7 +886,7 @@ class ContinuousLunarLanderFeatureExtractor(ContinuousFeatureExtractor):
         # interact features with relevant state categories
         self.state_category_interacter = OneHotCategoricalFeatureInteracter([
             OneHotCategory(*category_args)
-            for category_args in product(*([[True, False]] * 9))
+            for category_args in product(*([[True, False]] * 7))
         ])
 
 
