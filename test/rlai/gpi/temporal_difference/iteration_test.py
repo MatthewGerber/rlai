@@ -4,7 +4,7 @@ import shlex
 import tempfile
 import time
 from threading import Thread, Event
-from typing import Optional
+from typing import Optional, Dict
 
 import numpy as np
 import pytest
@@ -17,14 +17,14 @@ from rlai.gpi.temporal_difference.evaluation import Mode
 from rlai.gpi.temporal_difference.iteration import iterate_value_q_pi
 from rlai.gpi.utils import update_policy_iteration_plot, plot_policy_iteration
 from rlai.planning.environment_models import StochasticEnvironmentModel
-from rlai.runners.trainer import run
-from rlai.utils import RunThreadManager
 from rlai.q_S_A.function_approximation.estimators import ApproximateStateActionValueEstimator
 from rlai.q_S_A.function_approximation.models.feature_extraction import (
     StateActionIdentityFeatureExtractor
 )
 from rlai.q_S_A.function_approximation.models.sklearn import SKLearnSGD
 from rlai.q_S_A.tabular import TabularStateActionValueEstimator
+from rlai.runners.trainer import run
+from rlai.utils import RunThreadManager
 from test.rlai.utils import tabular_estimator_legacy_eq, tabular_pi_legacy_eq
 
 
@@ -549,7 +549,7 @@ def test_iterate_value_q_pi_func_approx_multi_threaded():
     q_S_A: Optional[ApproximateStateActionValueEstimator] = None
 
     def train_args_callback(
-            train_args
+            train_args: Dict
     ):
         nonlocal q_S_A
         q_S_A = train_args['q_S_A']

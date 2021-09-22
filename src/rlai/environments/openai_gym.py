@@ -41,7 +41,7 @@ class GymState(MdpState):
     def __init__(
             self,
             environment: 'Gym',
-            observation,
+            observation: np.ndarray,
             agent: MdpAgent,
             terminal: bool,
     ):

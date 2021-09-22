@@ -19,19 +19,23 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
+
     - name: Install dependencies
       run: |
         sudo apt-get update
         sudo apt-get install -y ffmpeg xvfb freeglut3-dev libxcb-xinerama0 libxcb-icccm4 libxcb-image0 libxcb-render-util0 libxcb-xinerama0 libxkbcommon-x11-0 libxcb-keysyms1 libxcb-randr0
         python -m pip install --upgrade pip
         python -m pip install -e .[test]
+
     - name: Check source with flake8
       run: |
-        flake8 --count --extend-ignore=E501 --show-source --statistics .
+        flake8 --count --extend-ignore=E501,ANN101,ANN102,ANN002,ANN003 --suppress-none-returning --show-source --statistics ./src ./test
+
     - name: Test with pytest
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

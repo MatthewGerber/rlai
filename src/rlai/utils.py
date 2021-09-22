@@ -254,7 +254,7 @@ def get_base_argument_parser(
 
 
 def parse_arguments(
-        parser_or_cls,
+        parser_or_cls: Any,
         args: List[str]
 ) -> Tuple[Namespace, List[str]]:
     """

@@ -30,9 +30,9 @@ class RobocodeReward(Reward):
             r: float,
             gun_reward: float,
             movement_reward: float,
-            bullet_id_fired_event,
-            bullet_hit_events,
-            bullet_missed_events
+            bullet_id_fired_event: Dict[str, Dict],
+            bullet_hit_events: List[Dict],
+            bullet_missed_events: List[Dict]
     ):
         """
         Initialize the reward.

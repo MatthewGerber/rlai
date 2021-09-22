@@ -40,7 +40,9 @@ def test_human_agent():
 
     call_num = 0
 
-    def mock_input(prompt):
+    def mock_input(
+            prompt: str
+    ) -> str:
 
         nonlocal call_num
         if call_num == 0:

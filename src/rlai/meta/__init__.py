@@ -2,7 +2,7 @@ import importlib
 import inspect
 import os
 import pkgutil
-from typing import Set, Dict, List, Union, Callable
+from typing import Set, Dict, List, Union, Callable, Any
 
 import rlai
 
@@ -20,7 +20,9 @@ def rl_text(
     :return: Decorator function.
     """
 
-    def inner(element):
+    def inner(
+            element: Any
+    ) -> Any:
 
         if os.getenv('ANNOTATIONS_ON', 'False') != 'True':
             return element
@@ -35,7 +37,7 @@ def rl_text(
 
 
 def summarize(
-        pkg,
+        pkg: Any,
         chapter_page_descriptions: Dict[int, Dict[int, List[str]]],
         paths_summarized: Set[str] = None,
 ):

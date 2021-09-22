@@ -68,7 +68,7 @@ class FunctionApproximationPolicy(Policy):
 
     def __init__(
             self,
-            estimator
+            estimator  # NOQA - circular reference with ApproximateStateActionValueEstimator
     ):
         """
         Initialize the policy.
