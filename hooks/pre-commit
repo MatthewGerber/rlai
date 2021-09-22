@@ -1,3 +1,3 @@
 #!/bin/sh
 set -e
-flake8 --extend-ignore=E501,ANN101,ANN102,ANN002,ANN003 --suppress-none-returning ./src ./test
+flake8 ./src ./test

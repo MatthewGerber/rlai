@@ -34,7 +34,7 @@ jobs:
 
     - name: Check source with flake8
       run: |
-        flake8 --count --extend-ignore=E501,ANN101,ANN102,ANN002,ANN003 --suppress-none-returning --show-source --statistics ./src ./test
+        flake8 ./src ./test
 
     - name: Test with pytest
       env:
