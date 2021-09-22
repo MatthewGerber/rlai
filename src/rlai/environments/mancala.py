@@ -23,7 +23,7 @@ class MancalaState(MdpState):
 
     def __init__(
             self,
-            mancala,
+            mancala: 'Mancala',
             agent_to_sense_state: MdpAgent
     ):
         """
@@ -32,8 +32,6 @@ class MancalaState(MdpState):
         :param mancala: Mancala environment
         :param agent_to_sense_state: Agent that will sense the state.
         """
-
-        mancala: Mancala
 
         agent_is_player_1 = agent_to_sense_state != mancala.player_2
 
@@ -142,7 +140,7 @@ class Mancala(MdpEnvironment):
 
     @staticmethod
     def human_player_mutator(
-            environment,
+            environment: 'Mancala',
             **_
     ):
         """
@@ -151,7 +149,6 @@ class Mancala(MdpEnvironment):
         :param environment: Environment.
         """
 
-        environment: Mancala
         environment.player_2 = Human()
 
     @classmethod
@@ -366,7 +363,7 @@ class Mancala(MdpEnvironment):
 
     def sow_and_capture(
             self,
-            pocket
+            pocket: 'Pit'
     ) -> bool:
         """
         Pick and sow seeds from a pocket.

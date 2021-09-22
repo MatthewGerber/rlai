@@ -28,7 +28,7 @@ class Gridworld(ModelBasedMdpEnvironment):
     def example_4_1(
             random_state: RandomState,
             T: Optional[int]
-    ):
+    ) -> 'Gridworld':
         """
         Construct the Gridworld for Example 4.1.
 

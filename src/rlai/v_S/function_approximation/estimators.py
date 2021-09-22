@@ -47,7 +47,7 @@ class ApproximateValueEstimator(ValueEstimator):
 
     def __init__(
             self,
-            estimator,
+            estimator: 'ApproximateStateValueEstimator',
             state: MdpState
     ):
         """
@@ -57,7 +57,7 @@ class ApproximateValueEstimator(ValueEstimator):
         :param state: State.
         """
 
-        self.estimator: ApproximateStateValueEstimator = estimator
+        self.estimator = estimator
         self.state = state
 
 
@@ -295,7 +295,7 @@ class ApproximateStateValueEstimator(StateValueEstimator):
 
     def __eq__(
             self,
-            other
+            other: 'ApproximateStateValueEstimator'
     ) -> bool:
         """
         Check whether the estimator equals another.
@@ -304,13 +304,11 @@ class ApproximateStateValueEstimator(StateValueEstimator):
         :return: True if equal and False otherwise.
         """
 
-        other: ApproximateStateValueEstimator
-
         return self.model == other.model
 
     def __ne__(
             self,
-            other
+            other: 'ApproximateStateValueEstimator'
     ) -> bool:
         """
         Check whether the estimator does not equal another.

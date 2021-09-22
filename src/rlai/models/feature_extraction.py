@@ -236,7 +236,7 @@ class OneHotCategory:
 
     def __eq__(
             self,
-            other
+            other: 'OneHotCategory'
     ) -> bool:
         """
         Check equality.
@@ -245,13 +245,11 @@ class OneHotCategory:
         :return: True if equal and False otherwise.
         """
 
-        other: OneHotCategory
-
         return self.id == other.id
 
     def __ne__(
             self,
-            other
+            other: 'OneHotCategory'
     ) -> bool:
         """
         Check inequality.

@@ -210,7 +210,7 @@ class SoftMaxInActionPreferencesPolicy(ParameterizedPolicy):
 
     def __eq__(
             self,
-            other
+            other: 'SoftMaxInActionPreferencesPolicy'
     ) -> bool:
         """
         Check whether the current policy equals another.
@@ -219,13 +219,11 @@ class SoftMaxInActionPreferencesPolicy(ParameterizedPolicy):
         :return: True if policies are equal and False otherwise.
         """
 
-        other: SoftMaxInActionPreferencesPolicy
-
         return np.allclose(self.theta, other.theta)
 
     def __ne__(
             self,
-            other
+            other: 'SoftMaxInActionPreferencesPolicy'
     ) -> bool:
         """
         Check whether the current policy does not equal another.
@@ -463,7 +461,7 @@ class SoftMaxInActionPreferencesJaxPolicy(ParameterizedPolicy):
 
     def __eq__(
             self,
-            other
+            other: 'SoftMaxInActionPreferencesJaxPolicy'
     ) -> bool:
         """
         Check whether the current policy equals another.
@@ -472,13 +470,11 @@ class SoftMaxInActionPreferencesJaxPolicy(ParameterizedPolicy):
         :return: True if policies are equal and False otherwise.
         """
 
-        other: SoftMaxInActionPreferencesJaxPolicy
-
         return np.allclose(self.theta, other.theta)
 
     def __ne__(
             self,
-            other
+            other: 'SoftMaxInActionPreferencesJaxPolicy'
     ) -> bool:
         """
         Check whether the current policy does not equal another.

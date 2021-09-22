@@ -133,7 +133,7 @@ class TabularPolicy(Policy):
 
     def __eq__(
             self,
-            other
+            other: 'TabularPolicy'
     ) -> bool:
         """
         Check whether the current policy equals another.
@@ -142,13 +142,11 @@ class TabularPolicy(Policy):
         :return: True if equal and False otherwise.
         """
 
-        other: TabularPolicy
-
         return self.state_action_prob == other.state_action_prob
 
     def __ne__(
             self,
-            other
+            other: 'TabularPolicy'
     ) -> bool:
         """
         Check whether the current policy does not equal another.

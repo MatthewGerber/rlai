@@ -1,4 +1,15 @@
 #!/bin/sh
 
-flake8 --extend-ignore=E501 ./src
-flake8 --extend-ignore=E501 ./test
+flake8 --extend-ignore=E501,ANN101,ANN102,ANN002,ANN003 --suppress-none-returning ./src
+retVal=$?
+if [ $retVal -ne 0 ]; then
+    exit $retVal
+fi
+
+flake8 --extend-ignore=E501,ANN101,ANN102,ANN002,ANN003 --suppress-none-returning ./test
+retVal=$?
+if [ $retVal -ne 0 ]; then
+    exit $retVal
+fi
+
+exit 0

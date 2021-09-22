@@ -56,7 +56,7 @@ class ApproximateValueEstimator(ValueEstimator):
 
     def __init__(
             self,
-            estimator,
+            estimator: 'ApproximateStateActionValueEstimator',
             state: MdpState,
             action: Action
     ):
@@ -68,7 +68,7 @@ class ApproximateValueEstimator(ValueEstimator):
         :param action: Action.
         """
 
-        self.estimator: ApproximateStateActionValueEstimator = estimator
+        self.estimator = estimator
         self.state = state
         self.action = action
 
@@ -81,7 +81,7 @@ class ApproximateActionValueEstimator(ActionValueEstimator):
 
     def __init__(
             self,
-            estimator,
+            estimator: 'ApproximateStateActionValueEstimator',
             state: MdpState
     ):
         """
@@ -91,7 +91,7 @@ class ApproximateActionValueEstimator(ActionValueEstimator):
         :param state: State.
         """
 
-        self.estimator: ApproximateStateActionValueEstimator = estimator
+        self.estimator = estimator
         self.state = state
 
     def __getitem__(
@@ -541,7 +541,7 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
 
     def __eq__(
             self,
-            other
+            other: 'ApproximateStateActionValueEstimator'
     ) -> bool:
         """
         Check whether the estimator equals another.
@@ -550,13 +550,11 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         :return: True if equal and False otherwise.
         """
 
-        other: ApproximateStateActionValueEstimator
-
         return self.model == other.model
 
     def __ne__(
             self,
-            other
+            other: 'ApproximateStateActionValueEstimator'
     ) -> bool:
         """
         Check whether the estimator does not equal another.

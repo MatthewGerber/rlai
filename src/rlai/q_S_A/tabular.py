@@ -54,7 +54,7 @@ class TabularValueEstimator(ValueEstimator):
 
     def __init__(
             self,
-            estimator,
+            estimator: 'TabularStateActionValueEstimator',
             alpha: float,
             weighted: bool
     ):
@@ -66,7 +66,7 @@ class TabularValueEstimator(ValueEstimator):
         :param weighted: Whether estimator should be weighted.
         """
 
-        self.estimator: TabularStateActionValueEstimator = estimator
+        self.estimator = estimator
 
         self.averager = IncrementalSampleAverager(
             alpha=alpha,
@@ -75,7 +75,7 @@ class TabularValueEstimator(ValueEstimator):
 
     def __eq__(
             self,
-            other
+            other: 'TabularValueEstimator'
     ) -> bool:
         """
         Check whether the estimator equals another.
@@ -84,13 +84,11 @@ class TabularValueEstimator(ValueEstimator):
         :return: True if estimates are equal and False otherwise.
         """
 
-        other: TabularValueEstimator
-
         return self.averager == other.averager
 
     def __ne__(
             self,
-            other
+            other: 'TabularValueEstimator'
     ) -> bool:
         """
         Check whether the estimator does not equal another.
@@ -110,7 +108,7 @@ class TabularActionValueEstimator(ActionValueEstimator):
 
     def __init__(
             self,
-            estimator
+            estimator: 'TabularStateActionValueEstimator'
     ):
         """
         Initialize the estimator.
@@ -118,7 +116,7 @@ class TabularActionValueEstimator(ActionValueEstimator):
         :param estimator: Estimator.
         """
 
-        self.estimator: TabularStateActionValueEstimator = estimator
+        self.estimator = estimator
 
         self.q_A: Dict[Action, TabularValueEstimator] = {}
 
@@ -186,7 +184,7 @@ class TabularActionValueEstimator(ActionValueEstimator):
 
     def __eq__(
             self,
-            other
+            other: 'TabularActionValueEstimator'
     ) -> bool:
         """
         Check whether the estimator equals another.
@@ -195,13 +193,11 @@ class TabularActionValueEstimator(ActionValueEstimator):
         :return: True if estimates are equal and False otherwise.
         """
 
-        other: TabularActionValueEstimator
-
         return self.q_A == other.q_A
 
     def __ne__(
             self,
-            other
+            other: 'TabularActionValueEstimator'
     ) -> bool:
         """
         Check whether the estimator does not equal another.
@@ -446,7 +442,7 @@ class TabularStateActionValueEstimator(StateActionValueEstimator):
 
     def __eq__(
             self,
-            other
+            other: 'TabularStateActionValueEstimator'
     ) -> bool:
         """
         Check whether the estimator equals another.
@@ -455,13 +451,11 @@ class TabularStateActionValueEstimator(StateActionValueEstimator):
         :return: True if equal and False otherwise.
         """
 
-        other: TabularStateActionValueEstimator
-
         return self.q_S_A == other.q_S_A
 
     def __ne__(
             self,
-            other
+            other: 'TabularStateActionValueEstimator'
     ) -> bool:
         """
         Check whether the estimator does not equal another.

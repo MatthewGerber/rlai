@@ -49,7 +49,7 @@ class Action:
 
     def __eq__(
             self,
-            other
+            other: 'Action'
     ) -> bool:
         """
         Check whether the current action equals another.
@@ -62,7 +62,7 @@ class Action:
 
     def __ne__(
             self,
-            other
+            other: 'Action'
     ) -> bool:
         """
         Check whether the current action is not equal to another.

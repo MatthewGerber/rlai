@@ -118,7 +118,7 @@ class FunctionApproximationPolicy(Policy):
 
     def __eq__(
             self,
-            other
+            other: 'FunctionApproximationPolicy'
     ) -> bool:
         """
         Check whether the current function approximation policy equals another. Two such policies are equal if their
@@ -132,7 +132,7 @@ class FunctionApproximationPolicy(Policy):
 
     def __ne__(
             self,
-            other
+            other: 'FunctionApproximationPolicy'
     ) -> bool:
         """
         Check whether the current estimator does not equal another.

@@ -81,7 +81,7 @@ class Agent(ABC):
 
     def act(
             self,
-            t
+            t: int
     ) -> Action:
         """
         Request an action from the agent.
@@ -153,7 +153,7 @@ class Agent(ABC):
 
     def __str__(
             self
-    ):
+    ) -> str:
         """
         Return name.
 

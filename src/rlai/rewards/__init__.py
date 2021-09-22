@@ -47,7 +47,7 @@ class Reward:
 
     def __eq__(
             self,
-            other
+            other: 'Reward'
     ) -> bool:
         """
         Check whether the current reward equals another.
@@ -60,7 +60,7 @@ class Reward:
 
     def __ne__(
             self,
-            other
+            other: 'Reward'
     ) -> bool:
         """
         Check whether the current reward is not equal to another.

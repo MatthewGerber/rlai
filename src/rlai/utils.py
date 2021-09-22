@@ -118,14 +118,14 @@ class IncrementalSampleAverager:
 
     def __eq__(
             self,
-            other
+            other: 'IncrementalSampleAverager'
     ) -> bool:
 
         return self.get_value() == other.get_value()
 
     def __ne__(
             self,
-            other
+            other: 'IncrementalSampleAverager'
     ) -> bool:
 
         return self.get_value() != other.get_value()
@@ -187,7 +187,7 @@ def import_function(
 
 def load_class(
         fully_qualified_class_name: str
-):
+) -> Any:
     """
     Load class from its fully-qualified name (e.g., xxx.yyy.Class).
 
@@ -203,7 +203,7 @@ def load_class(
 
 
 def get_argument_parser(
-        fully_qualified_class_name
+        fully_qualified_class_name: str
 ) -> ArgumentParser:
     """
     Get argument parser for a class.
@@ -389,7 +389,9 @@ def log_with_border(
         logging.log(level, '')
 
 
-def get_nearest_positive_definite_matrix(A):
+def get_nearest_positive_definite_matrix(
+        A: np.ndarray
+) -> np.ndarray:
     """
     Find the nearest positive-definite matrix to input. A Python/Numpy port of John D'Errico's `nearestSPD` MATLAB code
     [1], which credits [2].
@@ -439,7 +441,9 @@ def get_nearest_positive_definite_matrix(A):
     return A3
 
 
-def is_positive_definite(m):
+def is_positive_definite(
+        m: np.ndarray
+) -> bool:
     """
     Returns true when input is positive-definite, via Cholesky.
 

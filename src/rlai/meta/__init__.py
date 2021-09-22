@@ -2,7 +2,7 @@ import importlib
 import inspect
 import os
 import pkgutil
-from typing import Set, Dict, List, Union
+from typing import Set, Dict, List, Union, Callable
 
 import rlai
 
@@ -10,7 +10,7 @@ import rlai
 def rl_text(
         chapter: Union[int, str],
         page: int
-):
+) -> Callable:
     """
     Decorator for RL text references.
 

@@ -41,6 +41,7 @@ TEST_REQUIREMENTS = [
     'pytest-runner==5.3.1',
     'nose==1.3.7',
     'flake8==3.9.2',
+    'flake8-annotations==2.6.2',
     'coveralls==3.2.0',
     'xvfbwrapper==0.2.9'
 ]

@@ -304,7 +304,7 @@ class StateActionValueEstimator(ABC):
     @abstractmethod
     def __eq__(
             self,
-            other
+            other: 'StateActionValueEstimator'
     ) -> bool:
         """
         Check whether the estimator equals another.
@@ -316,7 +316,7 @@ class StateActionValueEstimator(ABC):
     @abstractmethod
     def __ne__(
             self,
-            other
+            other: 'StateActionValueEstimator'
     ) -> bool:
         """
         Check whether the estimator does not equal another.

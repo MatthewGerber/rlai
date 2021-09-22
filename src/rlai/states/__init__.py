@@ -65,7 +65,7 @@ class State:
 
     def __eq__(
             self,
-            other
+            other: 'State'
     ) -> bool:
         """
         Check whether the current state equals another.
@@ -78,7 +78,7 @@ class State:
 
     def __ne__(
             self,
-            other
+            other: 'State'
     ) -> bool:
         """
         Check whether the current state is not equal to another.

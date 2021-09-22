@@ -503,7 +503,7 @@ class SKLearnSGD(FunctionApproximationModel):
 
     def __eq__(
             self,
-            other
+            other: 'SKLearnSGD'
     ) -> bool:
         """
         Check whether the model equals another.
@@ -516,7 +516,7 @@ class SKLearnSGD(FunctionApproximationModel):
 
     def __ne__(
             self,
-            other
+            other: 'SKLearnSGD'
     ) -> bool:
         """
         Check whether the model does not equal another.

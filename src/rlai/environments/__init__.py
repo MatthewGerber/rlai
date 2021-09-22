@@ -65,7 +65,7 @@ class Environment(ABC):
 
     def run(
             self,
-            agent,  # can't provide Agent type hint due to circular reference with Environment
+            agent: 'Agent',
             monitor: Monitor
     ):
         """
@@ -131,7 +131,7 @@ class Environment(ABC):
 
     def __str__(
             self
-    ):
+    ) -> str:
         """
         Return name.
 
