@@ -228,14 +228,21 @@ class Gym(ContinuousMdpEnvironment):
 
             if done:
 
-                # the ideal state is zeros across position/movement and fuel left; however, fuel only counts if the
-                # lander is within the goal posts.
+                # the ideal state is zeros across position/movement
+                state_reward = -np.abs(observation[0:6]).sum()
 
+                # reward for remaining fuel, but only if the state is good. rewarding for remaining fuel unconditionally
+                # can cause the agent to veer out of bounds immediately and thus sacrifice state reward for fuel reward.
+                # the terminating state is considered good if the lander is within the goal posts (which are at
+                # x = +/-0.2) and the other orientation variables (y position, x and y velocity, angle and angular
+                # velocity) are near zero. permit a small amount of lenience in the latter, since it's common for a
+                # couple of the variables to be slightly positive even when the lander is sitting stationary on a flat
+                # surface.
                 fuel_reward = 0.0
-                if abs(observation[0]) <= 0.2:
+                if abs(observation[0]) <= 0.2 and np.abs(observation[1:6]).sum() < 0.01:
                     fuel_reward = state.observation[-1]
 
-                reward = -np.abs(observation[0:6]).sum() + fuel_reward
+                reward = state_reward + fuel_reward
 
         elif self.gym_id == Gym.MCC_V0:
 
