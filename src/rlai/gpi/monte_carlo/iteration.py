@@ -14,7 +14,7 @@ from rlai.gpi.monte_carlo.evaluation import evaluate_q_pi
 from rlai.gpi.utils import plot_policy_iteration
 from rlai.meta import rl_text
 from rlai.q_S_A import StateActionValueEstimator
-from rlai.utils import RunThreadManager
+from rlai.utils import RunThreadManager, insert_index_into_path
 
 
 @rl_text(chapter=5, page=99)
@@ -33,7 +33,7 @@ def iterate_value_q_pi(
         num_improvements_per_checkpoint: Optional[int] = None,
         checkpoint_path: Optional[str] = None,
         pdf_save_path: Optional[str] = None
-):
+) -> Optional[str]:
     """
     Run Monte Carlo value iteration on an agent using state-action value estimates. This iteration function operates
     over rewards obtained at the end of episodes, so it is only appropriate for episodic tasks.
@@ -58,6 +58,7 @@ def iterate_value_q_pi(
     :param num_improvements_per_checkpoint: Number of improvements per checkpoint save.
     :param checkpoint_path: Checkpoint path. Must be provided if `num_improvements_per_checkpoint` is provided.
     :param pdf_save_path: Path where a PDF of all plots is to be saved, or None for no PDF.
+    :return: Final checkpoint path, or None if checkpoints were not saved.
     """
 
     if thread_manager is None:
@@ -82,6 +83,7 @@ def iterate_value_q_pi(
     iteration_num_states_improved = []
     elapsed_seconds_average_rewards = {}
     start_datetime = datetime.now()
+    final_checkpoint_path = None
     while i < num_improvements:
 
         thread_manager.wait()
@@ -140,7 +142,9 @@ def iterate_value_q_pi(
                 'pdf_save_path': pdf_save_path
             }
 
-            with open(checkpoint_path, 'wb') as checkpoint_file:
+            checkpoint_path_with_index = insert_index_into_path(checkpoint_path, i)
+            final_checkpoint_path = checkpoint_path_with_index
+            with open(checkpoint_path_with_index, 'wb') as checkpoint_file:
                 pickle.dump(resume_args, checkpoint_file)
 
     logging.info(f'Value iteration of q_pi terminated after {i} iteration(s).')
@@ -156,3 +160,5 @@ def iterate_value_q_pi(
     if pdf is not None:
         pdf.close()
         logging.info(f'PDF of plots is available at {pdf_save_path}')
+
+    return final_checkpoint_path

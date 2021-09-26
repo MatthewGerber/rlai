@@ -1,4 +1,6 @@
 import logging
+import os
+import pickle
 import warnings
 from typing import Optional
 
@@ -8,7 +10,7 @@ from rlai.agents.mdp import StochasticMdpAgent
 from rlai.environments.mdp import MdpEnvironment
 from rlai.meta import rl_text
 from rlai.policies.parameterized import ParameterizedPolicy
-from rlai.utils import IncrementalSampleAverager, RunThreadManager, ScatterPlot
+from rlai.utils import IncrementalSampleAverager, RunThreadManager, ScatterPlot, insert_index_into_path
 from rlai.v_S import StateValueEstimator
 
 
@@ -22,8 +24,10 @@ def improve(
         alpha: float,
         v_S: Optional[StateValueEstimator],
         thread_manager: RunThreadManager,
-        plot_state_value: bool
-):
+        plot_state_value: bool,
+        num_episodes_per_checkpoint: Optional[int] = None,
+        checkpoint_path: Optional[str] = None
+) -> Optional[str]:
     """
     Perform Monte Carlo improvement of an agent's policy within an environment via the REINFORCE policy gradient method.
     This improvement function operates over rewards obtained at the end of episodes, so it is only appropriate for
@@ -41,10 +45,16 @@ def improve(
     waiting.
     :param plot_state_value: Whether or not to plot the state-value.
     :param v_S: Baseline state-value estimator, or None for no baseline.
+    :param num_episodes_per_checkpoint: Number of episodes per checkpoint save.
+    :param checkpoint_path: Checkpoint path. Must be provided if `num_episodes_per_checkpoint` is provided.
+    :return: Final checkpoint path, or None if checkpoints were not saved.
     """
 
     if thread_manager is not None:
         warnings.warn('This optimization method will ignore the thread_manager.')
+
+    if checkpoint_path is not None:
+        checkpoint_path = os.path.expanduser(checkpoint_path)
 
     state_value_plot = None
     if plot_state_value and v_S is not None:
@@ -54,6 +64,7 @@ def improve(
 
     episode_reward_averager = IncrementalSampleAverager()
     episodes_per_print = max(1, int(num_episodes * 0.05))
+    final_checkpoint_path = None
     for episode_i in range(num_episodes):
 
         # reset the environment for the new run (always use the agent we're learning about, as state identifiers come
@@ -116,10 +127,32 @@ def improve(
                 policy.append_update(a, state, alpha, target)
 
         policy.commit_updates()
-
         episode_reward_averager.update(total_reward)
+
+        if num_episodes_per_checkpoint is not None and episode_i % num_episodes_per_checkpoint == 0:
+
+            resume_args = {
+                'agent': agent,
+                'policy': policy,
+                'environment': environment,
+                'num_episodes': num_episodes,
+                'update_upon_every_visit': update_upon_every_visit,
+                'alpha': alpha,
+                'v_S': v_S,
+                'plot_state_value': plot_state_value,
+                'num_episodes_per_checkpoint': num_episodes_per_checkpoint,
+                'checkpoint_path': checkpoint_path
+            }
+
+            checkpoint_path_with_index = insert_index_into_path(checkpoint_path, episode_i)
+            final_checkpoint_path = checkpoint_path_with_index
+            with open(checkpoint_path_with_index, 'wb') as checkpoint_file:
+                pickle.dump(resume_args, checkpoint_file)
+
         episodes_finished = episode_i + 1
         if episodes_finished % episodes_per_print == 0:
             logging.info(f'Finished {episodes_finished} of {num_episodes} episode(s).')
 
     logging.info(f'Completed optimization. Average reward per episode:  {episode_reward_averager.get_value()}')
+
+    return final_checkpoint_path

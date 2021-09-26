@@ -146,6 +146,8 @@ def run(
     if len(unparsed_args) > 0:
         raise ValueError(f'Unparsed arguments remain:  {unparsed_args}')
 
+    new_checkpoint_path = None
+
     # resumption will return a trained version of the agent contained in the checkpoint file
     if parsed_args.resume:
         agent = resume_from_checkpoint(
@@ -159,7 +161,7 @@ def run(
         if train_function_args_callback is not None:
             train_function_args_callback(train_function_args)
 
-        train_function(
+        new_checkpoint_path = train_function(
             **train_function_args
         )
 
@@ -181,7 +183,7 @@ def run(
 
         logging.info(f'Saved agent to {parsed_args.save_agent_path}')
 
-    return train_function_args.get('checkpoint_path'), parsed_args.save_agent_path
+    return new_checkpoint_path, parsed_args.save_agent_path
 
 
 def get_argument_parser_for_run() -> ArgumentParser:
@@ -340,6 +342,12 @@ def get_argument_parser_for_train_function(
         '--num-improvements-per-checkpoint',
         type=int,
         help='Number of improvements per checkpoint.'
+    )
+
+    filter_add_argument(
+        '--num-episodes-per-checkpoint',
+        type=int,
+        help='Number of episodes per checkpoint.'
     )
 
     filter_add_argument(

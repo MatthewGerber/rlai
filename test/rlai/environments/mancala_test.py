@@ -41,9 +41,7 @@ def test_learn():
         1
     )
 
-    checkpoint_path = tempfile.NamedTemporaryFile(delete=False).name
-
-    iterate_value_q_pi(
+    checkpoint_path = iterate_value_q_pi(
         agent=p1,
         environment=mancala,
         num_improvements=3,
@@ -53,7 +51,7 @@ def test_learn():
         make_final_policy_greedy=False,
         q_S_A=q_S_A,
         num_improvements_per_checkpoint=3,
-        checkpoint_path=checkpoint_path
+        checkpoint_path=tempfile.NamedTemporaryFile(delete=False).name
     )
 
     # uncomment the following line and run test to update fixture

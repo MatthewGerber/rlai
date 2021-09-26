@@ -1,5 +1,6 @@
 import importlib
 import logging
+import os
 import threading
 from argparse import Namespace, ArgumentParser
 from enum import Enum, auto
@@ -662,3 +663,21 @@ class ScatterPlot:
         plot_x_axis.setTicks([list(enumerate(self.x_tick_labels))])
         self.plot_widget = self.plot_layout.addPlot(axisItems={'bottom': plot_x_axis})
         self.set_position(self.position)
+
+
+def insert_index_into_path(
+        path: str,
+        index: int
+) -> str:
+    """
+    Insert an index into a path.
+
+    :param path: Path.
+    :param index: Index.
+    :return: Path with index.
+    """
+
+    path_parts = [p for p in os.path.splitext(path) if p != ""]
+    path_parts.insert(1, f'{index}')
+
+    return '.'.join(path_parts)
