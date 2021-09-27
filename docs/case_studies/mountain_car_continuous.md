@@ -237,7 +237,7 @@ for the policy gradient optimizer.
 * `--plot-policy`:  Show a real-time display of the action that is selected at each step.
 
 ### Output
-* `-save-agent-path ~/Desktop/mountaincar_continuous_agent.pickle`:  Where to save the final agent.
+* `--save-agent-path ~/Desktop/mountaincar_continuous_agent.pickle`:  Where to save the final agent.
 
 The following videos show snapshots of the training process.
 

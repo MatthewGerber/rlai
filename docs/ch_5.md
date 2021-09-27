@@ -62,4 +62,5 @@ Run Monte Carlo value iteration on an agent using state-action value estimates. 
     :param num_improvements_per_checkpoint: Number of improvements per checkpoint save.
     :param checkpoint_path: Checkpoint path. Must be provided if `num_improvements_per_checkpoint` is provided.
     :param pdf_save_path: Path where a PDF of all plots is to be saved, or None for no PDF.
+    :return: Final checkpoint path, or None if checkpoints were not saved.
 ```

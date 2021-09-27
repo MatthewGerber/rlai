@@ -70,12 +70,14 @@ understanding how agents are parameterized and rewarded.
 
 ## OpenAI Gym
 [OpenAI Gym](https://gym.openai.com) is a collection of environments that range from traditional control to advanced 
-robotics. Case studies have been developed for the OpenAI Gym environment listed below:
+robotics. Case studies have been developed for the following OpenAI Gym environments, which are ordered roughly by 
+increasing complexity:
 
 * [Inverted Pendulum](case_studies/inverted_pendulum.md)
 * [Acrobot](case_studies/acrobot.md)
 * [Mountain Car](case_studies/mountain_car.md)
 * [Mountain Car with Continuous Control](case_studies/mountain_car_continuous.md)
+* [Lunar Lander with Continuous Control](case_studies/lunar_lander_continuous.md)
 
 ## Robocode
 [Robocode](https://github.com/robo-code/robocode) is a simulation-based robotic combat programming game with a 

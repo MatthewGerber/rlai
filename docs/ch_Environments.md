@@ -1,5 +1,5 @@
 # Environments
-### [rlai.environments.mancala.Mancala](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/mancala.py#L127)
+### [rlai.environments.mancala.Mancala](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/mancala.py#L125)
 ```
 Environment for the mancala game. This is a simple game with many rule variations, and it provides a greater
     challenge in terms of implementation and state-space size than the gridworld. I have implemented a fairly common
@@ -23,7 +23,7 @@ MDP environment in which states and actions are continuous and multidimensional.
 An MDP environment served over a TCP connection from an external source (e.g., a simulation environment running as
     a separate program).
 ```
-### [rlai.environments.openai_gym.Gym](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/openai_gym.py#L69)
+### [rlai.environments.openai_gym.Gym](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/openai_gym.py#L67)
 ```
 Generalized Gym environment. Any OpenAI Gym environment can be executed by supplying the appropriate identifier.
 ```
