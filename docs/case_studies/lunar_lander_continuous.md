@@ -100,3 +100,8 @@ for the policy gradient optimizer.
 The following video shows the final agent after 50000 training episodes:
 
 {% include youtubePlayer.html id="5n27V-ACLPg" %}
+
+Most of the landings are quite good despite challenging initial conditions. In a couple episodes, the lander comes down 
+too fast, and the lander body strikes the ground. Another shortcoming is that the lander has not learned to fully shut 
+down its engines after landing. Both of these might be addressed with additional learning episodes or changes to the 
+policy and baseline models.
