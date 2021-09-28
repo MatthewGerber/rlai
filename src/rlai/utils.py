@@ -678,6 +678,6 @@ def insert_index_into_path(
     """
 
     path_parts = [p for p in os.path.splitext(path) if p != ""]
-    path_parts.insert(1, f'{index}')
+    path_parts.insert(1, f'-{index}')
 
-    return '.'.join(path_parts)
+    return ''.join(path_parts)

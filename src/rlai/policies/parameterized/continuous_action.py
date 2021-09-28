@@ -155,6 +155,23 @@ class ContinuousActionPolicy(ParameterizedPolicy, ABC):
 
         return True
 
+    def __getstate__(
+            self
+    ) -> Dict:
+        """
+        Get state dictionary for pickling.
+
+        :return: State dictionary.
+        """
+
+        state = dict(self.__dict__)
+
+        # the environment should not be pickled, as it won't be used when running or resuming the policy later, and it
+        # will contain references (e.g., to scatter plots) that will become invalid.
+        state['environment'] = None
+
+        return state
+
 
 @rl_text(chapter=13, page=335)
 class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
@@ -410,7 +427,7 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
         :return: State dictionary.
         """
 
-        state = dict(self.__dict__)
+        state = super().__getstate__()
 
         state['get_action_density_gradients'] = None
         state['get_action_density_gradients_vmap'] = None
@@ -785,7 +802,7 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
         :return: State dictionary.
         """
 
-        state = dict(self.__dict__)
+        state = super().__getstate__()
 
         state['get_action_density_gradients'] = None
         state['get_action_density_gradients_vmap'] = None

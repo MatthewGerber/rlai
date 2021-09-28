@@ -83,6 +83,9 @@ def run(
     if train_function_args.get('make_final_policy_greedy', None) is not None:
         train_function_args['make_final_policy_greedy'] = train_function_args['make_final_policy_greedy'] == 'True'
 
+    if train_function_args.get('plot_state_value', None) is not None:
+        train_function_args['plot_state_value'] = train_function_args['plot_state_value'] == 'True'
+
     # load environment
     if train_function_args.get('environment', None) is not None:
         environment_class = load_class(train_function_args['environment'])
@@ -388,8 +391,9 @@ def get_argument_parser_for_train_function(
 
     filter_add_argument(
         '--plot-state-value',
-        action='store_true',
-        help='Pass this flag to plot the state value.'
+        type=str,
+        choices=['True', 'False'],
+        help='Whether or not to plot the state value.'
     )
 
     return argument_parser

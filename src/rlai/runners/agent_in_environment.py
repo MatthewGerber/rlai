@@ -3,6 +3,7 @@ import math
 import os
 import pickle
 import sys
+import warnings
 from argparse import ArgumentParser
 from typing import List
 
@@ -11,6 +12,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 from numpy.random import RandomState
 
 from rlai.meta import rl_text
+from rlai.policies.parameterized.continuous_action import ContinuousActionPolicy
 from rlai.runners.monitor import Monitor
 from rlai.utils import load_class, get_base_argument_parser
 
@@ -36,6 +38,7 @@ def run(
     del parsed_args.log
 
     if parsed_args.random_seed is None:
+        warnings.warn('No random seed provided to the trainer. Results will not be replicable. Consider passing --random-seed argument.')
         random_state = RandomState()
     else:
         random_state = RandomState(parsed_args.random_seed)
@@ -52,19 +55,18 @@ def run(
         with open(os.path.expanduser(parsed_args.agent), 'rb') as f:
             agents = [pickle.load(f)]
 
-    # otherwise, parse arguments for agent (there can't be a policy in this case, as policies only come from prior
-    # training/pickling).
+    # otherwise, parse arguments for agent.
     else:
         agent_class = load_class(parsed_args.agent)
         agents, unparsed_args = agent_class.init_from_arguments(
             args=unparsed_args,
             random_state=random_state,
-            pi=None
+            pi=None  # there can't be a policy in this case, as policies only come from prior training/pickling.
         )
 
     # no unparsed arguments should remain
     if len(unparsed_args) > 0:
-        raise ValueError(f'Unparsed arguments:  {unparsed_args}')
+        raise ValueError(f'Unparsed arguments remain:  {unparsed_args}')
 
     # set up plotting
     pdf = None
@@ -85,6 +87,10 @@ def run(
     for agent in agents:
 
         logging.info(f'Running {agent} agent in {environment} environment.')
+
+        # manually set the environment on continuous action policies, as they require a reference but do not pickle it.
+        if hasattr(agent, 'pi') and isinstance(agent.pi, ContinuousActionPolicy):
+            agent.pi.environment = environment
 
         monitor = Monitor()
         monitors.append(monitor)

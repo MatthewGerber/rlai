@@ -12,6 +12,8 @@ from matplotlib.backends.backend_pdf import PdfPages
 from rlai.agents.mdp import MdpAgent
 
 # plotting data and objects
+from rlai.policies.parameterized.continuous_action import ContinuousActionPolicy
+
 _iteration_ax: Optional[plt.Axes] = None
 _iteration_average_reward: Optional[List[int]] = None
 _iteration_average_reward_line: Optional[plt.Line2D] = None
@@ -203,6 +205,11 @@ def resume_from_checkpoint(
 
     if resume_args_mutator is not None:
         resume_args_mutator(resume_args)
+
+    # manually set the environment on continuous action policies, as they require a reference but do not pickle it.
+    agent = resume_args['agent']
+    if hasattr(agent, 'pi') and isinstance(agent.pi, ContinuousActionPolicy):
+        agent.pi.environment = resume_args['environment']
 
     resume_function(**resume_args)
 
