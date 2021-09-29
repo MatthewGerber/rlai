@@ -36,6 +36,8 @@ There are several ways to use the package.
 * Command-line interface:  Using RLAI from the command-line interface (CLI) is demonstrated in the case studies below 
   and is also explored in the [CLI guide](cli_guide.md).
 
+* See [here](raspberry_pi.md) for how to use RLAI on a Raspberry Pi system. 
+
 Looking for a place to dig in? Below are a few ideas organized by area of interest.
 
 * Explore new OpenAI Gym environments:  OpenAI Gym provides a wide range of interesting environments, and
