@@ -40,7 +40,7 @@ network={
 1. sudo systemctl reboot
 
 ### Install required packages and XFCE desktop environment
-1. sudo apt install gfortran python3-dev libblas-dev liblapack-dev build-essential swig python-pygame git virtualenv qt5-default
+1. sudo apt install gfortran python3-dev libblas-dev liblapack-dev build-essential swig python-pygame git virtualenv qt5-default xvfb
 1. sudo apt install xubuntu-desktop
 1. sudo systemctl reboot
 
@@ -62,14 +62,18 @@ network={
   1. cd PyQt5-5.15.4/
   1. sip-install
 1. JAX
-  1. git clone https://github.com/google/jax
-  1. pip install numpy six wheel
+  1. wget https://files.pythonhosted.org/packages/0f/85/0499931fe8e9dc05f4dd5ef989be2db4653d429adf08b9371fc259402af0/jax-0.2.21.tar.gz
+  1. tar -xvzf jax-0.2.21.tar.gz
+  1. cd jax-0.2.21
+  1. pip install numpy==1.21.2 six wheel
   1. cd jax
   1. python build/build.py
   1. pip install dist/*.whl
-  1. pip install . 
-1. Install RLAI
+  1. pip install .
+  1. edit setup.py to change jax[cpu]==0.2.17 to jax==0.2.17 (the cpu extra is not needed because we just installed jaxlib)
+1. Install and test RLAI
   1. pip install -e .[dev]
+  1. pytest ./test (or, if running without a display:  HEADLESS=True pytest ./test)
 
 ## IDE:  PyCharm Community Edition
 

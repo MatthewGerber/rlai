@@ -7,9 +7,9 @@ from setuptools import (
 INSTALL_REQUIREMENTS = [
 
     # core requirements
-    'scipy==1.5.2',
-    'matplotlib==3.3.1',
-    'numpy==1.19.0',
+    'scipy==1.7.1',
+    'matplotlib==3.4.3',
+    'numpy==1.21.2',
     'gym==0.17.3',
     'Box2D==2.3.10',
     'python-dateutil==2.8.1',
@@ -22,7 +22,7 @@ INSTALL_REQUIREMENTS = [
     'scikit-learn==0.24',
     'pandas==1.1.5',
     'patsy==0.5.1',
-    'jax[cpu]==0.2.17',
+    'jax[cpu]==0.2.21',
     'pyqtgraph==0.12.2',
     'PyQt5==5.15.4',
     'tabulate==0.8.9',
