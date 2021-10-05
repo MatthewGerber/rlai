@@ -1,5 +1,5 @@
 # Training and Running Agents
-### [rlai.runners.agent_in_environment.run](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/runners/agent_in_environment.py#L18)
+### [rlai.runners.agent_in_environment.run](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/runners/agent_in_environment.py#L20)
 ```
 Run an agent within an environment.
 
