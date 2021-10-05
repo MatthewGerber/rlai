@@ -43,7 +43,8 @@ TEST_REQUIREMENTS = [
     'flake8==3.9.2',
     'flake8-annotations==2.6.2',
     'coveralls==3.2.0',
-    'xvfbwrapper==0.2.9'
+    'xvfbwrapper==0.2.9',
+    'pytest-xdist==2.4.0'
 ]
 
 DEV_REQUIREMENTS = [
