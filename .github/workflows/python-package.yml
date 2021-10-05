@@ -44,7 +44,7 @@ jobs:
         # export QT_DEBUG_PLUGINS=1
 
         # run tests
-        coverage run --source=src --omit=src/rlai/meta/* -m pytest ./test -n auto
+        coverage run --source=src --omit=src/rlai/meta/* -m pytest ./test
 
         # upload results to coveralls using github token above
         coveralls --service=github
