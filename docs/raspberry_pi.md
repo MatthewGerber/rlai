@@ -84,7 +84,6 @@ network={
 6. `python build/build.py`
 7. `pip install dist/*.whl`
 8. `pip install .`
-9. Edit setup.py to change `jax[cpu]==0.2.17` to `jax==0.2.17` (the `cpu` extra is not needed because we just installed jaxlib)
 
 ### Install and Test RLAI
 1. `pip install -e .[dev]`
