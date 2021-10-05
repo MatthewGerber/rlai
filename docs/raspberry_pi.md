@@ -5,24 +5,26 @@
 ## Introduction
 The Raspberry Pi is an appealing platform for mobile computation in general and for RLAI in particular. The latest model
 as of October 2021 has a 64-bit quad-core CPU with 8 GB of RAM. Add-on hardware provides a wide range of sensing and 
-actuation capabilities, and the entire ecosystem is quite cheap.
+actuation capabilities, and the entire ecosystem is quite affordable.
 
 ## Operating System
-At present, the official Raspberry Pi OS is a 32-bit version of Debian running on the ARM CPU. It is possible to install
-most RLAI dependencies, either directly from the package repositories of by building them from source. A specific few, 
-particularly JAX, are neither available in the repositories nor straightforward to build from source for the ARM CPU. 
-There is an open issue for this [here](https://github.com/google/jax/issues/1161), and it indicates that support for 
-32-bit Raspberry Pi is not likely to appear soon. I experimented with Ubuntu Desktop 21.04 64-bit, which installs and 
-runs without issues on the Raspberry Pi 4 Model B; however, the desktop interface is sluggish, and since this is not an 
-LTS version it is not possible to use the Deadsnakes repository to install Python 3.7 and 3.8 (the default is Python 
-3.9). The Raspberry Pi Imager does not provide any other Desktop versions. Ultimately, I settled on Ubuntu Server 20.04 
-64-bit, which is a much slimmer OS that also installs and runs without issues. It defaults to Python 3.8 and works fine 
-with lighter desktop environments like XFCE. The installation is more complicated than for Desktop, but it is entirely 
-feasible.
+At present, the official Raspberry Pi OS is a 32-bit version of Debian running on the 64-bit ARM CPU. Thus, the OS 
+presents a 32-bit CPU to all software in the OS. It is possible to install most RLAI dependencies, either directly from 
+the package repositories of by building them from source. A specific few, particularly JAX, are neither available in the 
+repositories nor straightforward to build from source for the ARM CPU. There is an open issue for this 
+[here](https://github.com/google/jax/issues/1161), and it indicates that support for 32-bit Raspberry Pi is not likely 
+to appear soon. I experimented with Ubuntu Desktop 21.04 64-bit, which installs and runs without issues on the Raspberry 
+Pi 4 Model B; however, the desktop interface is sluggish, and since this is not an LTS version it is not possible to use 
+the Deadsnakes repository to install Python 3.7 and 3.8 (the Ubuntu default is Python 3.9). The Raspberry Pi Imager does 
+not provide any other Ubuntu Desktop versions. Ultimately, I settled on Ubuntu Server 20.04 64-bit, which is a much 
+slimmer OS that also installs and runs without issues. It defaults to Python 3.8 and works fine with lighter desktop 
+environments like XFCE. The installation is more complicated than for Ubuntu Desktop, but it is entirely feasible. 
+Detailed instructions are provided below.
 
 ### Image the Raspberry Pi SD Card
-1. Select Ubuntu Server 20.04 64-bit within the Raspberry Pi Imager
-2. Insert and boot the SD card.
+1. Install and start the Raspberry Pi Imager.
+2. Select Ubuntu Server 20.04 64-bit within the Raspberry Pi Imager, then write the OS to the SD card.
+3. Insert the SD card into the Raspberry Pi and boot.
 
 ### Configure Wireless Internet
 
@@ -82,7 +84,7 @@ network={
 6. `python build/build.py`
 7. `pip install dist/*.whl`
 8. `pip install .`
-9. Edit setup.py to change `jax[cpu]==0.2.17` to `jax==0.2.17` (the cpu extra is not needed because we just installed jaxlib)
+9. Edit setup.py to change `jax[cpu]==0.2.17` to `jax==0.2.17` (the `cpu` extra is not needed because we just installed jaxlib)
 
 ### Install and Test RLAI
 1. `pip install -e .[dev]`
