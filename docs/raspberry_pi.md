@@ -47,7 +47,7 @@ network={
 1. `sudo systemctl reboot`
 
 ### Install Required Packages and XFCE Desktop Environment
-1. `sudo apt install gfortran python3-dev libblas-dev liblapack-dev build-essential swig python-pygame git virtualenv qt5-default xvfb`
+1. `sudo apt install gfortran python3-dev libblas-dev liblapack-dev build-essential swig python-pygame git virtualenv qt5-default xvfb ffmpeg`
 1. `sudo apt install xubuntu-desktop`
 1. `sudo systemctl reboot`
 
