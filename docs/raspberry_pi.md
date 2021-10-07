@@ -91,6 +91,14 @@ network={
 
 ## IDE:  PyCharm Community Edition
 
+## VNC (Remote Desktop)
+Using the above configuration, I found the following VNC setup works best, providing automatic screen scaling and 
+reliable operation.
+1. Install VNC server:  `sudo apt install tigervnc-standalone-server`
+2. Start VNC server:  `LD_PRELOAD=/lib/aarch64-linux-gnu/libgcc_s.so.1 vncserver :1 -localhost no`
+3. Start SSH tunnel from client, where `XXXX` is the user name and `YYYY` is the IP address:  `ssh -L 59000:localhost:5901 -C -l XXXX YYYY`
+4. Use the TigerVNC client to connect to `localhost:59000`.
+
 ## References
 1. https://linuxhint.com/install-ubuntu-desktop-20-04-lts-on-raspberry-pi-4
-1. https://jax.readthedocs.io/en/latest/developer.html
+2. https://jax.readthedocs.io/en/latest/developer.html
