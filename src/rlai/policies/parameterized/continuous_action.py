@@ -2,7 +2,7 @@ import logging
 import warnings
 from abc import ABC
 from argparse import ArgumentParser
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Optional
 
 import numpy as np
 import pandas as pd
@@ -726,8 +726,8 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
 
         # coefficients for shape parameters a and b. these will be initialized upon the first call to the feature
         # extractor within __getitem__.
-        self.action_theta_a = None
-        self.action_theta_b = None
+        self.action_theta_a: Optional[np.ndarray] = None
+        self.action_theta_b: Optional[np.ndarray] = None
 
         # get jax function for gradients with respect to theta_a and theta_b. vectorize the gradient calculation over
         # input arrays for state and action values.
@@ -783,8 +783,9 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
             max_values=self.action.max_values
         )
 
-        if self.plot_policy:
-            self.update_action_scatter_plot(action)
+        self.update_action_scatter_plot(action)
+
+        if self.beta_shape_scatter_plot is not None:
             self.beta_shape_scatter_plot.update(np.array([
                 v
                 for a, b in zip(action_a, action_b)
@@ -837,6 +838,10 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
 
         if not isinstance(other, ContinuousActionBetaDistributionPolicy):
             raise ValueError('Expected a ContinuousActionBetaDistributionPolicy.')
+
+        if not isinstance(self.action_theta_a, np.ndarray) or not isinstance(self.action_theta_b, np.ndarray) or \
+                not isinstance(other.action_theta_a, np.ndarray) or not isinstance(other.action_theta_b, np.ndarray):
+            raise ValueError('Uninitialized array.')
 
         # using the default values for allclose is too strict to achieve cross-platform testing success. back off a little with atol.
         return np.allclose(self.action_theta_a, other.action_theta_a, atol=0.0001) and np.allclose(self.action_theta_b, other.action_theta_b, atol=0.0001)
