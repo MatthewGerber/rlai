@@ -167,17 +167,14 @@ def sample_list_item(
 
 
 def import_function(
-        name: Optional[str]
-) -> Optional[Callable]:
+        name: str
+) -> Callable:
     """
     Import function from fully-qualified name.
 
     :param name: Fully-qualified name.
     :return: Function.
     """
-
-    if name is None:
-        return None
 
     module_name, function_name = name.rsplit('.', maxsplit=1)
     function_module = import_module(module_name)

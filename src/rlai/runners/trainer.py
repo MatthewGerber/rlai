@@ -4,7 +4,7 @@ import pickle
 import sys
 import warnings
 from argparse import ArgumentParser
-from typing import List, Tuple, Optional, Callable, Dict
+from typing import List, Tuple, Optional, Callable, Dict, Any
 
 from numpy.random import RandomState
 
@@ -22,7 +22,7 @@ from rlai.utils import (
 
 @rl_text(chapter='Training and Running Agents', page=1)
 def run(
-        args: List[str] = None,
+        args: List[str],
         thread_manager: RunThreadManager = None,
         train_function_args_callback: Callable[[Dict], None] = None
 ) -> Tuple[Optional[str], Optional[str]]:
@@ -71,7 +71,7 @@ def run(
     train_function_arg_parser = get_argument_parser_for_train_function(parsed_args.train_function)
     parsed_train_function_args, unparsed_args = parse_arguments(train_function_arg_parser, unparsed_args)
 
-    train_function_args = {
+    train_function_args: Dict[str, Any] = {
         'thread_manager': thread_manager,
         **vars(parsed_train_function_args)
     }

@@ -32,7 +32,8 @@ class Reward:
 
         :return: String.
         """
-        return f'Reward {self.i}: {self.r}'
+
+        return f'Reward{"" if self.i is None else " " + str(self.i)}: {self.r}'
 
     def __hash__(
             self
@@ -42,6 +43,9 @@ class Reward:
 
         :return: Hash code
         """
+
+        if self.i is None:
+            raise ValueError('Cannot hash when i is None.')
 
         return self.i
 
@@ -56,6 +60,9 @@ class Reward:
         :return: True if equal and False otherwise.
         """
 
+        if self.i is None:
+            raise ValueError('Cannot check equality when i is None.')
+
         return self.i == other.i
 
     def __ne__(
@@ -68,5 +75,8 @@ class Reward:
         :param other: Other reward.
         :return: True if not equal and False otherwise.
         """
+
+        if self.i is None:
+            raise ValueError('Cannot check inequality when i is None.')
 
         return self.i != other.i

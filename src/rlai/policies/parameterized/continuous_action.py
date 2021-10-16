@@ -826,7 +826,7 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
 
     def __eq__(
             self,
-            other: 'ContinuousActionBetaDistributionPolicy'
+            other: object
     ) -> bool:
         """
         Check whether the current policy equals another.
@@ -835,12 +835,15 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
         :return: True if policies are equal and False otherwise.
         """
 
+        if not isinstance(other, ContinuousActionBetaDistributionPolicy):
+            raise ValueError('Expected a ContinuousActionBetaDistributionPolicy.')
+
         # using the default values for allclose is too strict to achieve cross-platform testing success. back off a little with atol.
         return np.allclose(self.action_theta_a, other.action_theta_a, atol=0.0001) and np.allclose(self.action_theta_b, other.action_theta_b, atol=0.0001)
 
     def __ne__(
             self,
-            other: 'ContinuousActionBetaDistributionPolicy'
+            other: object
     ) -> bool:
         """
         Check whether the current policy does not equal another.

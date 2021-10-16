@@ -5,7 +5,7 @@ import pickle
 import sys
 import warnings
 from argparse import ArgumentParser
-from typing import List
+from typing import List, Optional
 
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
@@ -70,7 +70,9 @@ def run(
 
     # set up plotting
     pdf = None
-    reward_ax = cum_reward_ax = optimal_action_ax = None
+    reward_ax: Optional[plt.Axes] = None
+    cum_reward_ax: Optional[plt.Axes] = None
+    optimal_action_ax: Optional[plt.Axes] = None
     if parsed_args.plot:
 
         if parsed_args.pdf_save_path:
@@ -114,6 +116,10 @@ def run(
 
         if parsed_args.plot:
 
+            assert reward_ax is not None
+            assert cum_reward_ax is not None
+            assert optimal_action_ax is not None
+
             reward_ax.plot([
                 monitor.t_average_reward[t].get_value()
                 for t in sorted(monitor.t_average_reward)
@@ -131,6 +137,10 @@ def run(
 
     # finish plotting
     if parsed_args.plot:
+
+        assert reward_ax is not None
+        assert cum_reward_ax is not None
+        assert optimal_action_ax is not None
 
         if parsed_args.figure_name is not None:
             reward_ax.set_title(parsed_args.figure_name)

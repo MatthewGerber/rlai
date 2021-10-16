@@ -15,7 +15,7 @@ from rlai.agents.mdp import MdpAgent
 from rlai.policies.parameterized.continuous_action import ContinuousActionPolicy
 
 _iteration_ax: Optional[plt.Axes] = None
-_iteration_average_reward: Optional[List[int]] = None
+_iteration_average_reward: Optional[List[float]] = None
 _iteration_average_reward_line: Optional[plt.Line2D] = None
 
 _state_space_ax: Optional[plt.Axes] = None
@@ -150,6 +150,7 @@ def plot_policy_iteration(
         return fig
     else:
         pdf.savefig()
+        return None
 
 
 def get_second_averages(

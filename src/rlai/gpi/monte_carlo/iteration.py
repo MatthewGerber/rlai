@@ -3,7 +3,7 @@ import os
 import pickle
 import warnings
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List, Dict
 
 from matplotlib.backends.backend_pdf import PdfPages
 
@@ -78,10 +78,10 @@ def iterate_value_q_pi(
         pdf = PdfPages(os.path.expanduser(pdf_save_path))
 
     i = 0
-    iteration_average_reward = []
-    iteration_total_states = []
-    iteration_num_states_improved = []
-    elapsed_seconds_average_rewards = {}
+    iteration_average_reward: List[float] = []
+    iteration_total_states: List[int] = []
+    iteration_num_states_improved: List[int] = []
+    elapsed_seconds_average_rewards: Dict[int, List[float]] = {}
     start_datetime = datetime.now()
     final_checkpoint_path = None
     while i < num_improvements:
@@ -125,6 +125,9 @@ def iterate_value_q_pi(
             plot_policy_iteration(iteration_average_reward, iteration_total_states, iteration_num_states_improved, elapsed_seconds_average_rewards, pdf)
 
         if num_improvements_per_checkpoint is not None and i % num_improvements_per_checkpoint == 0:
+
+            if checkpoint_path is None:
+                raise ValueError('Must provide checkpoint path when specifying number of improvements per checkpoint.')
 
             resume_args = {
                 'agent': agent,
