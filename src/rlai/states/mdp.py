@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import List, Optional
+from typing import Optional, Sequence
 
 from rlai.actions import Action
 from rlai.meta import rl_text
@@ -15,7 +15,7 @@ class MdpState(State, ABC):
     def __init__(
             self,
             i: Optional[int],
-            AA: List[Action],
+            AA: Sequence[Action],
             terminal: bool
     ):
         """

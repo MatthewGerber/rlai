@@ -1,7 +1,7 @@
 import logging
 import math
 from argparse import ArgumentParser
-from typing import List, Tuple, Dict, Any, Optional
+from typing import List, Tuple, Dict, Any, Optional, Sequence
 
 import numpy as np
 from numpy.random import RandomState
@@ -99,6 +99,9 @@ class RobocodeAgent(StochasticMdpAgent):
         :param pi: Policy.
         :return: 2-tuple of a Robocode agent and a list of unparsed arguments.
         """
+
+        if pi is None:
+            raise ValueError('Expected non-None policy.')
 
         parsed_args, unparsed_args = parse_arguments(cls, args)
 
@@ -405,10 +408,16 @@ class RobocodeEnvironment(TcpMdpEnvironment):
             prior_state_different_location = self.previous_state.prior_state_different_location
 
         # most recent scanned enemy and how many turns ago it was scanned
-        most_recent_scanned_robot = event_type_events.get('ScannedRobotEvent', [None])[-1]
+        most_recent_scanned_robot = None
+        scanned_robot_events = event_type_events.get('ScannedRobotEvent', [])
+        if len(scanned_robot_events) > 0:
+            most_recent_scanned_robot = scanned_robot_events[-1]
+
         most_recent_scanned_robot_age_turns: Optional[int] = None
         if most_recent_scanned_robot is None:
-            if self.previous_state is not None and self.previous_state.most_recent_scanned_robot is not None:
+            if self.previous_state is not None and \
+                    self.previous_state.most_recent_scanned_robot is not None and \
+                    self.previous_state.most_recent_scanned_robot_age_turns is not None:
                 most_recent_scanned_robot = self.previous_state.most_recent_scanned_robot
                 most_recent_scanned_robot_age_turns = self.previous_state.most_recent_scanned_robot_age_turns + turns_passed
         else:
@@ -518,11 +527,11 @@ class RobocodeState(MdpState):
             bullet_power_missed_others_cumulative: float,
             bullet_power_missed_others_since_previous_hit: float,
             events: Dict[str, List[Dict]],
-            previous_state: 'RobocodeState',
-            prior_state_different_location: 'RobocodeState',
+            previous_state: Optional['RobocodeState'],
+            prior_state_different_location: Optional['RobocodeState'],
             most_recent_scanned_robot: Optional[Dict],
             most_recent_scanned_robot_age_turns: Optional[int],
-            AA: List[Action],
+            AA: Sequence[Action],
             terminal: bool
     ):
         """
@@ -596,7 +605,7 @@ class RobocodeState(MdpState):
         self.bullet_power_missed_others_cumulative = bullet_power_missed_others_cumulative
         self.bullet_power_missed_others_since_previous_hit = bullet_power_missed_others_since_previous_hit
         self.events = events
-        self.previous_state: Optional[RobocodeState] = previous_state
+        self.previous_state = previous_state
         self.prior_state_different_location = prior_state_different_location
         self.most_recent_scanned_robot = most_recent_scanned_robot
         self.most_recent_scanned_robot_age_turns = most_recent_scanned_robot_age_turns

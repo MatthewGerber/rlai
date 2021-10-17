@@ -5,7 +5,7 @@ import threading
 from argparse import Namespace, ArgumentParser
 from enum import Enum, auto
 from importlib import import_module
-from typing import List, Any, Optional, Callable, Tuple, TextIO, Dict
+from typing import List, Any, Optional, Callable, Tuple, TextIO, Dict, Sequence
 
 import numpy as np
 import pyqtgraph as pg
@@ -133,7 +133,7 @@ class IncrementalSampleAverager:
 
 
 def sample_list_item(
-        x: List[Any],
+        x: Sequence[Any],
         probs: Optional[np.ndarray],
         random_state: RandomState
 ) -> Any:

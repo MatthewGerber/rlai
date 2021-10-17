@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, Sequence
 
 from rlai.actions import Action
 from rlai.meta import rl_text
@@ -27,7 +27,7 @@ class State:
     def __init__(
             self,
             i: Optional[int],
-            AA: List[Action]
+            AA: Sequence[Action]
     ):
         """
         Initialize the state.
