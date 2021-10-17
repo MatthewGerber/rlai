@@ -1,7 +1,7 @@
 import math
 import threading
 import warnings
-from abc import ABC
+from abc import ABC, abstractmethod
 from typing import Optional, Dict
 
 import matplotlib.pyplot as plt
@@ -164,6 +164,18 @@ class FunctionApproximationModel(BaseFunctionApproximationModel, ABC):
         :param feature_extractor: Feature extractor used to build the model.
         :return: DataFrame (#features, #actions), or None to omit plotting of feature-action coefficient boxplots. The
         DataFrame is indexed by feature name.
+        """
+
+    @abstractmethod
+    def update_plot(
+            self,
+            time_step_detail_iteration: Optional[int]
+    ):
+        """
+        Update the plot of the model. Can only be called from the main thread.
+
+        :param time_step_detail_iteration: Iteration for which to plot time-step-level detail, or None for no detail.
+        Passing -1 will plot detail for the most recently completed iteration.
         """
 
     def __init__(

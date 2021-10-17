@@ -6,7 +6,7 @@ from numpy.random import RandomState
 
 from rlai.actions import Action
 from rlai.environments import Environment
-from rlai.environments.mdp import ModelBasedMdpEnvironment
+from rlai.environments.mdp import ModelBasedMdpEnvironment, MdpEnvironment
 from rlai.meta import rl_text
 from rlai.models.feature_extraction import FeatureExtractor
 from rlai.q_S_A.function_approximation.models.feature_extraction import (
@@ -230,7 +230,7 @@ class GridworldFeatureExtractor(StateActionInteractionFeatureExtractor):
     def init_from_arguments(
             cls,
             args: List[str],
-            environment: Gridworld
+            environment: MdpEnvironment
     ) -> Tuple[StateActionInteractionFeatureExtractor, List[str]]:
         """
         Initialize a feature extractor from arguments.
@@ -239,6 +239,9 @@ class GridworldFeatureExtractor(StateActionInteractionFeatureExtractor):
         :param environment: Environment.
         :return: 2-tuple of a feature extractor and a list of unparsed arguments.
         """
+
+        if not isinstance(environment, Gridworld):
+            raise ValueError('Expected a Gridworld.')
 
         parsed_args, unparsed_args = parse_arguments(cls, args)
 
@@ -269,8 +272,15 @@ class GridworldFeatureExtractor(StateActionInteractionFeatureExtractor):
 
         self.check_state_and_action_lists(states, actions)
 
-        rows = [int(state.i / self.num_cols) for state in states]
-        cols = [state.i % self.num_cols for state in states]
+        state_indices = []
+        for state in states:
+            if state.i is None:
+                raise ValueError('Expected non-None state index.')
+            else:
+                state_indices.append(state.i)
+
+        rows = [int(state_i / self.num_cols) for state_i in state_indices]
+        cols = [state_i % self.num_cols for state_i in state_indices]
 
         state_features = np.array([
             [
@@ -296,9 +306,16 @@ class GridworldFeatureExtractor(StateActionInteractionFeatureExtractor):
         :return: Dictionary of action names and their associated feature names.
         """
 
+        action_names = []
+        for a in self.actions:
+            if a.name is None:
+                raise ValueError('Expected non-None action name.')
+            else:
+                action_names.append(a.name)
+
         return {
-            a.name: ['from-top', 'from-bottom', 'from-left', 'from-right']
-            for a in self.actions
+            name: ['from-top', 'from-bottom', 'from-left', 'from-right']
+            for name in action_names
         }
 
     def __init__(
@@ -355,7 +372,7 @@ class GridworldStateFeatureExtractor(StateFeatureExtractor):
     def init_from_arguments(
             cls,
             args: List[str],
-            environment: Gridworld
+            environment: MdpEnvironment
     ) -> Tuple[FeatureExtractor, List[str]]:
         """
         Initialize a feature extractor from arguments.
@@ -364,6 +381,9 @@ class GridworldStateFeatureExtractor(StateFeatureExtractor):
         :param environment: Environment.
         :return: 2-tuple of a feature extractor and a list of unparsed arguments.
         """
+
+        if not isinstance(environment, Gridworld):
+            raise ValueError('Expected a Gridworld.')
 
         parsed_args, unparsed_args = parse_arguments(cls, args)
 
@@ -389,6 +409,9 @@ class GridworldStateFeatureExtractor(StateFeatureExtractor):
         :param refit_scaler: Unused.
         :return: State-feature vector.
         """
+
+        if state.i is None:
+            raise ValueError('State index required.')
 
         row = int(state.i / self.num_cols)
         col = state.i % self.num_cols

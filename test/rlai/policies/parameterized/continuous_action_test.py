@@ -22,7 +22,7 @@ def test_rescale():
 
     agent = StochasticMdpAgent('test', random_state, policy, 0.9)
     state = gym.reset_for_new_run(agent)
-    policy.set_action(state)
+    policy.action = policy.extract_action(state)
 
     assert np.allclose(policy.rescale(np.array([0.0, 0.5])), np.array([-1.0, 0.0]))
     assert np.allclose(policy.rescale(np.array([0.5, 1.0])), np.array([0.0, 1.0]))

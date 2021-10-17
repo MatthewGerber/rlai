@@ -7,7 +7,8 @@ import numpy as np
 from numpy.random import RandomState
 
 from rlai.actions import Action
-from rlai.agents.mdp import MdpAgent, StochasticMdpAgent
+from rlai.agents import Agent
+from rlai.agents.mdp import StochasticMdpAgent
 from rlai.environments.mdp import MdpEnvironment
 from rlai.environments.network import TcpMdpEnvironment
 from rlai.meta import rl_text
@@ -261,7 +262,7 @@ class RobocodeEnvironment(TcpMdpEnvironment):
 
     def reset_for_new_run(
             self,
-            agent: MdpAgent
+            agent: Agent
     ) -> MdpState:
         """
         Reset the environment for a new run.
@@ -651,7 +652,7 @@ class RobocodeFeatureExtractor(FeatureExtractor):
     def init_from_arguments(
             cls,
             args: List[str],
-            environment: RobocodeEnvironment
+            environment: MdpEnvironment
     ) -> Tuple[FeatureExtractor, List[str]]:
         """
         Initialize a feature extractor from arguments.
@@ -660,6 +661,9 @@ class RobocodeFeatureExtractor(FeatureExtractor):
         :param environment: Environment.
         :return: 2-tuple of a feature extractor and a list of unparsed arguments.
         """
+
+        if not isinstance(environment, RobocodeEnvironment):
+            raise ValueError('Expected a RobocodeEnvironment.')
 
         parsed_args, unparsed_args = parse_arguments(cls, args)
 
@@ -672,7 +676,7 @@ class RobocodeFeatureExtractor(FeatureExtractor):
 
     def extract(
             self,
-            states: List[RobocodeState],
+            states: List[MdpState],
             actions: List[Action],
             refit_scaler: bool
     ) -> np.ndarray:
@@ -789,7 +793,7 @@ class RobocodeFeatureExtractor(FeatureExtractor):
 
     def get_feature_values(
             self,
-            state: RobocodeState,
+            state: MdpState,
             action: Action,
             action_to_extract: Action
     ) -> List[float]:
@@ -801,6 +805,12 @@ class RobocodeFeatureExtractor(FeatureExtractor):
         :param action_to_extract: Action to one-hot encode.
         :return: List of floating-point feature values.
         """
+
+        if not isinstance(state, RobocodeState):
+            raise ValueError('Expected a RobocodeState.')
+
+        if action_to_extract.name is None:
+            raise ValueError('Expected non-None name.')
 
         if state.most_recent_scanned_robot is None:
             most_recent_enemy_bearing_from_self = None

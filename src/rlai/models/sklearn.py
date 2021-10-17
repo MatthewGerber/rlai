@@ -151,14 +151,14 @@ class SKLearnSGD(FunctionApproximationModel):
             self,
             X: Any,
             y: Any,
-            weight: Optional[float]
+            weights: Optional[np.ndarray]
     ):
         """
         Fit the model to a matrix of features (one row per observations) and a vector of returns.
 
         :param X: Feature matrix (#obs, #features)
         :param y: Outcome vector (#obs,).
-        :param weight: Weight.
+        :param weights: Optional sample weights.
         """
 
         # TODO:  Add more here? (e.g., put max(y) in the exponent for some base we expose)
@@ -171,7 +171,7 @@ class SKLearnSGD(FunctionApproximationModel):
         sys.stdout = stdout_tee
 
         # update fit
-        self.model.partial_fit(X=X, y=y, sample_weight=weight)
+        self.model.partial_fit(X=X, y=y, sample_weight=weights)
 
         # reassign standard output
         sys.stdout = sys.__stdout__

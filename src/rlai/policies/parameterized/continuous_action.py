@@ -59,23 +59,23 @@ class ContinuousActionPolicy(ParameterizedPolicy, ABC):
 
         return parser
 
-    def set_action(
-            self,
+    @staticmethod
+    def extract_action(
             state: MdpState
-    ):
+    ) -> ContinuousMultiDimensionalAction:
         """
-        Set the single, continuous, multi-dimensional action for this policy based on a state. This function can be
-        called repeatedly; however, it will only have an effect upon the first call. It assumes that the state contains
-        a single action and will raise an exception if it does not.
+        Extract the single, continuous, multi-dimensional action for this policy from on a state.
 
         :param state: State.
+        :return: Action.
         """
 
-        if self.action is None:
-            if len(state.AA) == 1 and isinstance(state.AA[0], ContinuousMultiDimensionalAction):
-                self.action = state.AA[0]
-            else:  # pragma no cover
-                raise ValueError('Expected state to contain a single action of type ContinuousMultiDimensionalAction.')
+        if len(state.AA) == 1:
+            action = state.AA[0]
+            if isinstance(action, ContinuousMultiDimensionalAction):
+                return action
+
+        raise ValueError('Expected state to contain a single action of type ContinuousMultiDimensionalAction.')  # pragma no cover
 
     def update_action_scatter_plot(
             self,
@@ -86,6 +86,9 @@ class ContinuousActionPolicy(ParameterizedPolicy, ABC):
 
         :param action: Action.
         """
+
+        if action.value is None:
+            raise ValueError('Value is None.')
 
         if self.action_scatter_plot is not None:
             self.action_scatter_plot.update(action.value)
@@ -136,7 +139,7 @@ class ContinuousActionPolicy(ParameterizedPolicy, ABC):
         if self.plot_policy:
             self.action_scatter_plot = ScatterPlot('Actions', self.environment.get_action_dimension_names(), None)
 
-        self.action = None  # we'll fill this in upon the first call to __getitem__, where we have access to a state and its actions.
+        self.action: Optional[ContinuousMultiDimensionalAction] = None  # we'll fill this in upon the first call to __getitem__, where we have access to a state and its actions.
         self.random_state = RandomState(12345)
 
     def __contains__(
@@ -278,8 +281,8 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
                 )
 
                 if is_positive_definite(new_cov):
-                    self.theta_mean += alpha * target * (action_density_gradient_wrt_theta_mean / p_a_s)
-                    self.theta_cov = new_theta_cov
+                    self.theta_mean[:] = self.theta_mean + alpha * target * (action_density_gradient_wrt_theta_mean / p_a_s)
+                    self.theta_cov[:] = new_theta_cov
                 else:  # pragma no cover
                     warnings.warn('The updated covariance theta parameters will produce a covariance matrix that is not positive definite. Skipping update.')
 
@@ -366,8 +369,8 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
 
         # coefficients for mean and covariance. these will be initialized upon the first call to the feature extractor
         # within __getitem__.
-        self.theta_mean = None
-        self.theta_cov = None
+        self.theta_mean: Optional[np.ndarray] = None
+        self.theta_cov: Optional[np.ndarray] = None
 
         self.get_action_density_gradients = jit(grad(self.get_action_density, argnums=(0, 1)))
         self.get_action_density_gradients_vmap = jit(vmap(self.get_action_density_gradients, in_axes=(None, None, 0, 0)))
@@ -383,7 +386,8 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
         :return: Dictionary of action-probability items.
         """
 
-        self.set_action(state)
+        if self.action is None:
+            self.action = self.extract_action(state)
 
         intercept_state_features = np.append([1.0], self.feature_extractor.extract(state, True))
 
@@ -451,7 +455,7 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
 
     def __eq__(
             self,
-            other: 'ContinuousActionNormalDistributionPolicy'
+            other: object
     ) -> bool:
         """
         Check whether the current policy equals another.
@@ -460,12 +464,19 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
         :return: True if policies are equal and False otherwise.
         """
 
+        if not isinstance(other, ContinuousActionNormalDistributionPolicy):
+            raise ValueError('Expected a ContinuousActionNormalDistributionPolicy.')
+
+        if not isinstance(self.theta_mean, np.ndarray) or not isinstance(self.theta_cov, np.ndarray) or \
+                not isinstance(other.theta_mean, np.ndarray) or not isinstance(other.theta_cov, np.ndarray):
+            raise ValueError('Uninitialized array(s).')
+
         # using the default values for allclose is too strict to achieve cross-platform testing success. back off a little with atol.
         return np.allclose(self.theta_mean, other.theta_mean, atol=0.0001) and np.allclose(self.theta_cov, other.theta_cov, atol=0.0001)
 
     def __ne__(
             self,
-            other: 'ContinuousActionNormalDistributionPolicy'
+            other: object
     ) -> bool:
         """
         Check whether the current policy does not equal another.
@@ -473,6 +484,9 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
         :param other: Other policy.
         :return: True if policies are not equal and False otherwise.
         """
+
+        if not isinstance(object, ContinuousActionNormalDistributionPolicy):
+            raise ValueError('Expected a ContinuousActionNormalDistributionPolicy.')
 
         return not (self == other)
 
@@ -656,6 +670,12 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
         :return: Rescaled action value.
         """
 
+        if self.action is None:
+            raise ValueError('Action has not been extracted.')
+
+        if self.action.min_values is None or self.action.max_values is None:
+            raise ValueError('Minimum and maximum values are required.')
+
         value_ranges = [
             max_value - min_value
             for min_value, max_value in zip(self.action.min_values, self.action.max_values)
@@ -679,6 +699,12 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
         :param rescaled_action_value: Rescaled action value.
         :return: Action value.
         """
+
+        if self.action is None:
+            raise ValueError('Action has not been extracted.')
+
+        if self.action.min_values is None or self.action.max_values is None:
+            raise ValueError('Minimum and maximum values are required.')
 
         value_ranges = [
             max_value - min_value
@@ -754,7 +780,8 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
         :return: Dictionary of action-probability items.
         """
 
-        self.set_action(state)
+        if self.action is None:
+            self.action = self.extract_action(state)
 
         intercept_state_features = np.append([1.0], self.feature_extractor.extract(state, True))
 
@@ -841,7 +868,7 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
 
         if not isinstance(self.action_theta_a, np.ndarray) or not isinstance(self.action_theta_b, np.ndarray) or \
                 not isinstance(other.action_theta_a, np.ndarray) or not isinstance(other.action_theta_b, np.ndarray):
-            raise ValueError('Uninitialized array.')
+            raise ValueError('Uninitialized array(s).')
 
         # using the default values for allclose is too strict to achieve cross-platform testing success. back off a little with atol.
         return np.allclose(self.action_theta_a, other.action_theta_a, atol=0.0001) and np.allclose(self.action_theta_b, other.action_theta_b, atol=0.0001)

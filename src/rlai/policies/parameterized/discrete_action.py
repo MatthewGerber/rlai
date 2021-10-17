@@ -210,7 +210,7 @@ class SoftMaxInActionPreferencesPolicy(ParameterizedPolicy):
 
     def __eq__(
             self,
-            other: 'SoftMaxInActionPreferencesPolicy'
+            other: object
     ) -> bool:
         """
         Check whether the current policy equals another.
@@ -219,11 +219,14 @@ class SoftMaxInActionPreferencesPolicy(ParameterizedPolicy):
         :return: True if policies are equal and False otherwise.
         """
 
+        if not isinstance(other, SoftMaxInActionPreferencesPolicy):
+            raise ValueError('Expected a SoftMaxInActionPreferencesPolicy.')
+
         return np.allclose(self.theta, other.theta)
 
     def __ne__(
             self,
-            other: 'SoftMaxInActionPreferencesPolicy'
+            other: object
     ) -> bool:
         """
         Check whether the current policy does not equal another.
@@ -231,6 +234,9 @@ class SoftMaxInActionPreferencesPolicy(ParameterizedPolicy):
         :param other: Other policy.
         :return: True if policies are not equal and False otherwise.
         """
+
+        if not isinstance(other, SoftMaxInActionPreferencesPolicy):
+            raise ValueError('Expected a SoftMaxInActionPreferencesPolicy.')
 
         return not (self == other)
 
@@ -461,7 +467,7 @@ class SoftMaxInActionPreferencesJaxPolicy(ParameterizedPolicy):
 
     def __eq__(
             self,
-            other: 'SoftMaxInActionPreferencesJaxPolicy'
+            other: object
     ) -> bool:
         """
         Check whether the current policy equals another.
@@ -470,11 +476,14 @@ class SoftMaxInActionPreferencesJaxPolicy(ParameterizedPolicy):
         :return: True if policies are equal and False otherwise.
         """
 
+        if not isinstance(other, SoftMaxInActionPreferencesJaxPolicy):
+            raise ValueError('Expected a SoftMaxInActionPreferencesJaxPolicy.')
+
         return np.allclose(self.theta, other.theta)
 
     def __ne__(
             self,
-            other: 'SoftMaxInActionPreferencesJaxPolicy'
+            other: object
     ) -> bool:
         """
         Check whether the current policy does not equal another.
@@ -482,5 +491,8 @@ class SoftMaxInActionPreferencesJaxPolicy(ParameterizedPolicy):
         :param other: Other policy.
         :return: True if policies are not equal and False otherwise.
         """
+
+        if not isinstance(other, SoftMaxInActionPreferencesJaxPolicy):
+            raise ValueError('Expected a SoftMaxInActionPreferencesJaxPolicy.')
 
         return not (self == other)

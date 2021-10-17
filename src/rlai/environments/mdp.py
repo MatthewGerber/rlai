@@ -10,7 +10,6 @@ from numpy.random import RandomState
 
 from rlai.actions import Action
 from rlai.agents import Agent
-from rlai.agents.mdp import MdpAgent
 from rlai.environments import Environment
 from rlai.meta import rl_text
 from rlai.planning.environment_models import StochasticEnvironmentModel
@@ -29,7 +28,7 @@ class MdpEnvironment(Environment, ABC):
 
     def reset_for_new_run(
             self,
-            agent: MdpAgent
+            agent: Agent
     ) -> MdpState:
         """
         Reset the the environment to a random nonterminal state, if any are specified, or to None.
@@ -396,7 +395,7 @@ class PrioritizedSweepingMdpPlanningEnvironment(MdpPlanningEnvironment):
             state: MdpState,
             t: int,
             a: Action,
-            agent: MdpAgent
+            agent: Agent
     ) -> Tuple[Tuple[MdpState, Action, MdpState], Reward]:
         """
         Advance a planning state based on priorities.
@@ -613,7 +612,7 @@ class TrajectorySamplingMdpPlanningEnvironment(MdpPlanningEnvironment):
             state: MdpState,
             t: int,
             a: Action,
-            agent: MdpAgent
+            agent: Agent
     ) -> Tuple[Tuple[MdpState, Action, MdpState], Reward]:
         """
         Advance a planning state.

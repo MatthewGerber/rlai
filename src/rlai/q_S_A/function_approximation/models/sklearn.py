@@ -1,3 +1,4 @@
+import typing
 from typing import Optional, Dict
 
 import matplotlib.pyplot as plt
@@ -15,9 +16,10 @@ from rlai.q_S_A.function_approximation.models import (
 @rl_text(chapter=9, page=200)
 class SKLearnSGD(FunctionApproximationModel, BaseSKLearnSGD):
     """
-    Extension of the base SKLearnSGD features specific to state-action modeling.
+    Extension of the base SKLearnSGD that adds features specific to state-action modeling.
     """
 
+    @typing.no_type_check  # we explicitly call each super class's plot function, so ignore mismatched signatures.
     def plot(
             self,
             feature_extractor: FeatureExtractor,
@@ -122,6 +124,22 @@ class SKLearnSGD(FunctionApproximationModel, BaseSKLearnSGD):
             coefficients_df.loc['intercept', :] = self.model.intercept_[0]
 
         return coefficients_df
+
+    def update_plot(
+            self,
+            time_step_detail_iteration: Optional[int]
+    ):
+        """
+        Update the plot of the model. Can only be called from the main thread.
+
+        :param time_step_detail_iteration: Iteration for which to plot time-step-level detail, or None for no detail.
+        Passing -1 will plot detail for the most recently completed iteration.
+        """
+
+        BaseSKLearnSGD.update_plot(
+            self,
+            time_step_detail_iteration=time_step_detail_iteration
+        )
 
     def __init__(
             self,

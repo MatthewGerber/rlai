@@ -9,7 +9,6 @@ from numpy.random import RandomState
 
 from rlai.actions import Action
 from rlai.agents import Agent
-from rlai.agents.mdp import MdpAgent
 from rlai.environments.mdp import MdpEnvironment
 from rlai.meta import rl_text
 from rlai.rewards import Reward
@@ -50,7 +49,7 @@ class TcpMdpEnvironment(MdpEnvironment, ABC):
 
     def reset_for_new_run(
             self,
-            agent: MdpAgent
+            agent: Agent
     ) -> MdpState:
         """
         Reset the environment for a new run.

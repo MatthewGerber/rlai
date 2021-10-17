@@ -14,8 +14,9 @@ from gym.wrappers import TimeLimit
 from numpy.random import RandomState
 
 from rlai.actions import Action, DiscretizedAction, ContinuousMultiDimensionalAction
+from rlai.agents import Agent
 from rlai.agents.mdp import MdpAgent
-from rlai.environments.mdp import ContinuousMdpEnvironment
+from rlai.environments.mdp import ContinuousMdpEnvironment, MdpEnvironment
 from rlai.meta import rl_text
 from rlai.models.feature_extraction import (
     NonstationaryFeatureScaler,
@@ -167,7 +168,7 @@ class Gym(ContinuousMdpEnvironment):
             state: MdpState,
             t: int,
             a: Action,
-            agent: MdpAgent
+            agent: Agent
     ) -> Tuple[MdpState, Reward]:
         """
         Advance the state.
@@ -178,6 +179,12 @@ class Gym(ContinuousMdpEnvironment):
         :param agent: Agent.
         :return: 2-tuple of next state and reward.
         """
+
+        if not isinstance(state, GymState):
+            raise ValueError('Expected a GymState.')
+
+        if not isinstance(agent, MdpAgent):
+            raise ValueError('Expected an MdpAgent.')
 
         # map discretized actions back to continuous space
         if isinstance(a, DiscretizedAction):
@@ -246,6 +253,9 @@ class Gym(ContinuousMdpEnvironment):
 
         elif self.gym_id == Gym.MCC_V0:
 
+            if not isinstance(fuel_remaining, float):
+                raise ValueError('Missing fuel remaining.')
+
             fraction_to_goal = (observation[0] - Gym.MMC_V0_TROUGH_X_POS) / (Gym.MMC_V0_GOAL_X_POS - Gym.MMC_V0_TROUGH_X_POS)
 
             # if goal is reached, then reward with full fraction to goal plus any fuel remaining.
@@ -270,7 +280,7 @@ class Gym(ContinuousMdpEnvironment):
             if self.steps_per_second is not None:
                 sleep(1.0 / self.steps_per_second)
 
-            if self.plot_environment:
+            if self.state_reward_scatter_plot is not None:
                 self.state_reward_scatter_plot.update(np.append(observation, reward))
 
         self.state = GymState(
@@ -286,7 +296,7 @@ class Gym(ContinuousMdpEnvironment):
 
     def reset_for_new_run(
             self,
-            agent: MdpAgent
+            agent: Agent
     ) -> GymState:
         """
         Reset the environment for a new run (episode).
@@ -295,9 +305,12 @@ class Gym(ContinuousMdpEnvironment):
         :return: Initial state.
         """
 
+        if not isinstance(agent, MdpAgent):
+            raise ValueError('Expected an MdpAgent.')
+
         super().reset_for_new_run(agent)
 
-        if self.plot_environment:
+        if self.state_reward_scatter_plot is not None:
             self.state_reward_scatter_plot.reset_y_range()
 
         observation = self.gym_native.reset()
@@ -514,9 +527,9 @@ class Gym(ContinuousMdpEnvironment):
         self.force = force
         self.steps_per_second = steps_per_second
         self.gym_native = self.init_gym_native()
-        self.previous_observation = None
+        self.previous_observation: Optional[np.ndarray] = None
         self.plot_environment = plot_environment
-        self.state_reward_scatter_plot = None
+        self.state_reward_scatter_plot: Optional[ScatterPlot] = None
         if self.plot_environment:
             self.state_reward_scatter_plot = ScatterPlot(
                 f'{self.gym_id}:  State and Reward',
@@ -529,7 +542,7 @@ class Gym(ContinuousMdpEnvironment):
 
         # action space is already discrete:  initialize n actions from it.
         if isinstance(self.gym_native.action_space, Discrete):
-            self.actions = [
+            self.actions: List[Action] = [
                 Action(
                     i=i
                 )
@@ -539,7 +552,7 @@ class Gym(ContinuousMdpEnvironment):
         # action space is continuous and we lack a discretization resolution:  initialize a single, multi-dimensional
         # action including the min and max values of the dimensions.
         elif isinstance(self.gym_native.action_space, Box) and self.continuous_action_discretization_resolution is None:
-            self.actions = [
+            self.actions: List[Action] = [
                 ContinuousMultiDimensionalAction(
                     value=None,
                     min_values=self.gym_native.action_space.low,
@@ -562,7 +575,7 @@ class Gym(ContinuousMdpEnvironment):
             else:  # pragma no cover
                 raise ValueError(f'Unknown format of continuous action space:  {box}')
 
-            self.actions = [
+            self.actions: List[Action] = [
                 DiscretizedAction(
                     i=i,
                     continuous_value=np.array(n_dim_action)
@@ -635,7 +648,7 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
     def init_from_arguments(
             cls,
             args: List[str],
-            environment: Gym
+            environment: MdpEnvironment
     ) -> Tuple[StateActionInteractionFeatureExtractor, List[str]]:
         """
         Initialize a feature extractor from arguments.
@@ -644,6 +657,9 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
         :param environment: Environment.
         :return: 2-tuple of a feature extractor and a list of unparsed arguments.
         """
+
+        if not isinstance(environment, Gym):
+            raise ValueError('Expected a Gym.')
 
         parsed_args, unparsed_args = parse_arguments(cls, args)
 
@@ -676,7 +692,7 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
 
         # extract and scale features
         X = np.array([
-            np.append(state.observation, state.observation ** 2)
+            np.append(self.observation(state), self.observation(state) ** 2)
             for state in states
         ])
 
@@ -686,7 +702,7 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
         state_categories = [
             OneHotCategory(*[
                 obs_feature < 0.0
-                for obs_feature in state.observation
+                for obs_feature in self.observation(state)
             ])
             for state in states
         ]
@@ -700,6 +716,22 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
         )
 
         return X
+
+    @staticmethod
+    def observation(
+            state: MdpState
+    ) -> np.ndarray:
+        """
+        Check type of state and get observation features.
+
+        :param state: State.
+        :return: Features.
+        """
+
+        if not isinstance(state, GymState):
+            raise ValueError('Expected a GymState')
+
+        return state.observation
 
     def __init__(
             self,
@@ -773,7 +805,7 @@ class ContinuousFeatureExtractor(StateFeatureExtractor):
     def init_from_arguments(
             cls,
             args: List[str],
-            environment: Gym
+            environment: MdpEnvironment
     ) -> Tuple[FeatureExtractor, List[str]]:
         """
         Initialize a feature extractor from arguments.
@@ -795,7 +827,7 @@ class ContinuousFeatureExtractor(StateFeatureExtractor):
 
     def extract(
             self,
-            state: GymState,
+            state: MdpState,
             refit_scaler: bool
     ) -> np.ndarray:
         """
@@ -805,6 +837,9 @@ class ContinuousFeatureExtractor(StateFeatureExtractor):
         :param refit_scaler: Whether or not to refit the feature scaler before scaling the extracted features.
         :return: State-feature vector.
         """
+
+        if not isinstance(state, GymState):
+            raise ValueError('Expected a GymState.')
 
         return self.feature_scaler.scale_features(
             np.array([state.observation]),
@@ -835,7 +870,7 @@ class ContinuousLunarLanderFeatureExtractor(ContinuousFeatureExtractor):
 
     def extract(
             self,
-            state: GymState,
+            state: MdpState,
             refit_scaler: bool
     ) -> np.ndarray:
         """
@@ -845,6 +880,9 @@ class ContinuousLunarLanderFeatureExtractor(ContinuousFeatureExtractor):
         :param refit_scaler: Whether or not to refit the feature scaler before scaling the extracted features.
         :return: State-feature vector.
         """
+
+        if not isinstance(state, GymState):
+            raise ValueError('Expected a GymState.')
 
         # extract raw feature values
         raw_feature_values = super().extract(state, refit_scaler)
@@ -908,7 +946,7 @@ class ContinuousMountainCarFeatureExtractor(ContinuousFeatureExtractor):
 
     def extract(
             self,
-            state: GymState,
+            state: MdpState,
             refit_scaler: bool
     ) -> np.ndarray:
         """
@@ -918,6 +956,9 @@ class ContinuousMountainCarFeatureExtractor(ContinuousFeatureExtractor):
         :param refit_scaler: Whether or not to refit the feature scaler before scaling the extracted features.
         :return: State-feature vector.
         """
+
+        if not isinstance(state, GymState):
+            raise ValueError('Expected a GymState.')
 
         # extract raw feature values
         raw_feature_values = super().extract(state, refit_scaler)

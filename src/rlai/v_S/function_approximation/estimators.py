@@ -163,10 +163,7 @@ class ApproximateStateValueEstimator(StateValueEstimator):
         self.experience_values.append(value)
 
         if weight is not None:
-            if self.weights is None:
-                self.weights = np.array([weight])
-            else:
-                self.weights = np.append(self.weights, [weight], axis=0)
+            self.weights.append(weight)
 
         self.experience_pending = True
 
@@ -188,11 +185,16 @@ class ApproximateStateValueEstimator(StateValueEstimator):
 
             # feature extractors may return a matrix with no columns if extraction was not possible
             if X.shape[1] > 0:
-                self.model.fit(X, self.experience_values, self.weights)
+
+                weight_array: Optional[np.ndarray] = None
+                if len(self.weights) == 0:
+                    weight_array = np.array(self.weights)
+
+                self.model.fit(X, self.experience_values, weight_array)
 
             self.experience_states.clear()
             self.experience_values.clear()
-            self.weights = None
+            self.weights.clear()
             self.experience_pending = False
 
     def evaluate(
@@ -252,7 +254,7 @@ class ApproximateStateValueEstimator(StateValueEstimator):
 
         self.experience_states: List[MdpState] = []
         self.experience_values: List[float] = []
-        self.weights: np.ndarray = None
+        self.weights: List[float] = []
         self.experience_pending: bool = False
 
     def __getitem__(
@@ -295,7 +297,7 @@ class ApproximateStateValueEstimator(StateValueEstimator):
 
     def __eq__(
             self,
-            other: 'ApproximateStateValueEstimator'
+            other: object
     ) -> bool:
         """
         Check whether the estimator equals another.
@@ -304,11 +306,14 @@ class ApproximateStateValueEstimator(StateValueEstimator):
         :return: True if equal and False otherwise.
         """
 
+        if not isinstance(other, ApproximateStateValueEstimator):
+            raise ValueError('Expected a ApproximateStateValueEstimator.')
+
         return self.model == other.model
 
     def __ne__(
             self,
-            other: 'ApproximateStateValueEstimator'
+            other: object
     ) -> bool:
         """
         Check whether the estimator does not equal another.
@@ -316,5 +321,8 @@ class ApproximateStateValueEstimator(StateValueEstimator):
         :param other: Other estimator.
         :return: True if not equal and False otherwise.
         """
+
+        if not isinstance(other, ApproximateStateValueEstimator):
+            raise ValueError('Expected a ApproximateStateValueEstimator.')
 
         return not (self == other)

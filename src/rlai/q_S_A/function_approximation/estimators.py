@@ -1,6 +1,6 @@
 import logging
 from argparse import ArgumentParser
-from typing import Optional, List, Tuple, Iterator, Set
+from typing import Optional, List, Tuple, Iterator, Iterable
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -295,17 +295,14 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         self.experience_values.append(value)
 
         if weight is not None:
-            if self.weights is None:
-                self.weights = np.array([weight])
-            else:
-                self.weights = np.append(self.weights, [weight], axis=0)
+            self.weights.append(weight)
 
         self.experience_pending = True
 
     def improve_policy(
             self,
             agent: MdpAgent,
-            states: Optional[Set[MdpState]],
+            states: Optional[Iterable[MdpState]],
             event: PolicyImprovementEvent
     ) -> int:
         """
@@ -330,17 +327,22 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
 
             # feature extractors may return a matrix with no columns if extraction was not possible
             if X.shape[1] > 0:
-                self.model.fit(X, self.experience_values, self.weights)
+
+                weight_array: Optional[np.ndarray] = None
+                if len(self.weights) == 0:
+                    weight_array = np.array(self.weights)
+
+                self.model.fit(X, self.experience_values, weight_array)
 
             self.experience_states.clear()
             self.experience_actions.clear()
             self.experience_values.clear()
-            self.weights = None
+            self.weights.clear()
             self.experience_pending = False
 
         log_with_border(logging.DEBUG, 'Policy improved')
 
-        return -1 if states is None else len(states)
+        return -1
 
     def evaluate(
             self,
@@ -419,17 +421,21 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         :return: Matplotlib Figure, if one was generated and not plotting to PDF.
         """
 
+        figure = None
+
         if self.plot_model:
 
             render = final or (self.plot_model_per_improvements is not None and self.evaluation_policy_improvement_count % self.plot_model_per_improvements == 0)
 
-            return self.model.plot(
+            figure = self.model.plot(
                 feature_extractor=self.feature_extractor,
                 policy_improvement_count=self.evaluation_policy_improvement_count,
                 num_improvement_bins=self.plot_model_bins,
                 render=render,
                 pdf=pdf
             )
+
+        return figure
 
     def update_plot(
             self,
@@ -498,8 +504,8 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         self.experience_states: List[MdpState] = []
         self.experience_actions: List[Action] = []
         self.experience_values: List[float] = []
-        self.weights: np.ndarray = None
-        self.experience_pending: bool = False
+        self.weights: List[float] = []
+        self.experience_pending = False
 
     def __getitem__(
             self,
@@ -541,7 +547,7 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
 
     def __eq__(
             self,
-            other: 'ApproximateStateActionValueEstimator'
+            other: object
     ) -> bool:
         """
         Check whether the estimator equals another.
@@ -550,11 +556,14 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         :return: True if equal and False otherwise.
         """
 
+        if not isinstance(other, ApproximateStateActionValueEstimator):
+            raise ValueError('Expected a ApproximateStateActionValueEstimator.')
+
         return self.model == other.model
 
     def __ne__(
             self,
-            other: 'ApproximateStateActionValueEstimator'
+            other: object
     ) -> bool:
         """
         Check whether the estimator does not equal another.
@@ -562,5 +571,8 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         :param other: Other estimator.
         :return: True if not equal and False otherwise.
         """
+
+        if not isinstance(other, ApproximateStateActionValueEstimator):
+            raise ValueError('Expected a ApproximateStateActionValueEstimator.')
 
         return not (self == other)

@@ -47,14 +47,14 @@ class FunctionApproximationModel(ABC):
             self,
             X: Any,
             y: Any,
-            weight: Optional[float]
+            weights: Optional[np.ndarray]
     ):
         """
         Fit the model to a matrix of features and a vector of returns.
 
         :param X: Feature matrix.
         :param y: Returns.
-        :param weight: Weight.
+        :param weights: Optional sample weights.
         """
 
     @abstractmethod

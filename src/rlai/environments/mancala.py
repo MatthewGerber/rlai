@@ -210,7 +210,7 @@ class Mancala(MdpEnvironment):
             state: MdpState,
             t: int,
             a: Action,
-            agent: MdpAgent
+            agent: Agent
     ) -> Tuple[MdpState, Reward]:
         """
         Advance from the current state given an action.
@@ -221,6 +221,9 @@ class Mancala(MdpEnvironment):
         :param agent: Agent used to generate on-the-fly state identifiers.
         :return: 2-tuple of next state and next reward.
         """
+
+        if not isinstance(agent, MdpAgent):
+            raise ValueError('Expected an MdpAgent.')
 
         # pick and sow from pocket
         picked_pocket = self.board[a.i]
@@ -267,13 +270,16 @@ class Mancala(MdpEnvironment):
 
     def reset_for_new_run(
             self,
-            agent: MdpAgent
+            agent: Agent
     ) -> MdpState:
         """
         Reset the game to the initial state.
 
         :param agent: Agent used to generate on-the-fly state identifiers.
         """
+
+        if not isinstance(agent, MdpAgent):
+            raise ValueError('Expected an MdpAgent.')
 
         super().reset_for_new_run(agent)
 
