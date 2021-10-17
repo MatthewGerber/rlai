@@ -163,136 +163,33 @@ class Gym(ContinuousMdpEnvironment):
 
         return gym_env, unparsed_args
 
-    def advance(
-            self,
-            state: MdpState,
-            t: int,
-            a: Action,
-            agent: Agent
-    ) -> Tuple[MdpState, Reward]:
+    @staticmethod
+    def get_continuous_action_value(
+            action: Action
+    ) -> np.ndarray:
         """
-        Advance the state.
+        Get the continuous value for an action.
 
-        :param state: State to advance.
-        :param t: Time step.
-        :param a: Action.
-        :param agent: Agent.
-        :return: 2-tuple of next state and reward.
+        :param action: Action.
+        :return: Action vector.
         """
-
-        if not isinstance(state, GymState):
-            raise ValueError('Expected a GymState.')
-
-        if not isinstance(agent, MdpAgent):
-            raise ValueError('Expected an MdpAgent.')
 
         # map discretized actions back to continuous space
-        if isinstance(a, DiscretizedAction):
-            gym_action = a.continuous_value
+        if isinstance(action, DiscretizedAction):
+            gym_action = action.continuous_value
+
         # use continuous action values directly (need to be arrays)
-        elif isinstance(a, ContinuousMultiDimensionalAction):
-            gym_action = a.value
-        # use discretized action indices
+        elif isinstance(action, ContinuousMultiDimensionalAction):
+            if action.value is None:
+                raise ValueError('Expected non-None action value.')
+            else:
+                gym_action = action.value
+
+        # nothing else permitted
         else:
-            gym_action = a.i
+            raise ValueError(f'Unknown action type:  {type(action)}')
 
-        # fuel-based modification
-        fuel_used = None
-        if self.gym_id == Gym.LLC_V2:
-            main_throttle, side_throttle = gym_action[:]
-            required_main_fuel = Gym.LLC_V2_FUEL_CONSUMPTION_FULL_THROTTLE_MAIN * (0.5 + 0.5 * main_throttle if main_throttle >= 0.0 else 0.0)
-            required_side_fuel = Gym.LLC_V2_FUEL_CONSUMPTION_FULL_THROTTLE_SIDE * abs(side_throttle) if abs(side_throttle) >= 0.5 else 0.0
-            required_total_fuel = required_main_fuel + required_side_fuel
-            fuel_level = state.observation[-1]
-            if required_total_fuel > fuel_level:
-                gym_action[:] *= fuel_level / required_total_fuel
-                fuel_used = fuel_level
-            else:
-                fuel_used = required_total_fuel
-
-        # continuous mountain car:  cap energy expenditure at fuel level
-        elif self.gym_id == Gym.MCC_V0:
-            throttle = gym_action[0]
-            required_fuel = abs(throttle) * Gym.MMC_V0_FUEL_CONSUMPTION_FULL_THROTTLE
-            fuel_level = state.observation[-1]
-            if required_fuel > fuel_level:
-                gym_action[:] *= fuel_level / required_fuel
-                fuel_used = fuel_level
-            else:
-                fuel_used = required_fuel
-
-        observation, reward, done, _ = self.gym_native.step(action=gym_action)
-
-        # update fuel remaining if needed
-        fuel_remaining = None
-        if fuel_used is not None:
-            fuel_remaining = max(0.0, state.observation[-1] - fuel_used)
-            observation = np.append(observation, fuel_remaining)
-
-        if self.gym_id == Gym.LLC_V2:
-
-            reward = 0.0
-
-            if done:
-
-                # the ideal state is zeros across position/movement
-                state_reward = -np.abs(observation[0:6]).sum()
-
-                # reward for remaining fuel, but only if the state is good. rewarding for remaining fuel unconditionally
-                # can cause the agent to veer out of bounds immediately and thus sacrifice state reward for fuel reward.
-                # the terminating state is considered good if the lander is within the goal posts (which are at
-                # x = +/-0.2) and the other orientation variables (y position, x and y velocity, angle and angular
-                # velocity) are near zero. permit a small amount of lenience in the latter, since it's common for a
-                # couple of the variables to be slightly positive even when the lander is sitting stationary on a flat
-                # surface.
-                fuel_reward = 0.0
-                if abs(observation[0]) <= 0.2 and np.abs(observation[1:6]).sum() < 0.01:
-                    fuel_reward = state.observation[-1]
-
-                reward = state_reward + fuel_reward
-
-        elif self.gym_id == Gym.MCC_V0:
-
-            if not isinstance(fuel_remaining, float):
-                raise ValueError('Missing fuel remaining.')
-
-            fraction_to_goal = (observation[0] - Gym.MMC_V0_TROUGH_X_POS) / (Gym.MMC_V0_GOAL_X_POS - Gym.MMC_V0_TROUGH_X_POS)
-
-            # if goal is reached, then reward with full fraction to goal plus any fuel remaining.
-            if fraction_to_goal >= 1.0:
-                reward = 1.0 + fuel_remaining
-
-            # if the car has transitioned to sliding leftward down the hill, reward with fuel times fraction to goal.
-            elif self.previous_observation is not None and self.previous_observation[1] > 0.0 and observation[1] <= 0.0 and observation[0] >= Gym.MMC_V0_TROUGH_X_POS:
-                reward = fuel_remaining * fraction_to_goal
-
-            # otherwise, no reward.
-            else:
-                reward = 0.0
-
-        # call render if rendering manually
-        if self.check_render_current_episode(True):
-            self.gym_native.render()
-
-        if self.check_render_current_episode(None):
-
-            # sleep if we're restricting steps per second
-            if self.steps_per_second is not None:
-                sleep(1.0 / self.steps_per_second)
-
-            if self.state_reward_scatter_plot is not None:
-                self.state_reward_scatter_plot.update(np.append(observation, reward))
-
-        self.state = GymState(
-            environment=self,
-            observation=observation,
-            terminal=done,
-            agent=agent
-        )
-
-        self.previous_observation = observation
-
-        return self.state, Reward(i=None, r=reward)
+        return gym_action
 
     def reset_for_new_run(
             self,
@@ -542,7 +439,7 @@ class Gym(ContinuousMdpEnvironment):
 
         # action space is already discrete:  initialize n actions from it.
         if isinstance(self.gym_native.action_space, Discrete):
-            self.actions: List[Action] = [
+            actions = [
                 Action(
                     i=i
                 )
@@ -552,7 +449,7 @@ class Gym(ContinuousMdpEnvironment):
         # action space is continuous and we lack a discretization resolution:  initialize a single, multi-dimensional
         # action including the min and max values of the dimensions.
         elif isinstance(self.gym_native.action_space, Box) and self.continuous_action_discretization_resolution is None:
-            self.actions: List[Action] = [
+            actions = [
                 ContinuousMultiDimensionalAction(
                     value=None,
                     min_values=self.gym_native.action_space.low,
@@ -575,7 +472,7 @@ class Gym(ContinuousMdpEnvironment):
             else:  # pragma no cover
                 raise ValueError(f'Unknown format of continuous action space:  {box}')
 
-            self.actions: List[Action] = [
+            actions = [
                 DiscretizedAction(
                     i=i,
                     continuous_value=np.array(n_dim_action)
@@ -585,6 +482,139 @@ class Gym(ContinuousMdpEnvironment):
 
         else:  # pragma no cover
             raise ValueError(f'Unknown Gym action space type:  {type(self.gym_native.action_space)}')
+
+        self.actions = actions
+
+    def advance(
+            self,
+            state: MdpState,
+            t: int,
+            a: Action,
+            agent: Agent
+    ) -> Tuple[MdpState, Reward]:
+        """
+        Advance the state.
+
+        :param state: State to advance.
+        :param t: Time step.
+        :param a: Action.
+        :param agent: Agent.
+        :return: 2-tuple of next state and reward.
+        """
+
+        if not isinstance(state, GymState):
+            raise ValueError('Expected a GymState.')
+
+        if not isinstance(agent, MdpAgent):
+            raise ValueError('Expected an MdpAgent.')
+
+        gym_action: Optional[Union[np.ndarray, int]]
+
+        # fuel-based modification:  cap energy expenditure at fuel level
+        fuel_used = None
+
+        # continuous lunar lander
+        if self.gym_id == Gym.LLC_V2:
+            gym_action = self.get_continuous_action_value(a)
+            main_throttle, side_throttle = gym_action[:]
+            required_main_fuel = Gym.LLC_V2_FUEL_CONSUMPTION_FULL_THROTTLE_MAIN * (0.5 + 0.5 * main_throttle if main_throttle >= 0.0 else 0.0)
+            required_side_fuel = Gym.LLC_V2_FUEL_CONSUMPTION_FULL_THROTTLE_SIDE * abs(side_throttle) if abs(side_throttle) >= 0.5 else 0.0
+            required_total_fuel = required_main_fuel + required_side_fuel
+            fuel_level = state.observation[-1]
+            if required_total_fuel > fuel_level:
+                gym_action[:] *= fuel_level / required_total_fuel
+                fuel_used = fuel_level
+            else:
+                fuel_used = required_total_fuel
+
+        # continuous mountain car
+        elif self.gym_id == Gym.MCC_V0:
+            gym_action = self.get_continuous_action_value(a)
+            throttle = gym_action[0]
+            required_fuel = abs(throttle) * Gym.MMC_V0_FUEL_CONSUMPTION_FULL_THROTTLE
+            fuel_level = state.observation[-1]
+            if required_fuel > fuel_level:
+                gym_action[:] *= fuel_level / required_fuel
+                fuel_used = fuel_level
+            else:
+                fuel_used = required_fuel
+
+        # use discretized action indices for all other environments
+        else:
+            gym_action = a.i
+
+        observation, reward, done, _ = self.gym_native.step(action=gym_action)
+
+        # update fuel remaining if needed
+        fuel_remaining = None
+        if fuel_used is not None:
+            fuel_remaining = max(0.0, state.observation[-1] - fuel_used)
+            observation = np.append(observation, fuel_remaining)
+
+        if self.gym_id == Gym.LLC_V2:
+
+            reward = 0.0
+
+            if done:
+
+                # the ideal state is zeros across position/movement
+                state_reward = -np.abs(observation[0:6]).sum()
+
+                # reward for remaining fuel, but only if the state is good. rewarding for remaining fuel unconditionally
+                # can cause the agent to veer out of bounds immediately and thus sacrifice state reward for fuel reward.
+                # the terminating state is considered good if the lander is within the goal posts (which are at
+                # x = +/-0.2) and the other orientation variables (y position, x and y velocity, angle and angular
+                # velocity) are near zero. permit a small amount of lenience in the latter, since it's common for a
+                # couple of the variables to be slightly positive even when the lander is sitting stationary on a flat
+                # surface.
+                fuel_reward = 0.0
+                if abs(observation[0]) <= 0.2 and np.abs(observation[1:6]).sum() < 0.01:
+                    fuel_reward = state.observation[-1]
+
+                reward = state_reward + fuel_reward
+
+        elif self.gym_id == Gym.MCC_V0:
+
+            if not isinstance(fuel_remaining, float):
+                raise ValueError('Missing fuel remaining.')
+
+            fraction_to_goal = (observation[0] - Gym.MMC_V0_TROUGH_X_POS) / (Gym.MMC_V0_GOAL_X_POS - Gym.MMC_V0_TROUGH_X_POS)
+
+            # if goal is reached, then reward with full fraction to goal plus any fuel remaining.
+            if fraction_to_goal >= 1.0:
+                reward = 1.0 + fuel_remaining
+
+            # if the car has transitioned to sliding leftward down the hill, reward with fuel times fraction to goal.
+            elif self.previous_observation is not None and self.previous_observation[1] > 0.0 and observation[1] <= 0.0 and observation[0] >= Gym.MMC_V0_TROUGH_X_POS:
+                reward = fuel_remaining * fraction_to_goal
+
+            # otherwise, no reward.
+            else:
+                reward = 0.0
+
+        # call render if rendering manually
+        if self.check_render_current_episode(True):
+            self.gym_native.render()
+
+        if self.check_render_current_episode(None):
+
+            # sleep if we're restricting steps per second
+            if self.steps_per_second is not None:
+                sleep(1.0 / self.steps_per_second)
+
+            if self.state_reward_scatter_plot is not None:
+                self.state_reward_scatter_plot.update(np.append(observation, reward))
+
+        self.state = GymState(
+            environment=self,
+            observation=observation,
+            terminal=done,
+            agent=agent
+        )
+
+        self.previous_observation = observation
+
+        return self.state, Reward(i=None, r=reward)
 
     def __getstate__(
             self

@@ -329,7 +329,7 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
             if X.shape[1] > 0:
 
                 weight_array: Optional[np.ndarray] = None
-                if len(self.weights) == 0:
+                if len(self.weights) > 0:
                     weight_array = np.array(self.weights)
 
                 self.model.fit(X, self.experience_values, weight_array)
