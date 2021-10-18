@@ -15,6 +15,7 @@ from rlai.meta import rl_text
 from rlai.policies import Policy
 from rlai.q_S_A.function_approximation.models.feature_extraction import FeatureExtractor
 from rlai.rewards import Reward
+from rlai.states import State
 from rlai.states.mdp import MdpState
 from rlai.utils import parse_arguments
 
@@ -311,7 +312,7 @@ class RobocodeEnvironment(TcpMdpEnvironment):
     def reset_for_new_run(
             self,
             agent: Agent
-    ) -> MdpState:
+    ) -> State:
         """
         Reset the environment for a new run.
 

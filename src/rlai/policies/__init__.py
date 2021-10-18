@@ -5,6 +5,7 @@ import numpy as np
 
 from rlai.actions import Action
 from rlai.meta import rl_text
+from rlai.states import State
 from rlai.states.mdp import MdpState
 
 
@@ -16,7 +17,7 @@ class Policy(ABC):
 
     def reset_for_new_run(
             self,
-            state: MdpState
+            state: State
     ):
         """
         Reset the policy for a new run.

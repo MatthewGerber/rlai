@@ -9,7 +9,6 @@ from numpy.random import RandomState
 
 from rlai.actions import Action
 from rlai.agents.mdp import MdpAgent
-from rlai.environments.mdp import MdpEnvironment
 from rlai.gpi import PolicyImprovementEvent
 from rlai.meta import rl_text
 from rlai.policies import Policy
@@ -141,7 +140,7 @@ class StateActionValueEstimator(ABC):
             cls,
             args: List[str],
             random_state: RandomState,
-            environment: MdpEnvironment
+            environment
     ) -> Tuple[Any, List[str]]:
         """
         Initialize a state-action value estimator from arguments.
@@ -246,7 +245,7 @@ class StateActionValueEstimator(ABC):
 
     def __init__(
             self,
-            environment: MdpEnvironment,
+            environment,
             epsilon: Optional[float]
     ):
         """
@@ -304,7 +303,7 @@ class StateActionValueEstimator(ABC):
     @abstractmethod
     def __eq__(
             self,
-            other: 'StateActionValueEstimator'
+            other: object
     ) -> bool:
         """
         Check whether the estimator equals another.
@@ -316,7 +315,7 @@ class StateActionValueEstimator(ABC):
     @abstractmethod
     def __ne__(
             self,
-            other: 'StateActionValueEstimator'
+            other: object
     ) -> bool:
         """
         Check whether the estimator does not equal another.

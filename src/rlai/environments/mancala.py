@@ -11,6 +11,7 @@ from rlai.environments.mdp import MdpEnvironment
 from rlai.meta import rl_text
 from rlai.policies.tabular import TabularPolicy
 from rlai.rewards import Reward
+from rlai.states import State
 from rlai.states.mdp import MdpState
 from rlai.utils import parse_arguments
 
@@ -272,11 +273,12 @@ class Mancala(MdpEnvironment):
     def reset_for_new_run(
             self,
             agent: Agent
-    ) -> MdpState:
+    ) -> State:
         """
         Reset the game to the initial state.
 
         :param agent: Agent used to generate on-the-fly state identifiers.
+        :return: Initial state.
         """
 
         if not isinstance(agent, MdpAgent):

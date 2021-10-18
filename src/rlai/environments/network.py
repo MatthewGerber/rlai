@@ -12,6 +12,7 @@ from rlai.agents import Agent
 from rlai.environments.mdp import MdpEnvironment
 from rlai.meta import rl_text
 from rlai.rewards import Reward
+from rlai.states import State
 from rlai.states.mdp import MdpState
 
 
@@ -21,6 +22,31 @@ class TcpMdpEnvironment(MdpEnvironment, ABC):
     An MDP environment served over a TCP connection from an external source (e.g., a simulation environment running as
     a separate program).
     """
+
+    @classmethod
+    def get_argument_parser(
+            cls,
+    ) -> ArgumentParser:
+        """
+        Get argument parser.
+
+        :return: Argument parser.
+        """
+
+        parser = ArgumentParser(
+            parents=[super().get_argument_parser()],
+            allow_abbrev=False,
+            add_help=False
+        )
+
+        parser.add_argument(
+            '--port',
+            type=int,
+            default=54321,
+            help='Port to serve environment on.'
+        )
+
+        return parser
 
     def __init__(
             self,
@@ -49,35 +75,10 @@ class TcpMdpEnvironment(MdpEnvironment, ABC):
         self.server_socket.listen()
         self.server_connection: Optional[socket.socket] = None
 
-    @classmethod
-    def get_argument_parser(
-            cls,
-    ) -> ArgumentParser:
-        """
-        Get argument parser.
-
-        :return: Argument parser.
-        """
-
-        parser = ArgumentParser(
-            parents=[super().get_argument_parser()],
-            allow_abbrev=False,
-            add_help=False
-        )
-
-        parser.add_argument(
-            '--port',
-            type=int,
-            default=54321,
-            help='Port to serve environment on.'
-        )
-
-        return parser
-
     def reset_for_new_run(
             self,
             agent: Agent
-    ) -> MdpState:
+    ) -> State:
         """
         Reset the environment for a new run.
 
@@ -98,11 +99,12 @@ class TcpMdpEnvironment(MdpEnvironment, ABC):
 
             logging.info(f'Exception while client was connecting to reset environment:  {ex}')
 
-            # self.state will be None if this is our very first reset. not much we can do in that case (the caller will
-            # fail upon receipt of None). if this is a subsequent reset, then we'll have a state, and so we can set it
-            # terminal and the caller will skip the iteration.
-            if self.state is not None:
-                self.state.terminal = True
+            # self.state will be None if this is our very first reset. not much we can do in that case.
+            assert self.state is not None
+
+            # if this is a subsequent reset, then we'll have a state, and so we can set it terminal and the caller will
+            # skip the iteration.
+            self.state.terminal = True
 
         return self.state
 
@@ -123,6 +125,8 @@ class TcpMdpEnvironment(MdpEnvironment, ABC):
         :param agent: Agent.
         :return: Next state and reward.
         """
+
+        assert self.state is not None
 
         try:
 

@@ -3,6 +3,7 @@ from typing import Dict, List
 from rlai.actions import Action
 from rlai.meta import rl_text
 from rlai.policies import Policy
+from rlai.states import State
 from rlai.states.mdp import MdpState
 
 
@@ -16,13 +17,15 @@ class FunctionApproximationPolicy(Policy):
 
     def reset_for_new_run(
             self,
-            state: MdpState
+            state: State
     ):
         """
         Reset the policy for a new run.
 
         :param state: Initial state.
         """
+
+        assert isinstance(state, MdpState)
 
         super().reset_for_new_run(state)
 

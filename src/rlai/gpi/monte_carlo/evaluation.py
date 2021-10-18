@@ -42,6 +42,8 @@ def evaluate_v_pi(
 
         # start the environment in a random state
         state = environment.reset_for_new_run(agent)
+        assert isinstance(state, MdpState)
+
         agent.reset_for_new_run(state)
 
         # simulate until episode termination, keeping a trace of states and their immediate rewards, as well as the
@@ -138,6 +140,8 @@ def evaluate_q_pi(
         # reset the environment for the new run (always use the agent we're learning about, as state identifiers come
         # from it), and reset the episode generate agent accordingly.
         state = environment.reset_for_new_run(agent)
+        assert isinstance(state, MdpState)
+
         episode_generation_agent.reset_for_new_run(state)
 
         # simulate until episode termination, keeping a trace of state-action pairs and their immediate rewards, as well

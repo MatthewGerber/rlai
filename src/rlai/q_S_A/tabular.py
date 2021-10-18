@@ -75,7 +75,7 @@ class TabularValueEstimator(ValueEstimator):
 
     def __eq__(
             self,
-            other: 'TabularValueEstimator'
+            other: object
     ) -> bool:
         """
         Check whether the estimator equals another.
@@ -84,11 +84,14 @@ class TabularValueEstimator(ValueEstimator):
         :return: True if estimates are equal and False otherwise.
         """
 
+        if not isinstance(other, TabularValueEstimator):
+            raise ValueError('Expected a TabularValueEstimator.')
+
         return self.averager == other.averager
 
     def __ne__(
             self,
-            other: 'TabularValueEstimator'
+            other: object
     ) -> bool:
         """
         Check whether the estimator does not equal another.
@@ -96,6 +99,9 @@ class TabularValueEstimator(ValueEstimator):
         :param other: Other estimator.
         :return: True if estimates are not equal and False otherwise.
         """
+
+        if not isinstance(other, TabularValueEstimator):
+            raise ValueError('Expected a TabularValueEstimator.')
 
         return not (self == other)
 
@@ -184,7 +190,7 @@ class TabularActionValueEstimator(ActionValueEstimator):
 
     def __eq__(
             self,
-            other: 'TabularActionValueEstimator'
+            other: object
     ) -> bool:
         """
         Check whether the estimator equals another.
@@ -193,11 +199,14 @@ class TabularActionValueEstimator(ActionValueEstimator):
         :return: True if estimates are equal and False otherwise.
         """
 
+        if not isinstance(other, TabularActionValueEstimator):
+            raise ValueError('Expected a TabularActionValueEstimator.')
+
         return self.q_A == other.q_A
 
     def __ne__(
             self,
-            other: 'TabularActionValueEstimator'
+            other: object
     ) -> bool:
         """
         Check whether the estimator does not equal another.
@@ -205,6 +214,9 @@ class TabularActionValueEstimator(ActionValueEstimator):
         :param other: Other estimator.
         :return: True if estimates are not equal and False otherwise.
         """
+
+        if not isinstance(other, TabularActionValueEstimator):
+            raise ValueError('Expected a TabularActionValueEstimator.')
 
         return not (self == other)
 
@@ -442,7 +454,7 @@ class TabularStateActionValueEstimator(StateActionValueEstimator):
 
     def __eq__(
             self,
-            other: 'TabularStateActionValueEstimator'
+            other: object
     ) -> bool:
         """
         Check whether the estimator equals another.
@@ -451,11 +463,14 @@ class TabularStateActionValueEstimator(StateActionValueEstimator):
         :return: True if equal and False otherwise.
         """
 
+        if not isinstance(other, TabularStateActionValueEstimator):
+            raise ValueError('Expected a TabularStateActionValueEstimator.')
+
         return self.q_S_A == other.q_S_A
 
     def __ne__(
             self,
-            other: 'TabularStateActionValueEstimator'
+            other: object
     ) -> bool:
         """
         Check whether the estimator does not equal another.
@@ -463,5 +478,8 @@ class TabularStateActionValueEstimator(StateActionValueEstimator):
         :param other: Other estimator.
         :return: True if not equal and False otherwise.
         """
+
+        if not isinstance(other, TabularStateActionValueEstimator):
+            raise ValueError('Expected a TabularStateActionValueEstimator.')
 
         return not (self == other)

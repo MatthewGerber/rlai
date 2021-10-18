@@ -27,8 +27,7 @@ def improve_policy_with_q_pi(
     :return: Number of states in which the policy was improved.
     """
 
-    # noinspection PyTypeHints
-    agent.pi: TabularPolicy
+    assert isinstance(agent.pi, TabularPolicy)
 
     if epsilon is None:
         epsilon = 0.0

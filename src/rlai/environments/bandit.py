@@ -21,26 +21,6 @@ class Arm:
     Bandit arm.
     """
 
-    def pull(
-            self
-    ) -> float:
-        """
-        Pull the arm.
-
-        :return: Reward value.
-        """
-
-        # refill the reward buffer if it is empty or hasn't been initialized
-        if self.q_star_buffer_idx >= len(self.q_star_buffer):
-            self.q_star_buffer = self.random_state.normal(loc=self.mean, scale=self.variance, size=ARM_QSTAR_BUFFER_SIZE)
-            self.q_star_buffer_idx = 0
-
-        # return next value from buffer
-        value = self.q_star_buffer[self.q_star_buffer_idx]
-        self.q_star_buffer_idx += 1
-
-        return value
-
     def __init__(
             self,
             i: int,
@@ -64,6 +44,26 @@ class Arm:
 
         self.q_star_buffer: np.ndarray = np.array([])
         self.q_star_buffer_idx: int = 0
+
+    def pull(
+            self
+    ) -> float:
+        """
+        Pull the arm.
+
+        :return: Reward value.
+        """
+
+        # refill the reward buffer if it is empty or hasn't been initialized
+        if self.q_star_buffer_idx >= len(self.q_star_buffer):
+            self.q_star_buffer = self.random_state.normal(loc=self.mean, scale=self.variance, size=ARM_QSTAR_BUFFER_SIZE)
+            self.q_star_buffer_idx = 0
+
+        # return next value from buffer
+        value = self.q_star_buffer[self.q_star_buffer_idx]
+        self.q_star_buffer_idx += 1
+
+        return value
 
     def __str__(
             self
@@ -154,6 +154,43 @@ class KArmedBandit(Environment):
 
         return bandit, unparsed_args
 
+    def __init__(
+            self,
+            random_state: RandomState,
+            T: Optional[int],
+            k: int,
+            q_star_mean: float,
+            q_star_variance: float,
+            reward_variance: float,
+            reset_probability: float
+    ):
+        """
+        Initialize the bandit.
+
+        :param random_state: Random state.
+        :param T: Maximum number of steps to run, or None for no limit.
+        :param k: Number of arms.
+        :param q_star_mean: Mean of q_star.
+        :param q_star_variance: Variance of q_star.
+        :param reward_variance: Reward variance.
+        :param reset_probability: Per-step probability of resetting (nonstationarity).
+        """
+
+        super().__init__(
+            name=f'{k}-armed bandit',
+            random_state=random_state,
+            T=T
+        )
+
+        self.k = k
+        self.q_star_mean = q_star_mean
+        self.q_star_variance = q_star_variance
+        self.reward_variance = reward_variance
+        self.reset_probability = reset_probability
+
+        self.arms: List[Arm] = []
+        self.best_arm: Optional[Arm] = None
+
     def reset_for_new_run(
             self,
             agent: Agent
@@ -162,7 +199,7 @@ class KArmedBandit(Environment):
         Reset the the bandit, initializing arms to new expected values.
 
         :param agent: Agent.
-        :return: New State.
+        :return: Initial state.
         """
 
         super().reset_for_new_run(agent)
@@ -212,6 +249,8 @@ class KArmedBandit(Environment):
         :return: True if a terminal state was entered and the run should terminate, and False otherwise.
         """
 
+        assert self.best_arm is not None
+
         if self.random_state.random_sample() < self.reset_probability:
             self.reset_for_new_run(agent)
 
@@ -224,40 +263,3 @@ class KArmedBandit(Environment):
         agent.reward(reward)
 
         return False
-
-    def __init__(
-            self,
-            random_state: RandomState,
-            T: Optional[int],
-            k: int,
-            q_star_mean: float,
-            q_star_variance: float,
-            reward_variance: float,
-            reset_probability: float
-    ):
-        """
-        Initialize the bandit.
-
-        :param random_state: Random state.
-        :param T: Maximum number of steps to run, or None for no limit.
-        :param k: Number of arms.
-        :param q_star_mean: Mean of q_star.
-        :param q_star_variance: Variance of q_star.
-        :param reward_variance: Reward variance.
-        :param reset_probability: Per-step probability of resetting (nonstationarity).
-        """
-
-        super().__init__(
-            name=f'{k}-armed bandit',
-            random_state=random_state,
-            T=T
-        )
-
-        self.k = k
-        self.q_star_mean = q_star_mean
-        self.q_star_variance = q_star_variance
-        self.reward_variance = reward_variance
-        self.reset_probability = reset_probability
-
-        self.arms: List[Arm] = []
-        self.best_arm: Optional[Arm] = None

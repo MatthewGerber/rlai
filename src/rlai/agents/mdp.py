@@ -10,6 +10,7 @@ from rlai.agents import Agent
 from rlai.meta import rl_text
 from rlai.policies import Policy
 from rlai.rewards import Reward
+from rlai.states import State
 from rlai.states.mdp import MdpState
 from rlai.utils import sample_list_item, parse_arguments
 
@@ -153,7 +154,7 @@ class StochasticMdpAgent(MdpAgent):
 
     def reset_for_new_run(
             self,
-            state: MdpState
+            state: State
     ):
         """
         Reset the agent for a new run.

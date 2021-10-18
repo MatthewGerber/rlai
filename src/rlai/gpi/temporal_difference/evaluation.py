@@ -70,7 +70,7 @@ def evaluate_q_pi(
 
     logging.info(f'Running temporal-difference evaluation of q_pi for {num_episodes} episode(s).')
 
-    evaluated_states = set()
+    evaluated_states: Set[MdpState] = set()
 
     # prioritized sampling requires access to the bootstrapped state-action value function, and it also requires
     # access to the state-action value estimators. obtain them.
@@ -91,22 +91,26 @@ def evaluate_q_pi(
 
         # reset the environment for the new run, and reset the agent accordingly.
         curr_state = environment.reset_for_new_run(agent)
+        assert isinstance(curr_state, MdpState)
+
         agent.reset_for_new_run(curr_state)
 
         # simulate until episode termination. begin by taking an action in the first state.
         curr_t = 0
-        curr_a: Optional[Action] = agent.act(curr_t)
+        next_a: Optional[Action] = agent.act(curr_t)
         total_reward = 0.0
         t_state_a_g: Dict[int, Tuple[MdpState, Action, float]] = {}  # dictionary from time steps to tuples of state, action, and truncated return.
         next_state_q_s_a = 0.0
         while not curr_state.terminal and (environment.T is None or curr_t < environment.T):
 
-            assert curr_a is not None
+            assert next_a is not None
+
+            action = next_a
 
             advance_result, next_reward = environment.advance(
                 state=curr_state,
                 t=curr_t,
-                a=curr_a,
+                a=action,
                 agent=agent
             )
 
@@ -117,21 +121,24 @@ def evaluate_q_pi(
             # these variables to conduct the planning process (e.g., by prioritized sweeping).
             if isinstance(environment, MdpPlanningEnvironment):
                 if isinstance(advance_result, tuple):
-                    curr_state, curr_a, next_state = advance_result
+                    curr_state, action, next_state = advance_result
+                    assert isinstance(curr_state, MdpState)
                 else:
                     raise ValueError('Expected planning environment to return a Tuple.')
             else:
                 next_state = advance_result
+
+            assert isinstance(next_state, MdpState)
 
             next_t = curr_t + 1
             agent.sense(next_state, next_t)
 
             # if we're building an environment model, then update it with the transition we just observed.
             if planning_environment is not None:
-                planning_environment.model.update(curr_state, curr_a, next_state, next_reward)
+                planning_environment.model.update(curr_state, action, next_state, next_reward)
 
             # initialize the n-step, truncated return accumulator at the current time for the current state and action.
-            t_state_a_g[curr_t] = (curr_state, curr_a, 0.0)
+            t_state_a_g[curr_t] = (curr_state, action, 0.0)
 
             # ask the agent to shape the reward, returning the time steps whose returns should be updated and the shaped
             # reward associated with each. if n_steps is None, then shape the reward all the way back to the start
@@ -193,7 +200,6 @@ def evaluate_q_pi(
             # advance the episode
             curr_t = next_t
             curr_state = next_state
-            curr_a = next_a
 
             total_reward += next_reward.r
 

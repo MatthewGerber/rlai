@@ -28,6 +28,7 @@ from rlai.q_S_A.function_approximation.models.feature_extraction import (
     StateActionInteractionFeatureExtractor
 )
 from rlai.rewards import Reward
+from rlai.states import State
 from rlai.states.mdp import MdpState
 from rlai.utils import parse_arguments, ScatterPlot
 from rlai.v_S.function_approximation.models.feature_extraction import StateFeatureExtractor
@@ -194,7 +195,7 @@ class Gym(ContinuousMdpEnvironment):
     def reset_for_new_run(
             self,
             agent: Agent
-    ) -> GymState:
+    ) -> State:
         """
         Reset the environment for a new run (episode).
 

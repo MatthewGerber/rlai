@@ -77,6 +77,28 @@ class NonstationaryFeatureScaler:
     with the observation age.
     """
 
+    def __init__(
+            self,
+            num_observations_refit_feature_scaler: int,
+            refit_history_length: int,
+            refit_weight_decay: float
+    ):
+        """
+        Initializer the scaler.
+
+        :param num_observations_refit_feature_scaler: Number of observations to collect before refitting.
+        :param refit_history_length: Number of observations to use when refitting the feature scaler.
+        :param refit_weight_decay: Exponential weight decay for the observations used in refitting the feature scaler.
+        """
+
+        self.num_observations_refit_feature_scaler = num_observations_refit_feature_scaler
+        self.refit_history_length = refit_history_length
+        self.refit_weight_decay = refit_weight_decay
+
+        self.refit_history: Optional[np.ndarray] = None
+        self.feature_scaler = StandardScaler()
+        self.num_observations = 0
+
     def scale_features(
             self,
             X: np.ndarray,
@@ -97,6 +119,8 @@ class NonstationaryFeatureScaler:
                 self.refit_history = X
             else:
                 self.refit_history = np.append(self.refit_history, X, axis=0)
+
+            assert self.refit_history is not None
 
             # refit scaler if we've extracted enough
             self.num_observations += X.shape[0]
@@ -139,28 +163,6 @@ class NonstationaryFeatureScaler:
             pass
 
         return X
-
-    def __init__(
-            self,
-            num_observations_refit_feature_scaler: int,
-            refit_history_length: int,
-            refit_weight_decay: float
-    ):
-        """
-        Initializer the scaler.
-
-        :param num_observations_refit_feature_scaler: Number of observations to collect before refitting.
-        :param refit_history_length: Number of observations to use when refitting the feature scaler.
-        :param refit_weight_decay: Exponential weight decay for the observations used in refitting the feature scaler.
-        """
-
-        self.num_observations_refit_feature_scaler = num_observations_refit_feature_scaler
-        self.refit_history_length = refit_history_length
-        self.refit_weight_decay = refit_weight_decay
-
-        self.refit_history: Optional[np.ndarray] = None
-        self.feature_scaler = StandardScaler()
-        self.num_observations = 0
 
 
 @rl_text(chapter='Feature Extractors', page=1)

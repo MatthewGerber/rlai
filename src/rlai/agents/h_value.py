@@ -86,6 +86,39 @@ class PreferenceGradient(Agent):
 
         return agents, unparsed_args
 
+    def __init__(
+            self,
+            name: str,
+            random_state: RandomState,
+            step_size_alpha: float,
+            use_reward_baseline: bool,
+            reward_average_alpha: float
+    ):
+        """
+        Initialize the agent.
+
+        :param name: Name of the agent.
+        :param random_state: Random State.
+        :param step_size_alpha: Step-size parameter used to update action preferences.
+        :param use_reward_baseline: Whether or not to use a reward baseline when updating action preferences.
+        :param reward_average_alpha: Step-size parameter for incremental reward averaging. See `IncrementalSampleAverager` for details.
+        """
+
+        super().__init__(
+            name=name,
+            random_state=random_state
+        )
+
+        self.step_size_alpha = step_size_alpha
+        self.use_reward_baseline = use_reward_baseline
+        self.R_bar = IncrementalSampleAverager(
+            initial_value=0.0,
+            alpha=reward_average_alpha
+        )
+
+        self.H_t_A: Optional[np.ndarray] = None
+        self.Pr_A: Optional[np.ndarray] = None
+
     def reset_for_new_run(
             self,
             state: State
@@ -127,6 +160,10 @@ class PreferenceGradient(Agent):
 
         super().reward(r)
 
+        assert self.H_t_A is not None
+        assert self.Pr_A is not None
+        assert self.most_recent_action is not None
+
         if self.use_reward_baseline:
             self.R_bar.update(r)
             preference_update = self.step_size_alpha * (r - self.R_bar.get_value())
@@ -157,36 +194,3 @@ class PreferenceGradient(Agent):
         exp_h_t_a_sum = exp_h_t_a.sum()
 
         self.Pr_A = exp_h_t_a / exp_h_t_a_sum
-
-    def __init__(
-            self,
-            name: str,
-            random_state: RandomState,
-            step_size_alpha: float,
-            use_reward_baseline: bool,
-            reward_average_alpha: float
-    ):
-        """
-        Initialize the agent.
-
-        :param name: Name of the agent.
-        :param random_state: Random State.
-        :param step_size_alpha: Step-size parameter used to update action preferences.
-        :param use_reward_baseline: Whether or not to use a reward baseline when updating action preferences.
-        :param reward_average_alpha: Step-size parameter for incremental reward averaging. See `IncrementalSampleAverager` for details.
-        """
-
-        super().__init__(
-            name=name,
-            random_state=random_state
-        )
-
-        self.step_size_alpha = step_size_alpha
-        self.use_reward_baseline = use_reward_baseline
-        self.R_bar = IncrementalSampleAverager(
-            initial_value=0.0,
-            alpha=reward_average_alpha
-        )
-
-        self.H_t_A: Optional[np.array] = None
-        self.Pr_A: Optional[np.array] = None

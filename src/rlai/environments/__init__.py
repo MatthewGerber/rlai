@@ -51,17 +51,15 @@ class Environment(ABC):
     def reset_for_new_run(
             self,
             agent: Agent
-    ) -> Optional[State]:
+    ) -> State:  # type: ignore
         """
         Reset the the environment.
 
         :param agent: Agent used to generate on-the-fly state identifiers.
-        :return: New state.
+        :return: Always None.
         """
 
         self.num_resets += 1
-
-        return None
 
     def run(
             self,

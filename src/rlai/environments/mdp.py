@@ -1,3 +1,4 @@
+import typing
 from abc import ABC, abstractmethod
 from argparse import ArgumentParser
 from copy import copy
@@ -26,79 +27,6 @@ class MdpEnvironment(Environment, ABC):
     """
     MDP environment.
     """
-
-    def reset_for_new_run(
-            self,
-            agent: Agent
-    ) -> MdpState:
-        """
-        Reset the the environment to a random nonterminal state, if any are specified, or to None.
-
-        :param agent: Agent used to generate on-the-fly state identifiers.
-        :return: Initial state.
-        """
-
-        super().reset_for_new_run(agent)
-
-        if len(self.nonterminal_states) > 0:
-            self.state = self.random_state.choice(self.nonterminal_states)
-        else:
-            self.state = None
-
-        return self.state
-
-    @abstractmethod
-    def advance(
-            self,
-            state: MdpState,
-            t: int,
-            a: Action,
-            agent: Agent
-    ) -> Tuple[MdpState, Reward]:
-        """
-        Advance from the current state given an action.
-
-        :param state: State to advance.
-        :param t: Current time step.
-        :param a: Action.
-        :param agent: Agent.
-        :return: 2-tuple of next state and next reward.
-        """
-
-    def run_step(
-            self,
-            t: int,
-            agent: Agent,
-            monitor: Monitor
-    ) -> bool:
-        """
-        Run a step of the environment with an agent.
-
-        :param t: Step.
-        :param agent: Agent.
-        :param monitor: Monitor.
-        :return: True if a terminal state was entered and the run should terminate, and False otherwise.
-        """
-
-        a = agent.act(t=t)
-
-        self.state, next_reward = self.advance(
-            state=self.state,
-            t=t,
-            a=a,
-            agent=agent
-        )
-
-        agent.sense(
-            state=self.state,
-            t=t+1
-        )
-
-        agent.reward(next_reward.r)
-
-        monitor.report(t=t+1, action_reward=next_reward.r)
-
-        return self.state.terminal
 
     def __init__(
             self,
@@ -136,6 +64,82 @@ class MdpEnvironment(Environment, ABC):
         self.terminal_states = [s for s in self.SS if s.terminal]
         self.nonterminal_states = [s for s in self.SS if not s.terminal]
         self.state: Optional[MdpState] = None
+
+    def reset_for_new_run(
+            self,
+            agent: Agent
+    ) -> State:
+        """
+        Reset the the environment to a random nonterminal state, if any are specified, or to None.
+
+        :param agent: Agent used to generate on-the-fly state identifiers.
+        :return: Initial state.
+        """
+
+        super().reset_for_new_run(agent)
+
+        if len(self.nonterminal_states) > 0:
+            self.state = sample_list_item(self.nonterminal_states, None, self.random_state)
+        else:
+            self.state = None
+
+        # the current class is abstract, so we won't worry about type checking the return value, which can be None here.
+        return self.state  # type: ignore
+
+    @abstractmethod
+    def advance(
+            self,
+            state: MdpState,
+            t: int,
+            a: Action,
+            agent: Agent
+    ) -> Tuple[MdpState, Reward]:
+        """
+        Advance from the current state given an action.
+
+        :param state: State to advance.
+        :param t: Current time step.
+        :param a: Action.
+        :param agent: Agent.
+        :return: 2-tuple of next state and next reward.
+        """
+
+    def run_step(
+            self,
+            t: int,
+            agent: Agent,
+            monitor: Monitor
+    ) -> bool:
+        """
+        Run a step of the environment with an agent.
+
+        :param t: Step.
+        :param agent: Agent.
+        :param monitor: Monitor.
+        :return: True if a terminal state was entered and the run should terminate, and False otherwise.
+        """
+
+        a = agent.act(t=t)
+
+        assert self.state is not None
+
+        self.state, next_reward = self.advance(
+            state=self.state,
+            t=t,
+            a=a,
+            agent=agent
+        )
+
+        agent.sense(
+            state=self.state,
+            t=t+1
+        )
+
+        agent.reward(next_reward.r)
+
+        monitor.report(t=t+1, action_reward=next_reward.r)
+
+        return self.state.terminal
 
 
 @rl_text(chapter=3, page=48)
@@ -201,6 +205,8 @@ class ModelBasedMdpEnvironment(MdpEnvironment, ABC):
             probs=probs,
             random_state=self.random_state
         )
+
+        assert self.state is not None
 
         return self.state, next_reward
 
@@ -293,13 +299,15 @@ class MdpPlanningEnvironment(MdpEnvironment, ABC):
     def reset_for_new_run(
             self,
             agent: Agent
-    ) -> Optional[State]:
+    ) -> State:
         """
         Reset the planning environment to a randomly sampled state.
 
         :param agent: Agent.
-        :return: New state.
+        :return: Initial state.
         """
+
+        super().reset_for_new_run(agent)
 
         self.state = self.model.sample_state(self.random_state)
 
@@ -391,6 +399,7 @@ class PrioritizedSweepingMdpPlanningEnvironment(MdpPlanningEnvironment):
 
         return planning_environment, unparsed_args
 
+    @typing.no_type_check  # we change the return type here and explicitly account for it during optimization.
     def advance(
             self,
             state: MdpState,
@@ -608,6 +617,7 @@ class TrajectorySamplingMdpPlanningEnvironment(MdpPlanningEnvironment):
 
         return planning_environment, unparsed_args
 
+    @typing.no_type_check  # we change the return type here and explicitly account for it during optimization.
     def advance(
             self,
             state: MdpState,

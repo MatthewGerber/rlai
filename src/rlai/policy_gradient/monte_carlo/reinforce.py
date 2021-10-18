@@ -72,6 +72,8 @@ def improve(
         # reset the environment for the new run (always use the agent we're learning about, as state identifiers come
         # from it), and reset the agent accordingly.
         state = environment.reset_for_new_run(agent)
+        assert isinstance(state, MdpState)
+
         agent.reset_for_new_run(state)
 
         # simulate until episode termination, keeping a trace of state-action pairs and their immediate rewards, as well
