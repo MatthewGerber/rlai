@@ -2,14 +2,16 @@ import logging
 import os
 import pickle
 import warnings
-from typing import Optional
+from typing import Optional, Dict, Tuple
 
 import numpy as np
 
+from rlai.actions import Action
 from rlai.agents.mdp import StochasticMdpAgent
 from rlai.environments.mdp import MdpEnvironment
 from rlai.meta import rl_text
 from rlai.policies.parameterized import ParameterizedPolicy
+from rlai.states.mdp import MdpState
 from rlai.utils import IncrementalSampleAverager, RunThreadManager, ScatterPlot, insert_index_into_path
 from rlai.v_S import StateValueEstimator
 
@@ -75,7 +77,7 @@ def improve(
         # simulate until episode termination, keeping a trace of state-action pairs and their immediate rewards, as well
         # as the times of their first visits (only if we're doing first-visit evaluation).
         t = 0
-        state_action_first_t = None if update_upon_every_visit else {}
+        state_action_first_t: Optional[Dict[Tuple[MdpState, Action], int]] = None if update_upon_every_visit else {}
         t_state_action_reward = []
         total_reward = 0.0
         while not state.terminal and (environment.T is None or t < environment.T):
@@ -83,7 +85,7 @@ def improve(
             a = agent.act(t)
             state_a = (state, a)
 
-            if state_value_plot is not None:
+            if state_value_plot is not None and v_S is not None:
                 state_value_plot.update(np.array([v_S[state].get_value()]))
 
             # mark time step of first visit, if we're doing first-visit evaluation.
@@ -100,7 +102,7 @@ def improve(
 
         # work backwards through the trace to calculate discounted returns. need to work backward in order for the value
         # of g at each time step t to be properly discounted.
-        g = 0
+        g = 0.0
         for i, (t, state_a, reward) in enumerate(reversed(t_state_action_reward)):
 
             g = agent.gamma * g + reward.r
@@ -130,6 +132,9 @@ def improve(
         episode_reward_averager.update(total_reward)
 
         if num_episodes_per_checkpoint is not None and episode_i % num_episodes_per_checkpoint == 0:
+
+            if checkpoint_path is None:
+                raise ValueError('Must provide checkpoint path when specifying number of improvements per checkpoint.')
 
             resume_args = {
                 'agent': agent,

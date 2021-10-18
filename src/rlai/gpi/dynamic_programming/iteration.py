@@ -55,6 +55,8 @@ def iterate_policy_v_pi(
 
     logging.info(f'Policy iteration terminated after {i} iteration(s).')
 
+    assert v_pi is not None
+
     return v_pi
 
 
@@ -100,6 +102,8 @@ def iterate_policy_q_pi(
         i += 1
 
     logging.info(f'Policy iteration terminated after {i} iteration(s).')
+
+    assert q_pi is not None
 
     return q_pi
 
@@ -153,6 +157,8 @@ def iterate_value_v_pi(
 
     logging.info(f'Value iteration of v_pi terminated after {i} iteration(s).')
 
+    assert v_pi is not None
+
     return v_pi
 
 
@@ -203,5 +209,7 @@ def iterate_value_q_pi(
             break
 
     logging.info(f'Value iteration of q_pi terminated after {i} iteration(s).')
+
+    assert q_pi is not None
 
     return q_pi

@@ -144,6 +144,28 @@ class ApproximateStateValueEstimator(StateValueEstimator):
 
         return estimator, unparsed_args
 
+    def __init__(
+            self,
+            model: FunctionApproximationModel,
+            feature_extractor: StateFeatureExtractor
+    ):
+        """
+        Initialize the estimator.
+
+        :param model: Model.
+        :param feature_extractor: Feature extractor.
+        """
+
+        super().__init__()
+
+        self.model = model
+        self.feature_extractor = feature_extractor
+
+        self.experience_states: List[MdpState] = []
+        self.experience_values: List[float] = []
+        self.weights: List[float] = []
+        self.experience_pending = False
+
     def add_sample(
             self,
             state: MdpState,
@@ -234,28 +256,6 @@ class ApproximateStateValueEstimator(StateValueEstimator):
             self.feature_extractor.extract(state, refit_scaler)
             for state in states
         ])
-
-    def __init__(
-            self,
-            model: FunctionApproximationModel,
-            feature_extractor: StateFeatureExtractor
-    ):
-        """
-        Initialize the estimator.
-
-        :param model: Model.
-        :param feature_extractor: Feature extractor.
-        """
-
-        super().__init__()
-
-        self.model = model
-        self.feature_extractor = feature_extractor
-
-        self.experience_states: List[MdpState] = []
-        self.experience_values: List[float] = []
-        self.weights: List[float] = []
-        self.experience_pending: bool = False
 
     def __getitem__(
             self,

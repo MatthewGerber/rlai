@@ -22,6 +22,33 @@ class TcpMdpEnvironment(MdpEnvironment, ABC):
     a separate program).
     """
 
+    def __init__(
+            self,
+            name: str,
+            random_state: RandomState,
+            T: Optional[int],
+            port: int
+    ):
+        """
+        Initialize the MDP environment.
+
+        :param name: Name.
+        :param random_state: Random state.
+        :param T: Maximum number of steps to run, or None for no limit.
+        :param port: Port to serve networked environment on.
+        """
+
+        super().__init__(
+            name=name,
+            random_state=random_state,
+            T=T
+        )
+
+        self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.server_socket.bind(('127.0.0.1', port))
+        self.server_socket.listen()
+        self.server_connection: Optional[socket.socket] = None
+
     @classmethod
     def get_argument_parser(
             cls,
@@ -116,6 +143,7 @@ class TcpMdpEnvironment(MdpEnvironment, ABC):
 
         # close the socket if the state is terminal
         if self.state.terminal:
+            assert self.server_connection is not None
             try:
                 self.server_connection.close()
             except Exception as ex:  # pragma no cover
@@ -155,6 +183,8 @@ class TcpMdpEnvironment(MdpEnvironment, ABC):
         # self.state_sequence_file.write(message)
         # return message
 
+        assert self.server_connection is not None
+
         return self.server_connection.recv(999999999).decode('utf-8')
 
     def write_to_client(
@@ -166,6 +196,8 @@ class TcpMdpEnvironment(MdpEnvironment, ABC):
 
         :param s: Message string.
         """
+
+        assert self.server_connection is not None
 
         self.server_connection.sendall(f'{s}\n'.encode('utf-8'))
 
@@ -184,30 +216,3 @@ class TcpMdpEnvironment(MdpEnvironment, ABC):
             self.server_socket.close()
         except Exception as ex:  # pragma no cover
             logging.info(f'Exception while closing TCP environment:  {ex}')
-
-    def __init__(
-            self,
-            name: str,
-            random_state: RandomState,
-            T: Optional[int],
-            port: int
-    ):
-        """
-        Initialize the MDP environment.
-
-        :param name: Name.
-        :param random_state: Random state.
-        :param T: Maximum number of steps to run, or None for no limit.
-        :param port: Port to serve networked environment on.
-        """
-
-        super().__init__(
-            name=name,
-            random_state=random_state,
-            T=T
-        )
-
-        self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.server_socket.bind(('127.0.0.1', port))
-        self.server_socket.listen()
-        self.server_connection: socket = None

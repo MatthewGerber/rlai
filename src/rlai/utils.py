@@ -81,7 +81,7 @@ class IncrementalSampleAverager:
     def __init__(
             self,
             initial_value: float = 0.0,
-            alpha: float = None,
+            alpha: Optional[float] = None,
             weighted: bool = False
     ):
         """

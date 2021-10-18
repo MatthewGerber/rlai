@@ -24,7 +24,7 @@ class MancalaState(MdpState):
     def __init__(
             self,
             mancala: 'Mancala',
-            agent_to_sense_state: MdpAgent
+            agent_to_sense_state: Agent
     ):
         """
         Initialize the state.
@@ -42,6 +42,7 @@ class MancalaState(MdpState):
             state_pits = mancala.player_2_pockets + [mancala.player_2_store] + mancala.player_1_pockets + [mancala.player_1_store]
 
         # get state index from the agent that will sense the state
+        assert isinstance(agent_to_sense_state, MdpAgent) or isinstance(agent_to_sense_state, Human)
         state_i_str = '|'.join(str(pit.count) for pit in state_pits)
         state_i = agent_to_sense_state.pi.get_state_i(state_i_str)
 
@@ -56,6 +57,29 @@ class Pit:
     """
     A general pit, either a pocket (something a player can pick from) or a store (the goal pit).
     """
+
+    def __init__(
+            self,
+            player_1: bool,
+            count: int,
+            store: bool
+    ):
+        """
+        Initialize the pit.
+
+        :param player_1: Whether or not the current pit is for player 1.
+        :param count: Number of seeds.
+        :param store: Whether or not the current pit is a goal pit.
+        """
+
+        self.player_1 = player_1
+        self.count = count
+        self.store = store
+
+        # these will be assigned after all pits have been created
+        self.i: Optional[int] = None
+        self.opposing_pocket: Optional['Pit'] = None
+        self.action: Optional[Action] = None
 
     def pick(
             self
@@ -85,29 +109,6 @@ class Pit:
         """
 
         self.count += count
-
-    def __init__(
-            self,
-            player_1: bool,
-            count: int,
-            store: bool
-    ):
-        """
-        Initialize the pit.
-
-        :param player_1: Whether or not the current pit is for player 1.
-        :param count: Number of seeds.
-        :param store: Whether or not the current pit is a goal pit.
-        """
-
-        self.player_1 = player_1
-        self.count = count
-        self.store = store
-
-        # these will be assigned after all pits have been created
-        self.i = None
-        self.opposing_pocket = None
-        self.action = None
 
     def __str__(
             self
@@ -349,10 +350,17 @@ class Mancala(MdpEnvironment):
         :return: List of feasible actions.
         """
 
+        actions = []
+
         if player_1:
-            actions = [p.action for p in self.player_1_pockets if p.count > 0]
+            pockets = self.player_1_pockets
         else:
-            actions = [p.action for p in self.player_2_pockets if p.count > 0]
+            pockets = self.player_2_pockets
+
+        for p in pockets:
+            if p.count > 0:
+                assert p.action is not None
+                actions.append(p.action)
 
         return actions
 
@@ -382,7 +390,8 @@ class Mancala(MdpEnvironment):
         pick_count = pocket.pick()
 
         # sow
-        sow_pocket = None
+        sow_pocket: Optional[Pit] = None
+        assert pocket.i is not None
         sow_i = pocket.i + 1
         while pick_count > 0:
 
@@ -401,16 +410,22 @@ class Mancala(MdpEnvironment):
 
         go_again = False
 
+        assert sow_pocket is not None
+
         # go again if the final seed landed in the player's own store
         if sow_pocket.store and sow_pocket.player_1 == pocket.player_1:
             go_again = True
 
         # capture opponent's seeds if the final seed landed in one of the player's empty pits, and the opposing pit
         # contains seeds.
-        elif sow_pocket.count == 1 and sow_pocket.player_1 == pocket.player_1 and sow_pocket.opposing_pocket.count > 0:
-            to_store = sow_pocket.pick() + sow_pocket.opposing_pocket.pick()
-            own_store = self.player_1_store if pocket.player_1 else self.player_2_store
-            own_store.sow(to_store)
+        elif sow_pocket.count == 1 and sow_pocket.player_1 == pocket.player_1:
+
+            assert sow_pocket.opposing_pocket is not None
+
+            if sow_pocket.opposing_pocket.count > 0:
+                to_store = sow_pocket.pick() + sow_pocket.opposing_pocket.pick()
+                own_store = self.player_1_store if pocket.player_1 else self.player_2_store
+                own_store.sow(to_store)
 
         return go_again
 
@@ -468,9 +483,11 @@ class Mancala(MdpEnvironment):
 
         # Action.name indicates the i-th pit from the player's perspective
         for i, pit in enumerate(self.player_1_pockets):
+            assert pit.action is not None
             pit.action.name = str(i)
 
         for i, pit in enumerate(self.player_2_pockets):
+            assert pit.action is not None
             pit.action.name = str(i)
 
         for player_1_pocket, opposing_player_2_pocket in zip(self.player_1_pockets, reversed(self.player_2_pockets)):

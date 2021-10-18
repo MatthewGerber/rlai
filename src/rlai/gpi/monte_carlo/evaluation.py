@@ -1,6 +1,7 @@
 import logging
-from typing import Dict, Tuple, Set
+from typing import Dict, Tuple, Set, Optional
 
+from rlai.actions import Action
 from rlai.agents.mdp import MdpAgent
 from rlai.environments.mdp import MdpEnvironment
 from rlai.meta import rl_text
@@ -67,7 +68,7 @@ def evaluate_v_pi(
 
         # work backwards through the trace to calculate discounted returns. need to work backward in order for the value
         # of g at each time step t to be properly discounted.
-        g = 0
+        g = 0.0
         for t, state, reward in reversed(t_state_reward):
 
             g = agent.gamma * g + reward.r
@@ -142,7 +143,7 @@ def evaluate_q_pi(
         # simulate until episode termination, keeping a trace of state-action pairs and their immediate rewards, as well
         # as the times of their first visits (only if we're doing first-visit evaluation).
         t = 0
-        state_action_first_t = None if update_upon_every_visit else {}
+        state_action_first_t: Optional[Dict[Tuple[MdpState, Action], int]] = None if update_upon_every_visit else {}
         t_state_action_reward = []
         total_reward = 0.0
         while not state.terminal and (environment.T is None or t < environment.T):

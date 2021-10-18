@@ -55,7 +55,7 @@ class TabularValueEstimator(ValueEstimator):
     def __init__(
             self,
             estimator: 'TabularStateActionValueEstimator',
-            alpha: float,
+            alpha: Optional[float],
             weighted: bool
     ):
         """

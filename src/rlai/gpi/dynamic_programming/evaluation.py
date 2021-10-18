@@ -37,8 +37,7 @@ def evaluate_v_pi(
     value of delta.
     """
 
-    # noinspection PyTypeHints
-    agent.pi: TabularPolicy
+    assert isinstance(agent.pi, TabularPolicy)
 
     theta, num_iterations = check_termination_criteria(
         theta=theta,
@@ -106,7 +105,7 @@ def evaluate_q_pi(
         theta: Optional[float],
         num_iterations: Optional[int],
         update_in_place: bool,
-        initial_q_S_A: Dict[MdpState, Dict[Action, float]] = None
+        initial_q_S_A: Optional[Dict[MdpState, Dict[Action, float]]] = None
 ) -> Tuple[Dict[MdpState, Dict[Action, float]], float]:
     """
     Perform iterative policy evaluation of an agent's policy within an environment, returning state-action values.
@@ -123,8 +122,7 @@ def evaluate_q_pi(
     (2) final value of delta.
     """
 
-    # noinspection PyTypeHints
-    agent.pi: TabularPolicy
+    assert isinstance(agent.pi, TabularPolicy)
 
     theta, num_iterations = check_termination_criteria(
         theta=theta,
@@ -151,7 +149,7 @@ def evaluate_q_pi(
             q_S_A_to_update = {
                 s: {
                     a: 0.0
-                    for a in environment.p_S_prime_R_given_S_A
+                    for a in environment.p_S_prime_R_given_S_A[s]
                 }
                 for s in agent.pi
             }
@@ -208,7 +206,7 @@ def evaluate_q_pi(
 def check_termination_criteria(
         theta: Optional[float],
         num_iterations: Optional[int]
-) -> Tuple[float, int]:
+) -> Tuple[Optional[float], Optional[int]]:
     """
     Check theta and number of iterations.
 

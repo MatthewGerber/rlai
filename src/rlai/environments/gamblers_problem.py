@@ -124,7 +124,14 @@ class GamblersProblem(ModelBasedMdpEnvironment):
         )
 
         for s in self.SS:
+
+            if s.i is None:
+                raise ValueError('Uninitialized index.')
+
             for a in self.p_S_prime_R_given_S_A[s]:
+
+                if a.i is None:
+                    raise ValueError('Uninitialized index.')
 
                 # next state and reward if heads
                 s_prime_h = self.SS[s.i + a.i]

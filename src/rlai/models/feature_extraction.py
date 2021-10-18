@@ -236,7 +236,7 @@ class OneHotCategory:
 
     def __eq__(
             self,
-            other: 'OneHotCategory'
+            other: object
     ) -> bool:
         """
         Check equality.
@@ -245,11 +245,14 @@ class OneHotCategory:
         :return: True if equal and False otherwise.
         """
 
+        if not isinstance(other, OneHotCategory):
+            raise ValueError('Expected a OneHotCategory.')
+
         return self.id == other.id
 
     def __ne__(
             self,
-            other: 'OneHotCategory'
+            other: object
     ) -> bool:
         """
         Check inequality.
@@ -257,6 +260,9 @@ class OneHotCategory:
         :param other: Other category.
         :return: True if unequal and False otherwise.
         """
+
+        if not isinstance(other, OneHotCategory):
+            raise ValueError('Expected a OneHotCategory.')
 
         return not (self == other)
 

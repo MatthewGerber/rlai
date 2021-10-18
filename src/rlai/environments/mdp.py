@@ -13,11 +13,12 @@ from rlai.agents import Agent
 from rlai.environments import Environment
 from rlai.meta import rl_text
 from rlai.planning.environment_models import StochasticEnvironmentModel
+from rlai.q_S_A import StateActionValueEstimator
 from rlai.rewards import Reward
 from rlai.runners.monitor import Monitor
 from rlai.states import State
 from rlai.states.mdp import MdpState
-from rlai.utils import IncrementalSampleAverager, sample_list_item, parse_arguments, get_base_argument_parser
+from rlai.utils import sample_list_item, parse_arguments, get_base_argument_parser
 
 
 @rl_text(chapter=3, page=47)
@@ -523,7 +524,7 @@ class PrioritizedSweepingMdpPlanningEnvironment(MdpPlanningEnvironment):
         self.state_action_priority: PriorityQueue = PriorityQueue()
         self.num_priorities = 0
         self.bootstrap_function: Optional[partial] = None
-        self.q_S_A: Optional[Dict[MdpState, Dict[Action, IncrementalSampleAverager]]] = None
+        self.q_S_A: Optional[StateActionValueEstimator] = None
 
     def __getstate__(
             self

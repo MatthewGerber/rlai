@@ -72,10 +72,8 @@ def evaluate_q_pi(
 
     evaluated_states = set()
 
-    planning = isinstance(environment, MdpPlanningEnvironment)
-
     # prioritized sampling requires access to the bootstrapped state-action value function, and it also requires
-    # access to the state-action value estimators.
+    # access to the state-action value estimators. obtain them.
     if isinstance(environment, PrioritizedSweepingMdpPlanningEnvironment):
         environment.bootstrap_function = partial(
             get_bootstrapped_state_action_value,
@@ -97,11 +95,13 @@ def evaluate_q_pi(
 
         # simulate until episode termination. begin by taking an action in the first state.
         curr_t = 0
-        curr_a = agent.act(curr_t)
+        curr_a: Optional[Action] = agent.act(curr_t)
         total_reward = 0.0
         t_state_a_g: Dict[int, Tuple[MdpState, Action, float]] = {}  # dictionary from time steps to tuples of state, action, and truncated return.
         next_state_q_s_a = 0.0
         while not curr_state.terminal and (environment.T is None or curr_t < environment.T):
+
+            assert curr_a is not None
 
             advance_result, next_reward = environment.advance(
                 state=curr_state,
@@ -115,8 +115,11 @@ def evaluate_q_pi(
             # in the case of a planning-based advancement, the planning environment returns a 3-tuple of the current
             # state, current action, and next state. this is because the planning environment may revise any one of
             # these variables to conduct the planning process (e.g., by prioritized sweeping).
-            if planning:
-                curr_state, curr_a, next_state = advance_result
+            if isinstance(environment, MdpPlanningEnvironment):
+                if isinstance(advance_result, tuple):
+                    curr_state, curr_a, next_state = advance_result
+                else:
+                    raise ValueError('Expected planning environment to return a Tuple.')
             else:
                 next_state = advance_result
 
@@ -234,7 +237,7 @@ def get_bootstrapped_state_action_value(
         agent: MdpAgent,
         q_S_A: StateActionValueEstimator,
         environment: MdpEnvironment
-) -> Tuple[float, Action]:
+) -> Tuple[float, Optional[Action]]:
     """
     Get the bootstrapped state-action value for a state, also returning the next action.
 
@@ -292,12 +295,12 @@ def get_bootstrapped_state_action_value(
 
 def update_q_S_A(
         q_S_A: StateActionValueEstimator,
-        n_steps: Optional[int],
+        n_steps: int,
         curr_t: int,
         t_state_a_g: Dict[int, Tuple[MdpState, Action, float]],
         agent: MdpAgent,
         next_state_q_s_a: float,
-        alpha: float,
+        alpha: Optional[float],
         evaluated_states: Set[MdpState],
         planning_environment: Optional[MdpPlanningEnvironment],
         num_updates_per_improvement: Optional[int],
@@ -339,9 +342,8 @@ def update_q_S_A(
         value_estimator = q_S_A[update_state][update_a]
 
         # if we're using prioritized planning, then calculate the update error before we update the value estimation.
-        prioritized_planning = isinstance(planning_environment, PrioritizedSweepingMdpPlanningEnvironment)
-        if prioritized_planning:
-            error = td_target - value_estimator.get_value()
+        if isinstance(planning_environment, PrioritizedSweepingMdpPlanningEnvironment):
+            error: Optional[float] = td_target - value_estimator.get_value()
         else:
             error = None
 
@@ -351,7 +353,7 @@ def update_q_S_A(
         # if we're using prioritized-sweep planning, then update the priority queue. note that the priority queue
         # returns values with the lowest priority first. so negate the error to get the state-action pairs with highest
         # error to come out of the queue first.
-        if prioritized_planning:
+        if isinstance(planning_environment, PrioritizedSweepingMdpPlanningEnvironment) and error is not None:
             planning_environment.add_state_action_priority(update_state, update_a, -abs(error))
 
         # note the evaluated state if it has an index. states will only have indices if they are enumerated up front, or
