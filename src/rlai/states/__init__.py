@@ -65,7 +65,7 @@ class State:
 
     def __eq__(
             self,
-            other: 'State'
+            other: object
     ) -> bool:
         """
         Check whether the current state equals another.
@@ -74,11 +74,14 @@ class State:
         :return: True if equal and False otherwise.
         """
 
+        if not isinstance(other, State):
+            raise ValueError(f'Expected {State}')
+
         return self.i == other.i
 
     def __ne__(
             self,
-            other: 'State'
+            other: object
     ) -> bool:
         """
         Check whether the current state is not equal to another.
@@ -87,4 +90,4 @@ class State:
         :return: True if not equal and False otherwise.
         """
 
-        return self.i != other.i
+        return not (self == other)

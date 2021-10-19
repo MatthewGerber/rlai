@@ -134,11 +134,12 @@ def run(
     # load agent
     if train_function_args.get('agent', None) is not None:
         agent_class = load_class(train_function_args['agent'])
-        agent, unparsed_args = agent_class.init_from_arguments(
+        agents, unparsed_args = agent_class.init_from_arguments(
             args=unparsed_args,
             random_state=random_state,
             pi=initial_policy
         )
+        agent = agents[0]
         train_function_args['agent'] = agent
     else:
         agent = None

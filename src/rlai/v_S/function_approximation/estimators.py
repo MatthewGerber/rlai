@@ -295,7 +295,7 @@ class ApproximateStateValueEstimator(StateValueEstimator):
 
     def __eq__(
             self,
-            other: 'ApproximateStateValueEstimator'
+            other: object
     ) -> bool:
         """
         Check whether the estimator equals another.
@@ -304,11 +304,14 @@ class ApproximateStateValueEstimator(StateValueEstimator):
         :return: True if equal and False otherwise.
         """
 
+        if not isinstance(other, ApproximateStateValueEstimator):
+            raise ValueError(f'Expected {ApproximateStateValueEstimator}')
+
         return self.model == other.model
 
     def __ne__(
             self,
-            other: 'ApproximateStateValueEstimator'
+            other: object
     ) -> bool:
         """
         Check whether the estimator does not equal another.

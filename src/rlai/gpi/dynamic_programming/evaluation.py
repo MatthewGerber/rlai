@@ -151,7 +151,7 @@ def evaluate_q_pi(
             q_S_A_to_update = {
                 s: {
                     a: 0.0
-                    for a in environment.p_S_prime_R_given_S_A
+                    for a in environment.p_S_prime_R_given_S_A[s]
                 }
                 for s in agent.pi
             }

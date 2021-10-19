@@ -1,7 +1,7 @@
 import logging
 from abc import ABC, abstractmethod
 from argparse import ArgumentParser
-from typing import Optional, Iterable, Tuple, List, Any, Iterator
+from typing import Optional, Iterable, Tuple, List, Iterator
 
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
@@ -142,7 +142,7 @@ class StateActionValueEstimator(ABC):
             args: List[str],
             random_state: RandomState,
             environment: MdpEnvironment
-    ) -> Tuple[Any, List[str]]:
+    ) -> Tuple['StateActionValueEstimator', List[str]]:
         """
         Initialize a state-action value estimator from arguments.
 
@@ -304,7 +304,7 @@ class StateActionValueEstimator(ABC):
     @abstractmethod
     def __eq__(
             self,
-            other: 'StateActionValueEstimator'
+            other: object
     ) -> bool:
         """
         Check whether the estimator equals another.
@@ -316,7 +316,7 @@ class StateActionValueEstimator(ABC):
     @abstractmethod
     def __ne__(
             self,
-            other: 'StateActionValueEstimator'
+            other: object
     ) -> bool:
         """
         Check whether the estimator does not equal another.

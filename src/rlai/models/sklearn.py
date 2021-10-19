@@ -128,7 +128,7 @@ class SKLearnSGD(FunctionApproximationModel):
 
         :param args: Arguments.
         :param random_state: Random state.
-        :return: 2-tuple of a state-action value estimator and a list of unparsed arguments.
+        :return: 2-tuple of a model and a list of unparsed arguments.
         """
 
         parsed_args, unparsed_args = parse_arguments(cls, args)
@@ -503,7 +503,7 @@ class SKLearnSGD(FunctionApproximationModel):
 
     def __eq__(
             self,
-            other: 'SKLearnSGD'
+            other: object
     ) -> bool:
         """
         Check whether the model equals another.
@@ -512,11 +512,14 @@ class SKLearnSGD(FunctionApproximationModel):
         :return: True if equal and False otherwise.
         """
 
+        if not isinstance(other, SKLearnSGD):
+            raise ValueError(f'Expected {SKLearnSGD}')
+
         return np.allclose(self.model.coef_, other.model.coef_) and np.allclose(self.model.intercept_, other.model.intercept_)
 
     def __ne__(
             self,
-            other: 'SKLearnSGD'
+            other: object
     ) -> bool:
         """
         Check whether the model does not equal another.

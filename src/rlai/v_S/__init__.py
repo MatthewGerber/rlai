@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from argparse import ArgumentParser
-from typing import Optional, Tuple, List, Any
+from typing import Optional, Tuple, List
 
 from numpy.random import RandomState
 
@@ -76,7 +76,7 @@ class StateValueEstimator(ABC):
             args: List[str],
             random_state: RandomState,
             environment: MdpEnvironment
-    ) -> Tuple[Any, List[str]]:
+    ) -> Tuple['StateValueEstimator', List[str]]:
         """
         Initialize a state-value estimator from arguments.
 
@@ -155,7 +155,7 @@ class StateValueEstimator(ABC):
     @abstractmethod
     def __eq__(
             self,
-            other: 'StateValueEstimator'
+            other: object
     ) -> bool:
         """
         Check whether the estimator equals another.
@@ -167,7 +167,7 @@ class StateValueEstimator(ABC):
     @abstractmethod
     def __ne__(
             self,
-            other: 'StateValueEstimator'
+            other: object
     ) -> bool:
         """
         Check whether the estimator does not equal another.

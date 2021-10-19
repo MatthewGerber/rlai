@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from argparse import ArgumentParser
-from typing import Tuple, List, Any, Optional
+from typing import Tuple, List, Optional
 
 from numpy.random import RandomState
 
@@ -38,7 +38,7 @@ class Environment(ABC):
             cls,
             args: List[str],
             random_state: RandomState
-    ) -> Tuple[Any, List[str]]:
+    ) -> Tuple['Environment', List[str]]:
         """
         Initialize an environment from arguments.
 

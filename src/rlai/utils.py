@@ -119,17 +119,20 @@ class IncrementalSampleAverager:
 
     def __eq__(
             self,
-            other: 'IncrementalSampleAverager'
+            other: object
     ) -> bool:
+
+        if not isinstance(other, IncrementalSampleAverager):
+            raise ValueError(f'Expected {IncrementalSampleAverager}')
 
         return self.get_value() == other.get_value()
 
     def __ne__(
             self,
-            other: 'IncrementalSampleAverager'
+            other: object
     ) -> bool:
 
-        return self.get_value() != other.get_value()
+        return not (self == other)
 
 
 def sample_list_item(

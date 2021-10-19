@@ -231,7 +231,7 @@ class GridworldFeatureExtractor(StateActionInteractionFeatureExtractor):
             cls,
             args: List[str],
             environment: Gridworld
-    ) -> Tuple[StateActionInteractionFeatureExtractor, List[str]]:
+    ) -> Tuple[FeatureExtractor, List[str]]:
         """
         Initialize a feature extractor from arguments.
 

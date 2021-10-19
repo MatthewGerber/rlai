@@ -34,6 +34,7 @@ class Action:
 
         :return: String.
         """
+
         return f'{self.i}:  {self.name}'
 
     def __hash__(
@@ -49,7 +50,7 @@ class Action:
 
     def __eq__(
             self,
-            other: 'Action'
+            other: object
     ) -> bool:
         """
         Check whether the current action equals another.
@@ -58,11 +59,14 @@ class Action:
         :return: True if equal and False otherwise.
         """
 
+        if not isinstance(other, Action):
+            raise ValueError(f'Expected {Action}')
+
         return self.i == other.i
 
     def __ne__(
             self,
-            other: 'Action'
+            other: object
     ) -> bool:
         """
         Check whether the current action is not equal to another.
@@ -71,7 +75,7 @@ class Action:
         :return: True if not equal and False otherwise.
         """
 
-        return self.i != other.i
+        return not (self == other)
 
 
 @rl_text(chapter='Actions', page=1)

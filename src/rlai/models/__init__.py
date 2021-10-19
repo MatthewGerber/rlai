@@ -33,7 +33,7 @@ class FunctionApproximationModel(ABC):
             cls,
             args: List[str],
             random_state: RandomState
-    ) -> Tuple[Any, List[str]]:
+    ) -> Tuple['FunctionApproximationModel', List[str]]:
         """
         Initialize a model from arguments.
 
@@ -79,7 +79,7 @@ class FunctionApproximationModel(ABC):
     @abstractmethod
     def __eq__(
             self,
-            other: 'FunctionApproximationModel'
+            other: object
     ) -> bool:
         """
         Check whether the model equals another.
@@ -91,7 +91,7 @@ class FunctionApproximationModel(ABC):
     @abstractmethod
     def __ne__(
             self,
-            other: 'FunctionApproximationModel'
+            other: object
     ) -> bool:
         """
         Check whether the model does not equal another.

@@ -15,6 +15,7 @@ from numpy.random import RandomState
 
 from rlai.actions import Action, DiscretizedAction, ContinuousMultiDimensionalAction
 from rlai.agents.mdp import MdpAgent
+from rlai.environments import Environment
 from rlai.environments.mdp import ContinuousMdpEnvironment
 from rlai.meta import rl_text
 from rlai.models.feature_extraction import (
@@ -144,7 +145,7 @@ class Gym(ContinuousMdpEnvironment):
             cls,
             args: List[str],
             random_state: RandomState
-    ) -> Tuple[ContinuousMdpEnvironment, List[str]]:
+    ) -> Tuple[Environment, List[str]]:
         """
         Initialize an environment from arguments.
 
@@ -636,7 +637,7 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
             cls,
             args: List[str],
             environment: Gym
-    ) -> Tuple[StateActionInteractionFeatureExtractor, List[str]]:
+    ) -> Tuple[FeatureExtractor, List[str]]:
         """
         Initialize a feature extractor from arguments.
 

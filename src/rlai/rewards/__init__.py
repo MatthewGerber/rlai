@@ -47,7 +47,7 @@ class Reward:
 
     def __eq__(
             self,
-            other: 'Reward'
+            other: object
     ) -> bool:
         """
         Check whether the current reward equals another.
@@ -56,11 +56,14 @@ class Reward:
         :return: True if equal and False otherwise.
         """
 
+        if not isinstance(other, Reward):
+            raise ValueError(f'Expected {Reward}')
+
         return self.i == other.i
 
     def __ne__(
             self,
-            other: 'Reward'
+            other: object
     ) -> bool:
         """
         Check whether the current reward is not equal to another.
@@ -69,4 +72,4 @@ class Reward:
         :return: True if not equal and False otherwise.
         """
 
-        return self.i != other.i
+        return not (self == other)
