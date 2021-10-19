@@ -1,8 +1,19 @@
 from os import path
 
 from setuptools import (
-    setup, find_namespace_packages
+    setup,
+    find_namespace_packages
 )
+
+from distutils import util
+
+# we compile jaxlib from source on aarch64 (e.g., for raspberry pi), so don't specify jax here.
+if util.get_platform() == 'linux-aarch64':
+    jax_package = 'jax'
+
+# otherwise, try to install cpu-only support.
+else:
+    jax_package = 'jax[cpu]'
 
 INSTALL_REQUIREMENTS = [
 
@@ -22,7 +33,7 @@ INSTALL_REQUIREMENTS = [
     'scikit-learn==0.24',
     'pandas==1.1.5',
     'patsy==0.5.1',
-    'jax[cpu]==0.2.21',
+    f'{jax_package}==0.2.21',
     'pyqtgraph==0.12.2',
     'PyQt5==5.15.4',
     'tabulate==0.8.9',
