@@ -10,7 +10,6 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
 from rlai.agents.mdp import MdpAgent
-
 # plotting data and objects
 from rlai.policies.parameterized.continuous_action import ContinuousActionPolicy
 

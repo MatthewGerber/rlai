@@ -1,10 +1,9 @@
 import pytest
+from numpy.random import RandomState
 
 from rlai.agents.mdp import StochasticMdpAgent
 from rlai.environments.gridworld import Gridworld
 from rlai.gpi.temporal_difference.evaluation import evaluate_q_pi, Mode
-from numpy.random import RandomState
-
 from rlai.q_S_A.tabular import TabularStateActionValueEstimator
 
 

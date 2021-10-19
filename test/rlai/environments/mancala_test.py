@@ -11,8 +11,8 @@ from rlai.environments.mancala import Mancala, Pit
 from rlai.gpi.monte_carlo.iteration import iterate_value_q_pi
 from rlai.gpi.utils import resume_from_checkpoint
 from rlai.policies.tabular import TabularPolicy
-from rlai.utils import sample_list_item
 from rlai.q_S_A.tabular import TabularStateActionValueEstimator
+from rlai.utils import sample_list_item
 from test.rlai.utils import tabular_pi_legacy_eq
 
 

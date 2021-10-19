@@ -6,9 +6,9 @@ from numpy.random import RandomState
 
 from rlai.actions import Action
 from rlai.agents.mdp import StochasticMdpAgent
-from rlai.environments.mdp import PrioritizedSweepingMdpPlanningEnvironment
 from rlai.environments.gamblers_problem import GamblersProblem
 from rlai.environments.gridworld import Gridworld
+from rlai.environments.mdp import PrioritizedSweepingMdpPlanningEnvironment
 from rlai.gpi.dynamic_programming.iteration import iterate_value_v_pi
 from rlai.planning.environment_models import StochasticEnvironmentModel
 from rlai.policies.tabular import TabularPolicy
