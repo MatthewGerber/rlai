@@ -61,7 +61,7 @@ def test_learn():
                                     break
 
                     # if environment closes connection during receive, it ends the episode.
-                    except Exception:
+                    except Exception:  # pragma no cover
                         pass
 
         robocode_mock_thread = Thread(target=robocode_mock)
@@ -79,7 +79,7 @@ def test_learn():
         agent = pickle.load(f)
 
     # if we're updating the test fixture, then save the state sequence and resulting policy to disk.
-    if update_fixture:
+    if update_fixture:  # pragma no cover
         with open(os.path.expanduser('~/Desktop/state_sequence.txt'), 'r') as f:
             state_sequence = f.readlines()
         with open(f'{os.path.dirname(__file__)}/fixtures/test_robocode.pickle', 'wb') as file:

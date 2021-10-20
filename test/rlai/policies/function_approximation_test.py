@@ -90,7 +90,7 @@ def test_policy_overrides():
 
     with pytest.raises(ValueError, match='Attempted to check for None in policy.'):
         # noinspection PyTypeChecker
-        if None in mdp_agent_2.pi:
+        if None in mdp_agent_2.pi:  # pragma no cover
             pass
 
     assert mdp_agent.pi == mdp_agent_2.pi

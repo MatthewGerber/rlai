@@ -19,7 +19,7 @@ def test_agent_invalid_action():
     with pytest.raises(ValueError, match='Agent returned action of None'):
         agent.act(0)
 
-    # test infeasiable action
+    # test infeasible action
     action = Action(1, 'foo')
     agent.__act__ = lambda t: action
     state = MdpState(1, [], False)
@@ -54,3 +54,7 @@ def test_human_agent():
     agent.get_input = mock_input  # MagicMock(return_value='Bar')
 
     assert agent.act(0) == a2
+
+    with pytest.raises(NotImplementedError):
+        rng = RandomState(12345)
+        Human.init_from_arguments([], rng, None)

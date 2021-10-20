@@ -198,7 +198,7 @@ class Gym(ContinuousMdpEnvironment):
             required_side_fuel = Gym.LLC_V2_FUEL_CONSUMPTION_FULL_THROTTLE_SIDE * abs(side_throttle) if abs(side_throttle) >= 0.5 else 0.0
             required_total_fuel = required_main_fuel + required_side_fuel
             fuel_level = state.observation[-1]
-            if required_total_fuel > fuel_level:
+            if required_total_fuel > fuel_level:  # pragma no cover
                 gym_action[:] *= fuel_level / required_total_fuel
                 fuel_used = fuel_level
             else:
@@ -209,7 +209,7 @@ class Gym(ContinuousMdpEnvironment):
             throttle = gym_action[0]
             required_fuel = abs(throttle) * Gym.MMC_V0_FUEL_CONSUMPTION_FULL_THROTTLE
             fuel_level = state.observation[-1]
-            if required_fuel > fuel_level:
+            if required_fuel > fuel_level:  # pragma no cover
                 gym_action[:] *= fuel_level / required_fuel
                 fuel_used = fuel_level
             else:
@@ -240,7 +240,7 @@ class Gym(ContinuousMdpEnvironment):
                 # couple of the variables to be slightly positive even when the lander is sitting stationary on a flat
                 # surface.
                 fuel_reward = 0.0
-                if abs(observation[0]) <= 0.2 and np.abs(observation[1:6]).sum() < 0.01:
+                if abs(observation[0]) <= 0.2 and np.abs(observation[1:6]).sum() < 0.01:  # pragma no cover
                     fuel_reward = state.observation[-1]
 
                 reward = state_reward + fuel_reward
@@ -250,7 +250,7 @@ class Gym(ContinuousMdpEnvironment):
             fraction_to_goal = (observation[0] - Gym.MMC_V0_TROUGH_X_POS) / (Gym.MMC_V0_GOAL_X_POS - Gym.MMC_V0_TROUGH_X_POS)
 
             # if goal is reached, then reward with full fraction to goal plus any fuel remaining.
-            if fraction_to_goal >= 1.0:
+            if fraction_to_goal >= 1.0:  # pragma no cover
                 reward = 1.0 + fuel_remaining
 
             # if the car has transitioned to sliding leftward down the hill, reward with fuel times fraction to goal.

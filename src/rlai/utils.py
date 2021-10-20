@@ -26,6 +26,10 @@ class IncrementalSampleAverager:
     def reset(
             self
     ):
+        """
+        Reset the average and number of samples.
+        """
+
         self.average = self.initial_value
         self.n = 0
 
@@ -114,6 +118,11 @@ class IncrementalSampleAverager:
     def __str__(
             self
     ) -> str:
+        """
+        Get string.
+
+        :return: String.
+        """
 
         return str(self.average)
 
@@ -121,6 +130,12 @@ class IncrementalSampleAverager:
             self,
             other: object
     ) -> bool:
+        """
+        Check equality with another averager.
+
+        :param other: Averager.
+        :return: True if average values match and False otherwise.
+        """
 
         if not isinstance(other, IncrementalSampleAverager):
             raise ValueError(f'Expected {IncrementalSampleAverager}')
@@ -131,6 +146,12 @@ class IncrementalSampleAverager:
             self,
             other: object
     ) -> bool:
+        """
+        Check inequality with another averager.
+
+        :param other: Averager.
+        :return: True if average values do not match and False otherwise.
+        """
 
         return not (self == other)
 

@@ -265,6 +265,29 @@ def test_gym_cartpole_function_approximation_plot_model():
     )
 
 
+def test_gym_continuous_mountain_car():
+
+    start_virtual_display_if_headless()
+
+    checkpoint_path, agent_path = run(shlex.split(f'--random-seed 12345 --agent rlai.agents.mdp.StochasticMdpAgent --gamma 0.99 --environment rlai.environments.openai_gym.Gym --gym-id MountainCarContinuous-v0 --plot-environment --T 1000 --train-function rlai.policy_gradient.monte_carlo.reinforce.improve --num-episodes 2 --plot-state-value True --v-S rlai.v_S.function_approximation.estimators.ApproximateStateValueEstimator --feature-extractor rlai.environments.openai_gym.ContinuousMountainCarFeatureExtractor --function-approximation-model rlai.models.sklearn.SKLearnSGD --loss squared_loss --sgd-alpha 0.0 --learning-rate constant --eta0 0.01 --policy rlai.policies.parameterized.continuous_action.ContinuousActionBetaDistributionPolicy --policy-feature-extractor rlai.environments.openai_gym.ContinuousMountainCarFeatureExtractor --plot-policy --alpha 0.01 --update-upon-every-visit True --checkpoint-path {tempfile.NamedTemporaryFile(delete=False).name} --num-episodes-per-checkpoint 1 --save-agent-path {tempfile.NamedTemporaryFile(delete=False).name} --log DEBUG'))
+
+    checkpoint, agent = load_checkpoint_and_agent(checkpoint_path, agent_path)
+
+    # uncomment the following line and run test to update fixture
+    with open(f'{os.path.dirname(__file__)}/fixtures/test_gym_continuous_mountain_car.pickle', 'wb') as f:
+        pickle.dump((checkpoint, agent), f)
+
+    with open(f'{os.path.dirname(__file__)}/fixtures/test_gym_continuous_mountain_car.pickle', 'rb') as f:
+        checkpoint_fixture, agent_fixture = pickle.load(f)
+
+    assert_run(
+        checkpoint,
+        agent,
+        checkpoint_fixture,
+        agent_fixture
+    )
+
+
 def test_gridworld_plot_model_pdf():
 
     start_virtual_display_if_headless()
