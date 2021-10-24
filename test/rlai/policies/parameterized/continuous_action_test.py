@@ -2,7 +2,8 @@ import numpy as np
 from numpy.random import RandomState
 
 from rlai.agents.mdp import StochasticMdpAgent
-from rlai.environments.openai_gym import ContinuousFeatureExtractor, Gym
+from rlai.environments.openai_gym import Gym
+from rlai.v_S.function_approximation.models.feature_extraction import ContinuousFeatureExtractor
 from rlai.policies.parameterized.continuous_action import ContinuousActionBetaDistributionPolicy
 
 
