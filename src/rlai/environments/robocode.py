@@ -702,86 +702,6 @@ class RobocodeFeatureExtractor(StateFeatureExtractor):
 
         return X
 
-    # def get_action_feature_names(
-    #         self
-    # ) -> Dict[str, List[str]]:
-    #     """
-    #     Get names of actions and their associated feature names.
-    #
-    #     :return: Dictionary of action names and their associated feature names.
-    #     """
-    #
-    #     return {
-    #
-    #         action.name:
-    #
-    #         [
-    #             f'{action.name}_intercept',
-    #             'hit_by_bullet_power',
-    #             'robot_collision',
-    #             'enough_room',
-    #             'continue_away',
-    #             'funnel_cw_ortho',
-    #             'funnel_ccw_ortho'
-    #         ] if action.name == RobocodeAction.AHEAD else
-    #
-    #         [
-    #             f'{action.name}_intercept',
-    #             'hit_by_bullet_power',
-    #             'robot_collision',
-    #             'enough_room',
-    #             'continue_away',
-    #             'funnel_cw_ortho',
-    #             'funnel_ccw_ortho'
-    #         ] if action.name == RobocodeAction.BACK else
-    #
-    #         [
-    #             f'{action.name}_intercept',
-    #             'sigmoid_cw_ortho',
-    #             'sigmoid_ccw_ortho'
-    #         ] if action.name == RobocodeAction.TURN_LEFT else
-    #
-    #         [
-    #             f'{action.name}_intercept',
-    #             'sigmoid_cw_ortho',
-    #             'sigmoid_ccw_ortho'
-    #         ] if action.name == RobocodeAction.TURN_RIGHT else
-    #
-    #         [
-    #             f'{action.name}_intercept',
-    #             'bullet_power_missed',
-    #             'hit_by_bullet_power',
-    #             'sigmoid_lat_dist'
-    #         ] if action.name == RobocodeAction.TURN_RADAR_LEFT else
-    #
-    #         [
-    #             f'{action.name}_intercept',
-    #             'bullet_power_missed',
-    #             'hit_by_bullet_power',
-    #             'sigmoid_lat_dist'
-    #         ] if action.name == RobocodeAction.TURN_RADAR_RIGHT else
-    #
-    #         [
-    #             f'{action.name}_intercept',
-    #             'sigmoid_lat_dist'
-    #         ] if action.name == RobocodeAction.TURN_GUN_LEFT else
-    #
-    #         [
-    #             f'{action.name}_intercept',
-    #             'sigmoid_lat_dist'
-    #         ] if action.name == RobocodeAction.TURN_GUN_RIGHT else
-    #
-    #         # the final feature is FIRE
-    #         [
-    #             f'{action.name}_intercept',
-    #             'bullet_power_missed',
-    #             'bullet_power_hit_others',
-    #             'funnel_lat_dist'
-    #         ]
-    #
-    #         for action in self.robot_actions
-    #     }
-
     def get_feature_values(
             self,
             state: RobocodeState
@@ -806,34 +726,34 @@ class RobocodeFeatureExtractor(StateFeatureExtractor):
 
         feature_values = [
 
-            # hit_by_bullet_power:  discounted cumulative bullet power
+            # discounted cumulative bullet power that has hit self
             state.bullet_power_hit_self_cumulative,
 
-            # robot_collision:  we just hit a robot in the direction we're about to move
-            1.0 if (action.name == RobocodeAction.AHEAD and any(-90 < e['bearing'] < 90 for e in state.events.get('HitRobotEvent', []))) or
-                   (action.name == RobocodeAction.BACK and any(-90 > e['bearing'] > 90 for e in state.events.get('HitRobotEvent', [])))
+            # we just hit a robot with our front
+            1.0 if any(-90 < e['bearing'] < 90 for e in state.events.get('HitRobotEvent', []))
             else 0.0,
 
-            # enough_room:  we have enough room to complete the move, plus a little buffer (the robot itself is 36 pixels rectangular).
-            1.0 if (action.name == RobocodeAction.AHEAD and action.value + 36.0 <= self.heading_distance_to_boundary(state.heading, state.x, state.y, state.battle_field_height, state.battle_field_width)) or
-                   (action.name == RobocodeAction.BACK and action.value + 36.0 <= self.heading_distance_to_boundary(self.normalize(state.heading - 180.0), state.x, state.y, state.battle_field_height, state.battle_field_width))
+            # we just hit a robot with our back
+            1.0 if any(-90 > e['bearing'] > 90 for e in state.events.get('HitRobotEvent', []))
             else 0.0,
 
-            # continue_away:  the move will continue to take us farther from the most recent prior state whose location differs
-            # from the current location. we use this most recent prior state rather than the directly previous
-            # state because non-movement actions can intervene between movement and we don't want them to
-            # interfere with the feature value (they'll have the same location as the current state).
-            1.0 if state.prior_state_different_location is not None and RobocodeFeatureExtractor.euclidean_distance(
-                state.prior_state_different_location.x,
-                state.prior_state_different_location.y,
-                *RobocodeFeatureExtractor.heading_destination(state.heading if action.name == RobocodeAction.AHEAD else RobocodeFeatureExtractor.normalize(state.heading - 180.0), state.x, state.y, action.value)
-            ) > RobocodeFeatureExtractor.euclidean_distance(
-                state.prior_state_different_location.x,
-                state.prior_state_different_location.y,
+            # distance ahead to boundary
+            self.heading_distance_to_boundary(
+                state.heading,
                 state.x,
-                state.y
-            )
-            else 0.0,
+                state.y,
+                state.battle_field_height,
+                state.battle_field_width
+            ),
+
+            # distance behind to boundary
+            self.heading_distance_to_boundary(
+                self.normalize(state.heading - 180.0),
+                state.x,
+                state.y,
+                state.battle_field_height,
+                state.battle_field_width
+            ),
 
             # funnel_cw_ortho:  bearing is clockwise-orthogonal to enemy
             0.0 if most_recent_enemy_bearing_from_self is None else
