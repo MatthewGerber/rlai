@@ -557,11 +557,14 @@ class RobocodeState(MdpState):
         :param x: Robot x position.
         :param y: Robot y position.
         :param bullet_power_hit_self: Bullet power that hit self.
-        :param bullet_power_hit_self_cumulative: Cumulative bullet power that hit self, including a discounted sum of prior values.
+        :param bullet_power_hit_self_cumulative: Cumulative bullet power that hit self, including a discounted sum of
+        prior values.
         :param bullet_power_hit_others: Bullet power that hit others.
-        :param bullet_power_hit_others_cumulative: Cumulative bullet power that hit others, including a discounted sum of prior values.
+        :param bullet_power_hit_others_cumulative: Cumulative bullet power that hit others, including a discounted sum
+        of prior values.
         :param bullet_power_missed_others: Bullet power that missed.
-        :param bullet_power_missed_others_cumulative: Cumulative bullet power that missed, including a discounted sum of prior values.
+        :param bullet_power_missed_others_cumulative: Cumulative bullet power that missed, including a discounted sum of
+         prior values.
         :param bullet_power_missed_others_since_previous_hit: Bullet power that has missed since previous hit.
         :param events: List of events sent to the robot since the previous time the state was set.
         :param previous_state: Previous state.
@@ -724,18 +727,44 @@ class RobocodeFeatureExtractor(StateFeatureExtractor):
             most_recent_enemy_distance_from_self = state.most_recent_scanned_robot['distance']
             most_recent_scanned_robot_age_discount = self.scanned_robot_decay ** state.most_recent_scanned_robot_age_turns
 
+        # calculate continued distance ratio w.r.t. prior distance traveled
+        if state.prior_state_different_location is not None:
+
+            prior_distance_traveled = RobocodeFeatureExtractor.euclidean_distance(
+                state.prior_state_different_location.x,
+                state.prior_state_different_location.y,
+                state.x,
+                state.y
+            )
+
+            destination_x, destination_y = RobocodeFeatureExtractor.heading_destination(
+                state.heading,
+                state.x,
+                state.y,
+                prior_distance_traveled
+            )
+
+            continued_distance = RobocodeFeatureExtractor.euclidean_distance(
+                state.prior_state_different_location.x,
+                state.prior_state_different_location.y,
+                destination_x,
+                destination_y
+            )
+
+            continued_distance_ratio = continued_distance / prior_distance_traveled
+
+        else:
+            continued_distance_ratio = 0.0
+
         feature_values = [
 
-            # discounted cumulative bullet power that has hit self
             state.bullet_power_hit_self_cumulative,
 
             # we just hit a robot with our front
-            1.0 if any(-90 < e['bearing'] < 90 for e in state.events.get('HitRobotEvent', []))
-            else 0.0,
+            1.0 if any(-90.0 < e['bearing'] < 90.0 for e in state.events.get('HitRobotEvent', [])) else 0.0,
 
             # we just hit a robot with our back
-            1.0 if any(-90 > e['bearing'] > 90 for e in state.events.get('HitRobotEvent', []))
-            else 0.0,
+            1.0 if any(-90.0 > e['bearing'] > 90.0 for e in state.events.get('HitRobotEvent', [])) else 0.0,
 
             # distance ahead to boundary
             self.heading_distance_to_boundary(
@@ -755,7 +784,9 @@ class RobocodeFeatureExtractor(StateFeatureExtractor):
                 state.battle_field_width
             ),
 
-            # funnel_cw_ortho:  bearing is clockwise-orthogonal to enemy
+            continued_distance_ratio,
+
+            # bearing is clockwise-orthogonal to enemy
             0.0 if most_recent_enemy_bearing_from_self is None else
             most_recent_scanned_robot_age_discount * self.funnel(
                 self.get_shortest_degree_change(
@@ -766,7 +797,7 @@ class RobocodeFeatureExtractor(StateFeatureExtractor):
                 15.0
             ),
 
-            # funnel_ccw_ortho:  bearing is counterclockwise-orthogonal to enemy
+            # bearing is counterclockwise-orthogonal to enemy
             0.0 if most_recent_enemy_bearing_from_self is None else
             most_recent_scanned_robot_age_discount * self.funnel(
                 self.get_shortest_degree_change(
@@ -797,10 +828,9 @@ class RobocodeFeatureExtractor(StateFeatureExtractor):
                 15.0
             ),
 
-            # bullet_power_missed
             state.bullet_power_missed_others_cumulative,
 
-            # sigmoid_lat_dist:  squash lateral distance into [-1.0, 1.0]
+            # squashed lateral distance from radar to enemy
             0.0 if most_recent_enemy_bearing_from_self is None else
             most_recent_scanned_robot_age_discount * self.sigmoid(
                 self.get_lateral_distance(
@@ -813,7 +843,7 @@ class RobocodeFeatureExtractor(StateFeatureExtractor):
                 20.0
             ),
 
-            # sigmoid_lat_dist:  squash lateral distance into [-1.0, 1.0]
+            # squashed lateral distance from gun to enemy
             0.0 if most_recent_enemy_bearing_from_self is None else
             most_recent_scanned_robot_age_discount * self.sigmoid(
                 self.get_lateral_distance(
@@ -826,7 +856,6 @@ class RobocodeFeatureExtractor(StateFeatureExtractor):
                 20.0
             ),
 
-            # bullet_power_hit_others
             state.bullet_power_hit_others_cumulative,
 
             # funnel_lat_dist:  funnel lateral distance to 0.0

@@ -103,7 +103,7 @@ class TcpMdpEnvironment(MdpEnvironment, ABC):
             # write action to client
             self.write_to_client(json.dumps(a.__dict__))
 
-            # read state/reward response
+            # read state/reward response from client
             next_state_dict = json.loads(self.read_from_client())
             self.state, reward = self.extract_state_and_reward_from_client_dict(next_state_dict, t)
 
