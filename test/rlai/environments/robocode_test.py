@@ -9,7 +9,7 @@ from threading import Thread
 
 import numpy as np
 
-from rlai.environments.robocode_discrete_action import RobocodeFeatureExtractor
+from rlai.environments.robocode import RobocodeFeatureExtractor
 from rlai.runners.trainer import run
 
 
