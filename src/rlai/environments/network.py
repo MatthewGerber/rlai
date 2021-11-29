@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod
 from argparse import ArgumentParser
 from typing import Tuple, Optional, Any, Dict
 
+import numpy as np
 from numpy.random import RandomState
 
 from rlai.actions import Action
@@ -100,10 +101,15 @@ class TcpMdpEnvironment(MdpEnvironment, ABC):
 
         try:
 
-            # write action to client
-            self.write_to_client(json.dumps(a.__dict__))
+            action_dict = {
+                k: v.tolist() if isinstance(v, np.ndarray) else v  # numpy arrays cannot be serialized to json.
+                for k, v in a.__dict__.items()
+            }
 
-            # read state/reward response
+            # write action to client
+            self.write_to_client(json.dumps(action_dict))
+
+            # read state/reward response from client
             next_state_dict = json.loads(self.read_from_client())
             self.state, reward = self.extract_state_and_reward_from_client_dict(next_state_dict, t)
 

@@ -397,13 +397,13 @@ class SKLearnSGD(FunctionApproximationModel):
         self.base_eta0 = self.model.eta0
 
         # plotting data (update __getstate__ below when changing these attributes)
-        self.iteration_y_values: Dict[int, List[float]] = {}
+        self.iteration_y_values: Dict[int, List[float]] = dict()
         self.y_averager = IncrementalSampleAverager()
         self.y_averages: List[float] = []
-        self.iteration_loss_values: Dict[int, List[float]] = {}
+        self.iteration_loss_values: Dict[int, List[float]] = dict()
         self.loss_averager = IncrementalSampleAverager()
         self.loss_averages: List[float] = []
-        self.iteration_eta0_values: Dict[int, List[float]] = {}
+        self.iteration_eta0_values: Dict[int, List[float]] = dict()
         self.eta0_averager = IncrementalSampleAverager()
         self.eta0_averages: List[float] = []
         self.plot_iteration = 0  # number of policy improvement iterations that have been plotted

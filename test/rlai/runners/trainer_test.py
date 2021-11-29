@@ -274,8 +274,8 @@ def test_gym_continuous_mountain_car():
     checkpoint, agent = load_checkpoint_and_agent(checkpoint_path, agent_path)
 
     # uncomment the following line and run test to update fixture
-    with open(f'{os.path.dirname(__file__)}/fixtures/test_gym_continuous_mountain_car.pickle', 'wb') as f:
-        pickle.dump((checkpoint, agent), f)
+    # with open(f'{os.path.dirname(__file__)}/fixtures/test_gym_continuous_mountain_car.pickle', 'wb') as f:
+    #     pickle.dump((checkpoint, agent), f)
 
     with open(f'{os.path.dirname(__file__)}/fixtures/test_gym_continuous_mountain_car.pickle', 'rb') as f:
         checkpoint_fixture, agent_fixture = pickle.load(f)

@@ -50,6 +50,7 @@ TEST_REQUIREMENTS = [
     'pytest-cov==2.12.1',
     'coverage==5.5',
     'pytest-runner==5.3.1',
+    'pytest-xdist==2.4.0',
     'nose==1.3.7',
     'flake8==3.9.2',
     'flake8-annotations==2.6.2',
