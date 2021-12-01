@@ -86,27 +86,19 @@ class StateValueEstimator(ABC):
         :return: 2-tuple of a state-value estimator and a list of unparsed arguments.
         """
 
-    def initialize(
-            self,
-            state: MdpState,
-            alpha: Optional[float],
-            weighted: bool
-    ):
-        """
-        Initialize the estimator for a state.
-
-        :param state: State.
-        :param alpha: Step size.
-        :param weighted: Whether the estimator should be weighted.
-        :return:
-        """
-
     @abstractmethod
     def improve(
             self
     ):
         """
         Improve the estimator.
+        """
+
+    def reset(
+            self
+    ):
+        """
+        Reset the estimator.
         """
 
     def __init__(

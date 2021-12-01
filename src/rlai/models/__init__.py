@@ -69,6 +69,13 @@ class FunctionApproximationModel(ABC):
         :return: Vector of outcomes from the evaluation (#obs,).
         """
 
+    def reset(
+            self
+    ):
+        """
+        Reset the model.
+        """
+
     def __init__(
             self
     ):

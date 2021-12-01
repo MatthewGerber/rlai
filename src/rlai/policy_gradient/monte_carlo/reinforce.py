@@ -72,6 +72,11 @@ def improve(
         state = environment.reset_for_new_run(agent)
         agent.reset_for_new_run(state)
 
+        # reset the baseline if the environment's reward dynamics have changed (e.g., for progressive rewards). if this
+        # isn't done, then state returns might not have the correct sign with respect to the baseline.
+        if environment.check_reward_dynamics_changed() and v_S is not None:
+            v_S.reset()
+
         # simulate until episode termination, keeping a trace of state-action pairs and their immediate rewards, as well
         # as the times of their first visits (only if we're doing first-visit evaluation).
         t = 0

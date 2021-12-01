@@ -246,25 +246,25 @@ class Gym(ContinuousMdpEnvironment):
 
         elif self.gym_id == Gym.MCC_V0:
 
+            gym_native_reward = reward
             reward = 0.0
 
             # calculate fraction to goal state
             curr_distance = observation[0] - Gym.MCC_V0_TROUGH_X_POS
-            goal_distance = self.mcc_v0_curr_goal_x_pos - Gym.MCC_V0_TROUGH_X_POS
+            goal_distance = self.mcc_curr_goal_x_pos - Gym.MCC_V0_TROUGH_X_POS
             fraction_to_goal = curr_distance / goal_distance
             if fraction_to_goal >= 1.0:
 
                 provide_reward = False
 
-                # always provide reward if the goal is final
-                if self.mcc_v0_curr_goal_x_pos == Gym.MCC_V0_GOAL_X_POS:
+                # always provide reward if the native goal was achieved
+                if gym_native_reward == 100.0:
                     provide_reward = True
 
-                # only provide reward at intermediate goal if we started sliding backward from the peak while right of
-                # the trough. increment goal toward final goal if we provide an intermediate reward.
+                # only provide intermediate reward if we moved backward from the peak while right of the trough
                 elif self.previous_observation is not None and self.previous_observation[1] > 0.0 and observation[1] <= 0.0 and observation[0] >= Gym.MCC_V0_TROUGH_X_POS:
                     provide_reward = True
-                    self.mcc_v0_curr_goal_x_pos = min(Gym.MCC_V0_GOAL_X_POS, self.mcc_v0_curr_goal_x_pos + 0.005)
+                    self.mcc_achieved_intermediate_goal = True
 
                 if provide_reward:
                     reward = curr_distance + fuel_remaining
@@ -311,9 +311,21 @@ class Gym(ContinuousMdpEnvironment):
 
         observation = self.gym_native.reset()
 
-        # append fuel level to state of continuous mountain car and lunar lander
-        if self.gym_id in [Gym.MCC_V0, Gym.LLC_V2]:
+        # append fuel level to state of continuous lunar lander
+        if self.gym_id == Gym.LLC_V2:
             observation = np.append(observation, 1.0)
+
+        if self.gym_id == Gym.MCC_V0:
+
+            # append fuel level to state
+            observation = np.append(observation, 1.0)
+
+            # increment goal position if we achieved the goal during the previous run
+            if self.mcc_achieved_intermediate_goal:
+                self.mcc_curr_goal_x_pos = min(Gym.MCC_V0_GOAL_X_POS, self.mcc_curr_goal_x_pos + 0.05)
+                self.reward_dynamics_changed = True
+
+            self.mcc_achieved_intermediate_goal = False
 
         # call render if rendering manually
         if self.check_render_current_episode(True):
@@ -582,9 +594,10 @@ class Gym(ContinuousMdpEnvironment):
         else:  # pragma no cover
             raise ValueError(f'Unknown Gym action space type:  {type(self.gym_native.action_space)}')
 
-        # set incremental goal state
+        # set incremental goal
         if self.gym_id == Gym.MCC_V0:
-            self.mcc_v0_curr_goal_x_pos = Gym.MCC_V0_TROUGH_X_POS + 0.1
+            self.mcc_curr_goal_x_pos = Gym.MCC_V0_TROUGH_X_POS + 0.1
+            self.mcc_achieved_intermediate_goal = False
 
     def __getstate__(
             self
