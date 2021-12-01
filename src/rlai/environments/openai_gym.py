@@ -75,9 +75,9 @@ class Gym(ContinuousMdpEnvironment):
     LLC_V2_FUEL_CONSUMPTION_FULL_THROTTLE_SIDE = 1 / 600.0
 
     MCC_V0 = 'MountainCarContinuous-v0'
-    MMC_V0_TROUGH_X_POS = -0.5
-    MMC_V0_GOAL_X_POS = 0.45
-    MMC_V0_FUEL_CONSUMPTION_FULL_THROTTLE = 1.0 / 300.0
+    MCC_V0_TROUGH_X_POS = -0.5
+    MCC_V0_GOAL_X_POS = 0.45
+    MCC_V0_FUEL_CONSUMPTION_FULL_THROTTLE = 1.0 / 300.0
 
     @classmethod
     def get_argument_parser(
@@ -183,14 +183,14 @@ class Gym(ContinuousMdpEnvironment):
         # map discretized actions back to continuous space
         if isinstance(a, DiscretizedAction):
             gym_action = a.continuous_value
-        # use continuous action values directly (need to be arrays)
+        # use continuous action values (which are vectors) directly
         elif isinstance(a, ContinuousMultiDimensionalAction):
             gym_action = a.value
         # use discretized action indices
         else:
             gym_action = a.i
 
-        # fuel-based modification
+        # fuel-based modification for continuous environments. cap energy expenditure at remaining fuel levels.
         fuel_used = None
         if self.gym_id == Gym.LLC_V2:
             main_throttle, side_throttle = gym_action[:]
@@ -204,10 +204,9 @@ class Gym(ContinuousMdpEnvironment):
             else:
                 fuel_used = required_total_fuel
 
-        # continuous mountain car:  cap energy expenditure at fuel level
         elif self.gym_id == Gym.MCC_V0:
             throttle = gym_action[0]
-            required_fuel = abs(throttle) * Gym.MMC_V0_FUEL_CONSUMPTION_FULL_THROTTLE
+            required_fuel = Gym.MCC_V0_FUEL_CONSUMPTION_FULL_THROTTLE * abs(throttle)
             fuel_level = state.observation[-1]
             if required_fuel > fuel_level:  # pragma no cover
                 gym_action[:] *= fuel_level / required_fuel
@@ -247,19 +246,28 @@ class Gym(ContinuousMdpEnvironment):
 
         elif self.gym_id == Gym.MCC_V0:
 
-            fraction_to_goal = (observation[0] - Gym.MMC_V0_TROUGH_X_POS) / (Gym.MMC_V0_GOAL_X_POS - Gym.MMC_V0_TROUGH_X_POS)
+            reward = 0.0
 
-            # if goal is reached, then reward with full fraction to goal plus any fuel remaining.
-            if fraction_to_goal >= 1.0:  # pragma no cover
-                reward = 1.0 + fuel_remaining
+            # calculate fraction to goal state
+            curr_distance = observation[0] - Gym.MCC_V0_TROUGH_X_POS
+            goal_distance = self.mcc_v0_curr_goal_x_pos - Gym.MCC_V0_TROUGH_X_POS
+            fraction_to_goal = curr_distance / goal_distance
+            if fraction_to_goal >= 1.0:
 
-            # if the car has transitioned to sliding leftward down the hill, reward with fuel times fraction to goal.
-            elif self.previous_observation is not None and self.previous_observation[1] > 0.0 and observation[1] <= 0.0 and observation[0] >= Gym.MMC_V0_TROUGH_X_POS:
-                reward = fuel_remaining * fraction_to_goal
+                provide_reward = False
 
-            # otherwise, no reward.
-            else:
-                reward = 0.0
+                # always provide reward if the goal is final
+                if self.mcc_v0_curr_goal_x_pos == Gym.MCC_V0_GOAL_X_POS:
+                    provide_reward = True
+
+                # only provide reward at intermediate goal if we started sliding backward from the peak while right of
+                # the trough. increment goal toward final goal if we provide an intermediate reward.
+                elif self.previous_observation is not None and self.previous_observation[1] > 0.0 and observation[1] <= 0.0 and observation[0] >= Gym.MCC_V0_TROUGH_X_POS:
+                    provide_reward = True
+                    self.mcc_v0_curr_goal_x_pos = min(Gym.MCC_V0_GOAL_X_POS, self.mcc_v0_curr_goal_x_pos + 0.005)
+
+                if provide_reward:
+                    reward = curr_distance + fuel_remaining
 
         # call render if rendering manually
         if self.check_render_current_episode(True):
@@ -538,7 +546,7 @@ class Gym(ContinuousMdpEnvironment):
             ]
 
         # action space is continuous and we lack a discretization resolution:  initialize a single, multi-dimensional
-        # action including the min and max values of the dimensions.
+        # action including the min and max values of the dimensions. a policy gradient approach will be required.
         elif isinstance(self.gym_native.action_space, Box) and self.continuous_action_discretization_resolution is None:
             self.actions = [
                 ContinuousMultiDimensionalAction(
@@ -549,7 +557,7 @@ class Gym(ContinuousMdpEnvironment):
             ]
 
         # action space is continuous and we have a discretization resolution:  discretize it. this is generally not a
-        # great approach, as it results in high-dimensional action spaces.
+        # great approach, as it results in high-dimensional action spaces. but here goes.
         elif isinstance(self.gym_native.action_space, Box) and self.continuous_action_discretization_resolution is not None:
 
             box = self.gym_native.action_space
@@ -573,6 +581,10 @@ class Gym(ContinuousMdpEnvironment):
 
         else:  # pragma no cover
             raise ValueError(f'Unknown Gym action space type:  {type(self.gym_native.action_space)}')
+
+        # set incremental goal state
+        if self.gym_id == Gym.MCC_V0:
+            self.mcc_v0_curr_goal_x_pos = Gym.MCC_V0_TROUGH_X_POS + 0.1
 
     def __getstate__(
             self
@@ -990,7 +1002,7 @@ class ContinuousMountainCarFeatureExtractor(ContinuousFeatureExtractor):
 
         # encode features
         state_category = OneHotCategory(*[
-            obs_feature < Gym.MMC_V0_TROUGH_X_POS if i == 0 else  # shift the x midpoint to the trough
+            obs_feature < Gym.MCC_V0_TROUGH_X_POS if i == 0 else  # shift the x midpoint to the trough
             obs_feature <= 0.0 if i == 2 else  # fuel bottoms out at zero
             obs_feature < 0.0
             for i, obs_feature in enumerate(state.observation)
