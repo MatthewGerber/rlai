@@ -138,6 +138,12 @@ class Gym(ContinuousMdpEnvironment):
             help='Pass this flag to plot environment values (e.g., state).'
         )
 
+        parser.add_argument(
+            '--progressive-reward',
+            action='store_true',
+            help=f'Pass this flag to use progressive rewards (only valid for {Gym.MCC_V0}).'
+        )
+
         return parser
 
     @classmethod
@@ -250,24 +256,19 @@ class Gym(ContinuousMdpEnvironment):
 
             # calculate fraction to goal state
             curr_distance = observation[0] - Gym.MCC_V0_TROUGH_X_POS
-            goal_distance = self.mcc_v0_curr_goal_x_pos - Gym.MCC_V0_TROUGH_X_POS
+            goal_distance = self.mcc_curr_goal_x_pos - Gym.MCC_V0_TROUGH_X_POS
             fraction_to_goal = curr_distance / goal_distance
             if fraction_to_goal >= 1.0:
 
-                provide_reward = False
+                # increment goal up to the final goal
+                self.mcc_curr_goal_x_pos = min(Gym.MCC_V0_GOAL_X_POS, self.mcc_curr_goal_x_pos + 0.05)
 
-                # always provide reward if the goal is final
-                if self.mcc_v0_curr_goal_x_pos == Gym.MCC_V0_GOAL_X_POS:
-                    provide_reward = True
+                # mark state and stats recorder as done. must manually mark stats recorder to allow premature reset.
+                done = True
+                if hasattr(self.gym_native, 'stats_recorder'):
+                    self.gym_native.stats_recorder.done = done
 
-                # only provide reward at intermediate goal if we started sliding backward from the peak while right of
-                # the trough. increment goal toward final goal if we provide an intermediate reward.
-                elif self.previous_observation is not None and self.previous_observation[1] > 0.0 and observation[1] <= 0.0 and observation[0] >= Gym.MCC_V0_TROUGH_X_POS:
-                    provide_reward = True
-                    self.mcc_v0_curr_goal_x_pos = min(Gym.MCC_V0_GOAL_X_POS, self.mcc_v0_curr_goal_x_pos + 0.005)
-
-                if provide_reward:
-                    reward = curr_distance + fuel_remaining
+                reward = curr_distance + fuel_remaining
 
         # call render if rendering manually
         if self.check_render_current_episode(True):
@@ -311,7 +312,7 @@ class Gym(ContinuousMdpEnvironment):
 
         observation = self.gym_native.reset()
 
-        # append fuel level to state of continuous mountain car and lunar lander
+        # append fuel level to state of certain continuous environments
         if self.gym_id in [Gym.MCC_V0, Gym.LLC_V2]:
             observation = np.append(observation, 1.0)
 
@@ -488,7 +489,8 @@ class Gym(ContinuousMdpEnvironment):
             video_directory: Optional[str] = None,
             force: bool = False,
             steps_per_second: Optional[int] = None,
-            plot_environment: bool = False
+            plot_environment: bool = False,
+            progressive_reward: bool = False
     ):
         """
         Initialize the environment.
@@ -505,6 +507,7 @@ class Gym(ContinuousMdpEnvironment):
         content in the directory.
         :param steps_per_second: Number of steps per second when displaying videos.
         :param plot_environment: Whether or not to plot the environment.
+        :param progressive_reward: Use progressive reward.
         """
 
         super().__init__(
@@ -514,6 +517,7 @@ class Gym(ContinuousMdpEnvironment):
         )
 
         self.gym_id = gym_id
+        self.progressive_reward = progressive_reward
         self.continuous_action_discretization_resolution = continuous_action_discretization_resolution
         self.render_every_nth_episode = render_every_nth_episode
         if self.render_every_nth_episode is not None and self.render_every_nth_episode <= 0:
@@ -582,9 +586,12 @@ class Gym(ContinuousMdpEnvironment):
         else:  # pragma no cover
             raise ValueError(f'Unknown Gym action space type:  {type(self.gym_native.action_space)}')
 
-        # set incremental goal state
+        # set progressive goal for certain environments
         if self.gym_id == Gym.MCC_V0:
-            self.mcc_v0_curr_goal_x_pos = Gym.MCC_V0_TROUGH_X_POS + 0.1
+            if self.progressive_reward:
+                self.mcc_curr_goal_x_pos = Gym.MCC_V0_TROUGH_X_POS + 0.1
+            else:
+                self.mcc_curr_goal_x_pos = Gym.MCC_V0_GOAL_X_POS
 
     def __getstate__(
             self

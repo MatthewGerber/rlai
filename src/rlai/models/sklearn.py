@@ -225,6 +225,15 @@ class SKLearnSGD(FunctionApproximationModel):
 
         return values
 
+    def reset(
+            self
+    ):
+        """
+        Reset the model.
+        """
+
+        self.model = SGDRegressor(**self.model_kwargs)
+
     def plot(
             self,
             render: bool,
@@ -385,6 +394,7 @@ class SKLearnSGD(FunctionApproximationModel):
         super().__init__()
 
         self.scale_eta0_for_y = scale_eta0_for_y
+        self.model_kwargs = kwargs
 
         # verbose is required in order to capture standard output for plotting. if a verbosity level is not passed or
         # passed as 0, then set flag indicating that we should not print captured output back to stdout; otherwise,
@@ -393,7 +403,7 @@ class SKLearnSGD(FunctionApproximationModel):
         kwargs['verbose'] = 1
         self.print_output = passed_verbose != 0
 
-        self.model = SGDRegressor(**kwargs)
+        self.model = SGDRegressor(**self.model_kwargs)
         self.base_eta0 = self.model.eta0
 
         # plotting data (update __getstate__ below when changing these attributes)

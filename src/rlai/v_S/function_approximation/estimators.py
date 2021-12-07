@@ -195,6 +195,15 @@ class ApproximateStateValueEstimator(StateValueEstimator):
             self.weights = None
             self.experience_pending = False
 
+    def reset(
+            self
+    ):
+        """
+        Reset the estimator.
+        """
+
+        self.model.reset()
+
     def evaluate(
             self,
             state: MdpState
