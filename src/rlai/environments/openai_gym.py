@@ -260,10 +260,11 @@ class Gym(ContinuousMdpEnvironment):
             fraction_to_goal = curr_distance / goal_distance
             if fraction_to_goal >= 1.0:
 
-                done = True
+                # increment goal up to the final goal
                 self.mcc_curr_goal_x_pos = min(Gym.MCC_V0_GOAL_X_POS, self.mcc_curr_goal_x_pos + 0.05)
 
-                # must manually mark stats recorder done to enable premature reset
+                # mark state and stats recorder as done. must manually mark stats recorder to allow premature reset.
+                done = True
                 if hasattr(self.gym_native, 'stats_recorder'):
                     self.gym_native.stats_recorder.done = done
 
@@ -312,7 +313,7 @@ class Gym(ContinuousMdpEnvironment):
         observation = self.gym_native.reset()
 
         # append fuel level to state of certain continuous environments
-        if self.gym_id in [Gym.LLC_V2, Gym.MCC_V0]:
+        if self.gym_id in [Gym.MCC_V0, Gym.LLC_V2]:
             observation = np.append(observation, 1.0)
 
         # call render if rendering manually
