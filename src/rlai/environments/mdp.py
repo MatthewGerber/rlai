@@ -100,20 +100,6 @@ class MdpEnvironment(Environment, ABC):
 
         return self.state.terminal
 
-    def check_reward_dynamics_changed(
-            self
-    ) -> bool:
-        """
-        Check whether the environment's reward dynamics have changed. Since the previous check.
-
-        :return: True if they have changed and False otherwise.
-        """
-
-        changed = self.reward_dynamics_changed
-        self.reward_dynamics_changed = False
-
-        return changed
-
     def __init__(
             self,
             name: str,
@@ -150,7 +136,6 @@ class MdpEnvironment(Environment, ABC):
         self.terminal_states = [s for s in self.SS if s.terminal]
         self.nonterminal_states = [s for s in self.SS if not s.terminal]
         self.state: Optional[MdpState] = None
-        self.reward_dynamics_changed = False
 
 
 @rl_text(chapter=3, page=48)
