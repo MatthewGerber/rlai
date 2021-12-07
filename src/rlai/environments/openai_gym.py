@@ -103,12 +103,6 @@ class Gym(ContinuousMdpEnvironment):
         )
 
         parser.add_argument(
-            '--progressive-reward',
-            action='store_true',
-            help='Pass this flag to use progressive rewards (only valid for certain environment).'
-        )
-
-        parser.add_argument(
             '--continuous-action-discretization-resolution',
             type=float,
             help='Continuous-action discretization resolution.'
@@ -142,6 +136,12 @@ class Gym(ContinuousMdpEnvironment):
             '--plot-environment',
             action='store_true',
             help='Pass this flag to plot environment values (e.g., state).'
+        )
+
+        parser.add_argument(
+            '--progressive-reward',
+            action='store_true',
+            help=f'Pass this flag to use progressive rewards (only valid for {Gym.MCC_V0}).'
         )
 
         return parser
@@ -483,13 +483,13 @@ class Gym(ContinuousMdpEnvironment):
             random_state: RandomState,
             T: Optional[int],
             gym_id: str,
-            progressive_reward: bool,
             continuous_action_discretization_resolution: Optional[float] = None,
             render_every_nth_episode: Optional[int] = None,
             video_directory: Optional[str] = None,
             force: bool = False,
             steps_per_second: Optional[int] = None,
-            plot_environment: bool = False
+            plot_environment: bool = False,
+            progressive_reward: bool = False
     ):
         """
         Initialize the environment.
@@ -497,7 +497,6 @@ class Gym(ContinuousMdpEnvironment):
         :param random_state: Random state.
         :param T: Maximum number of steps to run, or None for no limit.
         :param gym_id: Gym identifier. See https://gym.openai.com/envs for a list.
-        :param progressive_reward: Use progressive reward.
         :param continuous_action_discretization_resolution: A discretization resolution for continuous-action
         environments. Providing this value allows the environment to be used with discrete-action methods via
         discretization of the continuous-action dimensions.
@@ -507,6 +506,7 @@ class Gym(ContinuousMdpEnvironment):
         content in the directory.
         :param steps_per_second: Number of steps per second when displaying videos.
         :param plot_environment: Whether or not to plot the environment.
+        :param progressive_reward: Use progressive reward.
         """
 
         super().__init__(
@@ -585,7 +585,7 @@ class Gym(ContinuousMdpEnvironment):
         else:  # pragma no cover
             raise ValueError(f'Unknown Gym action space type:  {type(self.gym_native.action_space)}')
 
-        # set progressive goal for continuous mountain car
+        # set progressive goal for certain environments
         if self.gym_id == Gym.MCC_V0:
             if self.progressive_reward:
                 self.mcc_curr_goal_x_pos = Gym.MCC_V0_TROUGH_X_POS + 0.1

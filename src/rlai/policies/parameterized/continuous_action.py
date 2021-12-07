@@ -597,9 +597,9 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
                 logging.debug(f'Action {i} [min,max]:\n\ta:  [{min_a},{max_a}]\n\tb:  [{min_b},{max_b}]\n')
 
         # only output the hyperparameter table if we have a state-dimension name for each feature. some feature
-        # extractors expand the feature space beyond the dimensions, and we don't have a good way to generate names for
-        # these extra dimensions. such extractors also tend to generate large feature spaces for which tabular output
-        # isn't readable.
+        # extractors expand the feature space beyond the dimension names (e.g., via interaction terms), and we don't
+        # have a good way to generate names for these extra features. such extractors also tend to generate large
+        # feature spaces for which tabular output isn't easily readable.
         if logging.getLogger().level <= logging.DEBUG and self.action_theta_a.shape[1] == len(self.environment.get_state_dimension_names()) + 1:
             row_names = [
                 f'{action_name}_{p}'
