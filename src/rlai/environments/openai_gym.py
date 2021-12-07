@@ -103,6 +103,12 @@ class Gym(ContinuousMdpEnvironment):
         )
 
         parser.add_argument(
+            '--progressive-reward',
+            action='store_true',
+            help='Pass this flag to use progressive rewards (only valid for certain environment).'
+        )
+
+        parser.add_argument(
             '--continuous-action-discretization-resolution',
             type=float,
             help='Continuous-action discretization resolution.'
@@ -246,7 +252,6 @@ class Gym(ContinuousMdpEnvironment):
 
         elif self.gym_id == Gym.MCC_V0:
 
-            gym_native_reward = reward
             reward = 0.0
 
             # calculate fraction to goal state
@@ -255,19 +260,14 @@ class Gym(ContinuousMdpEnvironment):
             fraction_to_goal = curr_distance / goal_distance
             if fraction_to_goal >= 1.0:
 
-                provide_reward = False
+                done = True
+                self.mcc_curr_goal_x_pos = min(Gym.MCC_V0_GOAL_X_POS, self.mcc_curr_goal_x_pos + 0.05)
 
-                # always provide reward if the native goal was achieved
-                if gym_native_reward == 100.0:
-                    provide_reward = True
+                # must manually mark stats recorder done to enable premature reset
+                if hasattr(self.gym_native, 'stats_recorder'):
+                    self.gym_native.stats_recorder.done = done
 
-                # only provide intermediate reward if we moved backward from the peak while right of the trough
-                elif self.previous_observation is not None and self.previous_observation[1] > 0.0 and observation[1] <= 0.0 and observation[0] >= Gym.MCC_V0_TROUGH_X_POS:
-                    provide_reward = True
-                    self.mcc_achieved_intermediate_goal = True
-
-                if provide_reward:
-                    reward = curr_distance + fuel_remaining
+                reward = curr_distance + fuel_remaining
 
         # call render if rendering manually
         if self.check_render_current_episode(True):
@@ -311,21 +311,9 @@ class Gym(ContinuousMdpEnvironment):
 
         observation = self.gym_native.reset()
 
-        # append fuel level to state of continuous lunar lander
-        if self.gym_id == Gym.LLC_V2:
+        # append fuel level to state of certain continuous environments
+        if self.gym_id in [Gym.LLC_V2, Gym.MCC_V0]:
             observation = np.append(observation, 1.0)
-
-        if self.gym_id == Gym.MCC_V0:
-
-            # append fuel level to state
-            observation = np.append(observation, 1.0)
-
-            # increment goal position if we achieved the goal during the previous run
-            if self.mcc_achieved_intermediate_goal:
-                self.mcc_curr_goal_x_pos = min(Gym.MCC_V0_GOAL_X_POS, self.mcc_curr_goal_x_pos + 0.05)
-                self.reward_dynamics_changed = True
-
-            self.mcc_achieved_intermediate_goal = False
 
         # call render if rendering manually
         if self.check_render_current_episode(True):
@@ -495,6 +483,7 @@ class Gym(ContinuousMdpEnvironment):
             random_state: RandomState,
             T: Optional[int],
             gym_id: str,
+            progressive_reward: bool,
             continuous_action_discretization_resolution: Optional[float] = None,
             render_every_nth_episode: Optional[int] = None,
             video_directory: Optional[str] = None,
@@ -508,6 +497,7 @@ class Gym(ContinuousMdpEnvironment):
         :param random_state: Random state.
         :param T: Maximum number of steps to run, or None for no limit.
         :param gym_id: Gym identifier. See https://gym.openai.com/envs for a list.
+        :param progressive_reward: Use progressive reward.
         :param continuous_action_discretization_resolution: A discretization resolution for continuous-action
         environments. Providing this value allows the environment to be used with discrete-action methods via
         discretization of the continuous-action dimensions.
@@ -526,6 +516,7 @@ class Gym(ContinuousMdpEnvironment):
         )
 
         self.gym_id = gym_id
+        self.progressive_reward = progressive_reward
         self.continuous_action_discretization_resolution = continuous_action_discretization_resolution
         self.render_every_nth_episode = render_every_nth_episode
         if self.render_every_nth_episode is not None and self.render_every_nth_episode <= 0:
@@ -594,10 +585,12 @@ class Gym(ContinuousMdpEnvironment):
         else:  # pragma no cover
             raise ValueError(f'Unknown Gym action space type:  {type(self.gym_native.action_space)}')
 
-        # set incremental goal
+        # set progressive goal for continuous mountain car
         if self.gym_id == Gym.MCC_V0:
-            self.mcc_curr_goal_x_pos = Gym.MCC_V0_TROUGH_X_POS + 0.1
-            self.mcc_achieved_intermediate_goal = False
+            if self.progressive_reward:
+                self.mcc_curr_goal_x_pos = Gym.MCC_V0_TROUGH_X_POS + 0.1
+            else:
+                self.mcc_curr_goal_x_pos = Gym.MCC_V0_GOAL_X_POS
 
     def __getstate__(
             self
