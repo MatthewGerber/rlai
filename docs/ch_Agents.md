@@ -15,7 +15,11 @@ MDP agent. Adds the concepts of state, reward discounting, and policy-based acti
 ```
 Stochastic MDP agent. Adds random selection of actions based on probabilities specified in the agent's policy.
 ```
-### [rlai.environments.robocode.RobocodeAgent](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/robocode.py#L62)
+### [rlai.environments.robocode.RobocodeAgent](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/robocode.py#L63)
+```
+Robocode agent.
+```
+### [rlai.environments.robocode_continuous_action.RobocodeAgent](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/robocode_continuous_action.py#L66)
 ```
 Robocode agent.
 ```

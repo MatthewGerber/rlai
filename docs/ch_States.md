@@ -3,11 +3,15 @@
 ```
 State of the mancala game. In charge of representing the entirety of the game state and advancing to the next state.
 ```
-### [rlai.environments.openai_gym.GymState](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/openai_gym.py#L36)
+### [rlai.environments.openai_gym.GymState](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/openai_gym.py#L37)
 ```
 State of a Gym environment.
 ```
-### [rlai.environments.robocode.RobocodeState](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/robocode.py#L484)
+### [rlai.environments.robocode.RobocodeState](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/robocode.py#L485)
+```
+State of Robocode battle.
+```
+### [rlai.environments.robocode_continuous_action.RobocodeState](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/robocode_continuous_action.py#L509)
 ```
 State of Robocode battle.
 ```
