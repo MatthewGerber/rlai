@@ -18,7 +18,9 @@ def test_continuous_learn():
     # test fixture. run a battle for 10 rounds to complete the fixture update.
     update_fixture = False
 
-    robocode_port = 54322
+    # updating the fixture uses the game (per above) on 54321. running test needs to be on a different port to avoid
+    # conflict with the other robocode test that runs in parallel.
+    robocode_port = 54321 if update_fixture else 54322
 
     robocode_mock_thread = None
 
