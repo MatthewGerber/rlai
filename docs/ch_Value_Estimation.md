@@ -11,11 +11,11 @@ State-action value estimator.
 ```
 Value estimator.
 ```
-### [rlai.q_S_A.tabular.TabularActionValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/q_S_A/tabular.py#L104)
+### [rlai.q_S_A.tabular.TabularActionValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/q_S_A/tabular.py#L107)
 ```
 Tabular action-value estimator.
 ```
-### [rlai.q_S_A.tabular.TabularStateActionValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/q_S_A/tabular.py#L213)
+### [rlai.q_S_A.tabular.TabularStateActionValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/q_S_A/tabular.py#L219)
 ```
 Tabular state-action value estimator.
 ```

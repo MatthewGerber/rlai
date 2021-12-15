@@ -1,5 +1,9 @@
 # Rewards
-### [rlai.environments.robocode.RobocodeReward](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/robocode.py#L22)
+### [rlai.environments.robocode.RobocodeReward](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/robocode.py#L23)
+```
+Robocode reward.
+```
+### [rlai.environments.robocode_continuous_action.RobocodeReward](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/robocode_continuous_action.py#L26)
 ```
 Robocode reward.
 ```
