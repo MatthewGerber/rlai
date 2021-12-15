@@ -1,14 +1,10 @@
 from os import path
+from sysconfig import get_platform
 
-from setuptools import (
-    setup,
-    find_namespace_packages
-)
-
-from distutils import util
+from setuptools import setup, find_namespace_packages
 
 # we compile jaxlib from source on aarch64 (e.g., for raspberry pi), so don't specify jax here.
-if util.get_platform() == 'linux-aarch64':
+if get_platform() == 'linux-aarch64':
     jax_package = 'jax'
 
 # otherwise, try to install cpu-only support.
