@@ -12,7 +12,6 @@ from gym.envs.registration import EnvSpec
 from gym.spaces import Discrete, Box
 from gym.wrappers import TimeLimit
 from numpy.random import RandomState
-
 from rlai.actions import Action, DiscretizedAction, ContinuousMultiDimensionalAction
 from rlai.agents.mdp import MdpAgent
 from rlai.environments import Environment
@@ -848,6 +847,59 @@ class ContinuousFeatureExtractor(StateFeatureExtractor):
 
 
 @rl_text(chapter='Feature Extractors', page=1)
+class SignedCodingFeatureExtractor(ContinuousFeatureExtractor):
+    """
+    Signed-coding feature extractor. Forms a category from the conjunction of all state-feature signs and then places
+    the continuous feature vector into its associated category.
+    """
+
+    def extract(
+            self,
+            state: GymState,
+            refit_scaler: bool
+    ) -> np.ndarray:
+        """
+        Extract state features.
+
+        :param state: State.
+        :param refit_scaler: Whether or not to refit the feature scaler before scaling the extracted features.
+        :return: State-feature vector.
+        """
+
+        if self.state_category_interacter is None:
+            self.state_category_interacter = OneHotCategoricalFeatureInteracter([
+                OneHotCategory(*category_args)
+                for category_args in product(*([[True, False]] * state.observation.shape[0]))
+            ])
+
+        # form the one-hot state category
+        state_category = OneHotCategory(*[
+            value < 0.0
+            for value in state.observation
+        ])
+
+        # extract and encode feature values
+        raw_feature_values = super().extract(state, refit_scaler)
+        encoded_feature_values = self.state_category_interacter.interact(
+            np.array([raw_feature_values]),
+            [state_category]
+        )[0]
+
+        return encoded_feature_values
+
+    def __init__(
+            self
+    ):
+        """
+        Initialize the feature extractor.
+        """
+
+        super().__init__()
+
+        self.state_category_interacter = None
+
+
+@rl_text(chapter='Feature Extractors', page=1)
 class ContinuousLunarLanderFeatureExtractor(ContinuousFeatureExtractor):
     """
     Feature extractor for the continuous lunar lander.
@@ -903,71 +955,6 @@ class ContinuousLunarLanderFeatureExtractor(ContinuousFeatureExtractor):
         final_feature_values = np.append(encoded_feature_values, unencoded_feature_values)
 
         return final_feature_values
-
-    def __init__(
-            self
-    ):
-        """
-        Initialize the feature extractor.
-        """
-
-        super().__init__()
-
-        # interact features with relevant state categories
-        self.state_category_interacter = OneHotCategoricalFeatureInteracter([
-            OneHotCategory(*category_args)
-            for category_args in product(*([[True, False]] * 5))
-        ])
-
-
-@rl_text(chapter='Feature Extractors', page=1)
-class WalkerFeatureExtractor(ContinuousFeatureExtractor):
-    """
-    Feature extractor for the walker.
-    """
-
-    def extract(
-            self,
-            state: GymState,
-            refit_scaler: bool
-    ) -> np.ndarray:
-        """
-        Extract state features.
-
-        :param state: State.
-        :param refit_scaler: Whether or not to refit the feature scaler before scaling the extracted features.
-        :return: State-feature vector.
-        """
-
-        # extract raw feature values
-        raw_feature_values = super().extract(state, refit_scaler)
-
-        # features:
-        #
-
-        # # form the one-hot state category. start by thresholding some feature values.
-        # state_category_feature_idxs = list(range(raw_feature_values.shape[0]))
-        # state_category = OneHotCategory(*[
-        #     value < 0.0
-        #     for idx, value in zip(state_category_feature_idxs, state.observation[state_category_feature_idxs])
-        # ])
-        #
-        # # encode feature values
-        # encoded_feature_idxs = state_category_feature_idxs
-        # feature_values_to_encode = raw_feature_values[encoded_feature_idxs]
-        # encoded_feature_values = self.state_category_interacter.interact(
-        #     np.array([feature_values_to_encode]),
-        #     [state_category]
-        # )[0]
-
-        # # get unencoded feature values
-        # both_legs_in_contact = 1.0 if all(raw_feature_values[6:8] == 1.0) else 0.0
-        # unencoded_feature_values = np.append(raw_feature_values[[1, 6, 7, 8]], [both_legs_in_contact])
-        #
-        # # combine encoded and unencoded feature values
-        # final_feature_values = np.append(encoded_feature_values, unencoded_feature_values)
-
-        return raw_feature_values
 
     def __init__(
             self

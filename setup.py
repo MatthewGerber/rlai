@@ -33,6 +33,7 @@ INSTALL_REQUIREMENTS = [
     'pyqtgraph==0.12.2',
     'PyQt5==5.15.4',
     'tabulate==0.8.9',
+    'mujoco-py==2.1.2.14',
 
     # jupyter requirements
     'jupyterlab==3.0.6',
@@ -59,12 +60,6 @@ DEV_REQUIREMENTS = [
     'bump2version==1.0.1'
 ]
 
-# mujoco requires a more elaborate registration and installation process, and the bindings below only work after going
-# through the registration and install.
-MUJOCO_REQUIREMENTS = [
-    'mujoco-py==2.0.2.13'
-]
-
 with open(path.join(path.abspath(path.dirname(__file__)), 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
@@ -86,8 +81,7 @@ setup(
     tests_require=TEST_REQUIREMENTS,
     extras_require={
         'test:': TEST_REQUIREMENTS,
-        'dev:': TEST_REQUIREMENTS + DEV_REQUIREMENTS,
-        'mujoco:': MUJOCO_REQUIREMENTS
+        'dev:': TEST_REQUIREMENTS + DEV_REQUIREMENTS
     },
     entry_points={
         'console_scripts': [
