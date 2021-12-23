@@ -862,7 +862,7 @@ class SignedCodingFeatureExtractor(ContinuousFeatureExtractor):
         Extract state features.
 
         :param state: State.
-        :param refit_scaler: Whether or not to refit the feature scaler before scaling the extracted features.
+        :param refit_scaler: Whether to refit the feature scaler before scaling the extracted features.
         :return: State-feature vector.
         """
 
