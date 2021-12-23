@@ -23,7 +23,7 @@ MDP environment in which states and actions are continuous and multidimensional.
 An MDP environment served over a TCP connection from an external source (e.g., a simulation environment running as
     a separate program).
 ```
-### [rlai.environments.openai_gym.Gym](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/openai_gym.py#L68)
+### [rlai.environments.openai_gym.Gym](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/openai_gym.py#L67)
 ```
 Generalized Gym environment. Any OpenAI Gym environment can be executed by supplying the appropriate identifier.
 ```

@@ -10,27 +10,28 @@ A feature extractor for the gridworld. This extractor, being based on the `State
 A feature extractor for the gridworld. This extractor does not interact feature values with actions. Its primary use
     is in state-value estimation (e.g., for the baseline of policy gradient methods).
 ```
-### [rlai.environments.openai_gym.CartpoleFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/openai_gym.py#L628)
+### [rlai.environments.openai_gym.CartpoleFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/openai_gym.py#L627)
 ```
 A feature extractor for the OpenAI cartpole environment. This extractor, being based on the
     `StateActionInteractionFeatureExtractor`, directly extracts the fully interacted state-action feature matrix. It
     returns numpy.ndarray feature matrices, which are not compatible with the Patsy formula-based interface.
 ```
-### [rlai.environments.openai_gym.ContinuousFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/openai_gym.py#L768)
+### [rlai.environments.openai_gym.ContinuousFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/openai_gym.py#L767)
 ```
 A feature extractor for continuous OpenAI environments.
 ```
-### [rlai.environments.openai_gym.ContinuousLunarLanderFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/openai_gym.py#L851)
+### [rlai.environments.openai_gym.ContinuousLunarLanderFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/openai_gym.py#L903)
 ```
 Feature extractor for the continuous lunar lander.
 ```
-### [rlai.environments.openai_gym.ContinuousMountainCarFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/openai_gym.py#L989)
+### [rlai.environments.openai_gym.ContinuousMountainCarFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/openai_gym.py#L976)
 ```
 Feature extractor for the continuous lunar lander.
 ```
-### [rlai.environments.openai_gym.WalkerFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/openai_gym.py#L924)
+### [rlai.environments.openai_gym.SignedCodingFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/openai_gym.py#L850)
 ```
-Feature extractor for the walker.
+Signed-coding feature extractor. Forms a category from the conjunction of all state-feature signs and then places
+    the continuous feature vector into its associated category.
 ```
 ### [rlai.environments.robocode.RobocodeFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/robocode.py#L621)
 ```

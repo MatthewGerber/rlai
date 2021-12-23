@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Swimmer train" type="PythonConfigurationType" factoryName="Python" folderName="OpenAI Gym">
-    <module name="rl" />
+    <module name="rlai" />
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />
     <envs>

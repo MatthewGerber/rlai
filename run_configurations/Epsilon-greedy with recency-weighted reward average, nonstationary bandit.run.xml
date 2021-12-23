@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Epsilon-greedy with recency-weighted reward average, nonstationary bandit" type="PythonConfigurationType" factoryName="Python" folderName="Book Figures">
-    <module name="rl" />
+    <module name="rlai" />
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />
     <envs>

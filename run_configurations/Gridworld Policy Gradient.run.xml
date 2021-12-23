@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Gridworld Policy Gradient Baseline" type="PythonConfigurationType" factoryName="Python" folderName="Function Approximation">
-    <module name="rl" />
+    <module name="rlai" />
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />
     <envs>
@@ -22,7 +22,7 @@
     <method v="2" />
   </configuration>
   <configuration default="false" name="Gridworld Policy Gradient" type="PythonConfigurationType" factoryName="Python" folderName="Function Approximation">
-    <module name="rl" />
+    <module name="rlai" />
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />
     <envs>
