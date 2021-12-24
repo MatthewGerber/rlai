@@ -11,37 +11,6 @@ if get_platform() == 'linux-aarch64':
 else:
     jax_package = 'jax[cpu]'
 
-INSTALL_REQUIREMENTS = [
-
-    # core requirements
-    'scipy==1.7.1',
-    'matplotlib==3.4.3',
-    'numpy==1.21.2',
-    'gym==0.17.3',
-    'Box2D==2.3.10',
-    'python-dateutil==2.8.1',
-    'importlib-metadata==3.1.1',
-    'packaging==20.7',
-    'more-itertools==8.6.0',
-    'attrs==20.3.0',
-    'pyparsing==2.4.7',
-    'future==0.18.2',
-    'scikit-learn==0.24',
-    'pandas==1.1.5',
-    'patsy==0.5.1',
-    f'{jax_package}==0.2.21',
-    'pyqtgraph==0.12.2',
-    'PyQt5==5.15.4',
-    'tabulate==0.8.9',
-    'mujoco-py==2.1.2.14',
-
-    # jupyter requirements
-    'jupyterlab==3.0.6',
-    'ipython==7.19.0',
-    'ipympl==0.6.3',
-    'tornado==6.1.0'
-]
-
 TEST_REQUIREMENTS = [
     'pytest==6.2.4',
     'pytest-cov==2.12.1',
@@ -76,7 +45,35 @@ setup(
     package_dir={'': 'src'},
     python_requires='~=3.7',
     install_requires=[
-        INSTALL_REQUIREMENTS
+
+        # core requirements
+        'scipy==1.7.1',
+        'matplotlib==3.4.3',
+        'numpy==1.21.2',
+        'gym==0.17.3',
+        'Box2D==2.3.10',
+        'python-dateutil==2.8.1',
+        'importlib-metadata==3.1.1',
+        'packaging==20.7',
+        'more-itertools==8.6.0',
+        'attrs==20.3.0',
+        'pyparsing==2.4.7',
+        'future==0.18.2',
+        'scikit-learn==0.24',
+        'pandas==1.1.5',
+        'patsy==0.5.1',
+        f'{jax_package}==0.2.21',
+        'pyqtgraph==0.12.2',
+        'PyQt5==5.15.4',
+        'tabulate==0.8.9',
+        'mujoco-py==2.1.2.14',
+
+        # jupyter requirements
+        'jupyterlab==3.0.6',
+        'ipython==7.19.0',
+        'ipympl==0.6.3',
+        'tornado==6.1.0'
+
     ],
     tests_require=TEST_REQUIREMENTS,
     extras_require={
