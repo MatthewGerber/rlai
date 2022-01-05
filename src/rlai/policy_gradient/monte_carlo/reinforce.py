@@ -138,8 +138,8 @@ def improve(
                 'num_episodes': num_episodes,
                 'update_upon_every_visit': update_upon_every_visit,
                 'alpha': alpha,
-                'v_S': v_S,
                 'plot_state_value': plot_state_value,
+                'v_S': v_S,
                 'num_episodes_per_checkpoint': num_episodes_per_checkpoint,
                 'checkpoint_path': checkpoint_path
             }

@@ -8,10 +8,12 @@ from typing import List, Tuple, Optional, Union, Dict
 
 import gym
 import numpy as np
+from PyQt5.QtWidgets import QApplication
 from gym.envs.registration import EnvSpec
 from gym.spaces import Discrete, Box
 from gym.wrappers import TimeLimit
 from numpy.random import RandomState
+
 from rlai.actions import Action, DiscretizedAction, ContinuousMultiDimensionalAction
 from rlai.agents.mdp import MdpAgent
 from rlai.environments import Environment
@@ -77,6 +79,8 @@ class Gym(ContinuousMdpEnvironment):
     MCC_V0_TROUGH_X_POS = -0.5
     MCC_V0_GOAL_X_POS = 0.45
     MCC_V0_FUEL_CONSUMPTION_FULL_THROTTLE = 1.0 / 300.0
+
+    SWIMMER_V2 = 'Swimmer-v2'
 
     @classmethod
     def get_argument_parser(
@@ -282,6 +286,10 @@ class Gym(ContinuousMdpEnvironment):
             if self.plot_environment:
                 self.state_reward_scatter_plot.update(np.append(observation, reward))
 
+            # swimmer is a non-qt environment, so we need to process qt events manually.
+            if self.gym_id == Gym.SWIMMER_V2:
+                QApplication.processEvents()
+
         self.state = GymState(
             environment=self,
             observation=observation,
@@ -335,9 +343,9 @@ class Gym(ContinuousMdpEnvironment):
         """
         Check whether the current episode is to be rendered.
 
-        :param render_manually: Whether the rendering will be done manually with calls to the render function or automatically
-        as a result of saving videos via the monitor. Pass None to check whether the episode should be rendered,
-        regardless of how the rendering will be done.
+        :param render_manually: Whether the rendering will be done manually with calls to the render function or
+        automatically as a result of saving videos via the monitor. Pass None to check whether the episode should be
+        rendered, regardless of how the rendering will be done.
         :return: True if rendered and False otherwise.
         """
 
@@ -458,7 +466,7 @@ class Gym(ContinuousMdpEnvironment):
             self
     ) -> List[str]:
         """
-        Get action names.
+        Get names of action dimensions.
 
         :return: List of names.
         """
@@ -473,7 +481,7 @@ class Gym(ContinuousMdpEnvironment):
                 'throttle'
             ]
         else:  # pragma no cover
-            warnings.warn(f'The action names for {self.gym_id} are unknown. Defaulting to numbers.')
+            warnings.warn(f'The action dimension names for {self.gym_id} are unknown. Defaulting to numbers.')
             names = [str(x) for x in range(0, self.get_action_space_dimensionality())]
 
         return names
