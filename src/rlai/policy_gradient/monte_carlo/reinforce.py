@@ -116,8 +116,7 @@ def improve(
                     target = g
 
                 # otherwise, update the baseline state-value estimator and set the target to be the difference between
-                # observed return and the baseline. returns above the baseline will be rewarded positively, and rewards
-                # below the baseline will be rewarded negatively.
+                # observed return and the baseline. actions that produce an above-baseline return will be reinforced.
                 else:
                     v_S[state].update(g)
                     v_S.improve()
