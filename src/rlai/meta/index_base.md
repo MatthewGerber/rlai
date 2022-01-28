@@ -80,6 +80,7 @@ increasing complexity:
 * [Mountain Car](case_studies/mountain_car.md)
 * [Mountain Car with Continuous Control](case_studies/mountain_car_continuous.md)
 * [Lunar Lander with Continuous Control](case_studies/lunar_lander_continuous.md)
+* [MuJoCo Swimming Worm](case_studies/mujoco_swimming_worm.md)
 
 ## Robocode
 [Robocode](https://github.com/robo-code/robocode) is a simulation-based robotic combat programming game with a 
