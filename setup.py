@@ -72,7 +72,10 @@ setup(
         'jupyterlab==3.0.6',
         'ipython==7.19.0',
         'ipympl==0.6.3',
-        'tornado==6.1.0'
+        'tornado==6.1.0',
+
+        # make pycharm package requirement checker happy (we calculate jax package on the fly above)
+        'jax'
 
     ],
     tests_require=TEST_REQUIREMENTS,

@@ -593,6 +593,7 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
             action_max_a = np.amax(self.action_theta_a, 1)
             action_min_b = np.amin(self.action_theta_b, 1)
             action_max_b = np.amax(self.action_theta_b, 1)
+            logging.debug(f'State dimensions:  {self.action_theta_a.shape[1]}')
             for i, (min_a, max_a, min_b, max_b) in enumerate(zip(action_min_a, action_max_a, action_min_b, action_max_b)):
                 logging.debug(f'Action {i} [min,max]:\n\ta:  [{min_a},{max_a}]\n\tb:  [{min_b},{max_b}]\n')
 
