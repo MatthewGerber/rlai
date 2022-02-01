@@ -1,6 +1,7 @@
 import logging
 import os
 import pickle
+import tempfile
 import warnings
 from typing import Optional
 
@@ -26,7 +27,8 @@ def improve(
         thread_manager: RunThreadManager,
         plot_state_value: bool,
         num_episodes_per_checkpoint: Optional[int] = None,
-        checkpoint_path: Optional[str] = None
+        checkpoint_path: Optional[str] = None,
+        training_pool_path: Optional[str] = None
 ) -> Optional[str]:
     """
     Perform Monte Carlo improvement of an agent's policy within an environment via the REINFORCE policy gradient method.
@@ -47,6 +49,7 @@ def improve(
     :param v_S: Baseline state-value estimator, or None for no baseline.
     :param num_episodes_per_checkpoint: Number of episodes per checkpoint save.
     :param checkpoint_path: Checkpoint path. Must be provided if `num_episodes_per_checkpoint` is provided.
+    :param training_pool_path: Path to directory in which to store pooled training runs.
     :return: Final checkpoint path, or None if checkpoints were not saved.
     """
 
@@ -65,6 +68,8 @@ def improve(
     episode_reward_averager = IncrementalSampleAverager()
     episodes_per_print = max(1, int(num_episodes * 0.05))
     final_checkpoint_path = None
+    own_pooled_paths = set()
+    others_pooled_paths = set()
     for episode_i in range(num_episodes):
 
         # reset the environment for the new run (always use the agent we're learning about, as state identifiers come
@@ -98,32 +103,55 @@ def improve(
 
             agent.sense(state, t)
 
-        # work backwards through the trace to calculate discounted returns. need to work backward in order for the value
-        # of g at each time step t to be properly discounted.
-        g = 0
-        for i, (t, state_a, reward) in enumerate(reversed(t_state_action_reward)):
+        t_state_action_reward_list = [(t_state_action_reward, state_action_first_t)]
 
-            g = agent.gamma * g + reward.r
+        if training_pool_path is not None:
 
-            # if we're doing every-visit, or if the current time step was the first visit to the state-action, then g
-            # is the discounted sample value. use it to update the policy.
-            if state_action_first_t is None or state_action_first_t[state_a] == t:
+            # add current episode to training pool
+            pool_path = tempfile.NamedTemporaryFile(delete=False, dir=training_pool_path).name
+            own_pooled_paths.add(pool_path)
+            with open(pool_path, 'wb') as f:
+                pickle.dump((t_state_action_reward, state_action_first_t), f)
 
-                state, a = state_a
+            # read available episodes from training pool
+            for pool_path in os.listdir(training_pool_path):
+                if pool_path not in own_pooled_paths and pool_path not in others_pooled_paths:
+                    try:
+                        with open(pool_path, 'rb') as f:
+                            t_state_action_reward_list.append(pickle.load(f))
+                        others_pooled_paths.add(pool_path)
+                    except Exception:
+                        pass
 
-                # if we don't have a baseline, then the target is the return.
-                if v_S is None:
-                    target = g
+        for t_state_action_reward, state_action_first_t in t_state_action_reward_list:
 
-                # otherwise, update the baseline state-value estimator and set the target to be the difference between
-                # observed return and the baseline. actions that produce an above-baseline return will be reinforced.
-                else:
-                    v_S[state].update(g)
-                    v_S.improve()
-                    estimate = v_S[state].get_value()
-                    target = g - estimate
+            # work backwards through the trace to calculate discounted returns. need to work backward in order for the
+            # value of g at each time step t to be properly discounted.
+            g = 0
+            for i, (t, state_a, reward) in enumerate(reversed(t_state_action_reward)):
 
-                policy.append_update(a, state, alpha, target)
+                g = agent.gamma * g + reward.r
+
+                # if we're doing every-visit, or if the current time step was the first visit to the state-action, then
+                # g is the discounted sample value. use it to update the policy.
+                if state_action_first_t is None or state_action_first_t[state_a] == t:
+
+                    state, a = state_a
+
+                    # if we don't have a baseline, then the target is the return.
+                    if v_S is None:
+                        target = g
+
+                    # otherwise, update the baseline state-value estimator and set the target to be the difference
+                    # between observed return and the baseline. actions that produce an above-baseline return will be
+                    # reinforced.
+                    else:
+                        v_S[state].update(g)
+                        v_S.improve()
+                        estimate = v_S[state].get_value()
+                        target = g - estimate
+
+                    policy.append_update(a, state, alpha, target)
 
         policy.commit_updates()
         episode_reward_averager.update(total_reward)
@@ -140,7 +168,8 @@ def improve(
                 'plot_state_value': plot_state_value,
                 'v_S': v_S,
                 'num_episodes_per_checkpoint': num_episodes_per_checkpoint,
-                'checkpoint_path': checkpoint_path
+                'checkpoint_path': checkpoint_path,
+                'training_pool_path': training_pool_path
             }
 
             checkpoint_path_with_index = insert_index_into_path(checkpoint_path, episode_i)
