@@ -28,7 +28,7 @@ def improve(
         plot_state_value: bool,
         num_episodes_per_checkpoint: Optional[int] = None,
         checkpoint_path: Optional[str] = None,
-        training_pool_path: Optional[str] = None
+        training_pool_directory: Optional[str] = None
 ) -> Optional[str]:
     """
     Perform Monte Carlo improvement of an agent's policy within an environment via the REINFORCE policy gradient method.
@@ -49,7 +49,7 @@ def improve(
     :param v_S: Baseline state-value estimator, or None for no baseline.
     :param num_episodes_per_checkpoint: Number of episodes per checkpoint save.
     :param checkpoint_path: Checkpoint path. Must be provided if `num_episodes_per_checkpoint` is provided.
-    :param training_pool_path: Path to directory in which to store pooled training runs.
+    :param training_pool_directory: Path to directory in which to store pooled training runs.
     :return: Final checkpoint path, or None if checkpoints were not saved.
     """
 
@@ -58,6 +58,11 @@ def improve(
 
     if checkpoint_path is not None:
         checkpoint_path = os.path.expanduser(checkpoint_path)
+
+    if training_pool_directory is not None:
+        training_pool_directory = os.path.expanduser(training_pool_directory)
+        if not os.path.exists(training_pool_directory):
+            os.mkdir(training_pool_directory)
 
     state_value_plot = None
     if plot_state_value and v_S is not None:
@@ -68,8 +73,7 @@ def improve(
     episode_reward_averager = IncrementalSampleAverager()
     episodes_per_print = max(1, int(num_episodes * 0.05))
     final_checkpoint_path = None
-    own_pooled_paths = set()
-    others_pooled_paths = set()
+    processed_training_pool_paths = set()
     for episode_i in range(num_episodes):
 
         # reset the environment for the new run (always use the agent we're learning about, as state identifiers come
@@ -105,23 +109,28 @@ def improve(
 
         t_state_action_reward_list = [(t_state_action_reward, state_action_first_t)]
 
-        if training_pool_path is not None:
+        if training_pool_directory is not None:
 
             # add current episode to training pool
-            pool_path = tempfile.NamedTemporaryFile(delete=False, dir=training_pool_path).name
-            own_pooled_paths.add(pool_path)
+            pool_path = tempfile.NamedTemporaryFile(delete=False, dir=training_pool_directory).name
+            processed_training_pool_paths.add(pool_path)
             with open(pool_path, 'wb') as f:
                 pickle.dump((t_state_action_reward, state_action_first_t), f)
 
             # read available episodes from training pool
-            for pool_path in os.listdir(training_pool_path):
-                if pool_path not in own_pooled_paths and pool_path not in others_pooled_paths:
+            num_training_pool_paths = 0
+            for pool_filename in os.listdir(training_pool_directory):
+                pool_path = os.path.join(training_pool_directory, pool_filename)
+                if pool_path not in processed_training_pool_paths:
                     try:
                         with open(pool_path, 'rb') as f:
                             t_state_action_reward_list.append(pickle.load(f))
-                        others_pooled_paths.add(pool_path)
-                    except Exception:
-                        pass
+                        processed_training_pool_paths.add(pool_path)
+                        num_training_pool_paths += 1
+                    except Exception as e:
+                        logging.error(f'Failed to read training pool path {pool_path}:  {e}')
+
+            logging.info(f'Read {num_training_pool_paths} training pool path(s).')
 
         for t_state_action_reward, state_action_first_t in t_state_action_reward_list:
 
@@ -169,7 +178,7 @@ def improve(
                 'v_S': v_S,
                 'num_episodes_per_checkpoint': num_episodes_per_checkpoint,
                 'checkpoint_path': checkpoint_path,
-                'training_pool_path': training_pool_path
+                'training_pool_directory': training_pool_directory
             }
 
             checkpoint_path_with_index = insert_index_into_path(checkpoint_path, episode_i)

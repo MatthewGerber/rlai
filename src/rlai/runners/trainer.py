@@ -243,9 +243,9 @@ def get_argument_parser_for_train_function(
 
     function = import_function(function_name)
 
-    # get argument names actually expected by the specified training function
+    # get argument names defined by the specified training function
     # noinspection PyUnresolvedReferences
-    actual_arg_names = function.__code__.co_varnames[:function.__code__.co_argcount]
+    function_arg_names = function.__code__.co_varnames[:function.__code__.co_argcount]
 
     def filter_add_argument(
             name: str,
@@ -259,14 +259,13 @@ def get_argument_parser_for_train_function(
         """
 
         var_name = name.lstrip('-').replace('-', '_')
-        if var_name in actual_arg_names:
+        if var_name in function_arg_names:
             argument_parser.add_argument(
                 name,
                 **kwargs
             )
 
-    # attempt to add the superset of all arguments used across all training function. the filter will only retain those
-    # that are actually allowed.
+    # add the superset of all arguments used across all training function. the filter will only retain those allowed.
 
     filter_add_argument(
         '--agent',
@@ -395,6 +394,12 @@ def get_argument_parser_for_train_function(
         type=str,
         choices=['True', 'False'],
         help='Whether or not to plot the state value.'
+    )
+
+    filter_add_argument(
+        '--training-pool-directory',
+        type=str,
+        help='Training pool directory.'
     )
 
     return argument_parser

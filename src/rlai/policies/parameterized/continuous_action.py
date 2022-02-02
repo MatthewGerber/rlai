@@ -588,20 +588,20 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
 
         self.reset_action_scatter_plot_y_range()
 
-        if logging.getLogger().level <= logging.DEBUG:
+        if logging.getLogger().level <= logging.INFO:
             action_min_a = np.amin(self.action_theta_a, 1)
             action_max_a = np.amax(self.action_theta_a, 1)
             action_min_b = np.amin(self.action_theta_b, 1)
             action_max_b = np.amax(self.action_theta_b, 1)
-            logging.debug(f'State dimensions:  {self.action_theta_a.shape[1]}')
+            logging.info(f'State dimensions:  {self.action_theta_a.shape[1]}')
             for i, (min_a, max_a, min_b, max_b) in enumerate(zip(action_min_a, action_max_a, action_min_b, action_max_b)):
-                logging.debug(f'Action {i} [min,max]:\n\ta:  [{min_a},{max_a}]\n\tb:  [{min_b},{max_b}]\n')
+                logging.info(f'Action {i} [min,max]:\n\ta:  [{min_a},{max_a}]\n\tb:  [{min_b},{max_b}]\n')
 
         # only output the hyperparameter table if we have a state-dimension name for each feature. some feature
         # extractors expand the feature space beyond the dimension names (e.g., via interaction terms), and we don't
         # have a good way to generate names for these extra features. such extractors also tend to generate large
         # feature spaces for which tabular output isn't easily readable.
-        if logging.getLogger().level <= logging.DEBUG and self.action_theta_a.shape[1] == len(self.environment.get_state_dimension_names()) + 1:
+        if logging.getLogger().level <= logging.INFO and self.action_theta_a.shape[1] == len(self.environment.get_state_dimension_names()) + 1:
             row_names = [
                 f'{action_name}_{p}'
                 for action_name in self.environment.get_action_dimension_names()
@@ -613,7 +613,7 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
                 for theta_a_row, theta_b_row in zip(self.action_theta_a, self.action_theta_b)
                 for row in [theta_a_row, theta_b_row]
             ], index=row_names, columns=col_names)
-            logging.debug(f'Per-action beta hyperparameters:\n{tabulate(theta_df, headers="keys", tablefmt="psql")}')
+            logging.info(f'Per-action beta hyperparameters:\n{tabulate(theta_df, headers="keys", tablefmt="psql")}')
 
     def reset_action_scatter_plot_y_range(
             self
