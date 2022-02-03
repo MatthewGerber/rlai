@@ -402,6 +402,13 @@ def get_argument_parser_for_train_function(
         help='Training pool directory.'
     )
 
+    filter_add_argument(
+        '--training-pool-slot',
+        type=str,
+        help='Training pool slot formatted as "x,y", where "x" is the 1-based slot number to use and "y" is the number '
+             'of slots in the pool.'
+    )
+
     return argument_parser
 
 
