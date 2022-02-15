@@ -403,10 +403,9 @@ def get_argument_parser_for_train_function(
     )
 
     filter_add_argument(
-        '--training-pool-slot',
-        type=str,
-        help='Training pool slot formatted as "x,y", where "x" is the 1-based slot number to use and "y" is the number '
-             'of slots in the pool.'
+        '--training-pool-batch-size',
+        type=int,
+        help='Number of episodes per training pool batch.'
     )
 
     return argument_parser

@@ -3,17 +3,15 @@ import os
 import pickle
 import tempfile
 import warnings
-from typing import Optional, Tuple, Dict, List
+from typing import Optional
 
 import numpy as np
 
-from rlai.actions import Action
 from rlai.agents.mdp import StochasticMdpAgent
 from rlai.environments.mdp import MdpEnvironment
 from rlai.meta import rl_text
 from rlai.policies.parameterized import ParameterizedPolicy
-from rlai.rewards import Reward
-from rlai.states.mdp import MdpState
+from rlai.policies.parameterized.continuous_action import ContinuousActionPolicy
 from rlai.utils import (
     IncrementalSampleAverager,
     RunThreadManager,
@@ -37,7 +35,7 @@ def improve(
         num_episodes_per_checkpoint: Optional[int] = None,
         checkpoint_path: Optional[str] = None,
         training_pool_directory: Optional[str] = None,
-        training_pool_slot: Optional[str] = None
+        training_pool_batch_size: Optional[int] = None
 ) -> Optional[str]:
     """
     Perform Monte Carlo improvement of an agent's policy within an environment via the REINFORCE policy gradient method.
@@ -59,8 +57,7 @@ def improve(
     :param num_episodes_per_checkpoint: Number of episodes per checkpoint save.
     :param checkpoint_path: Checkpoint path. Must be provided if `num_episodes_per_checkpoint` is provided.
     :param training_pool_directory: Path to directory in which to store pooled training runs.
-    :param training_pool_slot: Training pool slot formatted as "x,y", where "x" is the 1-based slot number to use and
-    "y" is the number of slots in the pool.
+    :param training_pool_batch_size: Number of episodes per training pool batch.
     :return: Final checkpoint path, or None if checkpoints were not saved.
     """
 
@@ -71,20 +68,16 @@ def improve(
         checkpoint_path = os.path.expanduser(checkpoint_path)
 
     # prepare training pool
+    training_pool_path = None
     has_training_pool_directory = training_pool_directory is not None
-    has_training_pool_slot = training_pool_slot is not None
-    training_pool_current_slot = None
-    training_pool_total_slots = None
-    if has_training_pool_directory != has_training_pool_slot:
-        raise ValueError('Both training pool directory and slot must be provided, or neither.')
+    has_training_pool_batch_size = training_pool_batch_size is not None
+    if has_training_pool_directory != has_training_pool_batch_size:
+        raise ValueError('Both training pool directory and batch size must be provided, or neither.')
     elif has_training_pool_directory:
         training_pool_directory = os.path.expanduser(training_pool_directory)
         if not os.path.exists(training_pool_directory):
             os.mkdir(training_pool_directory)
-        (
-            training_pool_current_slot,
-            training_pool_total_slots
-        ) = [int(v) for v in training_pool_slot.split(',')]
+        training_pool_path = tempfile.NamedTemporaryFile(dir=training_pool_directory, delete=False).name
 
     state_value_plot = None
     if plot_state_value and v_S is not None:
@@ -129,130 +122,107 @@ def improve(
 
             agent.sense(state, t)
 
-        t_state_action_reward_list = update_and_read_training_pool(
-            t_state_action_reward,
-            state_action_first_t,
-            training_pool_directory,
-            training_pool_total_slots,
-            training_pool_current_slot
-        )
+        # work backwards through the trace to calculate discounted returns. need to work backward in order for the value
+        # of g at each time step t to be properly discounted.
+        g = 0
+        for i, (t, state_a, reward) in enumerate(reversed(t_state_action_reward)):
 
-        for t_state_action_reward, state_action_first_t in t_state_action_reward_list:
+            g = agent.gamma * g + reward.r
 
-            # work backwards through the trace to calculate discounted returns. need to work backward in order for the
-            # value of g at each time step t to be properly discounted.
-            g = 0
-            for i, (t, state_a, reward) in enumerate(reversed(t_state_action_reward)):
+            # if we're doing every-visit, or if the current time step was the first visit to the state-action, then g is
+            # the discounted sample value. use it to update the policy.
+            if state_action_first_t is None or state_action_first_t[state_a] == t:
 
-                g = agent.gamma * g + reward.r
+                state, a = state_a
 
-                # if we're doing every-visit, or if the current time step was the first visit to the state-action, then
-                # g is the discounted sample value. use it to update the policy.
-                if state_action_first_t is None or state_action_first_t[state_a] == t:
+                # if we don't have a baseline, then the target is the return.
+                if v_S is None:
+                    target = g
 
-                    state, a = state_a
+                # otherwise, update the baseline state-value estimator and set the target to be the difference between
+                # observed return and the baseline. actions that produce an above-baseline return will be reinforced.
+                else:
+                    v_S[state].update(g)
+                    v_S.improve()
+                    estimate = v_S[state].get_value()
+                    target = g - estimate
 
-                    # if we don't have a baseline, then the target is the return.
-                    if v_S is None:
-                        target = g
+                policy.append_update(a, state, alpha, target)
 
-                    # otherwise, update the baseline state-value estimator and set the target to be the difference
-                    # between observed return and the baseline. actions that produce an above-baseline return will be
-                    # reinforced.
-                    else:
-                        v_S[state].update(g)
-                        v_S.improve()
-                        estimate = v_S[state].get_value()
-                        target = g - estimate
+        policy.commit_updates()
+        episode_reward_averager.update(total_reward)
 
-                    policy.append_update(a, state, alpha, target)
+        episode_i += 1
 
-            episode_i += 1
+        if num_episodes_per_checkpoint is not None and episode_i % num_episodes_per_checkpoint == 0:
 
-            policy.commit_updates()
-            episode_reward_averager.update(total_reward)
+            resume_args = {
+                'agent': agent,
+                'policy': policy,
+                'environment': environment,
+                'num_episodes': num_episodes,
+                'update_upon_every_visit': update_upon_every_visit,
+                'alpha': alpha,
+                'plot_state_value': plot_state_value,
+                'v_S': v_S,
+                'num_episodes_per_checkpoint': num_episodes_per_checkpoint,
+                'checkpoint_path': checkpoint_path,
+                'training_pool_directory': training_pool_directory
+            }
 
-            if num_episodes_per_checkpoint is not None and episode_i % num_episodes_per_checkpoint == 0:
+            checkpoint_path_with_index = insert_index_into_path(checkpoint_path, episode_i)
+            final_checkpoint_path = checkpoint_path_with_index
+            with open(checkpoint_path_with_index, 'wb') as checkpoint_file:
+                pickle.dump(resume_args, checkpoint_file)
 
-                resume_args = {
-                    'agent': agent,
-                    'policy': policy,
-                    'environment': environment,
-                    'num_episodes': num_episodes,
-                    'update_upon_every_visit': update_upon_every_visit,
-                    'alpha': alpha,
-                    'plot_state_value': plot_state_value,
-                    'v_S': v_S,
-                    'num_episodes_per_checkpoint': num_episodes_per_checkpoint,
-                    'checkpoint_path': checkpoint_path,
-                    'training_pool_directory': training_pool_directory
-                }
+        if episode_i % episodes_per_print == 0:
+            logging.info(f'Finished {episode_i} of {num_episodes} episode(s).')
 
-                checkpoint_path_with_index = insert_index_into_path(checkpoint_path, episode_i)
-                final_checkpoint_path = checkpoint_path_with_index
-                with open(checkpoint_path_with_index, 'wb') as checkpoint_file:
-                    pickle.dump(resume_args, checkpoint_file)
+        # update and scan training pool
+        if has_training_pool_batch_size and episode_i % training_pool_batch_size == 0:
 
-            if episode_i % episodes_per_print == 0:
-                logging.info(f'Finished {episode_i} of {num_episodes} episode(s).')
+            try:
+                with open(training_pool_path, 'wb') as training_pool_file:
+                    pickle.dump((agent, policy, v_S, episode_reward_averager), training_pool_file)
+            except:
+                pass
 
-            if episode_i >= num_episodes:
-                break
+            better_agent = None
+            better_policy = None
+            better_v_S = None
+            better_reward_averager = None
+            for path in os.listdir(training_pool_directory):
+
+                try:
+                    with open(os.path.join(training_pool_directory, path), 'rb') as f:
+                        (
+                            pool_agent,
+                            pool_policy,
+                            pool_v_S,
+                            pool_reward_averager
+                        ) = pickle.load(f)
+
+                    if pool_reward_averager.average > episode_reward_averager.average:
+                        (
+                            better_agent,
+                            better_policy,
+                            better_v_S,
+                            better_reward_averager
+                        ) = (pool_agent, pool_policy, pool_v_S, pool_reward_averager)
+                except:
+                    pass
+
+            if better_agent is not None:
+                agent = better_agent
+                policy = better_policy
+                v_S = better_v_S
+                episode_reward_averager = better_reward_averager
+                if isinstance(agent.pi, ContinuousActionPolicy):
+                    agent.pi.environment = environment
+
+        if episode_i >= num_episodes:
+            break
 
     logging.info(f'Completed optimization. Average reward per episode:  {episode_reward_averager.get_value()}')
 
     return final_checkpoint_path
-
-
-def update_and_read_training_pool(
-        t_state_action_reward: List[Tuple[int, Tuple[MdpState, Action], Reward]],
-        state_action_first_t: Optional[Dict[Tuple[MdpState, Action], int]],
-        training_pool_directory: Optional[str],
-        training_pool_total_slots: Optional[int],
-        training_pool_current_slot: Optional[int]
-) -> List[Tuple[Tuple[int, Tuple[MdpState, Action], Reward], Dict[Tuple[MdpState, Action], int]]]:
-    """
-    Update and read the training pool
-
-    :param t_state_action_reward: Trace of episode's times, state-action pairs, and rewards.
-    :param state_action_first_t: State-action pairs and their first-encountered time steps, or None if doing
-    every-visit.
-    :param training_pool_directory: Training pool directory, if any.
-    :param training_pool_total_slots: Total number of slots in the training pool, if any.
-    :param training_pool_current_slot: Training pool slot for current process, if any.
-    """
-
-    t_state_action_reward_list = [(t_state_action_reward, state_action_first_t)]
-
-    if training_pool_directory is not None:
-
-        # add current episode to training pool for other slots
-        for slot in range(1, training_pool_total_slots + 1):
-            if slot != training_pool_current_slot:
-                pool_path = tempfile.NamedTemporaryFile(
-                    dir=training_pool_directory,
-                    prefix=f'{slot}_',
-                    delete=False
-                ).name
-                with open(pool_path, 'wb') as f:
-                    pickle.dump((t_state_action_reward, state_action_first_t), f)
-
-        # read training pool for the current slot
-        filenames_for_current_slot = filter(
-            lambda s: s.startswith(f'{training_pool_current_slot}_'),
-            os.listdir(training_pool_directory)
-        )
-        num_pool_episodes = 0
-        for pool_filename in filenames_for_current_slot:
-            pool_path = os.path.join(training_pool_directory, pool_filename)
-            try:
-                with open(pool_path, 'rb') as f:
-                    t_state_action_reward_list.append(pickle.load(f))
-                os.unlink(pool_path)
-                num_pool_episodes += 1
-            except Exception as e:
-                logging.error(f'Failed to read training pool path {pool_path}:  {e}')
-
-        logging.info(f'Read {num_pool_episodes} episode(s) from the training pool.')
-
-    return t_state_action_reward_list
