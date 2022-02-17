@@ -178,19 +178,20 @@ def improve(
         if episodes_finished % episodes_per_print == 0:
             logging.info(f'Finished {episodes_finished} of {num_episodes} episode(s).')
 
-        # update training pool and scan it for a better agent
         if has_training_pool_batch_size and episodes_finished % training_pool_batch_size == 0:
 
+            # update training pool
             try:
                 with open(training_pool_path, 'wb') as training_pool_file:
                     pickle.dump((agent, policy, v_S, episode_reward_averager), training_pool_file)
             except:
                 pass
 
-            better_agent = None
-            better_policy = None
-            better_v_S = None
-            better_reward_averager = None
+            # scan training pool for a better agent
+            best_pool_agent = None
+            best_pool_policy = None
+            best_pool_v_S = None
+            best_pool_reward_averager = None
             for training_pool_filename in os.listdir(training_pool_directory):
 
                 try:
@@ -202,22 +203,22 @@ def improve(
                             pool_reward_averager
                         ) = pickle.load(f)
 
-                    if pool_reward_averager.average > episode_reward_averager.average:
+                    if best_pool_reward_averager is None or pool_reward_averager.average > best_pool_reward_averager.average:
                         (
-                            better_agent,
-                            better_policy,
-                            better_v_S,
-                            better_reward_averager
+                            best_pool_agent,
+                            best_pool_policy,
+                            best_pool_v_S,
+                            best_pool_reward_averager
                         ) = (pool_agent, pool_policy, pool_v_S, pool_reward_averager)
                 except:
                     pass
 
-            if better_agent is not None:
-                logging.info(f'Found better agent in training pool, with average reward of {better_reward_averager.average:.1f} versus the current reward of {episode_reward_averager.average:.1f}.')
-                agent = better_agent
-                policy = better_policy
-                v_S = better_v_S
-                episode_reward_averager = better_reward_averager
+            if best_pool_agent is not None and best_pool_reward_averager.average > episode_reward_averager.average:
+                logging.info(f'Found a better agent in the training pool, with average reward of {best_pool_reward_averager.average:.1f} versus the current reward of {episode_reward_averager.average:.1f}.')
+                agent = best_pool_agent
+                policy = best_pool_policy
+                v_S = best_pool_v_S
+                episode_reward_averager = best_pool_reward_averager
 
                 # set the environment reference in continuous-action policies, as we don't pickle it.
                 if isinstance(agent.pi, ContinuousActionPolicy):
