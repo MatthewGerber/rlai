@@ -88,8 +88,7 @@ def improve(
     episode_reward_averager = IncrementalSampleAverager()
     episodes_per_print = max(1, int(num_episodes * 0.05))
     final_checkpoint_path = None
-    episode_i = 0
-    while episode_i < num_episodes:
+    for episode_i in range(num_episodes):
 
         # reset the environment for the new run (always use the agent we're learning about, as state identifiers come
         # from it), and reset the agent accordingly.
@@ -152,9 +151,9 @@ def improve(
         policy.commit_updates()
         episode_reward_averager.update(total_reward)
 
-        episode_i += 1
+        episodes_finished = episode_i + 1
 
-        if num_episodes_per_checkpoint is not None and episode_i % num_episodes_per_checkpoint == 0:
+        if num_episodes_per_checkpoint is not None and episodes_finished % num_episodes_per_checkpoint == 0:
 
             resume_args = {
                 'agent': agent,
@@ -167,7 +166,8 @@ def improve(
                 'v_S': v_S,
                 'num_episodes_per_checkpoint': num_episodes_per_checkpoint,
                 'checkpoint_path': checkpoint_path,
-                'training_pool_directory': training_pool_directory
+                'training_pool_directory': training_pool_directory,
+                'training_pool_batch_size': training_pool_batch_size
             }
 
             checkpoint_path_with_index = insert_index_into_path(checkpoint_path, episode_i)
@@ -175,11 +175,11 @@ def improve(
             with open(checkpoint_path_with_index, 'wb') as checkpoint_file:
                 pickle.dump(resume_args, checkpoint_file)
 
-        if episode_i % episodes_per_print == 0:
-            logging.info(f'Finished {episode_i} of {num_episodes} episode(s).')
+        if episodes_finished % episodes_per_print == 0:
+            logging.info(f'Finished {episodes_finished} of {num_episodes} episode(s).')
 
-        # update and scan training pool
-        if has_training_pool_batch_size and episode_i % training_pool_batch_size == 0:
+        # update training pool and scan it for a better agent
+        if has_training_pool_batch_size and episodes_finished % training_pool_batch_size == 0:
 
             try:
                 with open(training_pool_path, 'wb') as training_pool_file:
@@ -191,10 +191,10 @@ def improve(
             better_policy = None
             better_v_S = None
             better_reward_averager = None
-            for path in os.listdir(training_pool_directory):
+            for training_pool_filename in os.listdir(training_pool_directory):
 
                 try:
-                    with open(os.path.join(training_pool_directory, path), 'rb') as f:
+                    with open(os.path.join(training_pool_directory, training_pool_filename), 'rb') as f:
                         (
                             pool_agent,
                             pool_policy,
@@ -213,15 +213,15 @@ def improve(
                     pass
 
             if better_agent is not None:
+                logging.info(f'Found better agent in training pool, with average reward of {better_reward_averager.average:.1f} versus the current reward of {episode_reward_averager.average:.1f}.')
                 agent = better_agent
                 policy = better_policy
                 v_S = better_v_S
                 episode_reward_averager = better_reward_averager
+
+                # set the environment reference in continuous-action policies, as we don't pickle it.
                 if isinstance(agent.pi, ContinuousActionPolicy):
                     agent.pi.environment = environment
-
-        if episode_i >= num_episodes:
-            break
 
     logging.info(f'Completed optimization. Average reward per episode:  {episode_reward_averager.get_value()}')
 

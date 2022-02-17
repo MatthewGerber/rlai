@@ -166,8 +166,9 @@ class ContinuousActionPolicy(ParameterizedPolicy, ABC):
 
         state = dict(self.__dict__)
 
-        # the environment should not be pickled, as it won't be used when running or resuming the policy later, and it
-        # will contain references (e.g., to scatter plots) that will become invalid.
+        # certain environments cannot be pickled, and even if all could be pickled they wouldn't be used when running
+        # the policy later. this is because we always instantiate a new environment when starting the process. retaining
+        # the environment here would cause its references (e.g., to scatter plots) to be invalid.
         state['environment'] = None
 
         return state
