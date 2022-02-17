@@ -75,8 +75,12 @@ def improve(
         raise ValueError('Both training pool directory and batch size must be provided, or neither.')
     elif has_training_pool_directory:
         training_pool_directory = os.path.expanduser(training_pool_directory)
-        if not os.path.exists(training_pool_directory):
+        if os.path.exists(training_pool_directory):
+            if len(os.listdir(training_pool_directory)) > 0:
+                raise ValueError(f'Training pool directory must be empty:  {training_pool_directory}')
+        else:
             os.mkdir(training_pool_directory)
+
         training_pool_path = tempfile.NamedTemporaryFile(dir=training_pool_directory, delete=False).name
 
     state_value_plot = None
