@@ -1,6 +1,7 @@
 import logging
 import os
 import pickle
+import tempfile
 import warnings
 from typing import Optional
 
@@ -10,7 +11,13 @@ from rlai.agents.mdp import StochasticMdpAgent
 from rlai.environments.mdp import MdpEnvironment
 from rlai.meta import rl_text
 from rlai.policies.parameterized import ParameterizedPolicy
-from rlai.utils import IncrementalSampleAverager, RunThreadManager, ScatterPlot, insert_index_into_path
+from rlai.policies.parameterized.continuous_action import ContinuousActionPolicy
+from rlai.utils import (
+    IncrementalSampleAverager,
+    RunThreadManager,
+    ScatterPlot,
+    insert_index_into_path
+)
 from rlai.v_S import StateValueEstimator
 
 
@@ -26,7 +33,9 @@ def improve(
         thread_manager: RunThreadManager,
         plot_state_value: bool,
         num_episodes_per_checkpoint: Optional[int] = None,
-        checkpoint_path: Optional[str] = None
+        checkpoint_path: Optional[str] = None,
+        training_pool_directory: Optional[str] = None,
+        training_pool_batch_size: Optional[int] = None
 ) -> Optional[str]:
     """
     Perform Monte Carlo improvement of an agent's policy within an environment via the REINFORCE policy gradient method.
@@ -47,6 +56,8 @@ def improve(
     :param v_S: Baseline state-value estimator, or None for no baseline.
     :param num_episodes_per_checkpoint: Number of episodes per checkpoint save.
     :param checkpoint_path: Checkpoint path. Must be provided if `num_episodes_per_checkpoint` is provided.
+    :param training_pool_directory: Path to directory in which to store pooled training runs.
+    :param training_pool_batch_size: Number of episodes per training pool batch.
     :return: Final checkpoint path, or None if checkpoints were not saved.
     """
 
@@ -55,6 +66,22 @@ def improve(
 
     if checkpoint_path is not None:
         checkpoint_path = os.path.expanduser(checkpoint_path)
+
+    # prepare training pool
+    training_pool_path = None
+    has_training_pool_directory = training_pool_directory is not None
+    has_training_pool_batch_size = training_pool_batch_size is not None
+    if has_training_pool_directory != has_training_pool_batch_size:
+        raise ValueError('Both training pool directory and batch size must be provided, or neither.')
+    elif has_training_pool_directory:
+        training_pool_directory = os.path.expanduser(training_pool_directory)
+        if os.path.exists(training_pool_directory):
+            if len(os.listdir(training_pool_directory)) > 0:
+                raise ValueError(f'Training pool directory must be empty:  {training_pool_directory}')
+        else:
+            os.mkdir(training_pool_directory)
+
+        training_pool_path = tempfile.NamedTemporaryFile(dir=training_pool_directory, delete=False).name
 
     state_value_plot = None
     if plot_state_value and v_S is not None:
@@ -105,8 +132,8 @@ def improve(
 
             g = agent.gamma * g + reward.r
 
-            # if we're doing every-visit, or if the current time step was the first visit to the state-action, then g
-            # is the discounted sample value. use it to update the policy.
+            # if we're doing every-visit, or if the current time step was the first visit to the state-action, then g is
+            # the discounted sample value. use it to update the policy.
             if state_action_first_t is None or state_action_first_t[state_a] == t:
 
                 state, a = state_a
@@ -128,7 +155,9 @@ def improve(
         policy.commit_updates()
         episode_reward_averager.update(total_reward)
 
-        if num_episodes_per_checkpoint is not None and episode_i % num_episodes_per_checkpoint == 0:
+        episodes_finished = episode_i + 1
+
+        if num_episodes_per_checkpoint is not None and episodes_finished % num_episodes_per_checkpoint == 0:
 
             resume_args = {
                 'agent': agent,
@@ -140,7 +169,9 @@ def improve(
                 'plot_state_value': plot_state_value,
                 'v_S': v_S,
                 'num_episodes_per_checkpoint': num_episodes_per_checkpoint,
-                'checkpoint_path': checkpoint_path
+                'checkpoint_path': checkpoint_path,
+                'training_pool_directory': training_pool_directory,
+                'training_pool_batch_size': training_pool_batch_size
             }
 
             checkpoint_path_with_index = insert_index_into_path(checkpoint_path, episode_i)
@@ -148,9 +179,54 @@ def improve(
             with open(checkpoint_path_with_index, 'wb') as checkpoint_file:
                 pickle.dump(resume_args, checkpoint_file)
 
-        episodes_finished = episode_i + 1
         if episodes_finished % episodes_per_print == 0:
             logging.info(f'Finished {episodes_finished} of {num_episodes} episode(s).')
+
+        if has_training_pool_batch_size and episodes_finished % training_pool_batch_size == 0:
+
+            # update training pool
+            try:
+                with open(training_pool_path, 'wb') as training_pool_file:
+                    pickle.dump((agent, policy, v_S, episode_reward_averager), training_pool_file)
+            except Exception:
+                pass
+
+            # scan training pool for a better agent
+            best_pool_agent = None
+            best_pool_policy = None
+            best_pool_v_S = None
+            best_pool_reward_averager = None
+            for training_pool_filename in os.listdir(training_pool_directory):
+
+                try:
+                    with open(os.path.join(training_pool_directory, training_pool_filename), 'rb') as f:
+                        (
+                            pool_agent,
+                            pool_policy,
+                            pool_v_S,
+                            pool_reward_averager
+                        ) = pickle.load(f)
+
+                    if best_pool_reward_averager is None or pool_reward_averager.average > best_pool_reward_averager.average:
+                        (
+                            best_pool_agent,
+                            best_pool_policy,
+                            best_pool_v_S,
+                            best_pool_reward_averager
+                        ) = (pool_agent, pool_policy, pool_v_S, pool_reward_averager)
+                except Exception:
+                    pass
+
+            if best_pool_agent is not None and best_pool_reward_averager.average > episode_reward_averager.average:
+                logging.info(f'Found a better agent in the training pool, with average reward of {best_pool_reward_averager.average:.1f} versus the current reward of {episode_reward_averager.average:.1f}.')
+                agent = best_pool_agent
+                policy = best_pool_policy
+                v_S = best_pool_v_S
+                episode_reward_averager = best_pool_reward_averager
+
+                # set the environment reference in continuous-action policies, as we don't pickle it.
+                if isinstance(agent.pi, ContinuousActionPolicy):
+                    agent.pi.environment = environment
 
     logging.info(f'Completed optimization. Average reward per episode:  {episode_reward_averager.get_value()}')
 

@@ -261,7 +261,7 @@ class ApproximateStateValueEstimator(StateValueEstimator):
 
         self.experience_states: List[MdpState] = []
         self.experience_values: List[float] = []
-        self.weights: np.ndarray = None
+        self.weights: Optional[np.ndarray] = None
         self.experience_pending: bool = False
 
     def __getitem__(
