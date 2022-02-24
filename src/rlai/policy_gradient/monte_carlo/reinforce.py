@@ -188,7 +188,7 @@ def improve(
             try:
                 with open(training_pool_path, 'wb') as training_pool_file:
                     pickle.dump((agent, policy, v_S, episode_reward_averager), training_pool_file)
-            except:
+            except Exception:
                 pass
 
             # scan training pool for a better agent
@@ -214,7 +214,7 @@ def improve(
                             best_pool_v_S,
                             best_pool_reward_averager
                         ) = (pool_agent, pool_policy, pool_v_S, pool_reward_averager)
-                except:
+                except Exception:
                     pass
 
             if best_pool_agent is not None and best_pool_reward_averager.average > episode_reward_averager.average:
