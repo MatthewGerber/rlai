@@ -75,10 +75,7 @@ def improve(
         raise ValueError('Both training pool directory and batch size must be provided, or neither.')
     elif has_training_pool_directory:
         training_pool_directory = os.path.expanduser(training_pool_directory)
-        if os.path.exists(training_pool_directory):
-            if len(os.listdir(training_pool_directory)) > 0:
-                raise ValueError(f'Training pool directory must be empty:  {training_pool_directory}')
-        else:
+        if not os.path.exists(training_pool_directory):
             os.mkdir(training_pool_directory)
 
         training_pool_path = tempfile.NamedTemporaryFile(dir=training_pool_directory, delete=False).name
@@ -174,7 +171,7 @@ def improve(
                 'training_pool_batch_size': training_pool_batch_size
             }
 
-            checkpoint_path_with_index = insert_index_into_path(checkpoint_path, episode_i)
+            checkpoint_path_with_index = insert_index_into_path(checkpoint_path, episodes_finished)
             final_checkpoint_path = checkpoint_path_with_index
             with open(checkpoint_path_with_index, 'wb') as checkpoint_file:
                 pickle.dump(resume_args, checkpoint_file)
