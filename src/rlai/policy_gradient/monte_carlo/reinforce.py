@@ -183,7 +183,7 @@ def improve(
         if has_training_pool_batch_size and episodes_finished % training_pool_batch_size == 0:
 
             # update training pool if we improved the agent that we previously obtained from it
-            if training_pool_reward_average is not None and episode_reward_averager.average > training_pool_reward_average:
+            if training_pool_reward_average is None or episode_reward_averager.average > training_pool_reward_average:
                 try:
                     with open(training_pool_path, 'wb') as training_pool_file:
                         pickle.dump((agent, policy, v_S, episode_reward_averager), training_pool_file)
