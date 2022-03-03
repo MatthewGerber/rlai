@@ -225,7 +225,7 @@ def improve(
                     agent = best_pool_agent
                     policy = best_pool_policy
                     v_S = best_pool_v_S
-                    episode_reward_averager = IncrementalSampleAverager()
+                    episode_reward_averager = best_pool_reward_averager
 
                     # set the environment reference in continuous-action policies, as we don't pickle it.
                     if isinstance(agent.pi, ContinuousActionPolicy):
