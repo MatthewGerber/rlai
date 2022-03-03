@@ -88,7 +88,6 @@ def improve(
 
     episode_reward_averager = IncrementalSampleAverager()
     episodes_per_print = max(1, int(num_episodes * 0.05))
-    training_pool_reward_average = None
     final_checkpoint_path = None
     for episode_i in range(num_episodes):
 
@@ -182,13 +181,12 @@ def improve(
 
         if has_training_pool_batch_size and episodes_finished % training_pool_batch_size == 0:
 
-            # update training pool if we improved the agent that we previously obtained from it
-            if training_pool_reward_average is None or episode_reward_averager.average > training_pool_reward_average:
-                try:
-                    with open(training_pool_path, 'wb') as training_pool_file:
-                        pickle.dump((agent, policy, v_S, episode_reward_averager), training_pool_file)
-                except Exception:
-                    pass
+            # update training pool
+            try:
+                with open(training_pool_path, 'wb') as training_pool_file:
+                    pickle.dump((agent, policy, v_S, episode_reward_averager), training_pool_file)
+            except Exception:
+                pass
 
             # scan training pool for the best available agent
             best_pool_agent = None
@@ -196,7 +194,6 @@ def improve(
             best_pool_v_S = None
             best_pool_reward_averager = None
             for training_pool_filename in os.listdir(training_pool_directory):
-
                 try:
                     with open(os.path.join(training_pool_directory, training_pool_filename), 'rb') as f:
                         (
@@ -216,19 +213,25 @@ def improve(
                 except Exception:
                     pass
 
-            # become the best agent in the pool if it's better than we currently are
-            if best_pool_agent is not None and best_pool_reward_averager.average > episode_reward_averager.average:
+            if best_pool_agent is None:
+                logging.info('The training pool contained no agents.')
+            else:
 
-                logging.info(f'Found a better agent in the training pool, with average reward of {best_pool_reward_averager.average:.1f} versus the current reward of {episode_reward_averager.average:.1f}.')
-                agent = best_pool_agent
-                policy = best_pool_policy
-                v_S = best_pool_v_S
-                episode_reward_averager = IncrementalSampleAverager()
-                training_pool_reward_average = best_pool_reward_averager.average
+                logging.info(f'Best agent in the training pool has an average reward of {best_pool_reward_averager.average:.1f}, compared with the current reward of {episode_reward_averager.average:.1f}.')
 
-                # set the environment reference in continuous-action policies, as we don't pickle it.
-                if isinstance(agent.pi, ContinuousActionPolicy):
-                    agent.pi.environment = environment
+                # become the best agent in the pool if it's better than we currently are
+                if best_pool_reward_averager.average > episode_reward_averager.average:
+                    logging.info('Becoming the better agent.')
+                    agent = best_pool_agent
+                    policy = best_pool_policy
+                    v_S = best_pool_v_S
+                    episode_reward_averager = IncrementalSampleAverager()
+
+                    # set the environment reference in continuous-action policies, as we don't pickle it.
+                    if isinstance(agent.pi, ContinuousActionPolicy):
+                        agent.pi.environment = environment
+                else:
+                    logging.info('Staying with the current agent.')
 
     logging.info(f'Completed optimization. Average reward per episode:  {episode_reward_averager.get_value()}')
 
