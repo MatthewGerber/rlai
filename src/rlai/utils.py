@@ -101,11 +101,11 @@ class IncrementalSampleAverager:
         every call to `update` must provide a non-None value for `weight`.
         """
 
-        if alpha is not None and alpha <= 0:
-            raise ValueError('alpha must be > 0')
-
-        if alpha is not None and weighted:
-            raise ValueError('Cannot supply alpha and per-value weights.')
+        if alpha is not None:
+            if alpha <= 0:
+                raise ValueError('alpha must be > 0')
+            elif weighted:
+                raise ValueError('Cannot supply alpha and per-value weights.')
 
         self.initial_value = initial_value
         self.alpha = alpha

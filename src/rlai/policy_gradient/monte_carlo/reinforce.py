@@ -35,7 +35,8 @@ def improve(
         num_episodes_per_checkpoint: Optional[int] = None,
         checkpoint_path: Optional[str] = None,
         training_pool_directory: Optional[str] = None,
-        training_pool_batch_size: Optional[int] = None
+        training_pool_batch_size: Optional[int] = None,
+        return_averager_alpha: Optional[float] = None
 ) -> Optional[str]:
     """
     Perform Monte Carlo improvement of an agent's policy within an environment via the REINFORCE policy gradient method.
@@ -58,6 +59,7 @@ def improve(
     :param checkpoint_path: Checkpoint path. Must be provided if `num_episodes_per_checkpoint` is provided.
     :param training_pool_directory: Path to directory in which to store pooled training runs.
     :param training_pool_batch_size: Number of episodes per training pool batch.
+    :param return_averager_alpha: Step size to use in return averager, or None for standard average.
     :return: Final checkpoint path, or None if checkpoints were not saved.
     """
 
@@ -86,7 +88,7 @@ def improve(
 
     logging.info(f'Running Monte Carlo-based REINFORCE improvement for {num_episodes} episode(s).')
 
-    episode_reward_averager = IncrementalSampleAverager()
+    episode_return_averager = IncrementalSampleAverager(alpha=return_averager_alpha)
     episodes_per_print = max(1, int(num_episodes * 0.05))
     final_checkpoint_path = None
     for episode_i in range(num_episodes):
@@ -101,7 +103,6 @@ def improve(
         t = 0
         state_action_first_t = None if update_upon_every_visit else {}
         t_state_action_reward = []
-        total_reward = 0.0
         while not state.terminal and (environment.T is None or t < environment.T):
 
             a = agent.act(t)
@@ -116,7 +117,6 @@ def improve(
 
             next_state, next_reward = environment.advance(state, t, a, agent)
             t_state_action_reward.append((t, state_a, next_reward))
-            total_reward += next_reward.r
             state = next_state
             t += 1
 
@@ -124,7 +124,7 @@ def improve(
 
         # work backwards through the trace to calculate discounted returns. need to work backward in order for the value
         # of g at each time step t to be properly discounted.
-        g = 0
+        g = 0.0
         for i, (t, state_a, reward) in enumerate(reversed(t_state_action_reward)):
 
             g = agent.gamma * g + reward.r
@@ -150,7 +150,7 @@ def improve(
                 policy.append_update(a, state, alpha, target)
 
         policy.commit_updates()
-        episode_reward_averager.update(total_reward)
+        episode_return_averager.update(g)
 
         episodes_finished = episode_i + 1
 
@@ -184,7 +184,7 @@ def improve(
             # update training pool
             try:
                 with open(training_pool_path, 'wb') as training_pool_file:
-                    pickle.dump((agent, policy, v_S, episode_reward_averager), training_pool_file)
+                    pickle.dump((agent, policy, v_S, episode_return_averager), training_pool_file)
             except Exception:
                 pass
 
@@ -192,7 +192,7 @@ def improve(
             best_pool_agent = None
             best_pool_policy = None
             best_pool_v_S = None
-            best_pool_reward_averager = None
+            best_pool_return_averager = None
             for training_pool_filename in os.listdir(training_pool_directory):
                 try:
                     with open(os.path.join(training_pool_directory, training_pool_filename), 'rb') as f:
@@ -200,16 +200,16 @@ def improve(
                             pool_agent,
                             pool_policy,
                             pool_v_S,
-                            pool_reward_averager
+                            pool_return_averager
                         ) = pickle.load(f)
 
-                    if best_pool_reward_averager is None or pool_reward_averager.average > best_pool_reward_averager.average:
+                    if best_pool_return_averager is None or pool_return_averager.average > best_pool_return_averager.average:
                         (
                             best_pool_agent,
                             best_pool_policy,
                             best_pool_v_S,
-                            best_pool_reward_averager
-                        ) = (pool_agent, pool_policy, pool_v_S, pool_reward_averager)
+                            best_pool_return_averager
+                        ) = (pool_agent, pool_policy, pool_v_S, pool_return_averager)
                 except Exception:
                     pass
 
@@ -217,15 +217,15 @@ def improve(
                 logging.info('The training pool contained no agents.')
             else:
 
-                logging.info(f'Best agent in the training pool has an average reward of {best_pool_reward_averager.average:.1f}, compared with the current reward of {episode_reward_averager.average:.1f}.')
+                logging.info(f'Best agent in the training pool has an average return of {best_pool_return_averager.average:.1f}, compared with the current average return of {episode_return_averager.average:.1f}.')
 
                 # become the best agent in the pool if it's better than we currently are
-                if best_pool_reward_averager.average > episode_reward_averager.average:
+                if best_pool_return_averager.average > episode_return_averager.average:
                     logging.info('Becoming the better agent.')
                     agent = best_pool_agent
                     policy = best_pool_policy
                     v_S = best_pool_v_S
-                    episode_reward_averager = best_pool_reward_averager
+                    episode_return_averager = best_pool_return_averager
 
                     # set the environment reference in continuous-action policies, as we don't pickle it.
                     if isinstance(agent.pi, ContinuousActionPolicy):
@@ -233,6 +233,6 @@ def improve(
                 else:
                     logging.info('Staying with the current agent.')
 
-    logging.info(f'Completed optimization. Average reward per episode:  {episode_reward_averager.get_value()}')
+    logging.info(f'Completed optimization. Average return per episode:  {episode_return_averager.get_value()}')
 
     return final_checkpoint_path
