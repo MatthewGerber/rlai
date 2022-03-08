@@ -35,7 +35,9 @@ def improve(
         num_episodes_per_checkpoint: Optional[int] = None,
         checkpoint_path: Optional[str] = None,
         training_pool_directory: Optional[str] = None,
-        training_pool_batch_size: Optional[int] = None,
+        training_pool_subpool_size: Optional[int] = None,
+        training_pool_update_episodes: Optional[int] = None,
+        training_pool_epsilon: Optional[float] = None,
         return_averager_alpha: Optional[float] = None
 ) -> Optional[str]:
     """
@@ -58,7 +60,10 @@ def improve(
     :param num_episodes_per_checkpoint: Number of episodes per checkpoint save.
     :param checkpoint_path: Checkpoint path. Must be provided if `num_episodes_per_checkpoint` is provided.
     :param training_pool_directory: Path to directory in which to store pooled training runs.
-    :param training_pool_batch_size: Number of episodes per training pool batch.
+    :param training_pool_subpool_size: Size of the current optimizer's subpool.
+    :param training_pool_update_episodes: Number of episodes per training pool update.
+    :param training_pool_epsilon: Probability of selecting a random (rather than greedy) element from the training pool
+    when updating.
     :param return_averager_alpha: Step size to use in return averager, or None for standard average.
     :return: Final checkpoint path, or None if checkpoints were not saved.
     """
@@ -69,10 +74,10 @@ def improve(
     if checkpoint_path is not None:
         checkpoint_path = os.path.expanduser(checkpoint_path)
 
-    # prepare training pool
+    # prepare training pool. TODO:  build subpool
     training_pool_path = None
     has_training_pool_directory = training_pool_directory is not None
-    has_training_pool_batch_size = training_pool_batch_size is not None
+    has_training_pool_batch_size = training_pool_update_episodes is not None
     if has_training_pool_directory != has_training_pool_batch_size:
         raise ValueError('Both training pool directory and batch size must be provided, or neither.')
     elif has_training_pool_directory:
@@ -168,7 +173,7 @@ def improve(
                 'num_episodes_per_checkpoint': num_episodes_per_checkpoint,
                 'checkpoint_path': checkpoint_path,
                 'training_pool_directory': training_pool_directory,
-                'training_pool_batch_size': training_pool_batch_size
+                'training_pool_update_episodes': training_pool_update_episodes
             }
 
             checkpoint_path_with_index = insert_index_into_path(checkpoint_path, episodes_finished)
@@ -179,16 +184,16 @@ def improve(
         if episodes_finished % episodes_per_print == 0:
             logging.info(f'Finished {episodes_finished} of {num_episodes} episode(s).')
 
-        if has_training_pool_batch_size and episodes_finished % training_pool_batch_size == 0:
+        if has_training_pool_batch_size and episodes_finished % training_pool_update_episodes == 0:
 
-            # update training pool
+            # update training pool.  TODO:  update/trim subpool
             try:
                 with open(training_pool_path, 'wb') as training_pool_file:
                     pickle.dump((agent, policy, v_S, episode_return_averager), training_pool_file)
             except Exception:
                 pass
 
-            # scan training pool for the best available agent
+            # scan training pool for the best available agent.  TODO:  use epsilon
             best_pool_agent = None
             best_pool_policy = None
             best_pool_v_S = None
@@ -233,6 +238,6 @@ def improve(
                 else:
                     logging.info('Staying with the current agent.')
 
-    logging.info(f'Completed optimization. Average return per episode:  {episode_return_averager.get_value()}')
+    logging.info(f'Completed optimization. Average return per episode:  {episode_return_averager.average}')
 
     return final_checkpoint_path

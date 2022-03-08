@@ -403,9 +403,9 @@ def get_argument_parser_for_train_function(
     )
 
     filter_add_argument(
-        '--training-pool-batch-size',
+        '--training-pool-update-episodes',
         type=int,
-        help='Number of episodes per training pool batch.'
+        help='Number of episodes per training pool update.'
     )
 
     filter_add_argument(
