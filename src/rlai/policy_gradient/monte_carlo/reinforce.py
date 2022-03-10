@@ -8,6 +8,7 @@ from typing import Optional, List, Tuple
 
 import numpy as np
 from numpy.random import RandomState
+
 from rlai.agents.mdp import StochasticMdpAgent
 from rlai.environments.mdp import MdpEnvironment
 from rlai.meta import rl_text
@@ -86,8 +87,15 @@ def improve(
     elif has_training_pool_directory:
 
         training_pool_directory = os.path.expanduser(training_pool_directory)
-        if not os.path.exists(training_pool_directory):
-            os.mkdir(training_pool_directory)
+
+        # create training pool directory. there's a race condition with others in the pool, where another might create
+        # the directory between the time we check for it here and attempt to make it. calling mkdir when the directory
+        # exists will raise an exception.
+        try:
+            if not os.path.exists(training_pool_directory):
+                os.mkdir(training_pool_directory)
+        except Exception:
+            pass
 
         training_subpool_paths = [
             tempfile.NamedTemporaryFile(dir=training_pool_directory, delete=False).name
@@ -182,7 +190,8 @@ def improve(
                 'training_pool_directory': training_pool_directory,
                 'training_pool_subpool_size': training_pool_subpool_size,
                 'training_pool_update_episodes': training_pool_update_episodes,
-                'training_pool_epsilon': training_pool_epsilon
+                'training_pool_epsilon': training_pool_epsilon,
+                'return_averager_alpha': return_averager_alpha
             }
 
             checkpoint_path_with_index = insert_index_into_path(checkpoint_path, episodes_finished)
@@ -195,21 +204,23 @@ def improve(
 
         if has_training_pool_update_episodes and episodes_finished % training_pool_update_episodes == 0:
 
-            # update training subpool
+            # replace the worst agent in the subpool with the current agent. but only do this if the current agent's
+            # return is better. we don't want to make the subpool worse.
             try:
-                training_subpool_path = get_worst_training_subpool_path(training_subpool_paths)
-                with open(training_subpool_path, 'wb') as training_subpool_file:
-                    pickle.dump((agent, policy, v_S, episode_return_averager), training_subpool_file)
+                worst_subpool_path, worst_subpool_return = get_worst_training_subpool_path(training_subpool_paths)
+                if worst_subpool_return is None or episode_return_averager.average > worst_subpool_return:
+                    with open(worst_subpool_path, 'wb') as worst_subpool_file:
+                        pickle.dump((agent, policy, v_S, episode_return_averager), worst_subpool_file)
             except Exception:
                 pass
 
-            # read training pool
+            # select a new agent from the pool either greedily or randomly
             (
                 agent,
                 policy,
                 v_S,
                 episode_return_averager
-            ) = read_training_pool(training_pool_directory, training_pool_epsilon, random_state, environment)
+            ) = select_agent_from_training_pool(training_pool_directory, training_pool_epsilon, random_state, environment)
 
     logging.info(f'Completed optimization. Average return per episode:  {episode_return_averager.average}')
 
@@ -218,12 +229,12 @@ def improve(
 
 def get_worst_training_subpool_path(
         training_subpool_paths: List[str]
-) -> str:
+) -> Tuple[str, Optional[float]]:
     """
     Get the worst training subpool path.
 
     :param training_subpool_paths: Paths.
-    :return: Worst path.
+    :return: 2-tuple of the worst path and its average return (or None if the worst path did not contain an agent).
     """
 
     worst_training_subpool_path = None
@@ -240,33 +251,37 @@ def get_worst_training_subpool_path(
                 ) = pickle.load(f)
 
             if worst_average_return is None or return_averager.average < worst_average_return:
-                worst_average_return = return_averager.average
                 worst_training_subpool_path = training_subpool_path
+                worst_average_return = return_averager.average
 
-        # exception will be thrown if the file hasn't been written. always write such a file.
+        # exception will be thrown if the file hasn't yet been written with an agent. always use such a file.
         except Exception:
             worst_training_subpool_path = training_subpool_path
             break
 
-    return worst_training_subpool_path
+    return worst_training_subpool_path, worst_average_return
 
 
-def read_training_pool(
+def select_agent_from_training_pool(
         training_pool_directory: str,
         training_pool_epsilon: Optional[float],
         random_state: RandomState,
         environment: MdpEnvironment
 ) -> Optional[Tuple[StochasticMdpAgent, ParameterizedPolicy, StateValueEstimator, IncrementalSampleAverager]]:
     """
-    Read an entry from the training pool.
+    Select an agent from the training pool.
 
     :param training_pool_directory: Training pool directory.
-    :param training_pool_epsilon: Probability of picking a random entry from the pool, or None to never pick randomly.
+    :param training_pool_epsilon: Probability of selecting a random agent from the pool, or None to always select the
+    best agent.
     :param random_state: Random state.
     :param environment: Environment.
-    :return: Training pool path to read.
+    :return: 4-tuple of agent, policy, state-value estimator, and return averager.
     """
 
+    select_greedily = training_pool_epsilon is None or random_state.random() > training_pool_epsilon
+
+    # get agents in random order. we'll take the first if selecting randomly.
     training_pool_filenames = os.listdir(training_pool_directory)
     shuffle(training_pool_filenames, random_state.random)
 
@@ -275,7 +290,6 @@ def read_training_pool(
     selected_pool_policy = None
     selected_pool_v_S = None
     selected_pool_return_averager = None
-    select_greedily = training_pool_epsilon is None or random_state.random() >= training_pool_epsilon
     for training_pool_filename in training_pool_filenames:
         try:
 
@@ -304,7 +318,7 @@ def read_training_pool(
             if not select_greedily:
                 break
 
-        # might get exception if another process is writing the file
+        # might get exception if another process is writing the current agent
         except Exception:
             pass
 
