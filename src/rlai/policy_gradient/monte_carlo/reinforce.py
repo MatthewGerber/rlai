@@ -3,10 +3,11 @@ import os
 import pickle
 import tempfile
 import warnings
-from typing import Optional
+from random import shuffle
+from typing import Optional, List, Tuple
 
 import numpy as np
-
+from numpy.random import RandomState
 from rlai.agents.mdp import StochasticMdpAgent
 from rlai.environments.mdp import MdpEnvironment
 from rlai.meta import rl_text
@@ -74,18 +75,24 @@ def improve(
     if checkpoint_path is not None:
         checkpoint_path = os.path.expanduser(checkpoint_path)
 
-    # prepare training pool. TODO:  build subpool
-    training_pool_path = None
+    random_state = agent.random_state
+
+    # prepare training pool
+    training_subpool_paths = None
     has_training_pool_directory = training_pool_directory is not None
-    has_training_pool_batch_size = training_pool_update_episodes is not None
-    if has_training_pool_directory != has_training_pool_batch_size:
-        raise ValueError('Both training pool directory and batch size must be provided, or neither.')
+    has_training_pool_update_episodes = training_pool_update_episodes is not None
+    if has_training_pool_directory != has_training_pool_update_episodes:
+        raise ValueError('Both training pool directory and episodes must be provided, or neither.')
     elif has_training_pool_directory:
+
         training_pool_directory = os.path.expanduser(training_pool_directory)
         if not os.path.exists(training_pool_directory):
             os.mkdir(training_pool_directory)
 
-        training_pool_path = tempfile.NamedTemporaryFile(dir=training_pool_directory, delete=False).name
+        training_subpool_paths = [
+            tempfile.NamedTemporaryFile(dir=training_pool_directory, delete=False).name
+            for _ in range(training_pool_subpool_size)
+        ]
 
     state_value_plot = None
     if plot_state_value and v_S is not None:
@@ -173,7 +180,9 @@ def improve(
                 'num_episodes_per_checkpoint': num_episodes_per_checkpoint,
                 'checkpoint_path': checkpoint_path,
                 'training_pool_directory': training_pool_directory,
-                'training_pool_update_episodes': training_pool_update_episodes
+                'training_pool_subpool_size': training_pool_subpool_size,
+                'training_pool_update_episodes': training_pool_update_episodes,
+                'training_pool_epsilon': training_pool_epsilon
             }
 
             checkpoint_path_with_index = insert_index_into_path(checkpoint_path, episodes_finished)
@@ -184,60 +193,124 @@ def improve(
         if episodes_finished % episodes_per_print == 0:
             logging.info(f'Finished {episodes_finished} of {num_episodes} episode(s).')
 
-        if has_training_pool_batch_size and episodes_finished % training_pool_update_episodes == 0:
+        if has_training_pool_update_episodes and episodes_finished % training_pool_update_episodes == 0:
 
-            # update training pool.  TODO:  update/trim subpool
+            # update training subpool
             try:
-                with open(training_pool_path, 'wb') as training_pool_file:
-                    pickle.dump((agent, policy, v_S, episode_return_averager), training_pool_file)
+                training_subpool_path = get_worst_training_subpool_path(training_subpool_paths)
+                with open(training_subpool_path, 'wb') as training_subpool_file:
+                    pickle.dump((agent, policy, v_S, episode_return_averager), training_subpool_file)
             except Exception:
                 pass
 
-            # scan training pool for the best available agent.  TODO:  use epsilon
-            best_pool_agent = None
-            best_pool_policy = None
-            best_pool_v_S = None
-            best_pool_return_averager = None
-            for training_pool_filename in os.listdir(training_pool_directory):
-                try:
-                    with open(os.path.join(training_pool_directory, training_pool_filename), 'rb') as f:
-                        (
-                            pool_agent,
-                            pool_policy,
-                            pool_v_S,
-                            pool_return_averager
-                        ) = pickle.load(f)
-
-                    if best_pool_return_averager is None or pool_return_averager.average > best_pool_return_averager.average:
-                        (
-                            best_pool_agent,
-                            best_pool_policy,
-                            best_pool_v_S,
-                            best_pool_return_averager
-                        ) = (pool_agent, pool_policy, pool_v_S, pool_return_averager)
-                except Exception:
-                    pass
-
-            if best_pool_agent is None:
-                logging.info('The training pool contained no agents.')
-            else:
-
-                logging.info(f'Best agent in the training pool has an average return of {best_pool_return_averager.average:.1f}, compared with the current average return of {episode_return_averager.average:.1f}.')
-
-                # become the best agent in the pool if it's better than we currently are
-                if best_pool_return_averager.average > episode_return_averager.average:
-                    logging.info('Becoming the better agent.')
-                    agent = best_pool_agent
-                    policy = best_pool_policy
-                    v_S = best_pool_v_S
-                    episode_return_averager = best_pool_return_averager
-
-                    # set the environment reference in continuous-action policies, as we don't pickle it.
-                    if isinstance(agent.pi, ContinuousActionPolicy):
-                        agent.pi.environment = environment
-                else:
-                    logging.info('Staying with the current agent.')
+            # read training pool
+            (
+                agent,
+                policy,
+                v_S,
+                episode_return_averager
+            ) = read_training_pool(training_pool_directory, training_pool_epsilon, random_state, environment)
 
     logging.info(f'Completed optimization. Average return per episode:  {episode_return_averager.average}')
 
     return final_checkpoint_path
+
+
+def get_worst_training_subpool_path(
+        training_subpool_paths: List[str]
+) -> str:
+    """
+    Get the worst training subpool path.
+
+    :param training_subpool_paths: Paths.
+    :return: Worst path.
+    """
+
+    worst_training_subpool_path = None
+    worst_average_return = None
+    for training_subpool_path in training_subpool_paths:
+        try:
+
+            with open(training_subpool_path, 'rb') as f:
+                (
+                    _,
+                    _,
+                    _,
+                    return_averager
+                ) = pickle.load(f)
+
+            if worst_average_return is None or return_averager.average < worst_average_return:
+                worst_average_return = return_averager.average
+                worst_training_subpool_path = training_subpool_path
+
+        # exception will be thrown if the file hasn't been written. always write such a file.
+        except Exception:
+            worst_training_subpool_path = training_subpool_path
+            break
+
+    return worst_training_subpool_path
+
+
+def read_training_pool(
+        training_pool_directory: str,
+        training_pool_epsilon: Optional[float],
+        random_state: RandomState,
+        environment: MdpEnvironment
+) -> Optional[Tuple[StochasticMdpAgent, ParameterizedPolicy, StateValueEstimator, IncrementalSampleAverager]]:
+    """
+    Read an entry from the training pool.
+
+    :param training_pool_directory: Training pool directory.
+    :param training_pool_epsilon: Probability of picking a random entry from the pool, or None to never pick randomly.
+    :param random_state: Random state.
+    :param environment: Environment.
+    :return: Training pool path to read.
+    """
+
+    training_pool_filenames = os.listdir(training_pool_directory)
+    shuffle(training_pool_filenames, random_state.random)
+
+    # select an entry from the pool either greedily (based on average return) or randomly (for exploratioon).
+    selected_pool_agent = None
+    selected_pool_policy = None
+    selected_pool_v_S = None
+    selected_pool_return_averager = None
+    select_greedily = training_pool_epsilon is None or random_state.random() >= training_pool_epsilon
+    for training_pool_filename in training_pool_filenames:
+        try:
+
+            with open(os.path.join(training_pool_directory, training_pool_filename), 'rb') as f:
+                (
+                    pool_agent,
+                    pool_policy,
+                    pool_v_S,
+                    pool_return_averager
+                ) = pickle.load(f)
+
+            if selected_pool_return_averager is None or pool_return_averager.average > selected_pool_return_averager.average:
+
+                (
+                    selected_pool_agent,
+                    selected_pool_policy,
+                    selected_pool_v_S,
+                    selected_pool_return_averager
+                ) = (pool_agent, pool_policy, pool_v_S, pool_return_averager)
+
+                # set the environment reference in continuous-action policies, as we don't pickle it.
+                if isinstance(selected_pool_agent.pi, ContinuousActionPolicy):
+                    selected_pool_agent.pi.environment = environment
+
+            # take the first (random) entry if we're not selecting greedily
+            if not select_greedily:
+                break
+
+        # might get exception if another process is writing the file
+        except Exception:
+            pass
+
+    if selected_pool_agent is None:
+        logging.info('The training pool contained no agents.')
+    else:
+        logging.info(f'Selected agent {"greedily" if select_greedily else "randomly"} from the training pool with an average return of {selected_pool_return_averager.average:.1f}.')
+
+    return selected_pool_agent, selected_pool_policy, selected_pool_v_S, selected_pool_return_averager

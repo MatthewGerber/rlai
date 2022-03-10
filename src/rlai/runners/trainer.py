@@ -403,9 +403,21 @@ def get_argument_parser_for_train_function(
     )
 
     filter_add_argument(
+        '--training-pool-subpool-size',
+        type=int,
+        help='Size of training subpool.n'
+    )
+
+    filter_add_argument(
         '--training-pool-update-episodes',
         type=int,
         help='Number of episodes per training pool update.'
+    )
+
+    filter_add_argument(
+        '--training-pool-epsilon',
+        type=float,
+        help='Probability of selecting randomly from the training pool.'
     )
 
     filter_add_argument(
