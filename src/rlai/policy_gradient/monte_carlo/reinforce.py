@@ -3,6 +3,7 @@ import os
 import pickle
 import tempfile
 import warnings
+from datetime import datetime
 from random import shuffle
 from typing import Optional, List, Tuple
 
@@ -279,13 +280,14 @@ def select_agent_from_training_pool(
     :return: 4-tuple of agent, policy, state-value estimator, and return averager.
     """
 
-    select_greedily = training_pool_epsilon is None or random_state.random() > training_pool_epsilon
+    select_greedily = training_pool_epsilon is None or random_state.random() >= training_pool_epsilon
 
     # get agents in random order. we'll take the first if selecting randomly.
     training_pool_filenames = os.listdir(training_pool_directory)
     shuffle(training_pool_filenames, random_state.random)
 
-    # select an entry from the pool either greedily (based on average return) or randomly (for exploratioon).
+    # select an entry from the pool either greedily (based on average return) or randomly (for exploration).
+    scan_start_datetime = datetime.now()
     selected_pool_agent = None
     selected_pool_policy = None
     selected_pool_v_S = None
@@ -321,6 +323,8 @@ def select_agent_from_training_pool(
         # might get exception if another process is writing the current agent
         except Exception:
             pass
+
+    logging.info(f'Scanned training pool in {(datetime.now() - scan_start_datetime).total_seconds():.1f} seconds.')
 
     if selected_pool_agent is None:
         logging.info('The training pool contained no agents.')
