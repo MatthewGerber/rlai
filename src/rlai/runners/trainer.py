@@ -409,15 +409,15 @@ def get_argument_parser_for_train_function(
     )
 
     filter_add_argument(
-        '--training-pool-update-episodes',
+        '--training-pool-iterate-episodes',
         type=int,
-        help='Number of episodes per training pool update.'
+        help='Number of episodes per training pool iteration.'
     )
 
     filter_add_argument(
-        '--return-averager-alpha',
-        type=float,
-        help='Step size to use in return averager, or ignore for standard average.'
+        '--training-pool-evaluate-episodes',
+        type=int,
+        help='Number of episodes to evaluate the agent when iterating the training pool.'
     )
 
     return argument_parser

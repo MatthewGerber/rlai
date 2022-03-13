@@ -4,6 +4,7 @@ import pickle
 import tempfile
 import time
 import warnings
+from datetime import datetime, timedelta
 from os.path import join
 from typing import Optional, Tuple
 
@@ -38,8 +39,8 @@ def improve(
         checkpoint_path: Optional[str] = None,
         training_pool_directory: Optional[str] = None,
         training_pool_count: Optional[int] = None,
-        training_pool_update_episodes: Optional[int] = None,
-        return_averager_alpha: Optional[float] = None
+        training_pool_iterate_episodes: Optional[int] = None,
+        training_pool_evaluate_episodes: Optional[int] = None
 ) -> Optional[str]:
     """
     Perform Monte Carlo improvement of an agent's policy within an environment via the REINFORCE policy gradient method.
@@ -62,8 +63,8 @@ def improve(
     :param checkpoint_path: Checkpoint path. Must be provided if `num_episodes_per_checkpoint` is provided.
     :param training_pool_directory: Path to directory in which to store pooled training runs.
     :param training_pool_count: Number of runners in the training pool.
-    :param training_pool_update_episodes: Number of episodes per training pool update.
-    :param return_averager_alpha: Step size to use in return averager, or None for standard average.
+    :param training_pool_iterate_episodes: Number of episodes per training pool iteration.
+    :param training_pool_evaluate_episodes: Number of episodes to evaluate the agent when iterating the training pool.
     :return: Final checkpoint path, or None if checkpoints were not saved.
     """
 
@@ -77,7 +78,7 @@ def improve(
     training_pool_path = None
     training_pool_iteration = None
     has_training_pool_directory = training_pool_directory is not None
-    has_training_pool_update_episodes = training_pool_update_episodes is not None
+    has_training_pool_update_episodes = training_pool_iterate_episodes is not None
     if has_training_pool_directory != has_training_pool_update_episodes:
         raise ValueError('Both training pool directory and episodes must be provided, or neither.')
     elif has_training_pool_directory:
@@ -102,8 +103,7 @@ def improve(
 
     logging.info(f'Running Monte Carlo-based REINFORCE improvement for {num_episodes} episode(s).')
 
-    episode_return_averager = IncrementalSampleAverager(alpha=return_averager_alpha)
-    episodes_per_print = max(1, int(num_episodes * 0.05))
+    start_timestamp = datetime.now()
     final_checkpoint_path = None
     for episode_i in range(num_episodes):
 
@@ -164,19 +164,40 @@ def improve(
                 policy.append_update(a, state, alpha, target)
 
         policy.commit_updates()
-        episode_return_averager.update(g)
         episodes_finished = episode_i + 1
 
-        if has_training_pool_update_episodes and episodes_finished % training_pool_update_episodes == 0:
+        if has_training_pool_update_episodes and episodes_finished % training_pool_iterate_episodes == 0:
 
+            # evaluate how good the current agent is
+            logging.info('Evaluating agent for training pool.')
+            evaluation_start_timestamp = datetime.now()
+            evaluation_averager = IncrementalSampleAverager()
+            for _ in range(training_pool_evaluate_episodes):
+                state = environment.reset_for_new_run(agent)
+                agent.reset_for_new_run(state)
+                total_reward = 0.0
+                t = 0
+                while not state.terminal and (environment.T is None or t < environment.T):
+                    a = agent.act(t)
+                    next_state, next_reward = environment.advance(state, t, a, agent)
+                    total_reward += next_reward.r
+                    state = next_state
+                    t += 1
+                    agent.sense(state, t)
+
+                evaluation_averager.update(total_reward)
+
+            logging.info(f'Evaluated agent in {(datetime.now() - evaluation_start_timestamp).total_seconds():.1f} seconds. Average total reward:  {evaluation_averager.average:.2f}')
+
+            # write to pool for current iteration
             with open(f'{training_pool_path}_{training_pool_iteration}', 'wb') as training_pool_file:
-                pickle.dump((agent, policy, v_S, episode_return_averager), training_pool_file)
+                pickle.dump((agent, policy, v_S, evaluation_averager.average), training_pool_file)
 
+            # select agent from current iteration
             (
                 agent,
                 policy,
-                v_S,
-                episode_return_averager
+                v_S
             ) = select_agent_from_training_pool(
                 training_pool_directory,
                 training_pool_count,
@@ -201,8 +222,8 @@ def improve(
                 'checkpoint_path': checkpoint_path,
                 'training_pool_directory': training_pool_directory,
                 'training_pool_count': training_pool_count,
-                'training_pool_update_episodes': training_pool_update_episodes,
-                'return_averager_alpha': return_averager_alpha
+                'training_pool_iterate_episodes': training_pool_iterate_episodes,
+                'training_pool_evaluate_episodes': training_pool_evaluate_episodes
             }
 
             checkpoint_path_with_index = insert_index_into_path(checkpoint_path, episodes_finished)
@@ -210,10 +231,12 @@ def improve(
             with open(checkpoint_path_with_index, 'wb') as checkpoint_file:
                 pickle.dump(resume_args, checkpoint_file)
 
-        if episodes_finished % episodes_per_print == 0:
-            logging.info(f'Finished {episodes_finished} of {num_episodes} episode(s).')
+        elapsed_minutes = (datetime.now() - start_timestamp).total_seconds() / 60.0
+        episodes_per_minute = episodes_finished / elapsed_minutes
+        estimated_completion_timestamp = start_timestamp + timedelta(minutes=(num_episodes / episodes_per_minute))
+        logging.info(f'Finished {episodes_finished} of {num_episodes} episode(s) @ {episodes_per_minute:.1f}/min. Estimated completion:  {estimated_completion_timestamp}.')
 
-    logging.info(f'Completed optimization. Average return per episode:  {episode_return_averager.average}')
+    logging.info('Completed optimization.')
 
     return final_checkpoint_path
 
@@ -223,7 +246,7 @@ def select_agent_from_training_pool(
         training_pool_count: int,
         training_pool_iteration: int,
         environment: MdpEnvironment
-) -> Optional[Tuple[StochasticMdpAgent, ParameterizedPolicy, StateValueEstimator, IncrementalSampleAverager]]:
+) -> Optional[Tuple[StochasticMdpAgent, ParameterizedPolicy, StateValueEstimator]]:
     """
     Select an agent from the training pool.
 
@@ -231,7 +254,7 @@ def select_agent_from_training_pool(
     :param training_pool_count: Training pool count.
     :param training_pool_iteration: Training pool iteration.
     :param environment: Environment.
-    :return: 4-tuple of agent, policy, state-value estimator, and return averager.
+    :return: 3-tuple of agent, policy, and state-value estimator.
     """
 
     # wait for all pickles to appear for the current iteration
@@ -250,26 +273,26 @@ def select_agent_from_training_pool(
         logging.info(f'Found {len(training_pool_pickles)} pickle(s).')
 
     # select best agent
-    selected_pool_agent = None
-    selected_pool_policy = None
-    selected_pool_v_S = None
-    selected_pool_return_averager = None
+    best_agent = None
+    best_policy = None
+    best_v_S = None
+    best_average_return = None
     for training_pool_pickle in training_pool_pickles:
 
-        _, _, _, pool_return_averager = training_pool_pickle
+        _, _, _, average_return = training_pool_pickle
 
-        if selected_pool_return_averager is None or pool_return_averager.average > selected_pool_return_averager.average:
+        if best_average_return is None or average_return > best_average_return:
 
             (
-                selected_pool_agent,
-                selected_pool_policy,
-                selected_pool_v_S,
-                selected_pool_return_averager
+                best_agent,
+                best_policy,
+                best_v_S,
+                best_average_return
             ) = training_pool_pickle
 
             # set the environment reference in continuous-action policies, as we don't pickle it.
-            if isinstance(selected_pool_agent.pi, ContinuousActionPolicy):
-                selected_pool_agent.pi.environment = environment
+            if isinstance(best_agent.pi, ContinuousActionPolicy):
+                best_agent.pi.environment = environment
 
     # delete pickles from the previous iteration
     for training_pool_filename in filter(lambda s: s.endswith(f'_{training_pool_iteration - 1}'), os.listdir(training_pool_directory)):
@@ -278,6 +301,6 @@ def select_agent_from_training_pool(
         except Exception:
             pass
 
-    logging.info(f'Selected agent for training pool iteration {training_pool_iteration} with an average return of {selected_pool_return_averager.average:.1f}.')
+    logging.info(f'Selected agent for training pool iteration {training_pool_iteration} with an average return of {best_average_return:.2f}.')
 
-    return selected_pool_agent, selected_pool_policy, selected_pool_v_S, selected_pool_return_averager
+    return best_agent, best_policy, best_v_S
