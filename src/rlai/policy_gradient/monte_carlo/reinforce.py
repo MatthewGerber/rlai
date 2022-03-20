@@ -74,7 +74,7 @@ def improve(
     if checkpoint_path is not None:
         checkpoint_path = os.path.expanduser(checkpoint_path)
 
-    # prepare training pool
+    # prepare training pool - TODO:  Retain policy with best evaluation across training pool iterations.
     use_training_pool = False
     training_pool_path = None
     training_pool_iteration = None
@@ -259,7 +259,7 @@ def iterate_training_pool(
     :return: 2-tuple of the new policy and state-value estimator.
     """
 
-    # evaluate the current agent without updating it
+    # evaluate the current agent without updating it - TODO:  Adaptive valuation based on return statistics.
     logging.info('Evaluating agent for training pool.')
     evaluation_start_timestamp = datetime.now()
     evaluation_averager = IncrementalSampleAverager()
