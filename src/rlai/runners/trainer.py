@@ -399,19 +399,25 @@ def get_argument_parser_for_train_function(
     filter_add_argument(
         '--training-pool-directory',
         type=str,
-        help='Training pool directory.'
+        help='Path to directory in which to store pooled training runs.'
     )
 
     filter_add_argument(
-        '--training-pool-batch-size',
+        '--training-pool-count',
         type=int,
-        help='Number of episodes per training pool batch.'
+        help='Number of runners in the training pool.'
     )
 
     filter_add_argument(
-        '--return-averager-alpha',
-        type=float,
-        help='Step size to use in return averager, or ignore for standard average.'
+        '--training-pool-iterate-episodes',
+        type=int,
+        help='Number of episodes per training pool iteration.'
+    )
+
+    filter_add_argument(
+        '--training-pool-evaluate-episodes',
+        type=int,
+        help='Number of episodes to evaluate the agent when iterating the training pool.'
     )
 
     return argument_parser

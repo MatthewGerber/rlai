@@ -3,7 +3,6 @@
 {:toc}
 
 # Introduction
-
 You can read more about this environment [here](https://gym.openai.com/envs/Swimmer-v2/). Many of the 
 issues involved in solving this environment are addressed in the 
 [continuous mountain car](mountain_car_continuous.md) and 
@@ -144,3 +143,6 @@ progress.
 This is the final agent, which shows coordinated actuation of the front and back joints.
 
 {% include youtubePlayer.html id="9a0jYLADr-c" %}
+
+The agent seems effective, but it took ~70,000 episodes and about 3 days of runtime to train. See 
+[here](mujoco_swimming_worm_pooled.md) for how I sped things up.
