@@ -1,3 +1,5 @@
+# -- UNDER CONSTRUCTION --
+
 # MuJoCo Swimming Worm (Pooled Processes)
 * Content
 {:toc}
@@ -8,8 +10,9 @@ It took ~70,000 training episodes and ~3 days of runtime to train the agent. Sev
 runtime:  policy dimensionality, learnings rates, the speed of simulation via `gym` and `mujoco-py`, and the speed of 
 JAX to calculate policy gradients. Instead of working to mitigate these issues, I was curious to explore the use of 
 multiple CPU cores during training. My first version linked above ran on a single CPU core. The question is, how should 
-multiple CPU cores be leveraged? I am certain that this question had been answered many times in many ways, but as usual 
-with my RLAI work I wanted to find an answer without skipping ahead to known solutions.
+multiple CPU cores be leveraged? I was certain that this question had been answered many times in many ways, and it is 
+likely that CPU cores far underperform GPU pipelines. However, CPU cores are a natural progression, and I've got no real 
+purpose here except to enjoy the progression.
 
 # Concept
 I tried several approaches that did not work.
@@ -47,12 +50,41 @@ Two things gradually became clear:
    ![branch-and-merge-with-eval](mujoco_worm_branch_and_merge_with_eval.png)
 
 # Implementation
+The implementation relies on process-level parallelization of RLAI optimizers. Each process is provided with arguments
+specifying a shared directory in which the independent processes are expected to deposit their resulting agents and 
+associated performance metrics. The processes are synchronized by their expectation of how many such deposits will 
+arrive, and when these expectations are met each process evaluates all deposited agents to select the best in the 
+exploration pool. As shown below, this approach affords the flexibility to parameterize the processes differently 
+(e.g., with different learning rates).
 
 # Training
+See [here](XXXX) for the complete shell scrip that invokes RLAI with process pooling. Key differences between the 
+[single-process](mujoco_swimming_worm.md) and the multi-process RLAI invocations used here are listed below:
+
+### Shell Variables
+* `num_runners=10`:  Use 10 independent RLAI processes.
+* `eta_values=(0.0001 0.001 0.001 0.001 0.001 0.001 0.001 0.001 0.001 0.001)`:  Per-process learning rates for baseline 
+  state-value estimator.  
+* `alpha_values=(0.00001 0.0001 0.0001 0.0001 0.0001 0.0001 0.0001 0.0001 0.0001 0.0001)`:  Per-process step sizes for
+  policy gradient updates.
+  
+### RLAI Arguments
+* `--random-seed "1234${n}"`:  Per-process random seeds, which need to be different to ensure effective exploration.
+* `--alpha "${alpha_values[$n]}"`:  See above.
+* `--training-pool-directory ~/Desktop/swimmer_pool`:  Directory into which per-process agents will be deposited after 
+  evaluation.
+* `--training-pool-count ${num_runners}`:  Number of processes. 
+* `--training-pool-iterate-episodes 10`:  Number of REINFORCE episodes to run with policy gradient updates, prior to 
+  evaluation.
+* `--training-pool-evaluate-episodes 10`:  Number of evaluation episodes to run with the agent without modifying its 
+  policy. The average score resulting from this evaluation is used to compare the agent with others in the pool, once 
+  all processes have finished their training and evaluation episodes.
 
 # Results
+Training took 2.45 minutes per pool iteration for 400 iterations, which gives a total runtime of ~16 hours. This is a 
+78% reduction compared with the [single-process](mujoco_swimming_worm.md) approach, which had a runtime of ~72 hours.
+Furthermore, the agent here is far more effective in terms of distance traveled. The resulting agent is shown below:
 
-2.45 minutes per pool iteration for 400 iterations gives a total runtime of ~16 hours. This is a 78% reduction compared 
-with the previous attempt's runtime of ~72 hours.
+{% include youtubePlayer.html id="_DNQvMaVh_M" %}
 
 ![results](mujoco_worm_pooled.png)
