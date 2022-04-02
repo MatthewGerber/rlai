@@ -58,7 +58,8 @@ exploration pool. As shown below, this approach affords the flexibility to param
 (e.g., with different learning rates).
 
 # Training
-See [here](XXXX) for the complete shell scrip that invokes RLAI with process pooling. Key differences between the 
+See [here](https://github.com/MatthewGerber/rlai/blob/master/trained_agents/swimmer/pooled/swimmer_pool.sh) for the 
+complete shell script that invokes RLAI with process pooling. Key differences between the 
 [single-process](mujoco_swimming_worm.md) and the multi-process RLAI invocations used here are listed below:
 
 ### Shell Variables

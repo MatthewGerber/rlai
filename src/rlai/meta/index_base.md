@@ -81,6 +81,8 @@ increasing complexity:
 * [Mountain Car with Continuous Control](case_studies/mountain_car_continuous.md)
 * [Lunar Lander with Continuous Control](case_studies/lunar_lander_continuous.md)
 * [MuJoCo Swimming Worm with Continuous Control](case_studies/mujoco_swimming_worm.md)
+  * A follow-up using [process-level parallelization](case_studies/mujoco_swimming_worm_pooled.md) for faster, better 
+    results.
 
 ## Robocode
 [Robocode](https://github.com/robo-code/robocode) is a simulation-based robotic combat programming game with a 
