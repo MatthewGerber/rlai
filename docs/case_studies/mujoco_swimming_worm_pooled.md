@@ -18,11 +18,16 @@ purpose here except to enjoy the progression.
 I tried several approaches that did not work.
 
 1. I had each process/core work on its own subpool of agents, and periodically the processes would exchange their best
-   known agents with each other. However, maintaining more agents than available CPU cores turned out to be a bad idea, 
-   since any work on a suboptimal agent in a subpool was a distraction from improving the best agent in the subpool.
-1. I then compounded the previous bad idea by introducing a low (epsilon) probability of a subpool process selecting -- 
-   not the best agent from other pools -- but a random agent from across all subpools. This just slowed things down even
-   further.
+   known agents with each other. This is depicted below:
+   ![subpools](swimming-worm-figs/subpools.png)
+   In this example, each of three processes works on a set of five agents, spending a fixed number of episodes improving 
+   each agent. After each subpool has been improved, the best agent among all (i.e., `1-3`) takes the place of the worst 
+   agents in the other pools (i.e., `2-4` and `3-5`). However, maintaining more agents than available CPU cores 
+   performed poorly, since any work on a suboptimal agent in a subpool was a distraction from improving the best overall
+   agent in the population.
+1. I then compounded the previous poor performance by introducing a low (epsilon) probability of a subpool process 
+   selecting -- not the best agent from other pools -- but a random agent from across all subpools. This slowed things 
+   down even further.
 1. ...
 1. ... (I tried several variations on the above ideas without success.)
 1. ...
@@ -31,23 +36,18 @@ Two things gradually became clear:
 
 1. Each process should attempt to improve the best known agent for a short amount of time. That is, the picture should 
    look as follows:
-   ![branch-and-merge](mujoco_worm_branch_and_merge.png)
-   In the above figure, the training pool always starts from the best known agent, improves the policies for a few 
-   episodes, and then reselects the best known agent for the next training pool iteration. Each process in the pool is
+   ![branch-and-merge](swimming-worm-figs/final_pools.png)
+   In the above figure, the training pool of `1-1`, `1-2`, and `1-3` originates with the same agent `1`, which is the 
+   initial (random) agent here but is generally the best agent thus far. Each of three processes independently improves 
+   this agent for a few episodes (here 10) resulting in `1-1'`, `1-2'`, and `1-3'`. Each process in the pool is 
    exploring independently by sampling the beta distributions that underlie its policy. Thus, a larger training pool 
-   will provide more efficient exploration. This was a big improvement over my previous approaches. Learning was quicker
-   and the policies were notably more effective. 
-1. The policy selection at the end of each iteration seemed haphazard. I don't have quantitative evidence for this, but 
-   it felt like policies were being selected on the basis of noise rather than a strong signal about their 
-   effectiveness. A policy would be selected and then perform poorly in the next iteration of the training pool. It 
-   occurred to me that two things were wrong. First, I was using the sum of rewards during the final training pool 
-   episode to rank the policies for selection; however, because each policy is updated at the end of each training pool
-   episode, the episode's rewards never corresponded exactly to the new policy. They were always out of step. I needed
-   a performance metric with good correspondence to the policy, which immediately suggested running the policy in the
-   environment without updating the policy. Because a single run would likely be noisy, I introduced an evaluation 
-   phase in which the policies coming out of the training pool iteration would be run for several episodes to obtain a
-   reliable performance metric for each. The final concept is shown below:
-   ![branch-and-merge-with-eval](mujoco_worm_branch_and_merge_with_eval.png)
+   provides more efficient exploration.
+1. If `1-1'`, `1-2'`, and `1-3'` are all we have, then it's not entirely clear how we should proceed. Each updated agent
+   on the trajectory from `1-1` to `1-1'` corresponds to a different REINFORCE epioode, and these intermediate rewards 
+   do not comment purely on the goodness of `1-1'`. Thus, I introduced an evaluation phase in which `1-1'`, `1-2'`, and 
+   `1-3'` are run for several episodes without learning updates to obtain an average reward. These average rewards 
+   determine which agent in the pool is promoted to the next iteration (`1-3'` in the above example), and then the 
+   procedure repeats.
 
 # Implementation
 The implementation relies on process-level parallelization of RLAI optimizers. Each process is provided with arguments
