@@ -4,7 +4,7 @@
 Modes of temporal-difference evaluation:  SARSA (on-policy), Q-Learning (off-policy), and Expected SARSA
     (off-policy).
 ```
-### [rlai.gpi.temporal_difference.evaluation.evaluate_q_pi](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/temporal_difference/evaluation.py#L35)
+### [rlai.gpi.temporal_difference.evaluation.evaluate_q_pi](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/temporal_difference/evaluation.py#L36)
 ```
 Perform temporal-difference (TD) evaluation of an agent's policy within an environment, returning state-action
     values. This evaluation function implements both on-policy TD learning (SARSA) as well as off-policy TD learning
@@ -25,7 +25,7 @@ Perform temporal-difference (TD) evaluation of an agent's policy within an envir
     :return: 2-tuple of (1) set of only those states that were evaluated, and (2) the average reward obtained per
     episode.
 ```
-### [rlai.gpi.temporal_difference.iteration.iterate_value_q_pi](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/temporal_difference/iteration.py#L19)
+### [rlai.gpi.temporal_difference.iteration.iterate_value_q_pi](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/temporal_difference/iteration.py#L20)
 ```
 Run temporal-difference value iteration on an agent using state-action value estimates.
 

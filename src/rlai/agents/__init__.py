@@ -133,7 +133,7 @@ class Agent(ABC):
     def __init__(
             self,
             name: str,
-            random_state: RandomState,
+            random_state: RandomState
     ):
         """
         Initialize the agent.
@@ -243,7 +243,7 @@ class Human(Agent):
 
         super().__init__(
             name='human',
-            random_state=None
+            random_state=RandomState(12345)
         )
 
         # TODO:  This is a hack to make the human agent compatible with tabular methods, which request state

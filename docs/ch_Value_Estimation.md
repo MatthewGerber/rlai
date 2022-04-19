@@ -1,13 +1,13 @@
 # Value Estimation
-### [rlai.q_S_A.ActionValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/q_S_A.py#L62)
+### [rlai.q_S_A.ActionValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/q_S_A/__init__.py#L62)
 ```
 Action value estimator.
 ```
-### [rlai.q_S_A.StateActionValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/q_S_A.py#L113)
+### [rlai.q_S_A.StateActionValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/q_S_A/__init__.py#L113)
 ```
 State-action value estimator.
 ```
-### [rlai.q_S_A.ValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/q_S_A.py#L21)
+### [rlai.q_S_A.ValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/q_S_A/__init__.py#L21)
 ```
 Value estimator.
 ```
@@ -23,11 +23,11 @@ Tabular state-action value estimator.
 ```
 Tabular value estimator.
 ```
-### [rlai.v_S.StateValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/v_S.py#L55)
+### [rlai.v_S.StateValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/v_S/__init__.py#L55)
 ```
 State-value estimator.
 ```
-### [rlai.v_S.ValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/v_S.py#L14)
+### [rlai.v_S.ValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/v_S/__init__.py#L14)
 ```
 Value estimator.
 ```

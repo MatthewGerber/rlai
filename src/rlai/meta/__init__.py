@@ -4,6 +4,8 @@ import os
 import pkgutil
 from typing import Set, Dict, List, Union, Callable, Any
 
+import requests
+
 import rlai
 
 
@@ -74,11 +76,29 @@ def summarize(
                         if page not in chapter_page_descriptions[chapter]:
                             chapter_page_descriptions[chapter][page] = []
 
-                        line_no = inspect.findsource(attribute)[1] + 1
-                        src_path = f'{repo_src_url}{full_path.replace(".", "/").rsplit("/", maxsplit=1)[0]}.py#L{line_no}'
-                        chapter_page_descriptions[chapter][page].append(f'### [{full_path}]({src_path})\n```\n{attribute.__doc__.strip()}\n```\n')
+                        # inspect is unpredictable, in that it sometimes returns the correct line and sometimes returns
+                        # the line previous to the line with the attribute. check each.
+                        src_lines, line_no = inspect.findsource(attribute)
+                        if attribute.__name__ not in src_lines[line_no]:
+                            if attribute.__name__ in src_lines[line_no + 1]:
+                                line_no = line_no + 1
+                            else:
+                                raise ValueError('Attribute name not found on src lines.')
 
-                        paths_summarized.add(full_path)
+                        # inspect returns 0-based line number of decorator. move to next 1-based line for url.
+                        line_no += 1
+
+                        relative_url_filepath = full_path.replace(".", "/").rsplit("/", maxsplit=1)[0]
+                        if module.__file__.endswith('__init__.py'):
+                            relative_url_filepath = f'{relative_url_filepath}/__init__'
+
+                        src_url = f'{repo_src_url}{relative_url_filepath}.py#L{line_no}'
+                        response = requests.get(src_url)
+                        if response.status_code == 200:
+                            chapter_page_descriptions[chapter][page].append(f'### [{full_path}]({src_url})\n```\n{attribute.__doc__.strip()}\n```\n')
+                            paths_summarized.add(full_path)
+                        else:
+                            print(f'Invalid URL:  {src_url}')
 
         if module_is_pkg:
             summarize(module, chapter_page_descriptions, paths_summarized)

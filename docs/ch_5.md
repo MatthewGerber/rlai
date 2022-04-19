@@ -1,5 +1,5 @@
 # Chapter 5:  Monte Carlo Methods
-### [rlai.gpi.monte_carlo.evaluation.evaluate_v_pi](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/monte_carlo/evaluation.py#L12)
+### [rlai.gpi.monte_carlo.evaluation.evaluate_v_pi](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/monte_carlo/evaluation.py#L13)
 ```
 Perform Monte Carlo evaluation of an agent's policy within an environment, returning state values. Uses a random
     action on the first time step to maintain exploration (exploring starts). This evaluation approach is only
@@ -13,7 +13,7 @@ Perform Monte Carlo evaluation of an agent's policy within an environment, retur
     :param num_episodes: Number of episodes to execute.
     :return: Dictionary of MDP states and their estimated values under the agent's policy.
 ```
-### [rlai.gpi.monte_carlo.evaluation.evaluate_q_pi](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/monte_carlo/evaluation.py#L94)
+### [rlai.gpi.monte_carlo.evaluation.evaluate_q_pi](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/monte_carlo/evaluation.py#L95)
 ```
 Perform Monte Carlo evaluation of an agent's policy within an environment, returning state-action values. This
     evaluation function operates over rewards obtained at the end of episodes, so it is only appropriate for episodic
@@ -37,7 +37,7 @@ Perform Monte Carlo evaluation of an agent's policy within an environment, retur
     :return: 2-tuple of (1) set of only those states that were evaluated, and (2) the average reward obtained per
     episode.
 ```
-### [rlai.gpi.monte_carlo.iteration.iterate_value_q_pi](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/monte_carlo/iteration.py#L20)
+### [rlai.gpi.monte_carlo.iteration.iterate_value_q_pi](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/monte_carlo/iteration.py#L21)
 ```
 Run Monte Carlo value iteration on an agent using state-action value estimates. This iteration function operates
     over rewards obtained at the end of episodes, so it is only appropriate for episodic tasks.

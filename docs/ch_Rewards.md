@@ -7,7 +7,7 @@ Robocode reward.
 ```
 Robocode reward.
 ```
-### [rlai.rewards.Reward](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/rewards.py#L7)
+### [rlai.rewards.Reward](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/rewards/__init__.py#L7)
 ```
 Reward.
 ```

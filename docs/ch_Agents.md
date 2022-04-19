@@ -1,9 +1,9 @@
 # Agents
-### [rlai.agents.Agent](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/agents.py#L17)
+### [rlai.agents.Agent](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/agents/__init__.py#L17)
 ```
 Base class for all agents.
 ```
-### [rlai.agents.Human](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/agents.py#L167)
+### [rlai.agents.Human](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/agents/__init__.py#L167)
 ```
 An interactive, human-driven agent that prompts for actions at each time step.
 ```

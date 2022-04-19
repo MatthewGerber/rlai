@@ -15,7 +15,7 @@ State of Robocode battle.
 ```
 State of Robocode battle.
 ```
-### [rlai.states.State](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/states.py#L8)
+### [rlai.states.State](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/states/__init__.py#L8)
 ```
 State.
 ```

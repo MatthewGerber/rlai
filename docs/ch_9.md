@@ -1,5 +1,5 @@
 # Chapter 9:  On-policy Prediction with Approximation
-### [rlai.models.FunctionApproximationModel](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/models.py#L13)
+### [rlai.models.FunctionApproximationModel](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/models/__init__.py#L13)
 ```
 Function approximation model.
 ```
@@ -7,7 +7,7 @@ Function approximation model.
 ```
 Feature extractor.
 ```
-### [rlai.q_S_A.function_approximation.models.FunctionApproximationModel](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/q_S_A/function_approximation/models.py#L20)
+### [rlai.q_S_A.function_approximation.models.FunctionApproximationModel](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/q_S_A/function_approximation/models/__init__.py#L20)
 ```
 Function approximation model.
 ```
