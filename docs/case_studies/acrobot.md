@@ -1,6 +1,4 @@
 [Home](../index.md) -> Acrobot
-
-Content
 * {:toc}
   
 # Introduction
