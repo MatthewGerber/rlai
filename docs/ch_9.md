@@ -1,3 +1,5 @@
+[Home](index.md)
+
 # Chapter 9:  On-policy Prediction with Approximation
 ### [rlai.models.FunctionApproximationModel](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/models/__init__.py#L13)
 ```

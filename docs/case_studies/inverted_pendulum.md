@@ -1,3 +1,5 @@
+[Home](../index.md)
+
 # Inverted Pendulum
 * Content
 {:toc}

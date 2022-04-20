@@ -1,3 +1,5 @@
+[Home](index.md)
+
 # Value Estimation
 ### [rlai.q_S_A.ActionValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/q_S_A/__init__.py#L62)
 ```
@@ -46,8 +48,4 @@ Approximate value estimator.
 ### [rlai.v_S.function_approximation.estimators.ApproximateStateValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/v_S/function_approximation/estimators.py#L65)
 ```
 Approximate state-value estimator.
-```
-### [rlai.v_S.function_approximation.estimators.ApproximateValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/v_S/function_approximation/estimators.py#L17)
-```
-Approximate value estimator.
 ```

@@ -1,3 +1,5 @@
+[Home](../index.md)
+
 # Mountain Car with Continuous Control
 * Content
 {:toc}

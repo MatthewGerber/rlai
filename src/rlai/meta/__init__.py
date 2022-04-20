@@ -143,13 +143,13 @@ def main():
 
         meta_md.write(f'{readme_base}\n\n')
 
-        # write sorted string chapters
+        # write sorted-string chapters
         meta_md.write('# Links to Code by Topic\n')
         for chapter in sorted(filter(lambda ch: isinstance(ch, str), chapter_page_descriptions)):
             ch_filename = f'ch_{chapter.replace(" ", "_")}.md'
             meta_md.write(f'### [{chapter}]({ch_filename})\n')
             with open(f'{docs_dir}{ch_filename}', 'w') as ch_md:
-                ch_md.write(f'# {chapter}\n')
+                ch_md.write(f'[Home](index.md)\n\n# {chapter}\n')
                 for page in sorted(chapter_page_descriptions[chapter]):
                     for description in sorted(chapter_page_descriptions[chapter][page]):
                         ch_md.write(description)
@@ -160,7 +160,7 @@ def main():
             ch_filename = f'ch_{chapter}.md'
             meta_md.write(f'### [Chapter {chapter}:  {ch_num_name[chapter]}]({ch_filename})\n')
             with open(f'{docs_dir}{ch_filename}', 'w') as ch_md:
-                ch_md.write(f'# Chapter {chapter}:  {ch_num_name[chapter]}\n')
+                ch_md.write(f'[Home](index.md)\n\n# Chapter {chapter}:  {ch_num_name[chapter]}\n')
                 for page in sorted(chapter_page_descriptions[chapter]):
                     for description in sorted(chapter_page_descriptions[chapter][page]):
                         ch_md.write(description)

@@ -1,3 +1,5 @@
+[Home](index.md)
+
 # Chapter 8:  Planning and Learning with Tabular Methods
 ### [rlai.environments.mdp.MdpPlanningEnvironment](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/mdp.py#L258)
 ```

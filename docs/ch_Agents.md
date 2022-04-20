@@ -1,3 +1,5 @@
+[Home](index.md)
+
 # Agents
 ### [rlai.agents.Agent](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/agents/__init__.py#L17)
 ```

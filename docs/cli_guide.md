@@ -1,3 +1,5 @@
+[Home](index.md)
+
 # Using RLAI from the Command-Line Interface
 
 Installing RLAI from PyPI will install the source code for the package, and it will also create a command-line 

@@ -1,3 +1,5 @@
+[Home](index.md)
+
 # Environments
 ### [rlai.environments.mancala.Mancala](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/mancala.py#L125)
 ```

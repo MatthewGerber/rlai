@@ -1,3 +1,5 @@
+[Home](../index.md)
+
 # MuJoCo Swimming Worm
 * Content
 {:toc}
