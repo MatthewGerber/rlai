@@ -1,6 +1,4 @@
-[Home](index.md)
-
-# Diagnostic and Interpretation Tools
+# [Home](index.md) -> Diagnostic and Interpretation Tools
 * Content
 {:toc}
   

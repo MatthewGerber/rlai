@@ -1,6 +1,4 @@
-[Home](../index.md)
-
-# Mountain Car
+# [Home](../index.md) -> Mountain Car
 * Content
 {:toc}
   

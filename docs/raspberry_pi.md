@@ -1,6 +1,4 @@
-[Home](index.md)
-
-# Using RLAI with Raspberry Pi
+# [Home](index.md) -> Using RLAI with Raspberry Pi
 * Content
 {:toc}
 

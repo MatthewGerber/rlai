@@ -1,6 +1,4 @@
-[Home](index.md)
-
-# States
+# [Home](index.md) -> States
 ### [rlai.environments.mancala.MancalaState](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/mancala.py#L19)
 ```
 State of the mancala game. In charge of representing the entirety of the game state and advancing to the next state.

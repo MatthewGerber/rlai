@@ -1,6 +1,4 @@
-[Home](index.md)
-
-# Chapter 8:  Planning and Learning with Tabular Methods
+# [Home](index.md) -> Chapter 8:  Planning and Learning with Tabular Methods
 ### [rlai.environments.mdp.MdpPlanningEnvironment](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/mdp.py#L258)
 ```
 An MDP planning environment, used to generate simulated experience based on a model of the MDP that is learned
