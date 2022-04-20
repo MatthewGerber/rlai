@@ -1,4 +1,4 @@
-# [Home](../index.md) -> Robocode
+[Home](../index.md) > Robocode
 * Content
 {:toc}
 

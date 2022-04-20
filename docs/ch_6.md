@@ -1,4 +1,4 @@
-# [Home](index.md) -> Chapter 6:  Temporal-Difference Learning
+[Home](index.md) > Chapter 6:  Temporal-Difference Learning
 ### [rlai.gpi.temporal_difference.evaluation.Mode](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/temporal_difference/evaluation.py#L17)
 ```
 Modes of temporal-difference evaluation:  SARSA (on-policy), Q-Learning (off-policy), and Expected SARSA

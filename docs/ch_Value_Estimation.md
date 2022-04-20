@@ -1,4 +1,4 @@
-# [Home](index.md) -> Value Estimation
+[Home](index.md) > Value Estimation
 ### [rlai.q_S_A.ActionValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/q_S_A/__init__.py#L62)
 ```
 Action value estimator.

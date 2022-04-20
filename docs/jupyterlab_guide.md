@@ -1,4 +1,4 @@
-# [Home](index.md) -> JupyterLab RLAI
+[Home](index.md) > JupyterLab RLAI
 * Content
 {:toc}
   

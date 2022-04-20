@@ -1,4 +1,4 @@
-# [Home](../index.md) -> Inverted Pendulum
+[Home](../index.md) > Inverted Pendulum
 * Content
 {:toc}
   

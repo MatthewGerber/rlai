@@ -1,5 +1,7 @@
-# [Home](index.md) -> Using RLAI from the Command-Line Interface
-
+[Home](index.md) > Using RLAI from the Command-Line Interface
+* Content
+{:toc}
+  
 Installing RLAI from PyPI will install the source code for the package, and it will also create a command-line 
 interface (CLI) that can be used to invoke RLAI functionality. This guide focuses on the CLI. Note that the CLI 
 exposes the full breadth and depth of the RLAI package. It is powerful, but it can be challenging to use correctly.

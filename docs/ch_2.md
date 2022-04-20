@@ -1,4 +1,4 @@
-# [Home](index.md) -> Chapter 2:  Multi-armed Bandits
+[Home](index.md) > Chapter 2:  Multi-armed Bandits
 ### [rlai.environments.bandit.Arm](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/bandit.py#L19)
 ```
 Bandit arm.

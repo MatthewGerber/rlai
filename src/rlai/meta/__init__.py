@@ -97,8 +97,10 @@ def summarize(
                         if response.status_code == 200:
                             chapter_page_descriptions[chapter][page].append(f'### [{full_path}]({src_url})\n```\n{attribute.__doc__.strip()}\n```\n')
                             paths_summarized.add(full_path)
+                        elif response.status_code == 404:
+                            print(f'Invalid URL ({response.status_code}):  {src_url}')
                         else:
-                            print(f'Invalid URL:  {src_url}')
+                            raise ValueError(f'Unexpected status code for URL {src_url}:  {response.status_code}')
 
         if module_is_pkg:
             summarize(module, chapter_page_descriptions, paths_summarized)
@@ -149,7 +151,7 @@ def main():
             ch_filename = f'ch_{chapter.replace(" ", "_")}.md'
             meta_md.write(f'### [{chapter}]({ch_filename})\n')
             with open(f'{docs_dir}{ch_filename}', 'w') as ch_md:
-                ch_md.write(f'# [Home](index.md) -> {chapter}\n')
+                ch_md.write(f'[Home](index.md) > {chapter}\n')
                 for page in sorted(chapter_page_descriptions[chapter]):
                     for description in sorted(chapter_page_descriptions[chapter][page]):
                         ch_md.write(description)
@@ -160,7 +162,7 @@ def main():
             ch_filename = f'ch_{chapter}.md'
             meta_md.write(f'### [Chapter {chapter}:  {ch_num_name[chapter]}]({ch_filename})\n')
             with open(f'{docs_dir}{ch_filename}', 'w') as ch_md:
-                ch_md.write(f'# [Home](index.md) -> Chapter {chapter}:  {ch_num_name[chapter]}\n')
+                ch_md.write(f'[Home](index.md) > Chapter {chapter}:  {ch_num_name[chapter]}\n')
                 for page in sorted(chapter_page_descriptions[chapter]):
                     for description in sorted(chapter_page_descriptions[chapter][page]):
                         ch_md.write(description)

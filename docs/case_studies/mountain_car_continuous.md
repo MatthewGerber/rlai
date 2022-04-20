@@ -1,4 +1,4 @@
-# [Home](../index.md) -> Mountain Car with Continuous Control
+[Home](../index.md) > Mountain Car with Continuous Control
 * Content
 {:toc}
 

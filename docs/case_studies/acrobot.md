@@ -1,4 +1,4 @@
-[Home](../index.md) -> Acrobot
+[Home](../index.md) > Acrobot
 * Content
 {:toc}
   

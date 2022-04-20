@@ -1,4 +1,4 @@
-# [Home](../index.md) -> MuJoCo Swimming Worm
+[Home](../index.md) > MuJoCo Swimming Worm
 * Content
 {:toc}
 

@@ -1,4 +1,4 @@
-# [Home](index.md) -> Chapter 4:  Dynamic Programming
+[Home](index.md) > Chapter 4:  Dynamic Programming
 ### [rlai.gpi.dynamic_programming.evaluation.evaluate_v_pi](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/dynamic_programming/evaluation.py#L16)
 ```
 Perform iterative policy evaluation of an agent's policy within an environment, returning state values.

@@ -1,4 +1,4 @@
-# [Home](index.md) -> Chapter 5:  Monte Carlo Methods
+[Home](index.md) > Chapter 5:  Monte Carlo Methods
 ### [rlai.gpi.monte_carlo.evaluation.evaluate_v_pi](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/monte_carlo/evaluation.py#L13)
 ```
 Perform Monte Carlo evaluation of an agent's policy within an environment, returning state values. Uses a random
