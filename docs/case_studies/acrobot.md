@@ -1,6 +1,7 @@
 [Home](../index.md) -> Acrobot
 
-* Content {:toc}
+Content
+* {:toc}
   
 # Introduction
 The acrobot is a two-joint, two-link mechanism, and the goal is to get the end of the mechanism to touch the horizontal 
