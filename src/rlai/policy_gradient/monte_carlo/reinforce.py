@@ -5,9 +5,10 @@ import tempfile
 import time
 import warnings
 from datetime import datetime, timedelta
-from os.path import join
+from os.path import join, expanduser
 from typing import Optional, Tuple
 
+import matplotlib.pyplot as plt
 import numpy as np
 
 from rlai.agents.mdp import StochasticMdpAgent
@@ -360,3 +361,31 @@ def select_policy_from_training_pool(
     logging.info(f'Selected policy for training pool iteration {training_pool_iteration} with an average return of {best_average_return:.2f}.')
 
     return best_policy, best_v_S
+
+
+def plot_training_pool_iterations(
+        log_path: str
+):
+    """
+    Plot training pool iteration performance.
+
+    :param log_path: Path to log file.
+    """
+
+    iteration_return = {}
+    with open(expanduser(log_path), 'r') as f:
+        for line in f:
+            # INFO:root:Selected policy for training pool iteration 1 with an average return of 11.84.
+            if line.startswith('INFO:root:Selected policy'):
+                s = line.split(' iteration ')[1]
+                iteration = int(s[0:s.index(' ')])
+                avg_return = float(s.split('return of ')[1].strip('.\n'))
+                iteration_return[iteration] = avg_return
+
+    plt.plot(list(iteration_return.keys()), list(iteration_return.values()), label='Pooled REINFORCE')
+    plt.xlabel('Pool iteration')
+    plt.ylabel('Avg. evaluation return')
+    plt.title('Pooled learning performance')
+    plt.grid()
+    plt.legend()
+    plt.show()
