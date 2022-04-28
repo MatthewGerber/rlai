@@ -246,13 +246,12 @@ class StateActionValueEstimator(ABC):
 
     def __init__(
             self,
-            environment: MdpEnvironment,
-            epsilon: Optional[float]
+            epsilon: Optional[float],
+            **_
     ):
         """
         Initialize the estimator.
 
-        :param environment: Environment.
         :param epsilon: Epsilon, or None for a purely greedy policy.
         """
 

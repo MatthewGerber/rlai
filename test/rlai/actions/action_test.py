@@ -1,3 +1,5 @@
+import numpy as np
+
 from rlai.actions import Action, DiscretizedAction
 
 
@@ -19,6 +21,6 @@ def test_action_str():
 
 def test_discretized_action():
 
-    action = DiscretizedAction(1, 0.5, 'foo')
+    action = DiscretizedAction(1, np.array([0.5]), 'foo')
 
-    assert action.continuous_value == 0.5
+    assert np.array_equal(action.continuous_value, np.array([0.5]))

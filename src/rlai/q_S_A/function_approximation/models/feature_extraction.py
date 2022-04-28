@@ -74,12 +74,10 @@ class FeatureExtractor(BaseFeatureExtractor):
 
     def __init__(
             self,
-            environment: MdpEnvironment
+            **_
     ):
         """
         Initialize the feature extractor.
-
-        :param environment: Environment.
         """
 
 

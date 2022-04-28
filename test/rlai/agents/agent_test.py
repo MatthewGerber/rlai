@@ -41,7 +41,7 @@ def test_human_agent():
     call_num = 0
 
     def mock_input(
-            prompt: str
+            *_
     ) -> str:
 
         nonlocal call_num

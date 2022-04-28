@@ -134,7 +134,7 @@ def test_human_player():
     human = Human()
 
     def mock_input(
-            prompt: str
+            *_
     ) -> str:
         s = human.most_recent_state
         selected_a = sample_list_item(s.AA, probs=None, random_state=random_state)

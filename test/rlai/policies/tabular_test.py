@@ -12,6 +12,7 @@ def test_invalid_get_state_i():
         policy.get_state_i(np.array([[1, 2, 3]]))
 
     with pytest.raises(ValueError, match=f'Unknown state space type:  {type(3)}'):
+        # noinspection PyTypeChecker
         policy.get_state_i(3)
 
 
