@@ -75,10 +75,12 @@ def improve(
     if checkpoint_path is not None:
         checkpoint_path = os.path.expanduser(checkpoint_path)
 
-    # prepare training pool - TODO:  Retain policy with best evaluation across training pool iterations.
+    # prepare training pool
     use_training_pool = False
     training_pool_path = None
     training_pool_iteration = None
+    training_pool_best_overall_policy = None
+    training_pool_best_overall_average_return = None
     has_training_pool_directory = training_pool_directory is not None
     has_training_pool_update_episodes = training_pool_iterate_episodes is not None
     if has_training_pool_directory != has_training_pool_update_episodes:
@@ -89,7 +91,7 @@ def improve(
 
         # create training pool directory. there's a race condition with others in the pool, where another runner
         # might create the directory between the time we check for it here and attempt to make it. calling mkdir when
-        # the directory exists will raise an exception.
+        # the directory exists will raise an exception. pass the exception and proceed, as the directory will exist.
         try:
             if not os.path.exists(training_pool_directory):
                 os.mkdir(training_pool_directory)
@@ -170,7 +172,7 @@ def improve(
         episodes_finished = episode_i + 1
 
         if use_training_pool and episodes_finished % training_pool_iterate_episodes == 0:
-            policy, v_S = iterate_training_pool(
+            policy, v_S, average_return = iterate_training_pool(
                 training_pool_directory,
                 training_pool_path,
                 training_pool_count,
@@ -182,6 +184,12 @@ def improve(
                 v_S
             )
             agent.pi = policy
+
+            # track the policy with the best average return
+            if training_pool_best_overall_average_return is None or average_return > training_pool_best_overall_average_return:
+                training_pool_best_overall_policy = policy
+                training_pool_best_overall_average_return = average_return
+
             training_pool_iteration += 1
 
         if num_episodes_per_checkpoint is not None and episodes_finished % num_episodes_per_checkpoint == 0:
@@ -213,20 +221,29 @@ def improve(
         estimated_completion_timestamp = start_timestamp + timedelta(minutes=(num_episodes / episodes_per_minute))
         logging.info(f'Finished {episodes_finished} of {num_episodes} episode(s) @ {episodes_per_minute:.1f}/min. Estimated completion:  {estimated_completion_timestamp}.')
 
-    # select final policy from training pool
     if use_training_pool:
-        policy, v_S = iterate_training_pool(
-            training_pool_directory,
-            training_pool_path,
-            training_pool_count,
-            training_pool_iteration,
-            training_pool_evaluate_episodes,
-            agent,
-            policy,
-            environment,
-            v_S
-        )
-        agent.pi = policy
+
+        # iterate training pool one final time, but only if we didn't iterate the pool just before exiting the loop above.
+        if num_episodes % training_pool_iterate_episodes != 0:
+            policy, v_S, average_return = iterate_training_pool(
+                training_pool_directory,
+                training_pool_path,
+                training_pool_count,
+                training_pool_iteration,
+                training_pool_evaluate_episodes,
+                agent,
+                policy,
+                environment,
+                v_S
+            )
+
+            # track the policy with the best average return
+            if training_pool_best_overall_average_return is None or average_return > training_pool_best_overall_average_return:
+                training_pool_best_overall_policy = policy
+                training_pool_best_overall_average_return = average_return
+
+        agent.pi = training_pool_best_overall_policy
+        print(f"Set the agent's policy to be the best overall, with average return of {training_pool_best_overall_average_return:.1f}.")
 
     logging.info('Completed optimization.')
 
@@ -243,7 +260,7 @@ def iterate_training_pool(
         policy: ParameterizedPolicy,
         environment: MdpEnvironment,
         v_S: StateValueEstimator
-) -> Tuple[ParameterizedPolicy, StateValueEstimator]:
+) -> Tuple[ParameterizedPolicy, StateValueEstimator, float]:
     """
     Iterate the training pool. This entails evaluating the current agent without updating its policy, waiting for all
     runners in the pool to do the same, and then selecting the best policy from all runners.
@@ -257,7 +274,7 @@ def iterate_training_pool(
     :param policy: Current policy.
     :param environment: Environment.
     :param v_S: State-value estimator.
-    :return: 2-tuple of the new policy and state-value estimator.
+    :return: 3-tuple of the best policy, its state-value estimator, and its average return.
     """
 
     # evaluate the current agent without updating it - TODO:  Adaptive valuation based on return statistics.
@@ -288,7 +305,8 @@ def iterate_training_pool(
     # select policy from current iteration of all runners
     (
         policy,
-        v_S
+        v_S,
+        average_return
     ) = select_policy_from_training_pool(
         training_pool_directory,
         training_pool_count,
@@ -296,7 +314,7 @@ def iterate_training_pool(
         environment
     )
 
-    return policy, v_S
+    return policy, v_S, average_return
 
 
 def select_policy_from_training_pool(
@@ -304,47 +322,43 @@ def select_policy_from_training_pool(
         training_pool_count: int,
         training_pool_iteration: int,
         environment: MdpEnvironment
-) -> Optional[Tuple[ParameterizedPolicy, StateValueEstimator]]:
+) -> Optional[Tuple[ParameterizedPolicy, StateValueEstimator, float]]:
     """
-    Select a policy from the training pool.
+    Select the best policy from the training pool.
 
     :param training_pool_directory: Training pool directory.
     :param training_pool_count: Training pool count.
-    :param training_pool_iteration: Training pool iteration.
+    :param training_pool_iteration: Training pool iteration that is expected to complete.
     :param environment: Environment.
-    :return: 2-tuple of policy and state-value estimator.
+    :return: 3-tuple of the best policy, its state-value estimator, and its average return.
     """
 
     # wait for all pickles to appear for the current iteration
-    training_pool_pickles = []
-    while len(training_pool_pickles) != training_pool_count:
+    training_pool_policy_v_S_returns = []
+    while len(training_pool_policy_v_S_returns) != training_pool_count:
         logging.info(f'Waiting for pickles to appear for training pool iteration {training_pool_iteration}.')
         time.sleep(1.0)
-        training_pool_pickles.clear()
+        training_pool_policy_v_S_returns.clear()
         for training_pool_filename in filter(lambda s: s.endswith(f'_{training_pool_iteration}'), os.listdir(training_pool_directory)):
             try:
                 with open(join(training_pool_directory, training_pool_filename), 'rb') as f:
-                    training_pool_pickles.append(pickle.load(f))
+                    training_pool_policy_v_S_returns.append(pickle.load(f))
             except Exception:
                 pass
 
-        logging.info(f'Found {len(training_pool_pickles)} pickle(s).')
+        logging.info(f'Read {len(training_pool_policy_v_S_returns)} pickle(s).')
 
     # select best policy
     best_policy = None
     best_v_S = None
     best_average_return = None
-    for training_pool_pickle in training_pool_pickles:
-
-        _, _, average_return = training_pool_pickle
+    for policy, v_S, average_return in training_pool_policy_v_S_returns:
 
         if best_average_return is None or average_return > best_average_return:
 
-            (
-                best_policy,
-                best_v_S,
-                best_average_return
-            ) = training_pool_pickle
+            best_policy = policy
+            best_v_S = v_S
+            best_average_return = average_return
 
             # set the environment reference in continuous-action policies, as we don't pickle it.
             if isinstance(best_policy, ContinuousActionPolicy):
@@ -360,7 +374,7 @@ def select_policy_from_training_pool(
 
     logging.info(f'Selected policy for training pool iteration {training_pool_iteration} with an average return of {best_average_return:.2f}.')
 
-    return best_policy, best_v_S
+    return best_policy, best_v_S, best_average_return
 
 
 def plot_training_pool_iterations(
