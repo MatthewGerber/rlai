@@ -774,13 +774,29 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
         action_a = np.exp(self.action_theta_a.dot(intercept_state_features))
         action_b = np.exp(self.action_theta_b.dot(intercept_state_features))
 
-        # sample each of the action dimensions and rescale
-        action_value = self.rescale(
-            np.array([
-                stats.beta.rvs(a=a, b=b, loc=0.0, scale=1.0, random_state=self.random_state)
-                for a, b in zip(action_a, action_b)
-            ])
-        )
+        try:
+
+            # sample each of the action dimensions and rescale
+            action_value = self.rescale(
+                np.array([
+                    stats.beta.rvs(a=a, b=b, loc=0.0, scale=1.0, random_state=self.random_state)
+                    for a, b in zip(action_a, action_b)
+                ])
+            )
+
+        # watch out for numerical issues (e.g., alpha step sizes that are too large and create issues for beta
+        # sampling). set a uniformly random action in such cases and report the error.
+        except ValueError as e:
+            if str(e) == 'Domain error in arguments.':
+                action_value = self.rescale(
+                    np.array([
+                        stats.beta.rvs(a=a, b=b, loc=0.0, scale=1.0, random_state=self.random_state)
+                        for a, b in zip(np.ones_like(action_a), np.ones_like(action_b))
+                    ])
+                )
+                logging.error(f'Caught {e} Setting action to {action_value}.')
+            else:
+                raise e
 
         action = ContinuousMultiDimensionalAction(
             value=action_value,
