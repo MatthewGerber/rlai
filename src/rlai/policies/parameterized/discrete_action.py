@@ -136,7 +136,8 @@ class SoftMaxInActionPreferencesPolicy(ParameterizedPolicy):
             self
     ):
         """
-        Commit updates that were previously appended with calls to `append_update`.
+        Commit updates that were previously appended with calls to `append_update`. Not intended to be called directly
+        by outside callers or inheritors.
         """
 
         updates = zip(
@@ -365,7 +366,8 @@ class SoftMaxInActionPreferencesJaxPolicy(ParameterizedPolicy):
             self
     ):
         """
-        Commit updates that were previously appended with calls to `append_update`.
+        Commit updates that were previously appended with calls to `append_update`. Not intended to be called directly
+        by outside callers or inheritors.
         """
 
         updates = zip(

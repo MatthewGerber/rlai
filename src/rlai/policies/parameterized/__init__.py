@@ -34,8 +34,8 @@ class ParameterizedPolicy(Policy, ABC):
             target: float
     ):
         """
-        Append an update for an action in a state using a target and a step size. All appended updates will
-        be committed to the policy when `commit_updates` is called.
+        Append an update for an action in a state using a target and a step size. All appended updates will be committed
+        to the policy when `commit_updates` is called.
 
         :param a: Action.
         :param s: State.
@@ -47,15 +47,7 @@ class ParameterizedPolicy(Policy, ABC):
         self.update_batch_s.append(s)
         self.update_batch_alpha.append(alpha)
         self.update_batch_target.append(target)
-
-    def updates_available(
-            self
-    ) -> bool:
-        """
-        Check whether updates are available.
-        """
-
-        return len(self.update_batch_a) > 0
+        self.updates_available = True
 
     def commit_updates(
             self
@@ -64,19 +56,21 @@ class ParameterizedPolicy(Policy, ABC):
         Commit updates that were previously appended with calls to `append_update`.
         """
 
-        if self.updates_available():
+        if self.updates_available:
             self.__commit_updates__()
             self.update_batch_a.clear()
             self.update_batch_s.clear()
             self.update_batch_alpha.clear()
             self.update_batch_target.clear()
+            self.updates_available = False
 
     @abstractmethod
     def __commit_updates__(
             self
     ):
         """
-        Commit updates that were previously appended with calls to `append_update`.
+        Commit updates that were previously appended with calls to `append_update`. Not intended to be called directly
+        by outside callers or inheritors.
         """
 
     def close(
@@ -97,3 +91,4 @@ class ParameterizedPolicy(Policy, ABC):
         self.update_batch_s = []
         self.update_batch_alpha = []
         self.update_batch_target = []
+        self.updates_available = False

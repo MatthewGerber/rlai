@@ -220,7 +220,8 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
             self
     ):
         """
-        Commit updates that were previously appended with calls to `append_update`.
+        Commit updates that were previously appended with calls to `append_update`. Not intended to be called directly
+        by outside callers or inheritors.
         """
 
         # extract state-feature matrix
