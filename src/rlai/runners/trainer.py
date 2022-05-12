@@ -247,7 +247,7 @@ def get_argument_parser_for_train_function(
     # noinspection PyUnresolvedReferences
     function_arg_names = function.__code__.co_varnames[:function.__code__.co_argcount]
 
-    def filter_add_argument(
+    def add_argument(
             name: str,
             **kwargs
     ):
@@ -267,154 +267,154 @@ def get_argument_parser_for_train_function(
 
     # add the superset of all arguments used across all training function. the filter will only retain those allowed.
 
-    filter_add_argument(
+    add_argument(
         '--agent',
         type=str,
         help='Fully-qualified type name of agent to train.'
     )
 
-    filter_add_argument(
+    add_argument(
         '--environment',
         type=str,
         help='Fully-qualified type name of environment to train agent in.'
     )
 
-    filter_add_argument(
+    add_argument(
         '--planning-environment',
         type=str,
         help='Fully-qualified type name of planning environment to train agent in.'
     )
 
-    filter_add_argument(
+    add_argument(
         '--policy',
         type=str,
         help='Fully-qualified type name of policy to use (for policy gradient methods).'
     )
 
-    filter_add_argument(
+    add_argument(
         '--num-improvements',
         type=int,
         help='Number of improvements.'
     )
 
-    filter_add_argument(
+    add_argument(
         '--num-episodes-per-improvement',
         type=int,
         help='Number of episodes per improvement.'
     )
 
-    filter_add_argument(
+    add_argument(
         '--num-episodes',
         type=int,
         help='Number of episodes.'
     )
 
-    filter_add_argument(
+    add_argument(
         '--num-updates-per-improvement',
         type=int,
         help='Number of state-action value updates per policy improvement.'
     )
 
-    filter_add_argument(
+    add_argument(
         '--update-upon-every-visit',
         type=str,
         choices=['True', 'False'],
         help='Whether or not to update values upon each visit to a state or state-action pair.'
     )
 
-    filter_add_argument(
+    add_argument(
         '--alpha',
         type=float,
         help='Step size.'
     )
 
-    filter_add_argument(
+    add_argument(
         '--make-final-policy-greedy',
         type=str,
         choices=['True', 'False'],
         help='Whether or not to make the final policy greedy after training is complete.'
     )
 
-    filter_add_argument(
+    add_argument(
         '--num-improvements-per-plot',
         type=int,
         help='Number of improvements per plot.'
     )
 
-    filter_add_argument(
+    add_argument(
         '--num-improvements-per-checkpoint',
         type=int,
         help='Number of improvements per checkpoint.'
     )
 
-    filter_add_argument(
+    add_argument(
         '--num-episodes-per-checkpoint',
         type=int,
         help='Number of episodes per checkpoint.'
     )
 
-    filter_add_argument(
+    add_argument(
         '--checkpoint-path',
         type=str,
         help='Path to checkpoint file.'
     )
 
-    filter_add_argument(
+    add_argument(
         '--mode',
         type=str,
         help='Temporal difference evaluation mode (SARSA, Q_LEARNING, EXPECTED_SARSA).'
     )
 
-    filter_add_argument(
+    add_argument(
         '--n-steps',
         type=int,
         help='N-step update value.'
     )
 
-    filter_add_argument(
+    add_argument(
         '--q-S-A',
         type=str,
         help='Fully-qualified type name of state-action value estimator to use (for action-value methods).'
     )
 
-    filter_add_argument(
+    add_argument(
         '--v-S',
         type=str,
         help='Fully-qualified type name of state-value estimator to use (for policy gradient methods).'
     )
 
-    filter_add_argument(
+    add_argument(
         '--pdf-save-path',
         type=str,
         help='Path where a PDF of all plots is to be saved.'
     )
 
-    filter_add_argument(
+    add_argument(
         '--plot-state-value',
         type=str,
         choices=['True', 'False'],
         help='Whether or not to plot the state value.'
     )
 
-    filter_add_argument(
+    add_argument(
         '--training-pool-directory',
         type=str,
         help='Path to directory in which to store pooled training runs.'
     )
 
-    filter_add_argument(
+    add_argument(
         '--training-pool-count',
         type=int,
         help='Number of runners in the training pool.'
     )
 
-    filter_add_argument(
+    add_argument(
         '--training-pool-iterate-episodes',
         type=int,
         help='Number of episodes per training pool iteration.'
     )
 
-    filter_add_argument(
+    add_argument(
         '--training-pool-evaluate-episodes',
         type=int,
         help='Number of episodes to evaluate the agent when iterating the training pool.'
