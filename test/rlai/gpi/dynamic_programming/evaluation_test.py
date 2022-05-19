@@ -5,10 +5,10 @@ import numpy as np
 import pytest
 from numpy.random import RandomState
 
-from rlai.agents.mdp import StochasticMdpAgent
+from rlai.agents.mdp import ActionValueMdpAgent
 from rlai.environments.gridworld import Gridworld
 from rlai.gpi.dynamic_programming.evaluation import evaluate_v_pi, evaluate_q_pi, check_termination_criteria
-from rlai.policies.tabular import TabularPolicy
+from rlai.q_S_A.tabular import TabularStateActionValueEstimator
 
 
 def test_evaluate_v_pi():
@@ -17,11 +17,11 @@ def test_evaluate_v_pi():
 
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
 
-    mdp_agent = StochasticMdpAgent(
+    mdp_agent = ActionValueMdpAgent(
         'test',
         random_state,
-        TabularPolicy(None, mdp_environment.SS),
-        1
+        1,
+        TabularStateActionValueEstimator(mdp_environment, None, None)
     )
 
     v_pi, _ = evaluate_v_pi(
@@ -60,11 +60,11 @@ def test_evaluate_q_pi():
 
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
 
-    mdp_agent = StochasticMdpAgent(
+    mdp_agent = ActionValueMdpAgent(
         'test',
         random_state,
-        TabularPolicy(None, mdp_environment.SS),
-        1
+        1,
+        TabularStateActionValueEstimator(mdp_environment, None, None)
     )
 
     q_pi, _ = evaluate_q_pi(

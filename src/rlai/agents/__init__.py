@@ -5,8 +5,8 @@ from typing import List, Optional, Dict, Tuple
 from numpy.random import RandomState
 
 from rlai.actions import Action
+from rlai.environments import Environment
 from rlai.meta import rl_text
-from rlai.policies import Policy
 from rlai.policies.tabular import TabularPolicy
 from rlai.states import State
 from rlai.states.mdp import MdpState
@@ -37,14 +37,14 @@ class Agent(ABC):
             cls,
             args: List[str],
             random_state: RandomState,
-            pi: Optional[Policy]
+            environment: Environment
     ) -> Tuple[List['Agent'], List[str]]:
         """
         Initialize a agents from arguments.
 
         :param args: Arguments.
         :param random_state: Random state.
-        :param pi: Policy.
+        :param environment: Environment.
         :return: 2-tuple of a list of agents and a list of unparsed arguments.
         """
 
@@ -174,7 +174,7 @@ class Human(Agent):
             cls,
             args: List[str],
             random_state: RandomState,
-            pi: Optional[Policy]
+            environment: Environment
     ) -> Tuple[List[Agent], List[str]]:
         """
         Not implemented.

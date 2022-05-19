@@ -20,7 +20,7 @@ def test_rescale():
 
     policy = ContinuousActionBetaDistributionPolicy(gym, fex, False)
 
-    agent = StochasticMdpAgent('test', random_state, policy, 0.9)
+    agent = ParameterizedMdpAgent('test', random_state, policy, 0.9)
     state = gym.reset_for_new_run(agent)
     policy.set_action(state)
 

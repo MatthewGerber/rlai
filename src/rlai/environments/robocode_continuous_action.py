@@ -92,14 +92,14 @@ class RobocodeAgent(StochasticMdpAgent):
             cls,
             args: List[str],
             random_state: RandomState,
-            pi: Optional[Policy]
+            environment: Environment
     ) -> Tuple[List[Agent], List[str]]:
         """
         Initialize a Robocode agent from arguments.
 
         :param args: Arguments.
         :param random_state: Random state.
-        :param pi: Policy.
+        :param environment: Environment.
         :return: 2-tuple of a list of agents and a list of unparsed arguments.
         """
 
@@ -108,7 +108,6 @@ class RobocodeAgent(StochasticMdpAgent):
         agent = cls(
             name=f'Robocode (gamma={parsed_args.gamma})',
             random_state=random_state,
-            pi=pi,
             **vars(parsed_args)
         )
 

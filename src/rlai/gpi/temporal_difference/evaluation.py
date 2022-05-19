@@ -4,7 +4,7 @@ from functools import partial
 from typing import Dict, Set, Tuple, Optional
 
 from rlai.actions import Action
-from rlai.agents.mdp import MdpAgent
+from rlai.agents.mdp import MdpAgent, ActionValueMdpAgent
 from rlai.environments.mdp import MdpEnvironment, MdpPlanningEnvironment, PrioritizedSweepingMdpPlanningEnvironment
 from rlai.gpi import PolicyImprovementEvent
 from rlai.meta import rl_text
@@ -34,15 +34,14 @@ class Mode(enum.Enum):
 
 @rl_text(chapter=6, page=130)
 def evaluate_q_pi(
-        agent: MdpAgent,
+        agent: ActionValueMdpAgent,
         environment: MdpEnvironment,
         num_episodes: int,
         num_updates_per_improvement: Optional[int],
         alpha: Optional[float],
         mode: Mode,
         n_steps: Optional[int],
-        planning_environment: Optional[MdpPlanningEnvironment],
-        q_S_A: StateActionValueEstimator
+        planning_environment: Optional[MdpPlanningEnvironment]
 ) -> Tuple[Set[MdpState], float]:
     """
     Perform temporal-difference (TD) evaluation of an agent's policy within an environment, returning state-action
@@ -60,7 +59,6 @@ def evaluate_q_pi(
     range [1, inf], or None for infinite step size (Monte Carlo evaluation).
     :param planning_environment: Planning environment to learn through experience gained during evaluation, or None to
     not learn an environment model.
-    :param q_S_A: State-action value estimator.
     :return: 2-tuple of (1) set of only those states that were evaluated, and (2) the average reward obtained per
     episode.
     """
@@ -81,10 +79,10 @@ def evaluate_q_pi(
             get_bootstrapped_state_action_value,
             mode=mode,
             agent=agent,
-            q_S_A=q_S_A,
+            q_S_A=agent.q_S_A,
             environment=environment
         )
-        environment.q_S_A = q_S_A
+        environment.q_S_A = agent.q_S_A
 
     # run episodes
     episode_reward_averager = IncrementalSampleAverager()
@@ -168,14 +166,14 @@ def evaluate_q_pi(
                 t=next_t,
                 mode=mode,
                 agent=agent,
-                q_S_A=q_S_A,
+                q_S_A=agent.q_S_A,
                 environment=environment
             )
 
             # only update if n_steps is finite (not monte carlo)
             if n_steps is not None:
                 update_q_S_A(
-                    q_S_A=q_S_A,
+                    q_S_A=agent.q_S_A,
                     n_steps=n_steps,
                     curr_t=curr_t,
                     t_state_a_g=t_state_a_g,
@@ -205,7 +203,7 @@ def evaluate_q_pi(
         flush_n_steps = len(t_state_a_g) + 1
         while len(t_state_a_g) > 0:
             update_q_S_A(
-                q_S_A=q_S_A,
+                q_S_A=agent.q_S_A,
                 n_steps=flush_n_steps,
                 curr_t=curr_t,
                 t_state_a_g=t_state_a_g,

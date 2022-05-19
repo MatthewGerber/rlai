@@ -102,17 +102,6 @@ def run(
             random_state=random_state
         )
 
-    # load state-action value estimator
-    if train_function_args.get('q_S_A', None) is not None:
-        estimator_class = load_class(train_function_args['q_S_A'])
-        state_action_value_estimator, unparsed_args = estimator_class.init_from_arguments(
-            args=unparsed_args,
-            random_state=random_state,
-            environment=train_function_args['environment']
-        )
-        train_function_args['q_S_A'] = state_action_value_estimator
-        initial_policy = state_action_value_estimator.get_initial_policy()
-
     # load state-value estimator
     if train_function_args.get('v_S', None) is not None:
         estimator_class = load_class(train_function_args['v_S'])
@@ -129,7 +118,6 @@ def run(
             args=unparsed_args,
             environment=train_function_args['environment']
         )
-        train_function_args['policy'] = initial_policy
 
     # load agent
     if train_function_args.get('agent', None) is not None:
@@ -139,6 +127,9 @@ def run(
             random_state=random_state,
             pi=initial_policy
         )
+        if len(agents) != 1:
+            raise Exception(f'Expected exactly 1 agent, but got {len(agents)}.')
+
         agent = agents[0]
         train_function_args['agent'] = agent
     else:
@@ -369,12 +360,6 @@ def get_argument_parser_for_train_function(
         '--n-steps',
         type=int,
         help='N-step update value.'
-    )
-
-    add_argument(
-        '--q-S-A',
-        type=str,
-        help='Fully-qualified type name of state-action value estimator to use (for action-value methods).'
     )
 
     add_argument(

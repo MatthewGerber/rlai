@@ -1,7 +1,7 @@
 import pytest
 from numpy.random import RandomState
 
-from rlai.agents.mdp import StochasticMdpAgent
+from rlai.agents.mdp import ActionValueMdpAgent
 from rlai.environments.gridworld import Gridworld, GridworldFeatureExtractor
 from rlai.gpi.temporal_difference.evaluation import Mode
 from rlai.gpi.temporal_difference.iteration import iterate_value_q_pi
@@ -29,11 +29,11 @@ def test_policy_overrides():
         None
     )
 
-    mdp_agent = StochasticMdpAgent(
+    mdp_agent = ActionValueMdpAgent(
         'test',
         random_state,
-        q_S_A.get_initial_policy(),
-        1
+        1,
+        q_S_A
     )
 
     iterate_value_q_pi(
@@ -47,7 +47,6 @@ def test_policy_overrides():
         n_steps=None,
         planning_environment=None,
         make_final_policy_greedy=True,
-        q_S_A=q_S_A
     )
 
     random_state = RandomState(12345)
@@ -65,11 +64,11 @@ def test_policy_overrides():
         None
     )
 
-    mdp_agent_2 = StochasticMdpAgent(
+    mdp_agent_2 = ActionValueMdpAgent(
         'test',
         random_state,
-        q_S_A_2.get_initial_policy(),
-        1
+        1,
+        q_S_A_2
     )
 
     iterate_value_q_pi(
@@ -82,8 +81,7 @@ def test_policy_overrides():
         mode=Mode.Q_LEARNING,
         n_steps=None,
         planning_environment=None,
-        make_final_policy_greedy=True,
-        q_S_A=q_S_A_2
+        make_final_policy_greedy=True
     )
 
     assert isinstance(mdp_agent_2.most_recent_state, MdpState) and mdp_agent_2.most_recent_state in mdp_agent_2.pi

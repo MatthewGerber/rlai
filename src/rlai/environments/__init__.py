@@ -1,10 +1,9 @@
 from abc import ABC, abstractmethod
 from argparse import ArgumentParser
-from typing import Tuple, List, Optional
+from typing import Tuple, List, Optional, Any
 
 from numpy.random import RandomState
 
-from rlai.agents import Agent
 from rlai.runners.monitor import Monitor
 from rlai.states import State
 from rlai.utils import get_base_argument_parser
@@ -50,7 +49,7 @@ class Environment(ABC):
     @abstractmethod
     def reset_for_new_run(
             self,
-            agent: Agent
+            agent: Any
     ) -> Optional[State]:
         """
         Reset the the environment.
@@ -65,7 +64,7 @@ class Environment(ABC):
 
     def run(
             self,
-            agent: 'Agent',
+            agent: Any,
             monitor: Monitor
     ):
         """
@@ -90,7 +89,7 @@ class Environment(ABC):
     def run_step(
             self,
             t: int,
-            agent: Agent,
+            agent: Any,
             monitor: Monitor
     ) -> bool:
         """
