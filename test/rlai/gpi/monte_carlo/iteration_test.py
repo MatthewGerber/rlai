@@ -7,7 +7,7 @@ from threading import Thread
 import pytest
 from numpy.random import RandomState
 
-from rlai.agents.mdp import StochasticMdpAgent, ActionValueMdpAgent
+from rlai.agents.mdp import ActionValueMdpAgent
 from rlai.environments.gridworld import Gridworld, GridworldFeatureExtractor
 from rlai.environments.mdp import TrajectorySamplingMdpPlanningEnvironment
 from rlai.gpi import PolicyImprovementEvent

@@ -8,8 +8,7 @@ import pytest
 from numpy.random import RandomState
 from numpy.testing import assert_allclose
 
-from rlai.agents.mdp import StochasticMdpAgent, ActionValueMdpAgent
-from rlai.policies.tabular import TabularPolicy
+from rlai.agents.mdp import ActionValueMdpAgent
 from rlai.runners.agent_in_environment import run
 from rlai.runners.monitor import Monitor
 

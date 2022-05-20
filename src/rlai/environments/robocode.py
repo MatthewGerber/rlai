@@ -7,12 +7,11 @@ import numpy as np
 from numpy.random import RandomState
 
 from rlai.actions import Action
-from rlai.agents import Agent
-from rlai.agents.mdp import MdpAgent, StochasticMdpAgent
+from rlai.agents.mdp import MdpAgent, ActionValueMdpAgent
 from rlai.environments import Environment
 from rlai.environments.network import TcpMdpEnvironment
 from rlai.meta import rl_text
-from rlai.policies import Policy
+from rlai.q_S_A import StateActionValueEstimator
 from rlai.q_S_A.function_approximation.models.feature_extraction import FeatureExtractor
 from rlai.rewards import Reward
 from rlai.states.mdp import MdpState
@@ -60,7 +59,7 @@ class RobocodeReward(Reward):
 
 
 @rl_text(chapter='Agents', page=1)
-class RobocodeAgent(StochasticMdpAgent):
+class RobocodeAgent(ActionValueMdpAgent):
     """
     Robocode agent.
     """
@@ -83,32 +82,6 @@ class RobocodeAgent(StochasticMdpAgent):
         )
 
         return parser
-
-    @classmethod
-    def init_from_arguments(
-            cls,
-            args: List[str],
-            random_state: RandomState,
-            environment: Environment
-    ) -> Tuple[List[Agent], List[str]]:
-        """
-        Initialize a Robocode agent from arguments.
-
-        :param args: Arguments.
-        :param random_state: Random state.
-        :param environment: Environment.
-        :return: 2-tuple of a list of agents and a list of unparsed arguments.
-        """
-
-        parsed_args, unparsed_args = parse_arguments(cls, args)
-
-        agent = cls(
-            name=f'Robocode (gamma={parsed_args.gamma})',
-            random_state=random_state,
-            **vars(parsed_args)
-        )
-
-        return [agent], unparsed_args
 
     def shape_reward(
             self,
@@ -183,23 +156,22 @@ class RobocodeAgent(StochasticMdpAgent):
             self,
             name: str,
             random_state: RandomState,
-            pi: Policy,
-            gamma: float
+            gamma: float,
+            q_S_A: StateActionValueEstimator
     ):
         """
         Initialize the agent.
 
         :param name: Name of the agent.
         :param random_state: Random state.
-        :param pi: Policy.
         :param gamma: Discount.
         """
 
         super().__init__(
             name=name,
             random_state=random_state,
-            pi=pi,
-            gamma=gamma
+            gamma=gamma,
+            q_S_A=q_S_A
         )
 
 

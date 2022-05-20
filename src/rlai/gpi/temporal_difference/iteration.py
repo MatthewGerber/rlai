@@ -134,7 +134,6 @@ def iterate_value_q_pi(
                 n_steps=n_steps,
                 planning_environment=None,
                 make_final_policy_greedy=False,
-                q_S_A=agent.q_S_A,
                 num_improvements_per_plot=None,
                 num_improvements_per_checkpoint=None,
                 checkpoint_path=None,

@@ -64,8 +64,6 @@ def run(
     if parsed_args.save_agent_path is None:
         warnings.warn('No --save-agent-path has been specified, so no agent will be saved after training.')
 
-    initial_policy = None
-
     # load training function and parse any arguments that it requires
     train_function = import_function(parsed_args.train_function)
     train_function_arg_parser = get_argument_parser_for_train_function(parsed_args.train_function)
@@ -102,31 +100,15 @@ def run(
             random_state=random_state
         )
 
-    # load state-value estimator
-    if train_function_args.get('v_S', None) is not None:
-        estimator_class = load_class(train_function_args['v_S'])
-        train_function_args['v_S'], unparsed_args = estimator_class.init_from_arguments(
-            args=unparsed_args,
-            random_state=random_state,
-            environment=train_function_args['environment']
-        )
-
-    # load parameterized policy
-    if train_function_args.get('policy', None) is not None:
-        policy_class = load_class(train_function_args['policy'])
-        initial_policy, unparsed_args = policy_class.init_from_arguments(
-            args=unparsed_args,
-            environment=train_function_args['environment']
-        )
-
     # load agent
     if train_function_args.get('agent', None) is not None:
         agent_class = load_class(train_function_args['agent'])
         agents, unparsed_args = agent_class.init_from_arguments(
             args=unparsed_args,
             random_state=random_state,
-            pi=initial_policy
+            environment=train_function_args['environment']
         )
+
         if len(agents) != 1:
             raise Exception(f'Expected exactly 1 agent, but got {len(agents)}.')
 
@@ -162,8 +144,8 @@ def run(
 
         train_function_args['environment'].close()
 
-        if isinstance(initial_policy, ParameterizedPolicy):
-            initial_policy.close()
+        if isinstance(agent.pi, ParameterizedPolicy):
+            agent.pi.close()
 
     logging.info('Training complete.')
 
@@ -277,12 +259,6 @@ def get_argument_parser_for_train_function(
     )
 
     add_argument(
-        '--policy',
-        type=str,
-        help='Fully-qualified type name of policy to use (for policy gradient methods).'
-    )
-
-    add_argument(
         '--num-improvements',
         type=int,
         help='Number of improvements.'
@@ -360,12 +336,6 @@ def get_argument_parser_for_train_function(
         '--n-steps',
         type=int,
         help='N-step update value.'
-    )
-
-    add_argument(
-        '--v-S',
-        type=str,
-        help='Fully-qualified type name of state-value estimator to use (for policy gradient methods).'
     )
 
     add_argument(

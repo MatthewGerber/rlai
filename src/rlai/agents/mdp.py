@@ -10,10 +10,12 @@ from rlai.agents import Agent
 from rlai.environments import Environment
 from rlai.meta import rl_text
 from rlai.policies import Policy
+from rlai.policies.parameterized import ParameterizedPolicy
 from rlai.q_S_A import StateActionValueEstimator
 from rlai.rewards import Reward
 from rlai.states.mdp import MdpState
 from rlai.utils import sample_list_item, parse_arguments, load_class
+from rlai.v_S import StateValueEstimator
 
 
 @rl_text(chapter='Agents', page=1)
@@ -226,7 +228,7 @@ class ActionValueMdpAgent(StochasticMdpAgent):
         agent = cls(
             name=f'action-value (gamma={parsed_args.gamma})',
             random_state=random_state,
-            q_S_A=q_S_A,
+            q_S_A=q_S_A,  # TODO: Why?
             **vars(parsed_args)
         )
 
@@ -256,3 +258,109 @@ class ActionValueMdpAgent(StochasticMdpAgent):
         )
 
         self.q_S_A = q_S_A
+
+
+class ParameterizedMdpAgent(StochasticMdpAgent):
+
+    @classmethod
+    def get_argument_parser(
+            cls
+    ) -> ArgumentParser:
+        """
+        Get argument parser.
+
+        :return: Argument parser.
+        """
+
+        parser = ArgumentParser(
+            prog=f'{cls.__module__}.{cls.__name__}',
+            parents=[super().get_argument_parser()],
+            allow_abbrev=False,
+            add_help=False
+        )
+
+        parser.add_argument(
+            '--policy',
+            type=str,
+            help='Fully-qualified type name of policy to use.'
+        )
+
+        parser.add_argument(
+            '--v-S',
+            type=str,
+            help='Fully-qualified type name of state-value estimator to use.'
+        )
+
+        return parser
+
+    @classmethod
+    def init_from_arguments(
+            cls,
+            args: List[str],
+            random_state: RandomState,
+            environment: Environment
+    ) -> Tuple[List[Agent], List[str]]:
+        """
+        Initialize an MDP agent from arguments.
+
+        :param args: Arguments.
+        :param random_state: Random state.
+        :param environment: Environment.
+        :return: 2-tuple of a list of agents and a list of unparsed arguments.
+        """
+
+        parsed_args, unparsed_args = parse_arguments(cls, args)
+
+        # load state-value estimator
+        estimator_class = load_class(parsed_args.v_S)
+        v_S, unparsed_args = estimator_class.init_from_arguments(
+            args=unparsed_args,
+            random_state=random_state,
+            environment=environment
+        )
+        del parsed_args.v_S
+
+        # load parameterized policy
+        policy_class = load_class(parsed_args.policy)
+        policy, unparsed_args = policy_class.init_from_arguments(
+            args=unparsed_args,
+            environment=environment
+        )
+        del parsed_args.policy
+
+        agent = cls(
+            name=f'parameterized (gamma={parsed_args.gamma})',
+            random_state=random_state,
+            pi=policy,  # TODO: Why?
+            v_S=v_S,  # TODO: Why?
+            **vars(parsed_args)
+        )
+
+        return [agent], unparsed_args
+
+    def __init__(
+            self,
+            name: str,
+            random_state: RandomState,
+            pi: ParameterizedPolicy,
+            gamma: float,
+            v_S: StateValueEstimator
+    ):
+        """
+        Initialize the agent.
+
+        :param name: Name of the agent.
+        :param random_state: Random state.
+        :param pi: Policy.
+        :param gamma: Discount.
+        :param v_S: State-value estimator.
+        """
+
+        super().__init__(
+            name=name,
+            random_state=random_state,
+            pi=pi,
+            gamma=gamma
+        )
+
+        self.v_S = v_S

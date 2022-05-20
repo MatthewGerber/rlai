@@ -51,7 +51,7 @@ The following command trains an agent for the MuJoCo swimming worm environment u
 with a baseline state-value estimator:
 
 ```
-rlai train --random-seed 12345 --agent rlai.agents.mdp.StochasticMdpAgent --gamma 1.0 --environment rlai.environments.openai_gym.Gym --gym-id Swimmer-v2 --render-every-nth-episode 500 --video-directory ~/Desktop/swimmer_videos --force --T 500 --train-function rlai.policy_gradient.monte_carlo.reinforce.improve --num-episodes 50000 --v-S rlai.v_S.function_approximation.estimators.ApproximateStateValueEstimator --feature-extractor rlai.environments.openai_gym.SignedCodingFeatureExtractor --function-approximation-model rlai.models.sklearn.SKLearnSGD --loss squared_loss --sgd-alpha 0.0 --learning-rate constant --eta0 0.001 --policy rlai.policies.parameterized.continuous_action.ContinuousActionBetaDistributionPolicy --policy-feature-extractor rlai.environments.openai_gym.SignedCodingFeatureExtractor --alpha 0.00001 --update-upon-every-visit True --num-episodes-per-checkpoint 500 --checkpoint-path ~/Desktop/swimmer_checkpoint.pickle --save-agent-path ~/Desktop/swimmer_agent.pickle --log DEBUG
+rlai train --random-seed 12345 --agent rlai.agents.mdp.ParameterizedMdpAgent --gamma 1.0 --environment rlai.environments.openai_gym.Gym --gym-id Swimmer-v2 --render-every-nth-episode 500 --video-directory ~/Desktop/swimmer_videos --force --T 500 --train-function rlai.policy_gradient.monte_carlo.reinforce.improve --num-episodes 50000 --v-S rlai.v_S.function_approximation.estimators.ApproximateStateValueEstimator --feature-extractor rlai.environments.openai_gym.SignedCodingFeatureExtractor --function-approximation-model rlai.models.sklearn.SKLearnSGD --loss squared_loss --sgd-alpha 0.0 --learning-rate constant --eta0 0.001 --policy rlai.policies.parameterized.continuous_action.ContinuousActionBetaDistributionPolicy --policy-feature-extractor rlai.environments.openai_gym.SignedCodingFeatureExtractor --alpha 0.00001 --update-upon-every-visit True --num-episodes-per-checkpoint 500 --checkpoint-path ~/Desktop/swimmer_checkpoint.pickle --save-agent-path ~/Desktop/swimmer_agent.pickle --log DEBUG
 ```
 
 The arguments are explained below.
@@ -61,7 +61,7 @@ The arguments are explained below.
 * `--random-seed 12345`:  For reproducibility.
 
 ### Agent
-* `--agent rlai.agents.mdp.StochasticMdpAgent`:  Standard stochastic MDP agent. 
+* `--agent rlai.agents.mdp.ParameterizedMdpAgent`:  Standard parameterized MDP agent. 
 * `--gamma 1.0`:  Do not discount.
 
 ### Environment
