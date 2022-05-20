@@ -14,16 +14,13 @@ from rlai.q_S_A.tabular import TabularStateActionValueEstimator
 def test_evaluate_v_pi():
 
     random_state = RandomState(12345)
-
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
-
     mdp_agent = ActionValueMdpAgent(
         'test',
         random_state,
         1,
         TabularStateActionValueEstimator(mdp_environment, None, None)
     )
-
     v_pi, _ = evaluate_v_pi(
         agent=mdp_agent,
         environment=mdp_environment,
@@ -32,6 +29,14 @@ def test_evaluate_v_pi():
         update_in_place=True
     )
 
+    random_state = RandomState(12345)
+    mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
+    mdp_agent = ActionValueMdpAgent(
+        'test',
+        random_state,
+        1,
+        TabularStateActionValueEstimator(mdp_environment, None, None)
+    )
     v_pi_not_in_place, _ = evaluate_v_pi(
         agent=mdp_agent,
         environment=mdp_environment,
@@ -42,7 +47,7 @@ def test_evaluate_v_pi():
 
     assert list(v_pi.keys()) == list(v_pi_not_in_place.keys())
 
-    assert np.allclose(list(v_pi.values()), list(v_pi_not_in_place.values()), atol=0.01)
+    np.testing.assert_allclose(list(v_pi.values()), list(v_pi_not_in_place.values()), atol=0.01)
 
     # uncomment the following line and run test to update fixture
     # with open(f'{os.path.dirname(__file__)}/fixtures/test_iterative_policy_evaluation_of_state_value.pickle', 'wb') as file:
@@ -57,16 +62,13 @@ def test_evaluate_v_pi():
 def test_evaluate_q_pi():
 
     random_state = RandomState(12345)
-
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
-
     mdp_agent = ActionValueMdpAgent(
         'test',
         random_state,
         1,
         TabularStateActionValueEstimator(mdp_environment, None, None)
     )
-
     q_pi, _ = evaluate_q_pi(
         agent=mdp_agent,
         environment=mdp_environment,
@@ -75,6 +77,8 @@ def test_evaluate_q_pi():
         update_in_place=True
     )
 
+    random_state = RandomState(12345)
+    mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
     q_pi_not_in_place, _ = evaluate_q_pi(
         agent=mdp_agent,
         environment=mdp_environment,

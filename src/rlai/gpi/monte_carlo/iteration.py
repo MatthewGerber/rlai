@@ -7,26 +7,24 @@ from typing import Optional
 
 from matplotlib.backends.backend_pdf import PdfPages
 
-from rlai.agents.mdp import MdpAgent
+from rlai.agents.mdp import MdpAgent, ActionValueMdpAgent
 from rlai.environments.mdp import MdpEnvironment, MdpPlanningEnvironment
 from rlai.gpi import PolicyImprovementEvent
 from rlai.gpi.monte_carlo.evaluation import evaluate_q_pi
 from rlai.gpi.utils import plot_policy_iteration
 from rlai.meta import rl_text
-from rlai.q_S_A import StateActionValueEstimator
 from rlai.utils import RunThreadManager, insert_index_into_path
 
 
 @rl_text(chapter=5, page=99)
 def iterate_value_q_pi(
-        agent: MdpAgent,
+        agent: ActionValueMdpAgent,
         environment: MdpEnvironment,
         num_improvements: int,
         num_episodes_per_improvement: int,
         update_upon_every_visit: bool,
         planning_environment: Optional[MdpPlanningEnvironment],
         make_final_policy_greedy: bool,
-        q_S_A: StateActionValueEstimator,
         thread_manager: RunThreadManager = None,
         off_policy_agent: Optional[MdpAgent] = None,
         num_improvements_per_plot: Optional[int] = None,
@@ -47,7 +45,6 @@ def iterate_value_q_pi(
     :param planning_environment: Not support. Will raise exception if passed.
     :param make_final_policy_greedy: Whether or not to make the agent's final policy greedy with respect to the q-values
     that have been learned, regardless of the value of epsilon used to estimate the q-values.
-    :param q_S_A: State-action value estimator.
     :param thread_manager: Thread manager. The current function (and the thread running it) will wait on this manager
     before starting each iteration. This provides a mechanism for pausing, resuming, and aborting training. Omit for no
     waiting.
@@ -67,7 +64,7 @@ def iterate_value_q_pi(
     if planning_environment is not None:
         raise ValueError('Planning environments are not currently supported for Monte Carlo iteration.')
 
-    if (q_S_A.epsilon is None or q_S_A.epsilon == 0.0) and off_policy_agent is None:
+    if (agent.q_S_A.epsilon is None or agent.q_S_A.epsilon == 0.0) and off_policy_agent is None:
         warnings.warn('epsilon is 0.0 and there is no off-policy agent. Exploration and convergence not guaranteed. Consider passing epsilon > 0 or a soft off-policy agent to maintain exploration.')
 
     if checkpoint_path is not None:
@@ -99,18 +96,17 @@ def iterate_value_q_pi(
             num_episodes=num_episodes_per_improvement,
             exploring_starts=False,
             update_upon_every_visit=update_upon_every_visit,
-            q_S_A=q_S_A,
             off_policy_agent=off_policy_agent
         )
 
-        num_states_improved = q_S_A.improve_policy(
+        num_states_improved = agent.q_S_A.improve_policy(
             agent=agent,
             states=evaluated_states,
             event=PolicyImprovementEvent.FINISHED_EVALUATION
         )
 
         iteration_average_reward.append(average_reward)
-        iteration_total_states.append(len(q_S_A))
+        iteration_total_states.append(len(agent.q_S_A))
         iteration_num_states_improved.append(num_states_improved)
 
         elapsed_seconds = int((datetime.now() - start_datetime).total_seconds())
@@ -134,7 +130,6 @@ def iterate_value_q_pi(
                 'update_upon_every_visit': update_upon_every_visit,
                 'planning_environment': planning_environment,
                 'make_final_policy_greedy': make_final_policy_greedy,
-                'q_S_A': q_S_A,
                 'off_policy_agent': off_policy_agent,
                 'num_improvements_per_plot': num_improvements_per_plot,
                 'num_improvements_per_checkpoint': num_improvements_per_checkpoint,
@@ -150,8 +145,8 @@ def iterate_value_q_pi(
     logging.info(f'Value iteration of q_pi terminated after {i} iteration(s).')
 
     if make_final_policy_greedy:
-        q_S_A.epsilon = 0.0
-        q_S_A.improve_policy(
+        agent.q_S_A.epsilon = 0.0
+        agent.q_S_A.improve_policy(
             agent=agent,
             states=None,
             event=PolicyImprovementEvent.MAKING_POLICY_GREEDY

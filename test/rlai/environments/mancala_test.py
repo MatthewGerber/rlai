@@ -6,11 +6,10 @@ import pytest
 from numpy.random import RandomState
 
 from rlai.agents import Human
-from rlai.agents.mdp import StochasticMdpAgent
+from rlai.agents.mdp import ActionValueMdpAgent
 from rlai.environments.mancala import Mancala, Pit
 from rlai.gpi.monte_carlo.iteration import iterate_value_q_pi
 from rlai.gpi.utils import resume_from_checkpoint
-from rlai.policies.tabular import TabularPolicy
 from rlai.q_S_A.tabular import TabularStateActionValueEstimator
 from rlai.utils import sample_list_item
 from test.rlai.utils import tabular_pi_legacy_eq
@@ -24,21 +23,14 @@ def test_learn():
         random_state=random_state,
         T=None,
         initial_count=4,
-        player_2=StochasticMdpAgent(
-            'player 2',
-            random_state,
-            TabularPolicy(None, None),
-            1
-        )
+        player_2=None
     )
 
-    q_S_A = TabularStateActionValueEstimator(mancala, 0.05, None)
-
-    p1 = StochasticMdpAgent(
+    p1 = ActionValueMdpAgent(
         'player 1',
         random_state,
-        q_S_A.get_initial_policy(),
-        1
+        1,
+        TabularStateActionValueEstimator(mancala, 0.05, None)
     )
 
     checkpoint_path = iterate_value_q_pi(
@@ -49,7 +41,6 @@ def test_learn():
         update_upon_every_visit=False,
         planning_environment=None,
         make_final_policy_greedy=False,
-        q_S_A=q_S_A,
         num_improvements_per_checkpoint=3,
         checkpoint_path=tempfile.NamedTemporaryFile(delete=False).name
     )
@@ -71,26 +62,17 @@ def test_learn():
 
     # run same number of improvements without checkpoint...result should be the same.
     random_state = RandomState(12345)
-
     mancala: Mancala = Mancala(
         random_state=random_state,
         T=None,
         initial_count=4,
-        player_2=StochasticMdpAgent(
-            'player 2',
-            random_state,
-            TabularPolicy(None, None),
-            1
-        )
+        player_2=None
     )
-
-    q_S_A = TabularStateActionValueEstimator(mancala, 0.05, None)
-
-    no_checkpoint_p1 = StochasticMdpAgent(
+    no_checkpoint_p1 = ActionValueMdpAgent(
         'player 1',
         random_state,
-        q_S_A.get_initial_policy(),
-        1
+        1,
+        TabularStateActionValueEstimator(mancala, 0.05, None)
     )
 
     iterate_value_q_pi(
@@ -100,8 +82,7 @@ def test_learn():
         num_episodes_per_improvement=100,
         update_upon_every_visit=False,
         planning_environment=None,
-        make_final_policy_greedy=False,
-        q_S_A=q_S_A
+        make_final_policy_greedy=False
     )
 
     assert no_checkpoint_p1.pi == resumed_p1.pi
@@ -121,7 +102,7 @@ def test_pit():
 def test_human_player_mutator():
 
     random = RandomState()
-    mancala = Mancala(random, None, 5, StochasticMdpAgent('foo', random, TabularPolicy(None, []), 1.0))
+    mancala = Mancala(random, None, 5, None)
     Mancala.human_player_mutator(mancala)
 
     assert isinstance(mancala.player_2, Human)
@@ -151,13 +132,11 @@ def test_human_player():
 
     epsilon = 0.05
 
-    q_S_A = TabularStateActionValueEstimator(mancala, epsilon, None)
-
-    p1 = StochasticMdpAgent(
+    p1 = ActionValueMdpAgent(
         'player 1',
         random_state,
-        q_S_A.get_initial_policy(),
-        1
+        1,
+        TabularStateActionValueEstimator(mancala, epsilon, None)
     )
 
     state = mancala.reset_for_new_run(p1)

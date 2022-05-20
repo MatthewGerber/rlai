@@ -5,13 +5,13 @@ import pytest
 from numpy.random import RandomState
 
 from rlai.actions import Action
-from rlai.agents.mdp import StochasticMdpAgent
+from rlai.agents.mdp import ActionValueMdpAgent
 from rlai.environments.gamblers_problem import GamblersProblem
 from rlai.environments.gridworld import Gridworld
 from rlai.environments.mdp import PrioritizedSweepingMdpPlanningEnvironment
 from rlai.gpi.dynamic_programming.iteration import iterate_value_v_pi
 from rlai.planning.environment_models import StochasticEnvironmentModel
-from rlai.policies.tabular import TabularPolicy
+from rlai.q_S_A.tabular import TabularStateActionValueEstimator
 from rlai.rewards import Reward
 from rlai.runners.monitor import Monitor
 from rlai.states.mdp import MdpState
@@ -20,19 +20,17 @@ from rlai.states.mdp import MdpState
 def test_gamblers_problem():
 
     random_state = RandomState(12345)
-
     mdp_environment: GamblersProblem = GamblersProblem(
         'gamblers problem',
         random_state=random_state,
         T=None,
         p_h=0.4
     )
-
-    mdp_agent_v_pi_value_iteration = StochasticMdpAgent(
+    mdp_agent_v_pi_value_iteration = ActionValueMdpAgent(
         'test',
         random_state,
-        TabularPolicy(None, mdp_environment.SS),
-        1
+        1,
+        TabularStateActionValueEstimator(mdp_environment, None, None)
     )
 
     v_pi = iterate_value_v_pi(
@@ -89,11 +87,11 @@ def test_run():
         p_h=0.4
     )
 
-    agent = StochasticMdpAgent(
+    agent = ActionValueMdpAgent(
         'test',
         random_state,
-        TabularPolicy(None, mdp_environment.SS),
-        1
+        1,
+        TabularStateActionValueEstimator(mdp_environment, None, None)
     )
 
     monitor = Monitor()

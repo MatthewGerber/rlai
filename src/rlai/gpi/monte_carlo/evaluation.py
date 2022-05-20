@@ -1,17 +1,16 @@
 import logging
 from typing import Dict, Tuple, Set
 
-from rlai.agents.mdp import MdpAgent
+from rlai.agents.mdp import ActionValueMdpAgent
 from rlai.environments.mdp import MdpEnvironment
 from rlai.meta import rl_text
-from rlai.q_S_A import StateActionValueEstimator
 from rlai.states.mdp import MdpState
 from rlai.utils import IncrementalSampleAverager, sample_list_item
 
 
 @rl_text(chapter=5, page=92)
 def evaluate_v_pi(
-        agent: MdpAgent,
+        agent: ActionValueMdpAgent,
         environment: MdpEnvironment,
         num_episodes: int
 ) -> Dict[MdpState, float]:
@@ -93,13 +92,12 @@ def evaluate_v_pi(
 
 @rl_text(chapter=5, page=96)
 def evaluate_q_pi(
-        agent: MdpAgent,
+        agent: ActionValueMdpAgent,
         environment: MdpEnvironment,
         num_episodes: int,
         exploring_starts: bool,
         update_upon_every_visit: bool,
-        q_S_A: StateActionValueEstimator,
-        off_policy_agent: MdpAgent = None,
+        off_policy_agent: ActionValueMdpAgent = None,
 ) -> Tuple[Set[MdpState], float]:
     """
     Perform Monte Carlo evaluation of an agent's policy within an environment, returning state-action values. This
@@ -116,7 +114,6 @@ def evaluate_q_pi(
     a nonzero epsilon (see `rlai.gpi.improvement.improve_policy_with_q_pi`).
     :param update_upon_every_visit: True to update each state-action pair upon each visit within an episode, or False to
     update each state-action pair upon the first visit within an episode.
-    :param q_S_A: State-action value estimator.
     :param off_policy_agent: Agent containing behavioral policy used to generate learning episodes. To ensure that the
     state-action value estimates converge to those of the target policy, the policy of the `off_policy_agent` must be
     soft (i.e., have positive probability for all state-action pairs that have positive probabilities in the agent's
@@ -183,12 +180,12 @@ def evaluate_q_pi(
 
                 state, a = state_a
 
-                q_S_A.initialize(state=state, a=a, alpha=None, weighted=True)
+                agent.q_S_A.initialize(state=state, a=a, alpha=None, weighted=True)
 
                 # the following two lines work correctly for on- and off-policy learning. in the former case, the agent
                 # and episode policies are the same, which makes w always equal to 1 (i.e., q_S_A is unweighted...the
                 # on-policy case). in off-policy learning, w will be the importance-sampling weight.
-                q_S_A[state][a].update(value=g, weight=w)
+                agent.q_S_A[state][a].update(value=g, weight=w)
                 w *= agent.pi[state][a] / episode_generation_agent.pi[state][a]
 
                 # if the importance sampling weight becomes zero (allowing floating-point tolerance), then we're done,

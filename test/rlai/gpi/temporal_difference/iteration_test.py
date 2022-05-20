@@ -10,7 +10,7 @@ import numpy as np
 import pytest
 from numpy.random import RandomState
 
-from rlai.agents.mdp import StochasticMdpAgent
+from rlai.agents.mdp import ActionValueMdpAgent
 from rlai.environments.gridworld import Gridworld, GridworldFeatureExtractor
 from rlai.environments.mdp import TrajectorySamplingMdpPlanningEnvironment
 from rlai.gpi.temporal_difference.evaluation import Mode
@@ -31,18 +31,14 @@ from test.rlai.utils import tabular_estimator_legacy_eq, tabular_pi_legacy_eq
 def test_sarsa_iterate_value_q_pi():
 
     random_state = RandomState(12345)
-
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
-
     q_S_A = TabularStateActionValueEstimator(mdp_environment, 0.05, None)
-
-    mdp_agent = StochasticMdpAgent(
+    mdp_agent = ActionValueMdpAgent(
         'test',
         random_state,
-        q_S_A.get_initial_policy(),
-        1
+        1,
+        q_S_A
     )
-
     iterate_value_q_pi(
         agent=mdp_agent,
         environment=mdp_environment,
@@ -53,8 +49,7 @@ def test_sarsa_iterate_value_q_pi():
         mode=Mode.SARSA,
         n_steps=1,
         planning_environment=None,
-        make_final_policy_greedy=False,
-        q_S_A=q_S_A
+        make_final_policy_greedy=False
     )
 
     # uncomment the following line and run test to update fixture
@@ -70,18 +65,14 @@ def test_sarsa_iterate_value_q_pi():
 def test_sarsa_iterate_value_q_pi_make_greedy():
 
     random_state = RandomState(12345)
-
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
-
     q_S_A = TabularStateActionValueEstimator(mdp_environment, 0.05, None)
-
-    mdp_agent = StochasticMdpAgent(
+    mdp_agent = ActionValueMdpAgent(
         'test',
         random_state,
-        q_S_A.get_initial_policy(),
-        1
+        1,
+        q_S_A
     )
-
     iterate_value_q_pi(
         agent=mdp_agent,
         environment=mdp_environment,
@@ -92,8 +83,7 @@ def test_sarsa_iterate_value_q_pi_make_greedy():
         mode=Mode.SARSA,
         n_steps=1,
         planning_environment=None,
-        make_final_policy_greedy=True,
-        q_S_A=q_S_A
+        make_final_policy_greedy=True
     )
 
     # uncomment the following line and run test to update fixture
@@ -109,16 +99,13 @@ def test_sarsa_iterate_value_q_pi_make_greedy():
 def test_sarsa_iterate_value_q_pi_with_trajectory_planning():
 
     random_state = RandomState(12345)
-
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
-
     q_S_A = TabularStateActionValueEstimator(mdp_environment, 0.05, None)
-
-    mdp_agent = StochasticMdpAgent(
+    mdp_agent = ActionValueMdpAgent(
         'test',
         random_state,
-        q_S_A.get_initial_policy(),
-        1
+        1,
+        q_S_A
     )
 
     planning_environment = TrajectorySamplingMdpPlanningEnvironment(
@@ -139,8 +126,7 @@ def test_sarsa_iterate_value_q_pi_with_trajectory_planning():
         mode=Mode.SARSA,
         n_steps=1,
         planning_environment=planning_environment,
-        make_final_policy_greedy=True,
-        q_S_A=q_S_A
+        make_final_policy_greedy=True
     )
 
     # uncomment the following line and run test to update fixture
@@ -156,16 +142,13 @@ def test_sarsa_iterate_value_q_pi_with_trajectory_planning():
 def test_q_learning_iterate_value_q_pi():
 
     random_state = RandomState(12345)
-
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
-
     q_S_A = TabularStateActionValueEstimator(mdp_environment, 0.05, None)
-
-    mdp_agent = StochasticMdpAgent(
+    mdp_agent = ActionValueMdpAgent(
         'test',
         random_state,
-        q_S_A.get_initial_policy(),
-        1
+        1,
+        q_S_A
     )
 
     iterate_value_q_pi(
@@ -178,8 +161,7 @@ def test_q_learning_iterate_value_q_pi():
         mode=Mode.Q_LEARNING,
         n_steps=1,
         planning_environment=None,
-        make_final_policy_greedy=False,
-        q_S_A=q_S_A
+        make_final_policy_greedy=False
     )
 
     # uncomment the following line and run test to update fixture
@@ -195,9 +177,7 @@ def test_q_learning_iterate_value_q_pi():
 def test_q_learning_iterate_value_q_pi_function_approximation_with_formula():
 
     random_state = RandomState(12345)
-
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state, 20)
-
     q_S_A = ApproximateStateActionValueEstimator(
         mdp_environment,
         0.05,
@@ -208,12 +188,11 @@ def test_q_learning_iterate_value_q_pi_function_approximation_with_formula():
         None,
         None
     )
-
-    mdp_agent = StochasticMdpAgent(
+    mdp_agent = ActionValueMdpAgent(
         'test',
         random_state,
-        q_S_A.get_initial_policy(),
-        1
+        1,
+        q_S_A
     )
 
     iterate_value_q_pi(
@@ -226,8 +205,7 @@ def test_q_learning_iterate_value_q_pi_function_approximation_with_formula():
         mode=Mode.Q_LEARNING,
         n_steps=None,
         planning_environment=None,
-        make_final_policy_greedy=False,
-        q_S_A=q_S_A
+        make_final_policy_greedy=False
     )
 
     # uncomment the following line and run test to update fixture
@@ -243,9 +221,7 @@ def test_q_learning_iterate_value_q_pi_function_approximation_with_formula():
 def test_q_learning_iterate_value_q_pi_function_approximation_no_formula():
 
     random_state = RandomState(12345)
-
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state, 20)
-
     q_S_A = ApproximateStateActionValueEstimator(
         mdp_environment,
         0.05,
@@ -256,12 +232,11 @@ def test_q_learning_iterate_value_q_pi_function_approximation_no_formula():
         None,
         None
     )
-
-    mdp_agent = StochasticMdpAgent(
+    mdp_agent = ActionValueMdpAgent(
         'test',
         random_state,
-        q_S_A.get_initial_policy(),
-        1
+        1,
+        q_S_A
     )
 
     iterate_value_q_pi(
@@ -274,8 +249,7 @@ def test_q_learning_iterate_value_q_pi_function_approximation_no_formula():
         mode=Mode.Q_LEARNING,
         n_steps=None,
         planning_environment=None,
-        make_final_policy_greedy=True,
-        q_S_A=q_S_A
+        make_final_policy_greedy=True
     )
 
     # uncomment the following line and run test to update fixture
@@ -293,9 +267,7 @@ def test_q_learning_iterate_value_q_pi_function_approximation_no_formula():
 def test_q_learning_iterate_value_q_pi_function_approximation_invalid_formula():
 
     random_state = RandomState(12345)
-
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state, 20)
-
     q_S_A = ApproximateStateActionValueEstimator(
         mdp_environment,
         0.05,
@@ -306,12 +278,11 @@ def test_q_learning_iterate_value_q_pi_function_approximation_invalid_formula():
         None,
         None
     )
-
-    mdp_agent = StochasticMdpAgent(
+    mdp_agent = ActionValueMdpAgent(
         'test',
         random_state,
-        q_S_A.get_initial_policy(),
-        1
+        1,
+        q_S_A
     )
 
     with pytest.raises(ValueError, match='Invalid combination of formula'):
@@ -325,24 +296,20 @@ def test_q_learning_iterate_value_q_pi_function_approximation_invalid_formula():
             mode=Mode.Q_LEARNING,
             n_steps=None,
             planning_environment=None,
-            make_final_policy_greedy=False,
-            q_S_A=q_S_A
+            make_final_policy_greedy=False
         )
 
 
 def test_expected_sarsa_iterate_value_q_pi():
 
     random_state = RandomState(12345)
-
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
-
     q_S_A = TabularStateActionValueEstimator(mdp_environment, 0.05, None)
-
-    mdp_agent = StochasticMdpAgent(
+    mdp_agent = ActionValueMdpAgent(
         'test',
         random_state,
-        q_S_A.get_initial_policy(),
-        1
+        1,
+        q_S_A
     )
 
     iterate_value_q_pi(
@@ -355,8 +322,7 @@ def test_expected_sarsa_iterate_value_q_pi():
         mode=Mode.EXPECTED_SARSA,
         n_steps=1,
         planning_environment=None,
-        make_final_policy_greedy=False,
-        q_S_A=q_S_A
+        make_final_policy_greedy=False
     )
 
     # uncomment the following line and run test to update fixture
@@ -372,16 +338,13 @@ def test_expected_sarsa_iterate_value_q_pi():
 def test_n_step_q_learning_iterate_value_q_pi():
 
     random_state = RandomState(12345)
-
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
-
     q_S_A = TabularStateActionValueEstimator(mdp_environment, 0.05, None)
-
-    mdp_agent = StochasticMdpAgent(
+    mdp_agent = ActionValueMdpAgent(
         'test',
         random_state,
-        q_S_A.get_initial_policy(),
-        1
+        1,
+        q_S_A
     )
 
     iterate_value_q_pi(
@@ -394,8 +357,7 @@ def test_n_step_q_learning_iterate_value_q_pi():
         mode=Mode.Q_LEARNING,
         n_steps=3,
         planning_environment=None,
-        make_final_policy_greedy=False,
-        q_S_A=q_S_A
+        make_final_policy_greedy=False
     )
 
     # uncomment the following line and run test to update fixture
@@ -411,16 +373,12 @@ def test_n_step_q_learning_iterate_value_q_pi():
 def test_invalid_epsilon_iterate_value_q_pi():
 
     random_state = RandomState(12345)
-
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
-
-    q_S_A = TabularStateActionValueEstimator(mdp_environment, 0.0, None)
-
-    mdp_agent = StochasticMdpAgent(
+    mdp_agent = ActionValueMdpAgent(
         'test',
         random_state,
-        q_S_A.get_initial_policy(),
-        1
+        1,
+        TabularStateActionValueEstimator(mdp_environment, 0.0, None)
     )
 
     with pytest.raises(ValueError, match='epsilon must be strictly > 0 for TD-learning'):
@@ -434,24 +392,19 @@ def test_invalid_epsilon_iterate_value_q_pi():
             mode=Mode.Q_LEARNING,
             n_steps=3,
             planning_environment=None,
-            make_final_policy_greedy=False,
-            q_S_A=q_S_A
+            make_final_policy_greedy=False
         )
 
 
 def test_iterate_value_q_pi_with_pdf():
 
     random_state = RandomState(12345)
-
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
-
-    q_S_A = TabularStateActionValueEstimator(mdp_environment, 0.05, None)
-
-    mdp_agent = StochasticMdpAgent(
+    mdp_agent = ActionValueMdpAgent(
         'test',
         random_state,
-        q_S_A.get_initial_policy(),
-        1
+        1,
+        TabularStateActionValueEstimator(mdp_environment, 0.05, None)
     )
 
     iterate_value_q_pi(
@@ -465,7 +418,6 @@ def test_iterate_value_q_pi_with_pdf():
         n_steps=1,
         planning_environment=None,
         make_final_policy_greedy=False,
-        q_S_A=q_S_A,
         num_improvements_per_plot=5,
         pdf_save_path=tempfile.NamedTemporaryFile(delete=False).name
     )
@@ -478,16 +430,12 @@ def test_iterate_value_q_pi_multi_threaded():
     def train_thread_target():
 
         random_state = RandomState(12345)
-
         mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
-
-        q_S_A = TabularStateActionValueEstimator(mdp_environment, 0.1, None)
-
-        mdp_agent = StochasticMdpAgent(
+        mdp_agent = ActionValueMdpAgent(
             'test',
             random_state,
-            q_S_A.get_initial_policy(),
-            1
+            1,
+            TabularStateActionValueEstimator(mdp_environment, 0.1, None)
         )
 
         iterate_value_q_pi(
@@ -501,7 +449,6 @@ def test_iterate_value_q_pi_multi_threaded():
             n_steps=None,
             planning_environment=None,
             make_final_policy_greedy=False,
-            q_S_A=q_S_A,
             thread_manager=thread_manager,
             num_improvements_per_plot=10
         )
@@ -591,11 +538,8 @@ def test_iterate_value_q_pi_func_approx_multi_threaded():
 def test_q_learning_iterate_value_q_pi_function_approximation_policy_ne():
 
     random_state = RandomState(12345)
-
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state, 20)
-
     epsilon = 0.05
-
     q_S_A_1 = ApproximateStateActionValueEstimator(
         mdp_environment,
         epsilon,
@@ -606,12 +550,11 @@ def test_q_learning_iterate_value_q_pi_function_approximation_policy_ne():
         None,
         None
     )
-
-    mdp_agent_1 = StochasticMdpAgent(
+    mdp_agent_1 = ActionValueMdpAgent(
         'test',
         random_state,
-        q_S_A_1.get_initial_policy(),
-        1
+        1,
+        q_S_A_1
     )
 
     iterate_value_q_pi(
@@ -624,8 +567,7 @@ def test_q_learning_iterate_value_q_pi_function_approximation_policy_ne():
         mode=Mode.Q_LEARNING,
         n_steps=None,
         planning_environment=None,
-        make_final_policy_greedy=True,
-        q_S_A=q_S_A_1
+        make_final_policy_greedy=True
     )
 
     q_S_A_2 = ApproximateStateActionValueEstimator(
@@ -639,11 +581,11 @@ def test_q_learning_iterate_value_q_pi_function_approximation_policy_ne():
         None
     )
 
-    mdp_agent_2 = StochasticMdpAgent(
+    mdp_agent_2 = ActionValueMdpAgent(
         'test',
         random_state,
-        q_S_A_2.get_initial_policy(),
-        1
+        1,
+        q_S_A_2
     )
 
     iterate_value_q_pi(
@@ -656,8 +598,7 @@ def test_q_learning_iterate_value_q_pi_function_approximation_policy_ne():
         mode=Mode.Q_LEARNING,
         n_steps=None,
         planning_environment=None,
-        make_final_policy_greedy=True,
-        q_S_A=q_S_A_2
+        make_final_policy_greedy=True
     )
 
     assert mdp_agent_1.pi.estimator != mdp_agent_2.pi.estimator
@@ -667,22 +608,19 @@ def test_q_learning_iterate_value_q_pi_function_approximation_policy_ne():
 def test_q_learning_iterate_value_q_pi_tabular_policy_ne():
 
     random_state = RandomState(12345)
-
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state, 20)
-
     epsilon = 0.05
-
     q_S_A_1 = TabularStateActionValueEstimator(
         mdp_environment,
         epsilon,
         None
     )
 
-    mdp_agent_1 = StochasticMdpAgent(
+    mdp_agent_1 = ActionValueMdpAgent(
         'test',
         random_state,
-        q_S_A_1.get_initial_policy(),
-        1
+        1,
+        q_S_A_1
     )
 
     iterate_value_q_pi(
@@ -695,8 +633,7 @@ def test_q_learning_iterate_value_q_pi_tabular_policy_ne():
         mode=Mode.Q_LEARNING,
         n_steps=None,
         planning_environment=None,
-        make_final_policy_greedy=True,
-        q_S_A=q_S_A_1
+        make_final_policy_greedy=True
     )
 
     q_S_A_2 = TabularStateActionValueEstimator(
@@ -705,11 +642,11 @@ def test_q_learning_iterate_value_q_pi_tabular_policy_ne():
         None
     )
 
-    mdp_agent_2 = StochasticMdpAgent(
+    mdp_agent_2 = ActionValueMdpAgent(
         'test',
         random_state,
-        q_S_A_2.get_initial_policy(),
-        1
+        1,
+        q_S_A_2
     )
 
     iterate_value_q_pi(
@@ -722,8 +659,7 @@ def test_q_learning_iterate_value_q_pi_tabular_policy_ne():
         mode=Mode.Q_LEARNING,
         n_steps=None,
         planning_environment=None,
-        make_final_policy_greedy=True,
-        q_S_A=q_S_A_2
+        make_final_policy_greedy=True
     )
 
     test_state = mdp_environment.SS[5]

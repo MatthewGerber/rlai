@@ -10,7 +10,6 @@ from rlai.actions import Action
 from rlai.agents import Agent
 from rlai.environments import Environment
 from rlai.meta import rl_text
-from rlai.policies import Policy
 from rlai.states import State
 from rlai.utils import IncrementalSampleAverager, parse_arguments
 
