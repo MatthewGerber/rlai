@@ -175,7 +175,7 @@ class DummyQSA:
     """
 
     @staticmethod
-    def get_initial_policy():
+    def get_initial_policy() -> TabularPolicy:
         return TabularPolicy(None, None)
 
 
