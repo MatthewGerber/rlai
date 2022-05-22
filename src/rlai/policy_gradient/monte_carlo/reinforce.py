@@ -262,7 +262,7 @@ def iterate_training_pool(
     :return: 3-tuple of the best policy, its state-value estimator, and its average return.
     """
 
-    # evaluate the current agent without updating it - TODO:  Adaptive valuation based on return statistics.
+    # evaluate the current agent without updating it - TODO:  Adaptive number of evaluation episodes based on return statistics.
     logging.info('Evaluating agent for training pool.')
     evaluation_start_timestamp = datetime.now()
     evaluation_averager = IncrementalSampleAverager()

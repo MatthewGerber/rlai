@@ -499,7 +499,7 @@ def test_iterate_value_q_pi_func_approx_multi_threaded():
             train_args: Dict
     ):
         nonlocal q_S_A
-        q_S_A = train_args['q_S_A']
+        q_S_A = train_args['agent'].q_S_A
         train_args_wait_event.set()
 
     cmd = '--random-seed 12345 --agent rlai.agents.mdp.ActionValueMdpAgent --gamma 1 --environment rlai.environments.gridworld.Gridworld --id example_4_1 --T 25 --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode SARSA --num-improvements 10 --num-episodes-per-improvement 10 --epsilon 0.05 --q-S-A rlai.q_S_A.function_approximation.estimators.ApproximateStateActionValueEstimator --function-approximation-model rlai.q_S_A.function_approximation.models.sklearn.SKLearnSGD --plot-model --feature-extractor rlai.environments.gridworld.GridworldFeatureExtractor --make-final-policy-greedy True'
@@ -523,7 +523,7 @@ def test_iterate_value_q_pi_func_approx_multi_threaded():
     time.sleep(1)
     assert q_S_A.plot(True, None) is not None
 
-    # should be allowed to update plot from non-main thread
+    # should not be allowed to update plot from non-main thread
     def bad_update():
         with pytest.raises(ValueError, match='Can only update plot on main thread.'):
             q_S_A.update_plot(-1)

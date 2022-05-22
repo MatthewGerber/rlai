@@ -1,6 +1,6 @@
 from abc import ABC
 from argparse import ArgumentParser
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Optional
 
 import numpy as np
 from numpy.random import RandomState
@@ -168,9 +168,10 @@ class StochasticMdpAgent(MdpAgent, ABC):
         )
 
 
+@rl_text(chapter='Agents', page=1)
 class ActionValueMdpAgent(StochasticMdpAgent):
     """
-    A stochastic MDP agent whose policy is informed by action-value estimates.
+    A stochastic MDP agent whose policy is updated according to action-value estimates.
     """
 
     @classmethod
@@ -225,10 +226,11 @@ class ActionValueMdpAgent(StochasticMdpAgent):
         )
         del parsed_args.q_S_A
 
+        # noinspection PyUnboundLocalVariable
         agent = cls(
             name=f'action-value (gamma={parsed_args.gamma})',
             random_state=random_state,
-            q_S_A=q_S_A,  # TODO: Why?
+            q_S_A=q_S_A,
             **vars(parsed_args)
         )
 
@@ -260,7 +262,11 @@ class ActionValueMdpAgent(StochasticMdpAgent):
         self.q_S_A = q_S_A
 
 
+@rl_text(chapter='Agents', page=1)
 class ParameterizedMdpAgent(StochasticMdpAgent):
+    """
+    A stochastic MDP agent whose policy is updated according to its parameterized gradients.
+    """
 
     @classmethod
     def get_argument_parser(
@@ -288,7 +294,7 @@ class ParameterizedMdpAgent(StochasticMdpAgent):
         parser.add_argument(
             '--v-S',
             type=str,
-            help='Fully-qualified type name of state-value estimator to use.'
+            help='Fully-qualified type name of baseline state-value estimator to use, or ignore for no baseline.'
         )
 
         return parser
@@ -311,13 +317,15 @@ class ParameterizedMdpAgent(StochasticMdpAgent):
 
         parsed_args, unparsed_args = parse_arguments(cls, args)
 
-        # load state-value estimator
-        estimator_class = load_class(parsed_args.v_S)
-        v_S, unparsed_args = estimator_class.init_from_arguments(
-            args=unparsed_args,
-            random_state=random_state,
-            environment=environment
-        )
+        # load state-value estimator, which is optional.
+        v_S = None
+        if parsed_args.v_S is not None:
+            estimator_class = load_class(parsed_args.v_S)
+            v_S, unparsed_args = estimator_class.init_from_arguments(
+                args=unparsed_args,
+                random_state=random_state,
+                environment=environment
+            )
         del parsed_args.v_S
 
         # load parameterized policy
@@ -328,11 +336,12 @@ class ParameterizedMdpAgent(StochasticMdpAgent):
         )
         del parsed_args.policy
 
+        # noinspection PyUnboundLocalVariable
         agent = cls(
             name=f'parameterized (gamma={parsed_args.gamma})',
             random_state=random_state,
-            pi=policy,  # TODO: Why?
-            v_S=v_S,  # TODO: Why?
+            pi=policy,
+            v_S=v_S,
             **vars(parsed_args)
         )
 
@@ -344,7 +353,7 @@ class ParameterizedMdpAgent(StochasticMdpAgent):
             random_state: RandomState,
             pi: ParameterizedPolicy,
             gamma: float,
-            v_S: StateValueEstimator
+            v_S: Optional[StateValueEstimator]
     ):
         """
         Initialize the agent.
@@ -353,7 +362,7 @@ class ParameterizedMdpAgent(StochasticMdpAgent):
         :param random_state: Random state.
         :param pi: Policy.
         :param gamma: Discount.
-        :param v_S: State-value estimator.
+        :param v_S: Baseline state-value estimator.
         """
 
         super().__init__(
