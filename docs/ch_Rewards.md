@@ -1,5 +1,5 @@
 [Home](index.md) > Rewards
-### [rlai.environments.robocode.RobocodeReward](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/robocode.py#L23)
+### [rlai.environments.robocode.RobocodeReward](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/robocode.py#L22)
 ```
 Robocode reward.
 ```

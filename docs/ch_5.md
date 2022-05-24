@@ -1,5 +1,5 @@
 [Home](index.md) > Chapter 5:  Monte Carlo Methods
-### [rlai.gpi.monte_carlo.evaluation.evaluate_v_pi](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/monte_carlo/evaluation.py#L13)
+### [rlai.gpi.monte_carlo.evaluation.evaluate_v_pi](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/monte_carlo/evaluation.py#L12)
 ```
 Perform Monte Carlo evaluation of an agent's policy within an environment, returning state values. Uses a random
     action on the first time step to maintain exploration (exploring starts). This evaluation approach is only
@@ -13,7 +13,7 @@ Perform Monte Carlo evaluation of an agent's policy within an environment, retur
     :param num_episodes: Number of episodes to execute.
     :return: Dictionary of MDP states and their estimated values under the agent's policy.
 ```
-### [rlai.gpi.monte_carlo.evaluation.evaluate_q_pi](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/monte_carlo/evaluation.py#L95)
+### [rlai.gpi.monte_carlo.evaluation.evaluate_q_pi](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/monte_carlo/evaluation.py#L94)
 ```
 Perform Monte Carlo evaluation of an agent's policy within an environment, returning state-action values. This
     evaluation function operates over rewards obtained at the end of episodes, so it is only appropriate for episodic
@@ -29,7 +29,6 @@ Perform Monte Carlo evaluation of an agent's policy within an environment, retur
     a nonzero epsilon (see `rlai.gpi.improvement.improve_policy_with_q_pi`).
     :param update_upon_every_visit: True to update each state-action pair upon each visit within an episode, or False to
     update each state-action pair upon the first visit within an episode.
-    :param q_S_A: State-action value estimator.
     :param off_policy_agent: Agent containing behavioral policy used to generate learning episodes. To ensure that the
     state-action value estimates converge to those of the target policy, the policy of the `off_policy_agent` must be
     soft (i.e., have positive probability for all state-action pairs that have positive probabilities in the agent's
@@ -37,7 +36,7 @@ Perform Monte Carlo evaluation of an agent's policy within an environment, retur
     :return: 2-tuple of (1) set of only those states that were evaluated, and (2) the average reward obtained per
     episode.
 ```
-### [rlai.gpi.monte_carlo.iteration.iterate_value_q_pi](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/monte_carlo/iteration.py#L21)
+### [rlai.gpi.monte_carlo.iteration.iterate_value_q_pi](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/monte_carlo/iteration.py#L20)
 ```
 Run Monte Carlo value iteration on an agent using state-action value estimates. This iteration function operates
     over rewards obtained at the end of episodes, so it is only appropriate for episodic tasks.
@@ -51,7 +50,6 @@ Run Monte Carlo value iteration on an agent using state-action value estimates. 
     :param planning_environment: Not support. Will raise exception if passed.
     :param make_final_policy_greedy: Whether or not to make the agent's final policy greedy with respect to the q-values
     that have been learned, regardless of the value of epsilon used to estimate the q-values.
-    :param q_S_A: State-action value estimator.
     :param thread_manager: Thread manager. The current function (and the thread running it) will wait on this manager
     before starting each iteration. This provides a mechanism for pausing, resuming, and aborting training. Omit for no
     waiting.

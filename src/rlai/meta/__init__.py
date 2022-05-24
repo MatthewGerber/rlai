@@ -2,6 +2,7 @@ import importlib
 import inspect
 import os
 import pkgutil
+import time
 from typing import Set, Dict, List, Union, Callable, Any
 
 import requests
@@ -92,15 +93,22 @@ def summarize(
                         if module.__file__.endswith('__init__.py'):
                             relative_url_filepath = f'{relative_url_filepath}/__init__'
 
+                        # check url
                         src_url = f'{repo_src_url}{relative_url_filepath}.py#L{line_no}'
-                        response = requests.get(src_url)
-                        if response.status_code == 200:
-                            chapter_page_descriptions[chapter][page].append(f'### [{full_path}]({src_url})\n```\n{attribute.__doc__.strip()}\n```\n')
-                            paths_summarized.add(full_path)
-                        elif response.status_code == 404:
-                            print(f'Invalid URL ({response.status_code}):  {src_url}')
-                        else:
-                            raise ValueError(f'Unexpected status code for URL {src_url}:  {response.status_code}')
+                        while True:
+                            response = requests.get(src_url)
+                            if response.status_code == 200:
+                                chapter_page_descriptions[chapter][page].append(f'### [{full_path}]({src_url})\n```\n{attribute.__doc__.strip()}\n```\n')
+                                paths_summarized.add(full_path)
+                                break
+                            elif response.status_code == 404:
+                                print(f'Invalid URL ({response.status_code}):  {src_url}')
+                                break
+                            elif response.status_code == 429:
+                                print(f'Rate limited. Sleeping.')
+                                time.sleep(10)
+                            else:
+                                raise ValueError(f'Unexpected status code for URL {src_url}:  {response.status_code}')
 
         if module_is_pkg:
             summarize(module, chapter_page_descriptions, paths_summarized)

@@ -33,11 +33,11 @@ Feature extractor for the continuous lunar lander.
 Signed-coding feature extractor. Forms a category from the conjunction of all state-feature signs and then places
     the continuous feature vector into its associated category.
 ```
-### [rlai.environments.robocode.RobocodeFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/robocode.py#L621)
+### [rlai.environments.robocode.RobocodeFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/robocode.py#L592)
 ```
 Robocode feature extractor.
 ```
-### [rlai.environments.robocode_continuous_action.RobocodeFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/robocode_continuous_action.py#L648)
+### [rlai.environments.robocode_continuous_action.RobocodeFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/robocode_continuous_action.py#L624)
 ```
 Robocode feature extractor.
 ```
@@ -63,7 +63,7 @@ Feature interacter for one-hot encoded categorical values.
 General-purpose category specification. Instances of this class are passed to
     `rlai.models.feature_extraction.OneHotCategoricalFeatureInteracter` to achieve one-hot encoding of feature vectors.
 ```
-### [rlai.q_S_A.function_approximation.models.feature_extraction.StateActionIdentityFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/q_S_A/function_approximation/models/feature_extraction.py#L151)
+### [rlai.q_S_A.function_approximation.models.feature_extraction.StateActionIdentityFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/q_S_A/function_approximation/models/feature_extraction.py#L149)
 ```
 Simple state/action identifier extractor. Generates features named "s" and "a" for each observation. The
     interpretation of the feature values (i.e., state and action identifiers) depends on the environment. The values
@@ -75,7 +75,7 @@ Simple state/action identifier extractor. Generates features named "s" and "a" f
     `rlai.q_S_A.function_approximation.statistical_learning.feature_extraction.gridworld.GridworldFeatureExtractor`
     for an example.
 ```
-### [rlai.q_S_A.function_approximation.models.feature_extraction.StateActionInteractionFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/q_S_A/function_approximation/models/feature_extraction.py#L87)
+### [rlai.q_S_A.function_approximation.models.feature_extraction.StateActionInteractionFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/q_S_A/function_approximation/models/feature_extraction.py#L85)
 ```
 A feature extractor that extracts features comprising the interaction (in a statistical modeling sense) of
     state features with categorical actions. Categorical actions are coded as one-hot vectors with length equal to the

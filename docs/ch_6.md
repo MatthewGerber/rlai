@@ -21,11 +21,10 @@ Perform temporal-difference (TD) evaluation of an agent's policy within an envir
     range [1, inf], or None for infinite step size (Monte Carlo evaluation).
     :param planning_environment: Planning environment to learn through experience gained during evaluation, or None to
     not learn an environment model.
-    :param q_S_A: State-action value estimator.
     :return: 2-tuple of (1) set of only those states that were evaluated, and (2) the average reward obtained per
     episode.
 ```
-### [rlai.gpi.temporal_difference.iteration.iterate_value_q_pi](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/temporal_difference/iteration.py#L20)
+### [rlai.gpi.temporal_difference.iteration.iterate_value_q_pi](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/temporal_difference/iteration.py#L19)
 ```
 Run temporal-difference value iteration on an agent using state-action value estimates.
 
@@ -42,7 +41,6 @@ Run temporal-difference value iteration on an agent using state-action value est
     :param planning_environment: Planning environment to learn and use.
     :param make_final_policy_greedy: Whether or not to make the agent's final policy greedy with respect to the q-values
     that have been learned, regardless of the value of epsilon used to estimate the q-values.
-    :param q_S_A: State-action value estimator.
     :param thread_manager: Thread manager. The current function (and the thread running it) will wait on this manager
     before starting each iteration. This provides a mechanism for pausing, resuming, and aborting training. Omit for no
     waiting.
