@@ -105,7 +105,7 @@ def summarize(
                                 print(f'Invalid URL ({response.status_code}):  {src_url}')
                                 break
                             elif response.status_code == 429:
-                                print(f'Rate limited. Sleeping.')
+                                print(f'Rate limited ({response.status_code}):  Sleeping.')
                                 time.sleep(10)
                             else:
                                 raise ValueError(f'Unexpected status code for URL {src_url}:  {response.status_code}')
