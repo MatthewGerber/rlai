@@ -43,7 +43,7 @@ The following command trains an agent for the continuous lunar lander environmen
 with a baseline state-value estimator:
 
 ```
-rlai train --random-seed 12345 --agent rlai.agents.mdp.StochasticMdpAgent --gamma 1.0 --environment rlai.environments.openai_gym.Gym --gym-id LunarLanderContinuous-v2 --render-every-nth-episode 100 --video-directory ~/Desktop/lunarlander_continuous_videos --force --plot-environment --T 500 --train-function rlai.policy_gradient.monte_carlo.reinforce.improve --num-episodes 50000 --plot-state-value True --v-S rlai.v_S.function_approximation.estimators.ApproximateStateValueEstimator --feature-extractor rlai.environments.openai_gym.ContinuousLunarLanderFeatureExtractor --function-approximation-model rlai.models.sklearn.SKLearnSGD --loss squared_loss --sgd-alpha 0.0 --learning-rate constant --eta0 0.0001 --policy rlai.policies.parameterized.continuous_action.ContinuousActionBetaDistributionPolicy --policy-feature-extractor rlai.environments.openai_gym.ContinuousLunarLanderFeatureExtractor --plot-policy --alpha 0.0001 --update-upon-every-visit True --save-agent-path ~/Desktop/continuous_lunarlander_agent.pickle
+rlai train --random-seed 12345 --agent rlai.agents.mdp.ParameterizedMdpAgent --gamma 1.0 --environment rlai.environments.openai_gym.Gym --gym-id LunarLanderContinuous-v2 --render-every-nth-episode 100 --video-directory ~/Desktop/lunarlander_continuous_videos --force --plot-environment --T 500 --train-function rlai.policy_gradient.monte_carlo.reinforce.improve --num-episodes 50000 --plot-state-value True --v-S rlai.v_S.function_approximation.estimators.ApproximateStateValueEstimator --feature-extractor rlai.environments.openai_gym.ContinuousLunarLanderFeatureExtractor --function-approximation-model rlai.models.sklearn.SKLearnSGD --loss squared_loss --sgd-alpha 0.0 --learning-rate constant --eta0 0.0001 --policy rlai.policies.parameterized.continuous_action.ContinuousActionBetaDistributionPolicy --policy-feature-extractor rlai.environments.openai_gym.ContinuousLunarLanderFeatureExtractor --plot-policy --alpha 0.0001 --update-upon-every-visit True --save-agent-path ~/Desktop/continuous_lunarlander_agent.pickle
 ```
 
 The arguments are explained below.
@@ -53,7 +53,7 @@ The arguments are explained below.
 * `--random-seed 12345`:  For reproducibility.
 
 ### Agent
-* `--agent rlai.agents.mdp.StochasticMdpAgent`:  Standard stochastic MDP agent. 
+* `--agent rlai.agents.mdp.ParameterizedMdpAgent`:  Standard parameterized MDP agent. 
 * `--gamma 1.0`:  Do not discount.
 
 ### Environment

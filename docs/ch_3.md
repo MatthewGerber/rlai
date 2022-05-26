@@ -1,5 +1,5 @@
 [Home](index.md) > Chapter 3:  Finite Markov Decision Processes
-### [rlai.environments.mdp.MdpEnvironment](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/mdp.py#L25)
+### [rlai.environments.mdp.MdpEnvironment](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/mdp.py#L24)
 ```
 MDP environment.
 ```
@@ -7,7 +7,7 @@ MDP environment.
 ```
 State of an MDP.
 ```
-### [rlai.environments.mdp.ModelBasedMdpEnvironment](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/mdp.py#L142)
+### [rlai.environments.mdp.ModelBasedMdpEnvironment](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/mdp.py#L141)
 ```
 Model-based MDP environment. Adds the specification of a probability distribution over next states and rewards.
 ```

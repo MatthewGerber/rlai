@@ -1,14 +1,13 @@
 import logging
 from abc import ABC, abstractmethod
 from argparse import ArgumentParser
-from typing import Optional, Iterable, Tuple, List, Iterator
+from typing import Optional, Iterable, Tuple, List, Iterator, Any
 
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 from numpy.random import RandomState
 
 from rlai.actions import Action
-from rlai.agents.mdp import MdpAgent
 from rlai.environments.mdp import MdpEnvironment
 from rlai.gpi import PolicyImprovementEvent
 from rlai.meta import rl_text
@@ -192,7 +191,7 @@ class StateActionValueEstimator(ABC):
     @abstractmethod
     def improve_policy(
             self,
-            agent: MdpAgent,
+            agent: Any,
             states: Optional[Iterable[MdpState]],
             event: PolicyImprovementEvent
     ):

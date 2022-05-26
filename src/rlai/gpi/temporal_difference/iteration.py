@@ -6,19 +6,18 @@ from typing import Optional, Union
 
 from matplotlib.backends.backend_pdf import PdfPages
 
-from rlai.agents.mdp import MdpAgent
+from rlai.agents.mdp import ActionValueMdpAgent
 from rlai.environments.mdp import MdpEnvironment, MdpPlanningEnvironment
 from rlai.gpi import PolicyImprovementEvent
 from rlai.gpi.temporal_difference.evaluation import evaluate_q_pi, Mode
 from rlai.gpi.utils import plot_policy_iteration
 from rlai.meta import rl_text
-from rlai.q_S_A import StateActionValueEstimator
 from rlai.utils import RunThreadManager, insert_index_into_path
 
 
 @rl_text(chapter=6, page=130)
 def iterate_value_q_pi(
-        agent: MdpAgent,
+        agent: ActionValueMdpAgent,
         environment: MdpEnvironment,
         num_improvements: int,
         num_episodes_per_improvement: int,
@@ -28,7 +27,6 @@ def iterate_value_q_pi(
         n_steps: Optional[int],
         planning_environment: Optional[MdpPlanningEnvironment],
         make_final_policy_greedy: bool,
-        q_S_A: StateActionValueEstimator,
         thread_manager: RunThreadManager = None,
         num_improvements_per_plot: Optional[int] = None,
         num_improvements_per_checkpoint: Optional[int] = None,
@@ -51,7 +49,6 @@ def iterate_value_q_pi(
     :param planning_environment: Planning environment to learn and use.
     :param make_final_policy_greedy: Whether or not to make the agent's final policy greedy with respect to the q-values
     that have been learned, regardless of the value of epsilon used to estimate the q-values.
-    :param q_S_A: State-action value estimator.
     :param thread_manager: Thread manager. The current function (and the thread running it) will wait on this manager
     before starting each iteration. This provides a mechanism for pausing, resuming, and aborting training. Omit for no
     waiting.
@@ -66,7 +63,7 @@ def iterate_value_q_pi(
     if thread_manager is None:
         thread_manager = RunThreadManager(True)
 
-    if q_S_A.epsilon is None or q_S_A.epsilon <= 0:
+    if agent.q_S_A.epsilon is None or agent.q_S_A.epsilon <= 0:
         raise ValueError('epsilon must be strictly > 0 for TD-learning')
 
     if checkpoint_path is not None:
@@ -104,23 +101,22 @@ def iterate_value_q_pi(
             alpha=alpha,
             mode=mode,
             n_steps=n_steps,
-            planning_environment=planning_environment,
-            q_S_A=q_S_A
+            planning_environment=planning_environment
         )
 
-        num_states_improved = q_S_A.improve_policy(
+        num_states_improved = agent.q_S_A.improve_policy(
             agent=agent,
             states=evaluated_states,
             event=PolicyImprovementEvent.FINISHED_EVALUATION
         )
 
-        q_S_A.plot(
+        agent.q_S_A.plot(
             final=i == num_improvements - 1,
             pdf=pdf
         )
 
         iteration_average_reward.append(average_reward)
-        iteration_total_states.append(len(q_S_A))
+        iteration_total_states.append(len(agent.q_S_A))
         iteration_num_states_improved.append(num_states_improved)
 
         # run planning through a recursive call to the iteration method, passing the planning environment as the
@@ -138,7 +134,6 @@ def iterate_value_q_pi(
                 n_steps=n_steps,
                 planning_environment=None,
                 make_final_policy_greedy=False,
-                q_S_A=q_S_A,
                 num_improvements_per_plot=None,
                 num_improvements_per_checkpoint=None,
                 checkpoint_path=None,
@@ -170,7 +165,6 @@ def iterate_value_q_pi(
                 'n_steps': n_steps,
                 'planning_environment': planning_environment,
                 'make_final_policy_greedy': make_final_policy_greedy,
-                'q_S_A': q_S_A,
                 'num_improvements_per_plot': num_improvements_per_plot,
                 'num_improvements_per_checkpoint': num_improvements_per_checkpoint,
                 'checkpoint_path': checkpoint_path,
@@ -185,8 +179,8 @@ def iterate_value_q_pi(
     logging.info(f'Value iteration of q_pi terminated after {i} iteration(s).')
 
     if make_final_policy_greedy:
-        q_S_A.epsilon = 0.0
-        q_S_A.improve_policy(
+        agent.q_S_A.epsilon = 0.0
+        agent.q_S_A.improve_policy(
             agent=agent,
             states=None,
             event=PolicyImprovementEvent.MAKING_POLICY_GREEDY

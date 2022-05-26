@@ -5,11 +5,11 @@ from numpy.random import RandomState
 
 from rlai.actions import Action
 from rlai.agents import Agent, Human
-from rlai.agents.mdp import StochasticMdpAgent, MdpAgent
+from rlai.agents.mdp import MdpAgent, ActionValueMdpAgent
 from rlai.environments import Environment
 from rlai.environments.mdp import MdpEnvironment
 from rlai.meta import rl_text
-from rlai.policies.tabular import TabularPolicy
+from rlai.q_S_A.tabular import TabularStateActionValueEstimator
 from rlai.rewards import Reward
 from rlai.states.mdp import MdpState
 from rlai.utils import parse_arguments
@@ -194,12 +194,7 @@ class Mancala(MdpEnvironment):
 
         mancala = cls(
             random_state=random_state,
-            player_2=StochasticMdpAgent(
-                'environmental agent',
-                random_state,
-                TabularPolicy(None, None),
-                1
-            ),
+            player_2=None,
             **vars(parsed_args)
         )
 
@@ -413,7 +408,7 @@ class Mancala(MdpEnvironment):
             random_state: RandomState,
             T: Optional[int],
             initial_count: int,
-            player_2: Agent
+            player_2: Optional[Agent]
     ):
         """
         Initialize the game.
@@ -421,7 +416,7 @@ class Mancala(MdpEnvironment):
         :param random_state: Random state.
         :param T: Maximum number of steps to run, or None for no limit.
         :param initial_count: Initial count for each pit.
-        :param player_2: Agent for player 2.
+        :param player_2: Agent for player 2, or None to use a random agent.
         """
 
         super().__init__(
@@ -429,6 +424,14 @@ class Mancala(MdpEnvironment):
             random_state=random_state,
             T=T
         )
+
+        if player_2 is None:
+            player_2 = ActionValueMdpAgent(
+                'environmental agent',
+                random_state,
+                1,
+                TabularStateActionValueEstimator(self, None, None)
+            )
 
         self.initial_count = initial_count
         self.player_2 = player_2

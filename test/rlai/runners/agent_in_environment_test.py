@@ -8,7 +8,7 @@ import pytest
 from numpy.random import RandomState
 from numpy.testing import assert_allclose
 
-from rlai.agents.mdp import StochasticMdpAgent
+from rlai.agents.mdp import ActionValueMdpAgent
 from rlai.policies.tabular import TabularPolicy
 from rlai.runners.agent_in_environment import run
 from rlai.runners.monitor import Monitor
@@ -169,10 +169,21 @@ def test_plot():
     run(shlex.split(f'--random-seed 12345 --T 100 --n-runs 200 --environment rlai.environments.bandit.KArmedBandit --k 10 --agent rlai.agents.q_value.EpsilonGreedy --epsilon 0.2 0.0 --plot --pdf-save-path {tempfile.NamedTemporaryFile(delete=False).name}'))
 
 
+class DummyQSA:
+    """
+    State-action value estimator without an environment.
+    """
+
+    @staticmethod
+    def get_initial_policy() -> TabularPolicy:
+        return TabularPolicy(None, None)
+
+
 def dump_agent() -> str:
 
     # create dummy mdp agent for runner
-    stochastic_mdp_agent = StochasticMdpAgent('foo', RandomState(12345), TabularPolicy(None, None), 1.0)
+    # noinspection PyTypeChecker
+    stochastic_mdp_agent = ActionValueMdpAgent('foo', RandomState(12345), 1.0, DummyQSA())
     agent_path = tempfile.NamedTemporaryFile(delete=False).name
     with open(agent_path, 'wb') as f:
         pickle.dump(stochastic_mdp_agent, f)

@@ -74,6 +74,7 @@ setup(
         'ipython==7.19.0',
         'ipympl==0.6.3',
         'tornado==6.1.0',
+        'jedi==0.17.2',
 
         # make pycharm package requirement checker happy (we calculate jax package on the fly above)
         'jax'

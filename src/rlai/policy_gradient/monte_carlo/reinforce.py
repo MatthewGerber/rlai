@@ -11,7 +11,7 @@ from typing import Optional, Tuple
 import matplotlib.pyplot as plt
 import numpy as np
 
-from rlai.agents.mdp import StochasticMdpAgent
+from rlai.agents.mdp import ParameterizedMdpAgent
 from rlai.environments.mdp import MdpEnvironment
 from rlai.meta import rl_text
 from rlai.policies.parameterized import ParameterizedPolicy
@@ -27,13 +27,11 @@ from rlai.v_S import StateValueEstimator
 
 @rl_text(chapter=13, page=326)
 def improve(
-        agent: StochasticMdpAgent,
-        policy: ParameterizedPolicy,
+        agent: ParameterizedMdpAgent,
         environment: MdpEnvironment,
         num_episodes: int,
         update_upon_every_visit: bool,
         alpha: float,
-        v_S: Optional[StateValueEstimator],
         thread_manager: RunThreadManager,
         plot_state_value: bool,
         num_episodes_per_checkpoint: Optional[int] = None,
@@ -48,8 +46,7 @@ def improve(
     This improvement function operates over rewards obtained at the end of episodes, so it is only appropriate for
     episodic tasks.
 
-    :param agent: Agent containing target policy to be optimized.
-    :param policy: Parameterized policy to be optimized.
+    :param agent: Agent containing a parameterized policy to be optimized.
     :param environment: Environment.
     :param num_episodes: Number of episodes to execute.
     :param update_upon_every_visit: True to update each state-action pair upon each visit within an episode, or False to
@@ -59,7 +56,6 @@ def improve(
     before starting each iteration. This provides a mechanism for pausing, resuming, and aborting training. Omit for no
     waiting.
     :param plot_state_value: Whether or not to plot the state-value.
-    :param v_S: Baseline state-value estimator, or None for no baseline.
     :param num_episodes_per_checkpoint: Number of episodes per checkpoint save.
     :param checkpoint_path: Checkpoint path. Must be provided if `num_episodes_per_checkpoint` is provided.
     :param training_pool_directory: Path to directory in which to store pooled training runs.
@@ -103,7 +99,7 @@ def improve(
         training_pool_iteration = 1
 
     state_value_plot = None
-    if plot_state_value and v_S is not None:
+    if plot_state_value and agent.v_S is not None:
         state_value_plot = ScatterPlot('REINFORCE:  State Value', ['Estimate'], None)
 
     logging.info(f'Running Monte Carlo-based REINFORCE improvement for {num_episodes} episode(s).')
@@ -128,7 +124,7 @@ def improve(
             state_a = (state, a)
 
             if state_value_plot is not None:
-                state_value_plot.update(np.array([v_S[state].get_value()]))
+                state_value_plot.update(np.array([agent.v_S[state].get_value()]))
 
             # mark time step of first visit, if we're doing first-visit evaluation.
             if state_action_first_t is not None and state_a not in state_action_first_t:
@@ -155,39 +151,36 @@ def improve(
                 state, a = state_a
 
                 # if we don't have a baseline, then the target is the return.
-                if v_S is None:
+                if agent.v_S is None:
                     target = g
 
                 # otherwise, update the baseline state-value estimator and set the target to be the difference between
                 # observed return and the baseline. actions that produce an above-baseline return will be reinforced.
                 else:
-                    v_S[state].update(g)
-                    v_S.improve()
-                    estimate = v_S[state].get_value()
+                    agent.v_S[state].update(g)
+                    agent.v_S.improve()
+                    estimate = agent.v_S[state].get_value()
                     target = g - estimate
 
-                policy.append_update(a, state, alpha, target)
+                agent.pi.append_update(a, state, alpha, target)
 
-        policy.commit_updates()
+        agent.pi.commit_updates()
         episodes_finished = episode_i + 1
 
         if use_training_pool and episodes_finished % training_pool_iterate_episodes == 0:
-            policy, v_S, average_return = iterate_training_pool(
+            agent.pi, agent.v_S, average_return = iterate_training_pool(
                 training_pool_directory,
                 training_pool_path,
                 training_pool_count,
                 training_pool_iteration,
                 training_pool_evaluate_episodes,
                 agent,
-                policy,
-                environment,
-                v_S
+                environment
             )
-            agent.pi = policy
 
             # track the policy with the best average return
             if training_pool_best_overall_average_return is None or average_return > training_pool_best_overall_average_return:
-                training_pool_best_overall_policy = policy
+                training_pool_best_overall_policy = agent.pi
                 training_pool_best_overall_average_return = average_return
 
             training_pool_iteration += 1
@@ -196,13 +189,11 @@ def improve(
 
             resume_args = {
                 'agent': agent,
-                'policy': policy,
                 'environment': environment,
                 'num_episodes': num_episodes,
                 'update_upon_every_visit': update_upon_every_visit,
                 'alpha': alpha,
                 'plot_state_value': plot_state_value,
-                'v_S': v_S,
                 'num_episodes_per_checkpoint': num_episodes_per_checkpoint,
                 'checkpoint_path': checkpoint_path,
                 'training_pool_directory': training_pool_directory,
@@ -225,21 +216,19 @@ def improve(
 
         # iterate training pool one final time, but only if we didn't iterate the pool just before exiting the loop above.
         if num_episodes % training_pool_iterate_episodes != 0:
-            policy, v_S, average_return = iterate_training_pool(
+            agent.pi, agent.v_S, average_return = iterate_training_pool(
                 training_pool_directory,
                 training_pool_path,
                 training_pool_count,
                 training_pool_iteration,
                 training_pool_evaluate_episodes,
                 agent,
-                policy,
-                environment,
-                v_S
+                environment
             )
 
             # track the policy with the best average return
             if training_pool_best_overall_average_return is None or average_return > training_pool_best_overall_average_return:
-                training_pool_best_overall_policy = policy
+                training_pool_best_overall_policy = agent.pi
                 training_pool_best_overall_average_return = average_return
 
         agent.pi = training_pool_best_overall_policy
@@ -256,10 +245,8 @@ def iterate_training_pool(
         training_pool_count: int,
         training_pool_iteration: int,
         training_pool_evaluate_episodes: int,
-        agent: StochasticMdpAgent,
-        policy: ParameterizedPolicy,
-        environment: MdpEnvironment,
-        v_S: StateValueEstimator
+        agent: ParameterizedMdpAgent,
+        environment: MdpEnvironment
 ) -> Tuple[ParameterizedPolicy, StateValueEstimator, float]:
     """
     Iterate the training pool. This entails evaluating the current agent without updating its policy, waiting for all
@@ -271,13 +258,11 @@ def iterate_training_pool(
     :param training_pool_iteration: Iteration to perform.
     :param training_pool_evaluate_episodes: Number of episodes to evaluate the current agent.
     :param agent: Agent to evaluate.
-    :param policy: Current policy.
     :param environment: Environment.
-    :param v_S: State-value estimator.
     :return: 3-tuple of the best policy, its state-value estimator, and its average return.
     """
 
-    # evaluate the current agent without updating it - TODO:  Adaptive valuation based on return statistics.
+    # evaluate the current agent without updating it - TODO:  Adaptive number of evaluation episodes based on return statistics.
     logging.info('Evaluating agent for training pool.')
     evaluation_start_timestamp = datetime.now()
     evaluation_averager = IncrementalSampleAverager()
@@ -300,7 +285,7 @@ def iterate_training_pool(
 
     # write the policy and its performance to the pool for the current iteration
     with open(f'{training_pool_path}_{training_pool_iteration}', 'wb') as training_pool_file:
-        pickle.dump((policy, v_S, evaluation_averager.average), training_pool_file)
+        pickle.dump((agent.pi, agent.v_S, evaluation_averager.average), training_pool_file)
 
     # select policy from current iteration of all runners
     (

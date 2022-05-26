@@ -1,6 +1,6 @@
 from numpy.random import RandomState
 
-from rlai.agents.mdp import StochasticMdpAgent
+from rlai.agents.mdp import ActionValueMdpAgent
 from rlai.environments.gridworld import Gridworld
 from rlai.gpi.dynamic_programming.iteration import (
     iterate_policy_v_pi,
@@ -8,23 +8,20 @@ from rlai.gpi.dynamic_programming.iteration import (
     iterate_value_v_pi,
     iterate_value_q_pi
 )
-from rlai.policies.tabular import TabularPolicy
+from rlai.q_S_A.tabular import TabularStateActionValueEstimator
 
 
 def test_policy_iteration():
 
-    random_state = RandomState(12345)
-
-    mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
-
     # state-value policy iteration
-    mdp_agent_v_pi = StochasticMdpAgent(
+    random_state = RandomState(12345)
+    mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
+    mdp_agent_v_pi = ActionValueMdpAgent(
         'test',
         random_state,
-        TabularPolicy(None, mdp_environment.SS),
-        1
+        1,
+        TabularStateActionValueEstimator(mdp_environment, None, None)
     )
-
     iterate_policy_v_pi(
         mdp_agent_v_pi,
         mdp_environment,
@@ -33,11 +30,13 @@ def test_policy_iteration():
     )
 
     # action-value policy iteration
-    mdp_agent_q_pi = StochasticMdpAgent(
+    random_state = RandomState(12345)
+    mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
+    mdp_agent_q_pi = ActionValueMdpAgent(
         'test',
         random_state,
-        TabularPolicy(None, mdp_environment.SS),
-        1
+        1,
+        TabularStateActionValueEstimator(mdp_environment, None, None)
     )
 
     iterate_policy_q_pi(
@@ -53,18 +52,15 @@ def test_policy_iteration():
 
 def test_value_iteration():
 
-    random_state = RandomState(12345)
-
-    mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
-
     # run policy iteration on v_pi
-    mdp_agent_v_pi_policy_iteration = StochasticMdpAgent(
+    random_state = RandomState(12345)
+    mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
+    mdp_agent_v_pi_policy_iteration = ActionValueMdpAgent(
         'test',
         random_state,
-        TabularPolicy(None, mdp_environment.SS),
-        1
+        1,
+        TabularStateActionValueEstimator(mdp_environment, None, None)
     )
-
     iterate_policy_v_pi(
         mdp_agent_v_pi_policy_iteration,
         mdp_environment,
@@ -73,13 +69,14 @@ def test_value_iteration():
     )
 
     # run value iteration on v_pi
-    mdp_agent_v_pi_value_iteration = StochasticMdpAgent(
+    random_state = RandomState(12345)
+    mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
+    mdp_agent_v_pi_value_iteration = ActionValueMdpAgent(
         'test',
         random_state,
-        TabularPolicy(None, mdp_environment.SS),
-        1
+        1,
+        TabularStateActionValueEstimator(mdp_environment, None, None)
     )
-
     iterate_value_v_pi(
         mdp_agent_v_pi_value_iteration,
         mdp_environment,
@@ -91,13 +88,14 @@ def test_value_iteration():
     assert mdp_agent_v_pi_policy_iteration.pi == mdp_agent_v_pi_value_iteration.pi
 
     # run value iteration on q_pi
-    mdp_agent_q_pi_value_iteration = StochasticMdpAgent(
+    random_state = RandomState(12345)
+    mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
+    mdp_agent_q_pi_value_iteration = ActionValueMdpAgent(
         'test',
         random_state,
-        TabularPolicy(None, mdp_environment.SS),
-        1
+        1,
+        TabularStateActionValueEstimator(mdp_environment, None, None)
     )
-
     iterate_value_q_pi(
         mdp_agent_q_pi_value_iteration,
         mdp_environment,

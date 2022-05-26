@@ -1,7 +1,7 @@
 import numpy as np
 from numpy.random import RandomState
 
-from rlai.agents.mdp import StochasticMdpAgent
+from rlai.agents.mdp import ParameterizedMdpAgent
 from rlai.environments.openai_gym import ContinuousFeatureExtractor, Gym
 from rlai.policies.parameterized.continuous_action import ContinuousActionBetaDistributionPolicy
 
@@ -17,10 +17,9 @@ def test_rescale():
     )
 
     fex = ContinuousFeatureExtractor()
-
     policy = ContinuousActionBetaDistributionPolicy(gym, fex, False)
-
-    agent = StochasticMdpAgent('test', random_state, policy, 0.9)
+    # noinspection PyTypeChecker
+    agent = ParameterizedMdpAgent('test', random_state, policy, 0.9, None)
     state = gym.reset_for_new_run(agent)
     policy.set_action(state)
 

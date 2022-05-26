@@ -3,10 +3,9 @@ import pickle
 
 from numpy.random import RandomState
 
-from rlai.agents.mdp import StochasticMdpAgent
+from rlai.agents.mdp import ActionValueMdpAgent
 from rlai.environments.gridworld import Gridworld
 from rlai.gpi.monte_carlo.evaluation import evaluate_v_pi, evaluate_q_pi
-from rlai.policies.tabular import TabularPolicy
 from rlai.q_S_A.tabular import TabularStateActionValueEstimator
 from test.rlai.utils import tabular_estimator_legacy_eq
 
@@ -17,11 +16,11 @@ def test_evaluate_v_pi():
 
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
 
-    mdp_agent = StochasticMdpAgent(
+    mdp_agent = ActionValueMdpAgent(
         'test',
         random_state,
-        TabularPolicy(None, mdp_environment.SS),
-        1
+        1,
+        TabularStateActionValueEstimator(mdp_environment, None, None)
     )
 
     v_pi = evaluate_v_pi(
@@ -43,16 +42,13 @@ def test_evaluate_v_pi():
 def test_evaluate_q_pi():
 
     random_state = RandomState(12345)
-
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
-
     q_S_A = TabularStateActionValueEstimator(mdp_environment, None, None)
-
-    mdp_agent = StochasticMdpAgent(
+    mdp_agent = ActionValueMdpAgent(
         'test',
         random_state,
-        q_S_A.get_initial_policy(),
-        1
+        1,
+        q_S_A
     )
 
     evaluated_states, _ = evaluate_q_pi(
@@ -60,8 +56,7 @@ def test_evaluate_q_pi():
         environment=mdp_environment,
         num_episodes=1000,
         exploring_starts=True,
-        update_upon_every_visit=False,
-        q_S_A=q_S_A
+        update_upon_every_visit=False
     )
 
     assert len(q_S_A) == len(evaluated_states) + 2  # terminal states aren't evaluated

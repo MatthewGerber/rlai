@@ -7,14 +7,13 @@ from threading import Thread
 import pytest
 from numpy.random import RandomState
 
-from rlai.agents.mdp import StochasticMdpAgent
+from rlai.agents.mdp import ActionValueMdpAgent
 from rlai.environments.gridworld import Gridworld, GridworldFeatureExtractor
 from rlai.environments.mdp import TrajectorySamplingMdpPlanningEnvironment
 from rlai.gpi import PolicyImprovementEvent
 from rlai.gpi.monte_carlo.iteration import iterate_value_q_pi
 from rlai.gpi.utils import update_policy_iteration_plot, plot_policy_iteration
 from rlai.planning.environment_models import StochasticEnvironmentModel
-from rlai.policies.tabular import TabularPolicy
 from rlai.q_S_A.function_approximation.estimators import ApproximateStateActionValueEstimator
 from rlai.q_S_A.function_approximation.models.sklearn import SKLearnSGD
 from rlai.q_S_A.tabular import TabularStateActionValueEstimator
@@ -25,18 +24,14 @@ from test.rlai.utils import tabular_estimator_legacy_eq, tabular_pi_legacy_eq
 def test_iterate_value_q_pi():
 
     random_state = RandomState(12345)
-
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
-
     q_S_A = TabularStateActionValueEstimator(mdp_environment, 0.1, None)
-
-    mdp_agent = StochasticMdpAgent(
+    mdp_agent = ActionValueMdpAgent(
         'test',
         random_state,
-        q_S_A.get_initial_policy(),
-        1
+        1,
+        q_S_A
     )
-
     iterate_value_q_pi(
         agent=mdp_agent,
         environment=mdp_environment,
@@ -44,8 +39,7 @@ def test_iterate_value_q_pi():
         num_episodes_per_improvement=1,
         update_upon_every_visit=False,
         planning_environment=None,
-        make_final_policy_greedy=False,
-        q_S_A=q_S_A
+        make_final_policy_greedy=False
     )
 
     # uncomment the following line and run test to update fixture
@@ -60,26 +54,23 @@ def test_iterate_value_q_pi():
 
 def test_off_policy_monte_carlo():
 
-    random_state = RandomState(12345)
-
-    mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
-
-    q_S_A = TabularStateActionValueEstimator(mdp_environment, 0.0, None)
-
     # target agent
-    mdp_agent = StochasticMdpAgent(
+    random_state = RandomState(12345)
+    mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
+    q_S_A = TabularStateActionValueEstimator(mdp_environment, 0.0, None)
+    mdp_agent = ActionValueMdpAgent(
         'test',
         random_state,
-        q_S_A.get_initial_policy(),
-        1
+        1,
+        q_S_A
     )
 
     # episode generation (behavior) policy
-    off_policy_agent = StochasticMdpAgent(
+    off_policy_agent = ActionValueMdpAgent(
         'test',
         random_state,
-        q_S_A.get_initial_policy(),
-        1
+        1,
+        TabularStateActionValueEstimator(mdp_environment, 0.0, None)
     )
 
     iterate_value_q_pi(
@@ -90,7 +81,6 @@ def test_off_policy_monte_carlo():
         update_upon_every_visit=True,
         planning_environment=None,
         make_final_policy_greedy=False,
-        q_S_A=q_S_A,
         off_policy_agent=off_policy_agent
     )
 
@@ -122,19 +112,19 @@ def test_off_policy_monte_carlo_with_function_approximation():
     )
 
     # target agent
-    mdp_agent = StochasticMdpAgent(
+    mdp_agent = ActionValueMdpAgent(
         'test',
         random_state,
-        q_S_A.get_initial_policy(),
-        1
+        1,
+        q_S_A
     )
 
     # episode generation (behavior) policy
-    off_policy_agent = StochasticMdpAgent(
+    off_policy_agent = ActionValueMdpAgent(
         'test',
         random_state,
-        TabularPolicy(None, None),
-        1
+        1,
+        TabularStateActionValueEstimator(mdp_environment, None, None)
     )
 
     iterate_value_q_pi(
@@ -145,7 +135,6 @@ def test_off_policy_monte_carlo_with_function_approximation():
         update_upon_every_visit=True,
         planning_environment=None,
         make_final_policy_greedy=False,
-        q_S_A=q_S_A,
         off_policy_agent=off_policy_agent
     )
 
@@ -167,26 +156,22 @@ def test_off_policy_monte_carlo_with_function_approximation():
 
 def test_invalid_iterate_value_q_pi():
 
-    random_state = RandomState(12345)
-
-    mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
-
-    q_S_A = TabularStateActionValueEstimator(mdp_environment, 0.0, None)
-
     # target agent
-    mdp_agent = StochasticMdpAgent(
+    random_state = RandomState(12345)
+    mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
+    mdp_agent = ActionValueMdpAgent(
         'test',
         random_state,
-        q_S_A.get_initial_policy(),
-        1
+        1,
+        TabularStateActionValueEstimator(mdp_environment, 0.0, None)
     )
 
     # episode generation (behavior) policy
-    off_policy_agent = StochasticMdpAgent(
+    off_policy_agent = ActionValueMdpAgent(
         'test',
         random_state,
-        q_S_A.get_initial_policy(),
-        1
+        1,
+        TabularStateActionValueEstimator(mdp_environment, 0.0, None)
     )
 
     with pytest.raises(ValueError, match='Planning environments are not currently supported for Monte Carlo iteration.'):
@@ -198,12 +183,11 @@ def test_invalid_iterate_value_q_pi():
             update_upon_every_visit=True,
             planning_environment=TrajectorySamplingMdpPlanningEnvironment('foo', random_state, StochasticEnvironmentModel(), 100, None),
             make_final_policy_greedy=False,
-            q_S_A=q_S_A,
             off_policy_agent=off_policy_agent
         )
 
     # test warning...no off-policy agent with epsilon=0.0
-    q_S_A.epsilon = 0.0
+    mdp_agent.q_S_A.epsilon = 0.0
     iterate_value_q_pi(
         agent=mdp_agent,
         environment=mdp_environment,
@@ -212,7 +196,6 @@ def test_invalid_iterate_value_q_pi():
         update_upon_every_visit=True,
         planning_environment=None,
         make_final_policy_greedy=False,
-        q_S_A=q_S_A,
         off_policy_agent=None
     )
 
@@ -220,18 +203,14 @@ def test_invalid_iterate_value_q_pi():
 def test_iterate_value_q_pi_with_pdf():
 
     random_state = RandomState(12345)
-
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
-
     q_S_A = TabularStateActionValueEstimator(mdp_environment, 0.1, None)
-
-    mdp_agent = StochasticMdpAgent(
+    mdp_agent = ActionValueMdpAgent(
         'test',
         random_state,
-        q_S_A.get_initial_policy(),
-        1
+        1,
+        q_S_A
     )
-
     iterate_value_q_pi(
         agent=mdp_agent,
         environment=mdp_environment,
@@ -240,7 +219,6 @@ def test_iterate_value_q_pi_with_pdf():
         update_upon_every_visit=False,
         planning_environment=None,
         make_final_policy_greedy=False,
-        q_S_A=q_S_A,
         num_improvements_per_plot=1500,
         pdf_save_path=tempfile.NamedTemporaryFile(delete=False).name
     )
@@ -258,19 +236,16 @@ def test_iterate_value_q_pi_multi_threaded():
     thread_manager = RunThreadManager(True)
 
     def train_thread_target():
+
         random_state = RandomState(12345)
-
         mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
-
         q_S_A = TabularStateActionValueEstimator(mdp_environment, 0.1, None)
-
-        mdp_agent = StochasticMdpAgent(
+        mdp_agent = ActionValueMdpAgent(
             'test',
             random_state,
-            q_S_A.get_initial_policy(),
-            1
+            1,
+            q_S_A
         )
-
         iterate_value_q_pi(
             agent=mdp_agent,
             environment=mdp_environment,
@@ -279,7 +254,6 @@ def test_iterate_value_q_pi_multi_threaded():
             update_upon_every_visit=False,
             planning_environment=None,
             make_final_policy_greedy=False,
-            q_S_A=q_S_A,
             thread_manager=thread_manager,
             num_improvements_per_plot=10
         )

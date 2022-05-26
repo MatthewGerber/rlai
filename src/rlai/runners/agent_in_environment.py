@@ -61,7 +61,7 @@ def run(
         agents, unparsed_args = agent_class.init_from_arguments(
             args=unparsed_args,
             random_state=random_state,
-            pi=None  # there can't be a policy in this case, as policies only come from prior training/pickling.
+            environment=environment
         )
 
     # no unparsed arguments should remain

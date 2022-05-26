@@ -3,15 +3,16 @@ from numpy.random import RandomState
 
 from rlai.actions import Action
 from rlai.agents import Human
-from rlai.agents.mdp import StochasticMdpAgent
-from rlai.policies.tabular import TabularPolicy
+from rlai.agents.mdp import ActionValueMdpAgent
+from rlai.environments.gridworld import Gridworld
+from rlai.q_S_A.tabular import TabularStateActionValueEstimator
 from rlai.states.mdp import MdpState
 
 
 def test_agent_invalid_action():
 
     random = RandomState()
-    agent = StochasticMdpAgent('foo', random, TabularPolicy(None, None), 1.0)
+    agent = ActionValueMdpAgent('foo', random, 1.0, TabularStateActionValueEstimator(Gridworld.example_4_1(random, None), None, None))
 
     # test None action
     agent.__act__ = lambda t: None
@@ -57,4 +58,4 @@ def test_human_agent():
 
     with pytest.raises(NotImplementedError):
         rng = RandomState(12345)
-        Human.init_from_arguments([], rng, None)
+        Human.init_from_arguments([], rng, Gridworld.example_4_1(rng, None))

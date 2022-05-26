@@ -4,7 +4,7 @@ import pickle
 import pytest
 from numpy.random import RandomState
 
-from rlai.agents.mdp import StochasticMdpAgent
+from rlai.agents.mdp import ActionValueMdpAgent
 from rlai.environments.openai_gym import Gym, CartpoleFeatureExtractor
 from rlai.gpi.temporal_difference.evaluation import Mode
 from rlai.gpi.temporal_difference.iteration import iterate_value_q_pi
@@ -15,20 +15,17 @@ from test.rlai.utils import tabular_estimator_legacy_eq, tabular_pi_legacy_eq
 def test_learn():
 
     random_state = RandomState(12345)
-
     gym = Gym(
         random_state=random_state,
         T=None,
         gym_id='CartPole-v1'
     )
-
     q_S_A = TabularStateActionValueEstimator(gym, 0.05, 0.001)
-
-    mdp_agent = StochasticMdpAgent(
+    mdp_agent = ActionValueMdpAgent(
         'agent',
         random_state,
-        q_S_A.get_initial_policy(),
-        1
+        1,
+        q_S_A
     )
 
     iterate_value_q_pi(
@@ -41,8 +38,7 @@ def test_learn():
         mode=Mode.SARSA,
         n_steps=1,
         planning_environment=None,
-        make_final_policy_greedy=False,
-        q_S_A=q_S_A
+        make_final_policy_greedy=False
     )
 
     # uncomment the following line and run test to update fixture
