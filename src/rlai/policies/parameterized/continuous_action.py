@@ -252,8 +252,6 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
 
         # assemble updates
         updates = zip(
-            self.update_batch_a,
-            self.update_batch_s,
             intercept_state_feature_matrix,
             self.update_batch_alpha,
             self.update_batch_target,
@@ -261,26 +259,28 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
             action_density_gradients_wrt_theta_cov
         )
 
-        for a, s, state_features, alpha, target, action_density_gradient_wrt_theta_mean, action_density_gradient_wrt_theta_cov in updates:
-
-            # TODO:  How to estimate this from the PDF? The multivariate_normal class has a CDF.
-            p_a_s = 1.0
+        for state_features, alpha, target, action_density_gradient_wrt_theta_mean, action_density_gradient_wrt_theta_cov in updates:
 
             # check for nans in the gradients and skip the update if any are found
-            if np.isinf(action_density_gradient_wrt_theta_mean).any() or np.isnan(action_density_gradient_wrt_theta_mean).any() or np.isinf(action_density_gradient_wrt_theta_cov).any() or np.isnan(action_density_gradient_wrt_theta_cov).any():  # pragma no cover
+            if (
+                    np.isinf(action_density_gradient_wrt_theta_mean).any() or
+                    np.isnan(action_density_gradient_wrt_theta_mean).any() or
+                    np.isinf(action_density_gradient_wrt_theta_cov).any() or
+                    np.isnan(action_density_gradient_wrt_theta_cov).any()
+            ):  # pragma no cover
                 warnings.warn('Gradients contain np.inf or np.nan value(s). Skipping update.')
             else:
 
                 # check whether the covariance matrix resulting from the updated parameters will be be positive
                 # definite, as the multivariate normal distribution requires this. assign the update only if it is so.
-                new_theta_cov = self.theta_cov + alpha * target * (action_density_gradient_wrt_theta_cov / p_a_s)
+                new_theta_cov = self.theta_cov + alpha * target * action_density_gradient_wrt_theta_cov
                 new_cov = self.get_covariance_matrix(
                     new_theta_cov,
                     state_features
                 )
 
                 if is_positive_definite(new_cov):
-                    self.theta_mean += alpha * target * (action_density_gradient_wrt_theta_mean / p_a_s)
+                    self.theta_mean += alpha * target * action_density_gradient_wrt_theta_mean
                     self.theta_cov = new_theta_cov
                 else:  # pragma no cover
                     warnings.warn('The updated covariance theta parameters will produce a covariance matrix that is not positive definite. Skipping update.')
@@ -531,17 +531,18 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
         Commit updates that were previously appended with calls to `append_update`.
         """
 
-        # extract state-feature matrix
+        # extract state-feature matrix:  one row per update and one column per state dimension.
         state_feature_matrix = np.array([
             self.feature_extractor.extract(s, False)
             for s in self.update_batch_s
         ])
 
-        # add intercept
+        # prepend an intercept column
         intercept_state_feature_matrix = np.ones(shape=np.add(state_feature_matrix.shape, (0, 1)))
         intercept_state_feature_matrix[:, 1:] = state_feature_matrix
 
-        # invert action values back to [0.0, 1.0] (the domain of the beta distribution)
+        # invert action values back to [0.0, 1.0] (the domain of the beta distribution), creating one row per action
+        # and one column per action dimension.
         action_matrix = np.array([
             self.invert_rescale(a.value)
             for a in self.update_batch_a
@@ -552,7 +553,7 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
         # values of the action (in action_i_values).
         for action_i, (action_i_theta_a, action_i_theta_b, action_i_values) in enumerate(zip(self.action_theta_a, self.action_theta_b, action_matrix.T)):
 
-            # calculate per-update gradients for the current action
+            # calculate per-update gradients for the current action with respect to the action's policy parameters
             (
                 action_density_gradients_wrt_theta_a,
                 action_density_gradients_wrt_theta_b
@@ -565,28 +566,23 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
 
             # assemble updates
             updates = zip(
-                self.update_batch_a,
-                self.update_batch_s,
                 self.update_batch_alpha,
                 self.update_batch_target,
                 action_density_gradients_wrt_theta_a,
                 action_density_gradients_wrt_theta_b
             )
 
-            for a, s, alpha, target, action_density_gradient_wrt_theta_a, action_density_gradient_wrt_theta_b in updates:
+            for alpha, target, action_density_gradient_wrt_theta_a, action_density_gradient_wrt_theta_b in updates:
 
-                # TODO:  How to estimate this from the PDF?
-                p_a_s = 1.0
-
-                # squash gradients into [-1.0, 1.0] to handle scaling issues when actions are chosen at the tails of
-                # the beta distribution where the gradients are very large. this also addresses cases of
+                # use tanh to squash gradients into [-1.0, 1.0] to handle scaling issues when actions are chosen at the
+                # tails of the beta distribution where the gradients are very large. this also addresses cases of
                 # positive/negative infinite gradients.
 
                 action_density_gradient_wrt_theta_a = np.nan_to_num(action_density_gradient_wrt_theta_a)
-                self.action_theta_a[action_i, :] += alpha * target * (np.tanh(action_density_gradient_wrt_theta_a) / p_a_s)
+                self.action_theta_a[action_i, :] += alpha * target * np.tanh(action_density_gradient_wrt_theta_a)
 
                 action_density_gradient_wrt_theta_b = np.nan_to_num(action_density_gradient_wrt_theta_b)
-                self.action_theta_b[action_i, :] += alpha * target * (np.tanh(action_density_gradient_wrt_theta_b) / p_a_s)
+                self.action_theta_b[action_i, :] += alpha * target * np.tanh(action_density_gradient_wrt_theta_b)
 
         self.reset_action_scatter_plot_y_range()
 
@@ -730,13 +726,14 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
             plot_policy=plot_policy
         )
 
-        # coefficients for shape parameters a and b. these will be initialized upon the first call to the feature
-        # extractor within __getitem__.
+        # coefficients for shape parameters a and b. each array has one row per action and one column per state
+        # dimension (plus an intercept). these will be initialized upon the first call to the feature extractor within
+        # __getitem__.
         self.action_theta_a = None
         self.action_theta_b = None
 
         # get jax function for gradients with respect to theta_a and theta_b. vectorize the gradient calculation over
-        # input arrays for state and action values.
+        # rows in the input arrays for state and action values.
         self.get_action_density_gradients = jit(grad(self.get_action_density, argnums=(0, 1)))
         self.get_action_density_gradients_vmap = jit(vmap(self.get_action_density_gradients, in_axes=(None, None, 0, 0)))
 

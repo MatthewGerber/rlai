@@ -41,7 +41,7 @@ Arguments are explained below.
 * `--checkpoint-path "~/Desktop/acrobat_checkpoint.pickle"`:  Where to store the checkpoint.
 * `--save-agent-path "~/Desktop/acrobat_agent.pickle"`:  Where to save the final agent.
 
-Note that, unlike other tasks such as the [inverted pendulum](inverted_pendulum.html), no value is passed for `--T` 
+Note that, unlike other tasks such as the [inverted pendulum](inverted_pendulum.md), no value is passed for `--T` 
 (maximum number of time steps per episode). This is because there is no way to predict how long an episode will last, 
 particularly episodes earlier in the training. All episodes must be permitted to run until success in order to learn 
 a useful policy. The training progression is shown below.

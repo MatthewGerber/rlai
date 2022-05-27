@@ -1,7 +1,7 @@
 from os import path
 from sysconfig import get_platform
 
-from setuptools import setup, find_namespace_packages
+from setuptools import setup, find_packages
 
 # we compile jaxlib from source on aarch64 (e.g., for raspberry pi), so don't specify jax here.
 if get_platform() == 'linux-aarch64':
@@ -41,7 +41,7 @@ setup(
     author='Matthew Gerber',
     author_email='gerber.matthew@gmail.com',
     url='https://matthewgerber.github.io/rlai',
-    packages=find_namespace_packages(where='src'),
+    packages=find_packages('src'),
     package_dir={'': 'src'},
     python_requires='~=3.7',
     install_requires=[
@@ -74,7 +74,6 @@ setup(
         'ipython==7.19.0',
         'ipympl==0.6.3',
         'tornado==6.1.0',
-        'jedi==0.17.2',
 
         # make pycharm package requirement checker happy (we calculate jax package on the fly above)
         'jax'
