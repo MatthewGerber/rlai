@@ -542,7 +542,7 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
         intercept_state_feature_matrix[:, 1:] = state_feature_matrix
 
         # invert action values back to [0.0, 1.0] (the domain of the beta distribution), creating one row per action
-        # and one column per action dimension.
+        # taken and one column per action dimension.
         action_matrix = np.array([
             self.invert_rescale(a.value)
             for a in self.update_batch_a
@@ -553,7 +553,11 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
         # values of the action (in action_i_values).
         for action_i, (action_i_theta_a, action_i_theta_b, action_i_values) in enumerate(zip(self.action_theta_a, self.action_theta_b, action_matrix.T)):
 
-            # calculate per-update gradients for the current action with respect to the action's policy parameters
+            # calculate per-update gradients for the current action with respect to the action's policy parameters. the
+            # following call is vectorized over the rows of the state-feature matrix and the action_i_values. each of
+            # the return values (action_density_gradients_wrt_theta_a and action_density_gradients_wrt_theta_b) will
+            # have one row per update, and each such row will be a vector of partial gradients for the associated
+            # state features and action.
             (
                 action_density_gradients_wrt_theta_a,
                 action_density_gradients_wrt_theta_b
