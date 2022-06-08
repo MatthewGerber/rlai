@@ -67,6 +67,7 @@ setup(
         'PyQt5==5.15.4',
         'tabulate==0.8.9',
         'mujoco-py==2.1.2.14',
+        'mujoco==2.2.0',
         'requests==2.27.1',
 
         # jupyter requirements
