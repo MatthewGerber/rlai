@@ -4,7 +4,7 @@ from enum import Enum
 from typing import List, Tuple, Dict, Any, Optional
 
 import numpy as np
-from PyQt5.QtWidgets import QApplication
+from PyQt6.QtWidgets import QApplication
 from numpy.random import RandomState
 
 from rlai.actions import Action, ContinuousMultiDimensionalAction

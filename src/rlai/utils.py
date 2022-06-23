@@ -9,7 +9,7 @@ from typing import List, Any, Optional, Callable, Tuple, TextIO, Dict
 
 import numpy as np
 import pyqtgraph as pg
-from PyQt5.QtWidgets import QApplication
+from PyQt6.QtWidgets import QApplication
 from numpy import linalg as la
 from numpy.random import RandomState
 
@@ -489,6 +489,7 @@ def is_positive_definite(
     return pd
 
 
+# noinspection PyArgumentList
 class ScatterPlotPosition(Enum):
     """
     Scatter-plot positions.
@@ -549,7 +550,7 @@ class ScatterPlot:
         Move the scatter plot to the top-left corner of the screen.
         """
 
-        top_left_point = QApplication.desktop().availableGeometry().topLeft()
+        top_left_point = QApplication.primaryScreen().availableGeometry().topLeft()
         plot_layout_geometry = self.plot_layout.frameGeometry()
         plot_layout_geometry.moveTopLeft(top_left_point)
         self.plot_layout.move(plot_layout_geometry.topLeft())
@@ -559,7 +560,7 @@ class ScatterPlot:
         Move the scatter plot to the top-right corner of the screen.
         """
 
-        top_right_point = QApplication.desktop().availableGeometry().topRight()
+        top_right_point = QApplication.primaryScreen().availableGeometry().topRight()
         plot_layout_geometry = self.plot_layout.frameGeometry()
         plot_layout_geometry.moveTopRight(top_right_point)
         self.plot_layout.move(plot_layout_geometry.topLeft())
@@ -569,7 +570,7 @@ class ScatterPlot:
         Move the scatter plot to the botttom-left corner of the screen.
         """
 
-        bottom_left_point = QApplication.desktop().availableGeometry().bottomLeft()
+        bottom_left_point = QApplication.primaryScreen().availableGeometry().bottomLeft()
         plot_layout_geometry = self.plot_layout.frameGeometry()
         plot_layout_geometry.moveBottomLeft(bottom_left_point)
         self.plot_layout.move(plot_layout_geometry.topLeft())
@@ -579,7 +580,7 @@ class ScatterPlot:
         Move the scatter plot to the bottom-right corner of the screen.
         """
 
-        bottom_right_point = QApplication.desktop().availableGeometry().bottomRight()
+        bottom_right_point = QApplication.primaryScreen().availableGeometry().bottomRight()
         plot_layout_geometry = self.plot_layout.frameGeometry()
         plot_layout_geometry.moveBottomRight(bottom_right_point)
         self.plot_layout.move(plot_layout_geometry.topLeft())

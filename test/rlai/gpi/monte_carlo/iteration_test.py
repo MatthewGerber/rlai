@@ -146,7 +146,7 @@ def test_off_policy_monte_carlo_with_function_approximation():
         pi_fixture, q_S_A_fixture = pickle.load(file)
 
     assert mdp_agent.pi == pi_fixture and q_S_A == q_S_A_fixture
-    assert str(mdp_agent.pi.estimator[mdp_environment.SS[5]][mdp_environment.SS[5].AA[1]]).startswith('-1.4524')
+    assert str(mdp_agent.pi.estimator[mdp_environment.SS[5]][mdp_environment.SS[5].AA[1]]).startswith('-2.4305')
 
     # make greedy
     q_S_A.epsilon = 0.0

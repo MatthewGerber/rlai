@@ -8,7 +8,7 @@ from typing import List, Tuple, Optional, Union, Dict
 
 import gym
 import numpy as np
-from PyQt5.QtWidgets import QApplication
+from PyQt6.QtWidgets import QApplication
 from gym.envs.registration import EnvSpec
 from gym.spaces import Discrete, Box
 from gym.wrappers import TimeLimit
