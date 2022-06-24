@@ -1,4 +1,3 @@
-import math
 import os
 import warnings
 from argparse import ArgumentParser
@@ -7,11 +6,11 @@ from time import sleep
 from typing import List, Tuple, Optional, Union, Dict
 
 import gym
+import math
 import numpy as np
 from PyQt6.QtWidgets import QApplication
-from gym.envs.registration import EnvSpec
 from gym.spaces import Discrete, Box
-from gym.wrappers import TimeLimit
+from gym.wrappers import TimeLimit, RecordVideo
 from numpy.random import RandomState
 
 from rlai.actions import Action, DiscretizedAction, ContinuousMultiDimensionalAction
@@ -121,12 +120,6 @@ class Gym(ContinuousMdpEnvironment):
             '--video-directory',
             type=str,
             help='Local directory in which to save rendered videos. Must be an empty directory. Ignore to only display videos.'
-        )
-
-        parser.add_argument(
-            '--force',
-            action='store_true',
-            help='Pass this flag to force the writing of videos into the video directory. Will overwrite/delete content in the directory.'
         )
 
         parser.add_argument(
@@ -374,7 +367,7 @@ class Gym(ContinuousMdpEnvironment):
 
     def init_gym_native(
             self
-    ) -> Union[EnvSpec, TimeLimit]:
+    ) -> Union[TimeLimit, RecordVideo]:
         """
         Initialize the native Gym environment object.
 
@@ -391,11 +384,10 @@ class Gym(ContinuousMdpEnvironment):
         # save videos via wrapper if we have a video directory
         if self.render_every_nth_episode is not None and self.video_directory is not None:
             try:
-                gym_native = gym.wrappers.Monitor(
+                gym_native = RecordVideo(
                     env=gym_native,
-                    directory=os.path.expanduser(self.video_directory),
-                    video_callable=lambda episode_id: episode_id % self.render_every_nth_episode == 0,
-                    force=self.force
+                    video_folder=os.path.expanduser(self.video_directory),
+                    episode_trigger=lambda episode_id: episode_id % self.render_every_nth_episode == 0
                 )
 
             # pickled checkpoints can come from another os where the video directory is valid, but the directory might
@@ -403,7 +395,7 @@ class Gym(ContinuousMdpEnvironment):
             except PermissionError as ex:
                 warnings.warn(f'Permission error when initializing OpenAI Gym monitor. Videos will not be saved. Error:  {ex}')
 
-        gym_native.seed(self.random_state.randint(1000))
+        gym_native.reset(seed=self.random_state.randint(1000))
 
         return gym_native
 
@@ -494,7 +486,6 @@ class Gym(ContinuousMdpEnvironment):
             continuous_action_discretization_resolution: Optional[float] = None,
             render_every_nth_episode: Optional[int] = None,
             video_directory: Optional[str] = None,
-            force: bool = False,
             steps_per_second: Optional[int] = None,
             plot_environment: bool = False,
             progressive_reward: bool = False
@@ -510,8 +501,6 @@ class Gym(ContinuousMdpEnvironment):
         discretization of the continuous-action dimensions.
         :param render_every_nth_episode: If passed, the environment will render an episode video per this value.
         :param video_directory: Directory in which to store rendered videos.
-        :param force: Whether or not to force the writing of videos into the video directory. This will overwrite/delete
-        content in the directory.
         :param steps_per_second: Number of steps per second when displaying videos.
         :param plot_environment: Whether or not to plot the environment.
         :param progressive_reward: Use progressive reward.
@@ -531,7 +520,6 @@ class Gym(ContinuousMdpEnvironment):
             raise ValueError('render_every_nth_episode must be > 0 if provided.')
 
         self.video_directory = video_directory
-        self.force = force
         self.steps_per_second = steps_per_second
         self.gym_native = self.init_gym_native()
         self.previous_observation = None

@@ -43,9 +43,9 @@ class SKLearnSGD(FunctionApproximationModel):
         parser.add_argument(
             '--loss',
             type=str,
-            default='squared_loss',
+            default='squared_error',
             help='The loss function to be used.',
-            choices=['squared_loss', 'huber', 'epsilon_insensitive', 'squared_epsilon_insensitive']
+            choices=['squared_error', 'huber', 'epsilon_insensitive', 'squared_epsilon_insensitive']
         )
 
         parser.add_argument(

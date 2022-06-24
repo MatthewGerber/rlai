@@ -43,7 +43,7 @@ The following command trains an agent for the continuous lunar lander environmen
 with a baseline state-value estimator:
 
 ```
-rlai train --random-seed 12345 --agent rlai.agents.mdp.ParameterizedMdpAgent --gamma 1.0 --environment rlai.environments.openai_gym.Gym --gym-id LunarLanderContinuous-v2 --render-every-nth-episode 100 --video-directory ~/Desktop/lunarlander_continuous_videos --force --plot-environment --T 500 --train-function rlai.policy_gradient.monte_carlo.reinforce.improve --num-episodes 50000 --plot-state-value True --v-S rlai.v_S.function_approximation.estimators.ApproximateStateValueEstimator --feature-extractor rlai.environments.openai_gym.ContinuousLunarLanderFeatureExtractor --function-approximation-model rlai.models.sklearn.SKLearnSGD --loss squared_loss --sgd-alpha 0.0 --learning-rate constant --eta0 0.0001 --policy rlai.policies.parameterized.continuous_action.ContinuousActionBetaDistributionPolicy --policy-feature-extractor rlai.environments.openai_gym.ContinuousLunarLanderFeatureExtractor --plot-policy --alpha 0.0001 --update-upon-every-visit True --save-agent-path ~/Desktop/continuous_lunarlander_agent.pickle
+rlai train --random-seed 12345 --agent rlai.agents.mdp.ParameterizedMdpAgent --gamma 1.0 --environment rlai.environments.openai_gym.Gym --gym-id LunarLanderContinuous-v2 --render-every-nth-episode 100 --video-directory ~/Desktop/lunarlander_continuous_videos --plot-environment --T 500 --train-function rlai.policy_gradient.monte_carlo.reinforce.improve --num-episodes 50000 --plot-state-value True --v-S rlai.v_S.function_approximation.estimators.ApproximateStateValueEstimator --feature-extractor rlai.environments.openai_gym.ContinuousLunarLanderFeatureExtractor --function-approximation-model rlai.models.sklearn.SKLearnSGD --loss squared_error --sgd-alpha 0.0 --learning-rate constant --eta0 0.0001 --policy rlai.policies.parameterized.continuous_action.ContinuousActionBetaDistributionPolicy --policy-feature-extractor rlai.environments.openai_gym.ContinuousLunarLanderFeatureExtractor --plot-policy --alpha 0.0001 --update-upon-every-visit True --save-agent-path ~/Desktop/continuous_lunarlander_agent.pickle
 ```
 
 The arguments are explained below.
@@ -61,7 +61,6 @@ The arguments are explained below.
 * `--gym-id LunarLanderContinuous-v2`:  OpenAI Gym environment identifier.
 * `--render-every-nth-episode 100`:  Render a video every 100 episodes.
 * `--video-directory ~/Desktop/lunarlander_continuous_videos`:  Where to store rendered videos.
-* `--force`:  Overwrite videos in the video directory.
 * `--plot-environment`:  Show a real-time plot of state and reward values.
 * `--T 500`:  Limit episodes to 500 steps.
 
@@ -77,7 +76,7 @@ algorithm.
 baseline state-value estimator.
 * `--function-approximation-model rlai.models.sklearn.SKLearnSGD`:  Use SKLearn's SGD for the baseline state-value 
 estimator.
-* `--loss squared_loss`:  Use a squared loss within the baseline state-value estimator.
+* `--loss squared_error`:  Use a squared-error loss within the baseline state-value estimator.
 * `--sgd-alpha 0.0`:  Do not use regularization.
 * `--learning-rate constant`:  Use a constant learning rate schedule.
 * `--eta0 0.0001`:  Learning rate.
