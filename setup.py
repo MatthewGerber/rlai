@@ -12,17 +12,16 @@ else:
     jax_package = 'jax[cpu]'
 
 TEST_REQUIREMENTS = [
-    'pytest==6.2.4',
-    'pytest-cov==2.12.1',
-    'coverage==5.5',
-    'pytest-runner==5.3.1',
-    'pytest-xdist==2.4.0',
+    'pytest==7.1.2',
+    'pytest-cov==3.0.0',
+    'coverage==6.4.1',
+    'pytest-runner==6.0.0',
     'nose==1.3.7',
-    'flake8==3.9.2',
-    'flake8-annotations==2.6.2',
-    'coveralls==3.2.0',
+    'flake8==4.0.1',
+    'flake8-annotations==2.9.0',
+    'coveralls==3.3.1',
     'xvfbwrapper==0.2.9',
-    'pytest-xdist==2.4.0'
+    'pytest-xdist==2.5.0'
 ]
 
 DEV_REQUIREMENTS = [
@@ -56,7 +55,7 @@ setup(
         'importlib-metadata==4.11.4',
         'packaging==20.7',
         'more-itertools==8.6.0',
-        'attrs==20.3.0',
+        'attrs==21.4',
         'pyparsing==2.4.7',
         'future==0.18.2',
         'scikit-learn==1.1.1',

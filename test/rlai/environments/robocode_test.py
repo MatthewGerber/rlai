@@ -15,9 +15,9 @@ from rlai.runners.trainer import run
 
 def test_learn():
 
-    # set the following to True to update the fixture. if you do this, then you'll also need to start the robocode game
-    # and uncomment some stuff in rlai.environments.network.TcpMdpEnvironment.read_from_client in order to update the
-    # test fixture. run a battle for 10 rounds to complete the fixture update.
+    # set the following to True to update the fixture. then uncomment some stuff in
+    # rlai.environments.network.TcpMdpEnvironment.read_from_client in order to update the test fixture. finally, start
+    # this test and then start the robocode game. run a battle for 10 rounds to complete the fixture update.
     update_fixture = False
 
     robocode_port = 54321
