@@ -54,21 +54,15 @@ def test_learn():
 def test_invalid_gym_arguments():
 
     with pytest.raises(ValueError, match='Continuous-action discretization is only valid for Box action-space environments.'):
-        Gym(RandomState(), None, 'CartPole-v0', 0.1)
+        Gym(RandomState(), None, 'CartPole-v1', 0.1)
 
     with pytest.raises(ValueError, match='render_every_nth_episode must be > 0 if provided.'):
-        Gym(RandomState(), None, 'CartPole-v0', render_every_nth_episode=-1)
+        Gym(RandomState(), None, 'CartPole-v1', render_every_nth_episode=-1)
 
 
 def test_unimplemented_feature_names():
 
-    cartpole_environment = Gym(RandomState(), None, 'CartPole-v0')
+    cartpole_environment = Gym(RandomState(), None, 'CartPole-v1')
     cartpole_fex = CartpoleFeatureExtractor(cartpole_environment)
 
     assert cartpole_fex.get_action_feature_names() is None
-
-
-def test_video_directory_permission_error():
-
-    # attempt to use directory off root to raise permission error. should be caught and warned about.
-    Gym(RandomState(), None, 'CartPole-v0', render_every_nth_episode=1, video_directory=os.path.abspath(f'{os.sep}test'))

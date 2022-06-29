@@ -186,7 +186,7 @@ The following command trains an agent for the continuous mountain car environmen
 with a baseline state-value estimator:
 
 ```
-rlai train --random-seed 12345 --agent rlai.agents.mdp.ParameterizedMdpAgent --gamma 0.99 --environment rlai.environments.openai_gym.Gym --gym-id MountainCarContinuous-v0 --render-every-nth-episode 50 --video-directory ~/Desktop/mountaincar_continuous_videos --force --T 1000 --plot-environment --train-function rlai.policy_gradient.monte_carlo.reinforce.improve --num-episodes 500 --plot-state-value True --v-S rlai.v_S.function_approximation.estimators.ApproximateStateValueEstimator --feature-extractor rlai.environments.openai_gym.ContinuousMountainCarFeatureExtractor --function-approximation-model rlai.models.sklearn.SKLearnSGD --loss squared_loss --sgd-alpha 0.0 --learning-rate constant --eta0 0.01 --policy rlai.policies.parameterized.continuous_action.ContinuousActionBetaDistributionPolicy --policy-feature-extractor rlai.environments.openai_gym.ContinuousMountainCarFeatureExtractor --alpha 0.01 --update-upon-every-visit True --plot-policy --save-agent-path ~/Desktop/mountaincar_continuous_agent.pickle
+rlai train --random-seed 12345 --agent rlai.agents.mdp.ParameterizedMdpAgent --gamma 0.99 --environment rlai.environments.openai_gym.Gym --gym-id MountainCarContinuous-v0 --render-every-nth-episode 50 --video-directory ~/Desktop/mountaincar_continuous_videos --T 1000 --plot-environment --train-function rlai.policy_gradient.monte_carlo.reinforce.improve --num-episodes 500 --plot-state-value True --v-S rlai.v_S.function_approximation.estimators.ApproximateStateValueEstimator --feature-extractor rlai.environments.openai_gym.ContinuousMountainCarFeatureExtractor --function-approximation-model rlai.models.sklearn.SKLearnSGD --loss squared_error --sgd-alpha 0.0 --learning-rate constant --eta0 0.01 --policy rlai.policies.parameterized.continuous_action.ContinuousActionBetaDistributionPolicy --policy-feature-extractor rlai.environments.openai_gym.ContinuousMountainCarFeatureExtractor --alpha 0.01 --update-upon-every-visit True --plot-policy --save-agent-path ~/Desktop/mountaincar_continuous_agent.pickle
 ```
 
 The arguments are explained below.
@@ -205,7 +205,6 @@ start of the episode.
 * `--gym-id MountainCarContinuous-v0`:  OpenAI Gym environment identifier.
 * `--render-every-nth-episode 50`:  Render a video every 50 episodes.
 * `--video-directory ~/Desktop/mountaincar_continuous_videos`:  Where to store rendered videos.
-* `--force`:  Overwrite videos in the video directory.
 * `--T 1000`:  Limit episodes to 1000 steps.
 * `--plot-environment`:  Show a real-time plot of state and reward values.
 
@@ -221,7 +220,7 @@ algorithm.
 baseline state-value estimator.
 * `--function-approximation-model rlai.models.sklearn.SKLearnSGD`:  Use SKLearn's SGD for the baseline state-value 
 estimator.
-* `--loss squared_loss`:  Use a squared loss within the baseline state-value estimator.
+* `--loss squared_error`:  Use a squared-error loss within the baseline state-value estimator.
 * `--sgd-alpha 0.0`:  Do not use regularization.
 * `--learning-rate constant`:  Use a constant learning rate schedule.
 * `--eta0 0.01`:  Learning rate

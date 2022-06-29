@@ -1,5 +1,5 @@
 [Home](index.md) > Agents
-### [rlai.agents.Agent](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/agents/__init__.py#L17)
+### [rlai.agents.Agent](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/agents/__init__.py#L16)
 ```
 Base class for all agents.
 ```

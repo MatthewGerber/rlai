@@ -1,5 +1,5 @@
 [Home](index.md) > Actions
-### [rlai.actions.Action](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/actions/__init__.py#L9)
+### [rlai.actions.Action](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/actions/__init__.py#L8)
 ```
 Base class for all actions.
 ```
