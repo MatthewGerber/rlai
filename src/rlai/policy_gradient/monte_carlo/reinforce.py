@@ -1,6 +1,7 @@
 import logging
 import os
 import pickle
+import re
 import tempfile
 import time
 import warnings
@@ -272,8 +273,11 @@ class TrainingPool:
         """
 
         iteration_return = {}
+        fallback_at_iteration_at_reward_to_iteration_to_reward = {}
+        fallback_re = re.compile('INFO:root:At training pool iteration (\\d+): {2}Falling back to policy/v_S at iteration (\\d+) with average return of ([\\d.]+), after an average return of ([\\d.]+) and .+')
         with open(expanduser(log_path), 'r') as f:
             for line in f:
+
                 # INFO:root:Selected policy for training pool iteration 1 with an average return of 11.84.
                 if line.startswith('INFO:root:Selected policy'):
                     s = line.split(' iteration ')[1]
@@ -281,7 +285,18 @@ class TrainingPool:
                     avg_return = float(s.split('return of ')[1].strip('.\n'))
                     iteration_return[iteration] = avg_return
 
+                fallback_match = fallback_re.match(line)
+                if fallback_match is not None:
+                    at_iteration = float(fallback_match.group(1))
+                    at_reward = float(fallback_match.group(4))
+                    to_iteration = float(fallback_match.group(2))
+                    to_reward = float(fallback_match.group(3))
+                    fallback_at_iteration_at_reward_to_iteration_to_reward[at_iteration] = (at_reward, to_iteration, to_reward)
+
         plt.plot(list(iteration_return.keys()), list(iteration_return.values()), label='Pooled REINFORCE')
+        for at_iteration, (at_reward, to_iteration, to_reward) in fallback_at_iteration_at_reward_to_iteration_to_reward.items():
+            plt.plot([at_iteration, to_iteration], [at_reward, to_reward])
+
         plt.xlabel('Pool iteration')
         plt.ylabel('Avg. evaluation return')
         plt.title('Pooled learning performance')
@@ -299,7 +314,7 @@ class TrainingPool:
 
         # TODO:  Adaptive number of evaluation episodes based on return statistics
         # evaluate the current agent without updating it
-        logging.info('Evaluating agent for training pool.')
+        logging.info(f'Evaluating agent for training pool iteration {self.training_pool_iteration}.')
         evaluation_start_timestamp = datetime.now()
         evaluation_averager = IncrementalSampleAverager()
         for _ in range(self.training_pool_evaluate_episodes):
@@ -335,6 +350,7 @@ class TrainingPool:
             self.training_pool_best_overall_policy = best_policy
             self.training_pool_best_overall_v_S = best_v_S
             self.training_pool_best_overall_average_return = best_average_return
+            self.training_pool_best_overall_iteration = self.training_pool_iteration
             logging.info(f'Bookmarked new best policy/v_S at training pool iteration {self.training_pool_iteration}:  {best_average_return} average return')
         else:
             self.training_pool_iterations_without_improvement += 1
@@ -343,7 +359,7 @@ class TrainingPool:
         # fall back to the best prior policy if we've failed to improve upon it for too many iterations
         if self.training_pool_max_iterations_without_improvement is not None and self.training_pool_iterations_without_improvement > self.training_pool_max_iterations_without_improvement:
 
-            logging.info(f'Falling back to previous agent after {self.training_pool_iterations_without_improvement} training pool iterations without improvement.')
+            logging.info(f'At training pool iteration {self.training_pool_iteration}:  Falling back to policy/v_S at iteration {self.training_pool_best_overall_iteration} with average return of {self.training_pool_best_overall_average_return}, after an average return of {best_average_return} and {self.training_pool_iterations_without_improvement} iteration(s) without improvement.')
 
             # break references with deepcopy we don't change the best overall in subsequent updates
             self.agent.pi = deepcopy(self.training_pool_best_overall_policy)
@@ -447,3 +463,4 @@ class TrainingPool:
         self.training_pool_best_overall_policy = None
         self.training_pool_best_overall_v_S = None
         self.training_pool_best_overall_average_return = None
+        self.training_pool_best_overall_iteration = None
