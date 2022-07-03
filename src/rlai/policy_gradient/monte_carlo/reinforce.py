@@ -335,20 +335,29 @@ class TrainingPool:
             self.training_pool_best_overall_policy = best_policy
             self.training_pool_best_overall_v_S = best_v_S
             self.training_pool_best_overall_average_return = best_average_return
+            logging.info(f'Bookmarked new best policy/v_S at training pool iteration {self.training_pool_iteration}:  {best_average_return} average return')
         else:
             self.training_pool_iterations_without_improvement += 1
+            logging.info(f'Training pool iterations without improvement:  {self.training_pool_iterations_without_improvement}')
 
         # fall back to the best prior policy if we've failed to improve upon it for too many iterations
         if self.training_pool_max_iterations_without_improvement is not None and self.training_pool_iterations_without_improvement > self.training_pool_max_iterations_without_improvement:
+
             logging.info(f'Falling back to previous agent after {self.training_pool_iterations_without_improvement} training pool iterations without improvement.')
+
+            # break references with deepcopy we don't change the best overall in subsequent updates
             self.agent.pi = deepcopy(self.training_pool_best_overall_policy)
             self.agent.v_S = deepcopy(self.training_pool_best_overall_v_S)
             self.training_pool_iterations_without_improvement = 0
 
         # set the agent's policy/v_S to the best available
         else:
-            self.agent.pi = deepcopy(best_policy)
-            self.agent.v_S = deepcopy(best_v_S)
+            self.agent.pi = best_policy
+            self.agent.v_S = best_v_S
+
+        # set the environment reference in continuous-action policies, as we don't pickle it or deepcopy it.
+        if isinstance(self.agent.pi, ContinuousActionPolicy):
+            self.agent.pi.environment = self.environment
 
         self.training_pool_iteration += 1
 
@@ -387,10 +396,6 @@ class TrainingPool:
                 best_policy = policy
                 best_v_S = v_S
                 best_average_return = average_return
-
-                # set the environment reference in continuous-action policies, as we don't pickle it.
-                if isinstance(best_policy, ContinuousActionPolicy):
-                    best_policy.environment = self.environment
 
         # delete pickles from the previous iteration. we can't delete them from the current iteration because other
         # runners might still be scanning them.
