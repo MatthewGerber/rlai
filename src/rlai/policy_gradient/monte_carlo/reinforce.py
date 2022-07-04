@@ -274,7 +274,7 @@ class TrainingPool:
 
         iteration_return = {}
         fallback_at_iteration_at_reward_to_iteration_to_reward = {}
-        fallback_re = re.compile('INFO:root:At training pool iteration (\\d+): {2}Falling back to policy/v_S at iteration (\\d+) with average return of ([\\d.]+), after an average return of ([\\d.]+) and .+')
+        fallback_re = re.compile('INFO:root:At training pool iteration (\\d+): {2}Falling back to policy/v_S at iteration (\\d+) with average return of ([\\-\\d.]+), after an average return of ([\\-\\d.]+) and .+')
         with open(expanduser(log_path), 'r') as f:
             for line in f:
 
@@ -287,15 +287,19 @@ class TrainingPool:
 
                 fallback_match = fallback_re.match(line)
                 if fallback_match is not None:
-                    at_iteration = float(fallback_match.group(1))
+                    at_iteration = int(fallback_match.group(1))
                     at_reward = float(fallback_match.group(4))
-                    to_iteration = float(fallback_match.group(2))
+                    to_iteration = int(fallback_match.group(2))
                     to_reward = float(fallback_match.group(3))
                     fallback_at_iteration_at_reward_to_iteration_to_reward[at_iteration] = (at_reward, to_iteration, to_reward)
 
         plt.plot(list(iteration_return.keys()), list(iteration_return.values()), label='Pooled REINFORCE')
+        to_iteration_color = {}
         for at_iteration, (at_reward, to_iteration, to_reward) in fallback_at_iteration_at_reward_to_iteration_to_reward.items():
-            plt.plot([at_iteration, to_iteration], [at_reward, to_reward])
+            color = to_iteration_color.get(to_iteration, None)
+            lines = plt.plot([at_iteration, to_iteration], [at_reward, to_reward], color=color)
+            if color is None:
+                to_iteration_color[to_iteration] = lines[0].get_color()
 
         plt.xlabel('Pool iteration')
         plt.ylabel('Avg. evaluation return')
