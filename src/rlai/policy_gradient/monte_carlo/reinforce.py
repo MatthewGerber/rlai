@@ -156,8 +156,9 @@ def improve(
         agent.pi.commit_updates()
         episodes_finished += 1
 
+        num_fallback_iterations = 0
         if training_pool is not None and episodes_finished % training_pool_iterate_episodes == 0:
-            training_pool.iterate()
+            num_fallback_iterations = training_pool.iterate(False)
 
         if num_episodes_per_checkpoint is not None and episodes_finished % num_episodes_per_checkpoint == 0:
 
@@ -187,9 +188,14 @@ def improve(
         estimated_completion_timestamp = start_timestamp + timedelta(minutes=(num_episodes / episodes_per_minute))
         logging.info(f'Finished {episodes_finished} of {num_episodes} episode(s) @ {episodes_per_minute:.1f}/min. Estimated completion:  {estimated_completion_timestamp}.')
 
-    # iterate training pool one final time, but only if we didn't iterate the pool just before exiting the loop above.
-    if training_pool is not None and num_episodes % training_pool_iterate_episodes != 0:
-        training_pool.iterate()
+        # decrement episodes finished if we fell back to an earlier iteration
+        if num_fallback_iterations > 0:
+            num_fallback_episodes = num_fallback_iterations * training_pool_iterate_episodes
+            episodes_finished -= num_fallback_episodes
+            logging.info(f'Removed {num_fallback_episodes} finished episodes due to a fallback.')
+
+    logging.info(f'Iterating the training pool one final time to ensure that the best policy/v_S is set.')
+    training_pool.iterate(True)
 
     logging.info('Completed optimization.')
 
@@ -309,11 +315,15 @@ class TrainingPool:
         plt.show()
 
     def iterate(
-            self
-    ):
+            self,
+            greedy: bool
+    ) -> int:
         """
         Iterate the training pool. This entails evaluating the current agent without updating its policy, waiting for
         all runners in the pool to do the same, and then updating the agent with the best policy from all runners.
+
+        :param greedy: Whether to set the policy to the best one, either from the current iteration or a past iteration.
+        :return: Number of preceding iterations that were erased due to falling back to an earlier iteration.
         """
 
         # TODO:  Adaptive number of evaluation episodes based on return statistics
@@ -355,22 +365,31 @@ class TrainingPool:
             self.training_pool_best_overall_v_S = best_v_S
             self.training_pool_best_overall_average_return = best_average_return
             self.training_pool_best_overall_iteration = self.training_pool_iteration
-            logging.info(f'Bookmarked new best policy/v_S at training pool iteration {self.training_pool_iteration}:  {best_average_return} average return')
+            self.training_pool_iterations_without_improvement = 0
+            logging.info(f'Bookmarked new best policy/v_S at training pool iteration {self.training_pool_iteration} with average return of {self.training_pool_best_overall_average_return}.')
         else:
             self.training_pool_iterations_without_improvement += 1
             logging.info(f'Training pool iterations without improvement:  {self.training_pool_iterations_without_improvement}')
 
-        # fall back to the best prior policy if we've failed to improve upon it for too many iterations
+        # fall back to the best prior policy if we've failed to improve upon it for too many iterations. copy to prevent
+        # changes to the original, which might get used again.
+        num_fallback_iterations = 0
         if self.training_pool_max_iterations_without_improvement is not None and self.training_pool_iterations_without_improvement > self.training_pool_max_iterations_without_improvement:
-
             logging.info(f'At training pool iteration {self.training_pool_iteration}:  Falling back to policy/v_S at iteration {self.training_pool_best_overall_iteration} with average return of {self.training_pool_best_overall_average_return}, after an average return of {best_average_return} and {self.training_pool_iterations_without_improvement} iteration(s) without improvement.')
-
-            # break references with deepcopy we don't change the best overall in subsequent updates
             self.agent.pi = deepcopy(self.training_pool_best_overall_policy)
             self.agent.v_S = deepcopy(self.training_pool_best_overall_v_S)
+            num_fallback_iterations = self.training_pool_iterations_without_improvement
             self.training_pool_iterations_without_improvement = 0
 
-        # set the agent's policy/v_S to the best available
+        # greedy iteration always sets to the best overall. copy to prevent changes to the original, which might get
+        # used again.
+        elif greedy:
+            logging.info(f'Setting to greedy policy/v_S from iteration {self.training_pool_best_overall_iteration} with average return of {self.training_pool_best_overall_average_return}.')
+            self.agent.pi = deepcopy(self.training_pool_best_overall_policy)
+            self.agent.v_S = deepcopy(self.training_pool_best_overall_v_S)
+
+        # set the agent's policy/v_S to the best available from the pool's current iteration. no need to copy here, as
+        # the objects come directly from a pickle.load call.
         else:
             self.agent.pi = best_policy
             self.agent.v_S = best_v_S
@@ -380,6 +399,8 @@ class TrainingPool:
             self.agent.pi.environment = self.environment
 
         self.training_pool_iteration += 1
+
+        return num_fallback_iterations
 
     def select_best(
             self,
