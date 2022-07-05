@@ -194,7 +194,7 @@ def improve(
             episodes_finished -= num_fallback_episodes
             logging.info(f'Removed {num_fallback_episodes} finished episodes due to a fallback.')
 
-    logging.info(f'Iterating the training pool one final time to ensure that the best policy/v_S is set.')
+    logging.info('Iterating the training pool one final time to ensure that the best policy/v_S is set.')
     training_pool.iterate(True)
 
     logging.info('Completed optimization.')
