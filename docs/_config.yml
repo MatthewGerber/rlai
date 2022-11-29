@@ -3,6 +3,6 @@ theme: jekyll-theme-cayman
 include:
  - "**/*.md"
 
-url: "https://matthewgerber.github.io"
+url: "https://matthewgerber.github.io/rlai"
 plugins:
   - jekyll-sitemap
