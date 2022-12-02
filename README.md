@@ -5,5 +5,5 @@ Welcome to RLAI. To launch a live graphical interface to the RLAI package, click
 Please see the [project website](https://matthewgerber.github.io/rlai/) for more information.
 
 Status:
-* PyPI distribution:  [![PyPI version](https://badge.fury.io/py/rlai.svg)](https://badge.fury.io/py/rlai)
-* Tests:  [![Coverage Status](https://coveralls.io/repos/github/MatthewGerber/rlai/badge.svg?branch=master)](https://coveralls.io/github/MatthewGerber/rlai?branch=master)
+* [![PyPI version](https://badge.fury.io/py/rlai.svg)](https://badge.fury.io/py/rlai)
+* [![Coverage Status](https://coveralls.io/repos/github/MatthewGerber/rlai/badge.svg?branch=master)](https://coveralls.io/github/MatthewGerber/rlai?branch=master)
