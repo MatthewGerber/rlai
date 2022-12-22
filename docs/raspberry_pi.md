@@ -27,7 +27,6 @@ Detailed instructions are provided below.
 3. Insert the SD card into the Raspberry Pi and boot.
 
 ### Configure Wireless Internet
-
 1. `sudo nano /etc/wpa_supplicant.conf` (edit as follows, replacing values as indicated):
 ```
 country=US
@@ -41,7 +40,11 @@ network={
 }
 ```
 2. Enable wireless interface:  `sudo wpa_supplicant -Dnl80211 -B iwlan0 -c/etc/wpa_supplicant.conf`
-2. Obtain wireless address:  `sudo dhclient -v`
+3. Obtain wireless address:  `sudo dhclient -v`
+
+The above should be sufficient to get your Raspberry Pi connected to Wi-Fi. Note that subsequent installation of the 
+XFCE Desktop Environment (below) will cause the wireless networking settings to be managed by NetworkManager, which 
+stores connection information in `/etc/NetworkManager/system-connections`.
 
 ### Upgrade OS
 1. `sudo apt update`
