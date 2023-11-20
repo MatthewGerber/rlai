@@ -470,7 +470,7 @@ def is_positive_definite(
         m: np.ndarray
 ) -> bool:
     """
-    Returns true when input is positive-definite, via Cholesky.
+    Return true when input is positive-definite, via Cholesky.
 
     :param m: Matrix.
     :return: True if positive-definite, False otherwise.

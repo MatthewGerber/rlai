@@ -6,7 +6,7 @@ from typing import List, Tuple, Dict
 
 import numpy as np
 import pandas as pd
-from jax import numpy as jnp, jit, grad, vmap
+from jax import numpy as jnp, jit, grad, vmap, Array
 from jax.scipy import stats as jstats
 from numpy.random import RandomState
 from scipy import stats
@@ -317,7 +317,7 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
             theta_cov: np.ndarray,
             state_features: np.ndarray,
             action_vector: np.ndarray
-    ) -> float:
+    ) -> Array:
         """
         Get the value of the probability density function at an action.
 
@@ -635,7 +635,7 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
             theta_b: np.ndarray,
             state_features: np.ndarray,
             action_value: float
-    ) -> float:
+    ) -> Array:
         """
         Get the value of the probability density function at an action.
 

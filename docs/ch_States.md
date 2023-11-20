@@ -11,7 +11,7 @@ State of a Gym environment.
 ```
 State of Robocode battle.
 ```
-### [rlai.environments.robocode_continuous_action.RobocodeState](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/robocode_continuous_action.py#L485)
+### [rlai.environments.robocode_continuous_action.RobocodeState](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/robocode_continuous_action.py#L509)
 ```
 State of Robocode battle.
 ```

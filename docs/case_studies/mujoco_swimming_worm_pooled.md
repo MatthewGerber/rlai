@@ -23,12 +23,12 @@ I tried several approaches that did not work.
    the worst agents in the other pools (i.e., `2-4` and `3-5`). However, maintaining more agents than available CPU 
    cores performed poorly, since any work on a suboptimal agent in a subpool was a distraction from improving the best 
    overall agent in the population.
-1. I then compounded the previous poor performance by introducing a low (epsilon) probability of a subpool process 
+2. I then compounded the previous poor performance by introducing a low (epsilon) probability of a subpool process 
    selecting not the best agent from other pools but a random agent from across all subpools. This slowed things down 
    even further.
-1. ...
-1. ... (I tried several variations on the above ideas without success.)
-1. ...
+3. ...
+4. ... (I tried several variations on the above ideas without success.)
+5. ...
 
 Two things gradually became clear:
 
@@ -40,7 +40,7 @@ Two things gradually became clear:
    improves this agent for a few episodes (here 10) resulting in `1-1'`, `1-2'`, and `1-3'`. Each process in the pool is 
    exploring independently by sampling the beta distributions that underlie its policy. Thus, a larger training pool 
    provides more efficient exploration.
-1. If `1-1'`, `1-2'`, and `1-3'` are all we have, then it's not entirely clear how we should proceed. Each updated agent
+2. If `1-1'`, `1-2'`, and `1-3'` are all we have, then it's not entirely clear how we should proceed. Each updated agent
    on the trajectory from `1-1` to `1-1'` corresponds to a different REINFORCE epioode, and the rewards in these 
    intermediate episodes do not comment purely on the goodness of `1-1'`. Thus, I introduced an evaluation phase in 
    which `1-1'`, `1-2'`, and `1-3'` are run for several episodes without policy updates to obtain an average reward. 

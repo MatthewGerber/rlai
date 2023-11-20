@@ -65,14 +65,14 @@ def evaluate_v_pi(
             prev_v = v_S[s]
 
             # calculate expected value of current state using current estimates of successor state-values
-            new_v = np.sum([
+            new_v = float(np.sum([
 
                 agent.pi[s][a] * environment.p_S_prime_R_given_S_A[s][a][s_prime][r] * (r.r + agent.gamma * v_S[s_prime])
 
                 for a in environment.p_S_prime_R_given_S_A[s]
                 for s_prime in environment.p_S_prime_R_given_S_A[s][a]
                 for r in environment.p_S_prime_R_given_S_A[s][a][s_prime]
-            ])
+            ]))
 
             v_S_to_update[s] = new_v
 
@@ -165,7 +165,7 @@ def evaluate_q_pi(
                 prev_q = q_S_A[s][a]
 
                 # calculate expected state-action value using current estimates of successor state-action values
-                new_q = np.sum([
+                new_q = float(np.sum([
 
                     # action is given, so start expectation with state/reward probability.
                     environment.p_S_prime_R_given_S_A[s][a][s_prime][r] * (r.r + agent.gamma * np.sum([
@@ -175,7 +175,7 @@ def evaluate_q_pi(
 
                     for s_prime in environment.p_S_prime_R_given_S_A[s][a]
                     for r in environment.p_S_prime_R_given_S_A[s][a][s_prime]
-                ])
+                ]))
 
                 q_S_A_to_update[s][a] = new_q
 

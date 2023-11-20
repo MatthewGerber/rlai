@@ -14,6 +14,7 @@ from rlai.gpi import PolicyImprovementEvent
 from rlai.gpi.monte_carlo.iteration import iterate_value_q_pi
 from rlai.gpi.utils import update_policy_iteration_plot, plot_policy_iteration
 from rlai.planning.environment_models import StochasticEnvironmentModel
+from rlai.policies.function_approximation import FunctionApproximationPolicy
 from rlai.q_S_A.function_approximation.estimators import ApproximateStateActionValueEstimator
 from rlai.q_S_A.function_approximation.models.sklearn import SKLearnSGD
 from rlai.q_S_A.tabular import TabularStateActionValueEstimator
@@ -146,6 +147,7 @@ def test_off_policy_monte_carlo_with_function_approximation():
         pi_fixture, q_S_A_fixture = pickle.load(file)
 
     assert mdp_agent.pi == pi_fixture and q_S_A == q_S_A_fixture
+    assert isinstance(mdp_agent.pi, FunctionApproximationPolicy)
     assert str(mdp_agent.pi.estimator[mdp_environment.SS[5]][mdp_environment.SS[5].AA[1]]).startswith('-2.4305')
 
     # make greedy

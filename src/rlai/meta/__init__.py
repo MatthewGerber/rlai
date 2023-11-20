@@ -15,7 +15,7 @@ def rl_text(
         page: int
 ) -> Callable:
     """
-    Decorator for RL text references.
+    Initialize decorator for RL text references.
 
     :param chapter: Either an integer chapter within RL text that describes the Python element being decorated, or a
     string chapter about something else.
@@ -115,6 +115,9 @@ def summarize(
 
 
 def main():
+    """
+    Generate docs.
+    """
 
     chapter_page_descriptions = {}
 

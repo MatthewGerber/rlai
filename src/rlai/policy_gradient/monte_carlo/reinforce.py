@@ -76,6 +76,8 @@ def improve(
     if checkpoint_path is not None:
         checkpoint_path = os.path.expanduser(checkpoint_path)
 
+    assert isinstance(agent.pi, ParameterizedPolicy)
+
     training_pool = TrainingPool.init(
         agent=agent,
         environment=environment,

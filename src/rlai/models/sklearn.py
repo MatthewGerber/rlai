@@ -312,7 +312,7 @@ class SKLearnSGD(FunctionApproximationModel):
                 self.time_step_eta0_ax.legend(loc='upper right')
 
                 # share y-axis scale between the two twin-x axes
-                self.iteration_eta0_ax.get_shared_y_axes().join(self.iteration_eta0_ax, self.time_step_eta0_ax)
+                self.iteration_eta0_ax.sharey(self.time_step_eta0_ax)
 
                 plt.tight_layout()
 

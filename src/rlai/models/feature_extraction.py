@@ -147,7 +147,7 @@ class NonstationaryFeatureScaler:
             refit_weight_decay: float
     ):
         """
-        Initializer the scaler.
+        Initialize the scaler.
 
         :param num_observations_refit_feature_scaler: Number of observations to collect before refitting.
         :param refit_history_length: Number of observations to use when refitting the feature scaler.
@@ -209,9 +209,8 @@ class OneHotCategoricalFeatureInteracter:
         See `rlai.models.feature_extraction.OneHotCategory` for a general-purpose category class.
         """
 
-        category_array = np.array([categories])
-        self.category_encoder = OneHotEncoder(categories=category_array)
-        self.category_encoder.fit(category_array.reshape(-1, 1))
+        self.category_encoder = OneHotEncoder(categories=[categories])
+        self.category_encoder.fit(np.array([categories]).reshape(-1, 1))
 
 
 @rl_text(chapter='Feature Extractors', page=1)

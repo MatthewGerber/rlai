@@ -68,6 +68,12 @@ class Arm:
     def __str__(
             self
     ) -> str:
+        """
+        Get string.
+
+        :return: String.
+        """
+
         return f'Mean:  {self.mean}, Variance:  {self.variance}'
 
 

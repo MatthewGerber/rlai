@@ -444,7 +444,7 @@ class RobocodeEnvironment(TcpMdpEnvironment):
         ]
 
         self.robot_actions = [
-            RobocodeAction(i, action_name, action_value)
+            RobocodeAction(i, action_name, action_value)  # type: ignore
             for i, (action_name, action_value) in enumerate(action_name_action_value_list)
         ]
 
@@ -773,6 +773,8 @@ class RobocodeFeatureExtractor(FeatureExtractor):
         :param action_to_extract: Action to one-hot encode.
         :return: List of floating-point feature values.
         """
+
+        assert isinstance(action, RobocodeAction)
 
         if state.most_recent_scanned_robot is None:
             most_recent_enemy_bearing_from_self = None

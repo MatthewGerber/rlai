@@ -99,7 +99,7 @@ class SKLearnSGD(FunctionApproximationModel, BaseSKLearnSGD):
 
         coefficients_df = pd.DataFrame(
             index=df_index,
-            columns=action_feature_names.keys()
+            columns=list(action_feature_names.keys())
         )
 
         curr_coef = 0

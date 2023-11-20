@@ -182,6 +182,8 @@ class Gym(ContinuousMdpEnvironment):
         :return: 2-tuple of next state and reward.
         """
 
+        assert isinstance(state, GymState)
+
         # map discretized actions back to continuous space
         if isinstance(a, DiscretizedAction):
             gym_action = a.continuous_value

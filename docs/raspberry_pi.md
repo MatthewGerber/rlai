@@ -28,17 +28,17 @@ Detailed instructions are provided below.
 
 ### Configure Wireless Internet
 1. `sudo nano /etc/wpa_supplicant.conf` (edit as follows, replacing values as indicated):
-```
-country=US
-ctrl_interface=DIR=/var/run/wpa_supplicant
-update_config=1
-network={
-  ssid="Your Wi-Fi SSID"
-  scan_ssid=1
-  psk="Your Wi-Fi Password"
-  key_mgmt=WPA-PSK
-}
-```
+   ```
+   country=US
+   ctrl_interface=DIR=/var/run/wpa_supplicant
+   update_config=1
+   network={
+     ssid="Your Wi-Fi SSID"
+     scan_ssid=1
+     psk="Your Wi-Fi Password"
+     key_mgmt=WPA-PSK
+   }
+   ```
 2. Enable wireless interface:  `sudo wpa_supplicant -Dnl80211 -B iwlan0 -c/etc/wpa_supplicant.conf`
 3. Obtain wireless address:  `sudo dhclient -v`
 
@@ -48,13 +48,13 @@ stores connection information in `/etc/NetworkManager/system-connections`.
 
 ### Upgrade OS
 1. `sudo apt update`
-1. `sudo apt upgrade`
-1. `sudo systemctl reboot`
+2. `sudo apt upgrade`
+3. `sudo systemctl reboot`
 
 ### Install Required Packages and XFCE Desktop Environment
 1. `sudo apt install gfortran python3-dev libblas-dev liblapack-dev build-essential swig python-pygame git virtualenv qt5-default xvfb ffmpeg`
-1. `sudo apt install xubuntu-desktop`
-1. `sudo systemctl reboot`
+2. `sudo apt install xubuntu-desktop`
+3. `sudo systemctl reboot`
 
 ## Install RLAI
 

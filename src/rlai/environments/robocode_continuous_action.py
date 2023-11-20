@@ -193,15 +193,39 @@ class RobocodeEnvironment(ContinuousMdpEnvironment, TcpMdpEnvironment):
     """
 
     def get_state_space_dimensionality(self) -> int:
+        """
+        Get state-space dimensionality.
+
+        :return: Dimensionality.
+        """
+
         return 15
 
     def get_state_dimension_names(self) -> List[str]:
+        """
+        Get state dimension names.
+
+        :return: Names.
+        """
+
         return [str(i) for i in range(self.get_state_space_dimensionality())]
 
     def get_action_space_dimensionality(self) -> int:
+        """
+        Get action-space dimensionality.
+
+        :return: Dimensionality.
+        """
+
         return 5
 
     def get_action_dimension_names(self) -> List[str]:
+        """
+        Get action dimension names.
+
+        :return: Names.
+        """
+
         return [str(i) for i in range(self.get_action_space_dimensionality())]
 
     @classmethod
@@ -553,7 +577,7 @@ class RobocodeState(MdpState):
         of prior values.
         :param bullet_power_missed_others: Bullet power that missed.
         :param bullet_power_missed_others_cumulative: Cumulative bullet power that missed, including a discounted sum of
-         prior values.
+        prior values.
         :param bullet_power_missed_others_since_previous_hit: Bullet power that has missed since previous hit.
         :param events: List of events sent to the robot since the previous time the state was set.
         :param previous_state: Previous state.

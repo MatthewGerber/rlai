@@ -10,6 +10,9 @@ from rlai.utils import get_base_argument_parser
 
 
 class Environment(ABC):
+    """
+    Base class for all environments.
+    """
 
     @classmethod
     def get_argument_parser(

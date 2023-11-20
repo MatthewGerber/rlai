@@ -28,16 +28,16 @@ The purpose of this case study is to explore the use of RLAI for learning robot 
    permission to perform reflection-based inspection of objects. These permissions are needed to communicate with the 
    RLAI server, and in general they do not pose much of a security risk; however, it is probably a good idea to avoid 
    importing other robots into this installation of Robocode.
-1. Run the Robocode installer. Install to a directory such as `robocode_rlai`.
+2. Run the Robocode installer. Install to a directory such as `robocode_rlai`.
 
 # Running Robocode with RLAI
 1. Start the Robocode RLAI environment. This is most easily done using the 
    [JupyterLab notebook](../jupyterlab_guide.md). There is already a configuration saved in the notebook that should 
    suffice as a demonstration of reinforcement learning with Robocode. Load the configuration and start it.
-1. Start Robocode from the directory into which you installed it above. Add a few robots as well as the `RlaiRobot`, 
+2. Start Robocode from the directory into which you installed it above. Add a few robots as well as the `RlaiRobot`, 
    then begin the battle. If this is successful, then you will see the `RlaiRobot` moving, firing, etc. This is the 
    start of training, so the agent will likely appear random until its policy develops.
-1. In order to restart training with different parameters, you will need to first restart the Robocode application and 
+3. In order to restart training with different parameters, you will need to first restart the Robocode application and 
    then restart the RLAI environment by killing the command (if using the CLI) or by restarting the JupyterLab kernel. 
    This is a bit tedious but is required to reset the state of each.
 

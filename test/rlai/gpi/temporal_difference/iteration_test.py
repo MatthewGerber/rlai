@@ -17,6 +17,7 @@ from rlai.gpi.temporal_difference.evaluation import Mode
 from rlai.gpi.temporal_difference.iteration import iterate_value_q_pi
 from rlai.gpi.utils import update_policy_iteration_plot, plot_policy_iteration
 from rlai.planning.environment_models import StochasticEnvironmentModel
+from rlai.policies.function_approximation import FunctionApproximationPolicy
 from rlai.q_S_A.function_approximation.estimators import ApproximateStateActionValueEstimator
 from rlai.q_S_A.function_approximation.models.feature_extraction import (
     StateActionIdentityFeatureExtractor
@@ -215,6 +216,7 @@ def test_q_learning_iterate_value_q_pi_function_approximation_with_formula():
     with open(f'{os.path.dirname(__file__)}/fixtures/test_q_learning_iterate_value_q_pi_function_approximation.pickle', 'rb') as file:
         pi_fixture, q_S_A_fixture = pickle.load(file)
 
+    assert isinstance(mdp_agent.pi, FunctionApproximationPolicy)
     assert np.allclose(mdp_agent.pi.estimator.model.model.coef_, pi_fixture.estimator.model.model.coef_)
 
 
@@ -259,6 +261,7 @@ def test_q_learning_iterate_value_q_pi_function_approximation_no_formula():
     with open(f'{os.path.dirname(__file__)}/fixtures/test_q_learning_iterate_value_q_pi_function_approximation_no_formula.pickle', 'rb') as file:
         pi_fixture, q_S_A_fixture = pickle.load(file)
 
+    assert isinstance(mdp_agent.pi, FunctionApproximationPolicy)
     assert np.allclose(mdp_agent.pi.estimator.model.model.coef_, pi_fixture.estimator.model.model.coef_)
     assert mdp_agent.pi.format_state_action_probs(mdp_environment.SS) == pi_fixture.format_state_action_probs(mdp_environment.SS)
     assert mdp_agent.pi.format_state_action_values(mdp_environment.SS) == pi_fixture.format_state_action_values(mdp_environment.SS)
@@ -601,6 +604,8 @@ def test_q_learning_iterate_value_q_pi_function_approximation_policy_ne():
         make_final_policy_greedy=True
     )
 
+    assert isinstance(mdp_agent_1.pi, FunctionApproximationPolicy)
+    assert isinstance(mdp_agent_2.pi, FunctionApproximationPolicy)
     assert mdp_agent_1.pi.estimator != mdp_agent_2.pi.estimator
     assert mdp_agent_1.pi.estimator.model != mdp_agent_2.pi.estimator.model
 

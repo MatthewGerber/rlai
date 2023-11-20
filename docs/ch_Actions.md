@@ -7,11 +7,11 @@ Base class for all actions.
 ```
 Action that is derived from discretizing an n-dimensional continuous action space.
 ```
-### [rlai.environments.robocode.RobocodeAction](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/robocode.py#L1460)
+### [rlai.environments.robocode.RobocodeAction](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/robocode.py#L1462)
 ```
 Robocode action.
 ```
-### [rlai.environments.robocode_continuous_action.RobocodeAction](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/robocode_continuous_action.py#L1348)
+### [rlai.environments.robocode_continuous_action.RobocodeAction](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/robocode_continuous_action.py#L1372)
 ```
 Robocode action.
 ```

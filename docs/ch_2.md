@@ -11,7 +11,7 @@ Nonassociative, epsilon-greedy agent.
 ```
 Nonassociative, q-value agent.
 ```
-### [rlai.environments.bandit.KArmedBandit](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/bandit.py#L75)
+### [rlai.environments.bandit.KArmedBandit](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/bandit.py#L81)
 ```
 K-armed bandit.
 ```

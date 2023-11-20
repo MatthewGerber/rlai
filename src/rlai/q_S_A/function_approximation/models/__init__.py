@@ -85,7 +85,7 @@ class FunctionApproximationModel(BaseFunctionApproximationModel, ABC):
             if self.feature_action_coefficients is None:
                 self.feature_action_coefficients = feature_action_coefficients
             else:
-                self.feature_action_coefficients = self.feature_action_coefficients.append(feature_action_coefficients, ignore_index=True)
+                self.feature_action_coefficients = pd.concat([self.feature_action_coefficients, feature_action_coefficients], verify_integrity=False)
 
             if render:
 

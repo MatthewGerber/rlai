@@ -26,7 +26,7 @@ def test_cube():
     with open(f'{os.path.dirname(__file__)}/fixtures/Cube_3d_printing_sample.stl', 'rb') as f:
         ASSETS['gizmo.stl'] = f.read()
 
-    model = mujoco.MjModel.from_xml_string(XML, ASSETS)
+    model = mujoco.MjModel.from_xml_string(xml=XML, assets=ASSETS)  # type: ignore
     data = mujoco.MjData(model)
     while data.time < 1:
         mujoco.mj_step(model, data)

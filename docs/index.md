@@ -8,9 +8,9 @@ and Barto, 2018, 2nd edition). It is a work in progress, implemented with the fo
 
 1. **Complete conceptual and algorithmic coverage**:  Implement all concepts and algorithms described in the text, plus 
 some.
-1. **Minimal dependencies**:  All computation specific to the text is implemented here.
-1. **Complete test coverage**:  All implementations are paired with unit tests.
-1. **General-purpose design**:  The text provides concise pseudocode that is not difficult to implement for the
+2. **Minimal dependencies**:  All computation specific to the text is implemented here.
+3. **Complete test coverage**:  All implementations are paired with unit tests.
+4. **General-purpose design**:  The text provides concise pseudocode that is not difficult to implement for the
 examples covered; however, such implementations do not necessarily lead to reusable and extensible code that is 
 generally applicable beyond such examples. The approach taken here should be generally applicable well beyond the text.
    

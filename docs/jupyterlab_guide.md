@@ -33,7 +33,7 @@ steps required to get the notebook up and running.
 
 1. Install `node`. On Mac, this can be done with [Homebrew](https://brew.sh/) via
    `brew install node`.
-1. `jupyter labextension install @jupyter-widgets/jupyterlab-manager`
-1. `jupyter labextension install jupyter-matplotlib`
+2. `jupyter labextension install @jupyter-widgets/jupyterlab-manager`
+3. `jupyter labextension install jupyter-matplotlib`
 
 Once the above are completed, run `jupyter lab` from your terminal.

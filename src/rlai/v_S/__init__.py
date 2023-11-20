@@ -43,7 +43,7 @@ class ValueEstimator(ABC):
             self
     ) -> str:
         """
-        String override.
+        Get string.
 
         :return: String.
         """
