@@ -12,6 +12,9 @@ from rlai.q_S_A.tabular import TabularStateActionValueEstimator
 
 
 def test_evaluate_v_pi():
+    """
+    Test.
+    """
 
     random_state = RandomState(12345)
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
@@ -60,6 +63,9 @@ def test_evaluate_v_pi():
 
 
 def test_evaluate_q_pi():
+    """
+    Test.
+    """
 
     random_state = RandomState(12345)
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
@@ -104,6 +110,9 @@ def test_evaluate_q_pi():
 
 
 def test_check_termination_criteria():
+    """
+    Test.
+    """
 
     assert check_termination_criteria(0, 1) == (None, 1)
     assert check_termination_criteria(-1, 1) == (None, 1)

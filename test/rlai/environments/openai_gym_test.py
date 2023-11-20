@@ -13,6 +13,9 @@ from test.rlai.utils import tabular_estimator_legacy_eq, tabular_pi_legacy_eq
 
 
 def test_learn():
+    """
+    Test.
+    """
 
     random_state = RandomState(12345)
     gym = Gym(
@@ -52,6 +55,9 @@ def test_learn():
 
 
 def test_invalid_gym_arguments():
+    """
+    Test.
+    """
 
     with pytest.raises(ValueError, match='Continuous-action discretization is only valid for Box action-space environments.'):
         Gym(RandomState(), None, 'CartPole-v1', 0.1)
@@ -61,6 +67,9 @@ def test_invalid_gym_arguments():
 
 
 def test_unimplemented_feature_names():
+    """
+    Test.
+    """
 
     cartpole_environment = Gym(RandomState(), None, 'CartPole-v1')
     cartpole_fex = CartpoleFeatureExtractor(cartpole_environment)

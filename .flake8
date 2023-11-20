@@ -1,6 +1,4 @@
 [flake8]
 extend-ignore = E501,ANN101,ANN102,ANN002,ANN003,D205,D400,D200,D202,RST206,D100,D104
 suppress-none-returning = true
-count = true
 show-source = true
-statistics = true

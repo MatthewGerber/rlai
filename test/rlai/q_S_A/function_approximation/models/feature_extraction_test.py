@@ -13,6 +13,9 @@ from rlai.states.mdp import MdpState
 
 
 def test_check_state_and_action_lists():
+    """
+    Test.
+    """
 
     random = RandomState(12345)
     gw = Gridworld.example_4_1(random, T=None)
@@ -28,6 +31,9 @@ def test_check_state_and_action_lists():
 
 
 def test_bad_interact():
+    """
+    Test.
+    """
 
     cats = [1, 2]
     interacter = OneHotCategoricalFeatureInteracter(cats)
@@ -39,6 +45,9 @@ def test_bad_interact():
 
 
 def test_nonstationary_feature_scaler():
+    """
+    Test.
+    """
 
     numpy.random.seed(12345)
 

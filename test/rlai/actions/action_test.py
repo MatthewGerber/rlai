@@ -4,6 +4,9 @@ from rlai.actions import Action, DiscretizedAction
 
 
 def test_action_eq_ne():
+    """
+    Test.
+    """
 
     a1 = Action(1)
     a2 = Action(1)
@@ -13,6 +16,9 @@ def test_action_eq_ne():
 
 
 def test_action_str():
+    """
+    Test.
+    """
 
     action = Action(1, 'foo')
 
@@ -20,6 +26,9 @@ def test_action_str():
 
 
 def test_discretized_action():
+    """
+    Test.
+    """
 
     action = DiscretizedAction(1, np.array([0.5]), 'foo')
 

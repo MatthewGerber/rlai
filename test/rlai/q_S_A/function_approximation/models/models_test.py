@@ -2,6 +2,9 @@ from rlai.q_S_A.function_approximation.models.sklearn import SKLearnSGD
 
 
 def test_model_pickle_no_coefs_dict():
+    """
+    Test.
+    """
 
     model = SKLearnSGD(False)
 

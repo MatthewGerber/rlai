@@ -15,6 +15,13 @@ def tabular_pi_legacy_eq(
         pi: Policy,
         fixture: Dict[MdpState, Dict[Action, float]]
 ) -> bool:
+    """
+    Check equality.
+
+    :param pi: Policy.
+    :param fixture: Fixture.
+    :return: True if equal.
+    """
 
     pi: TabularPolicy
 

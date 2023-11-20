@@ -2,6 +2,9 @@ from rlai.models.feature_extraction import OneHotCategory
 
 
 def test_one_hot_category():
+    """
+    Test.
+    """
 
     booleans = [True, False]
     ohc_1 = OneHotCategory(*booleans)

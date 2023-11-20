@@ -15,6 +15,9 @@ from rlai.runners.monitor import Monitor
 
 
 def test_k_armed_bandit_epsilon_greedy_no_resets():
+    """
+    Test.
+    """
 
     monitors = run(shlex.split('--random-seed 12345 --T 100 --n-runs 200 --environment rlai.environments.bandit.KArmedBandit --k 10 --agent rlai.agents.q_value.EpsilonGreedy --epsilon 0.2 0.0'))
 
@@ -29,6 +32,9 @@ def test_k_armed_bandit_epsilon_greedy_no_resets():
 
 
 def test_k_armed_bandit_epsilon_greedy_resets_no_alpha():
+    """
+    Test.
+    """
 
     monitors = run(shlex.split('--random-seed 12345 --T 100 --n-runs 200 --environment rlai.environments.bandit.KArmedBandit --k 10 --reset-probability 0.005 --agent rlai.agents.q_value.EpsilonGreedy --epsilon 0.2 0.0'))
 
@@ -43,6 +49,9 @@ def test_k_armed_bandit_epsilon_greedy_resets_no_alpha():
 
 
 def test_k_armed_bandit_epsilon_greedy_resets_with_alpha():
+    """
+    Test.
+    """
 
     monitors = run(shlex.split('--random-seed 12345 --T 100 --n-runs 200 --environment rlai.environments.bandit.KArmedBandit --k 10 --reset-probability 0.005 --agent rlai.agents.q_value.EpsilonGreedy --epsilon 0.2 0.0 --alpha 0.1'))
 
@@ -57,6 +66,9 @@ def test_k_armed_bandit_epsilon_greedy_resets_with_alpha():
 
 
 def test_k_armed_bandit_epsilon_greedy_epsilon_reduction():
+    """
+    Test.
+    """
 
     monitors = run(shlex.split('--random-seed 12345 --T 100 --n-runs 200 --environment rlai.environments.bandit.KArmedBandit --k 10 --agent rlai.agents.q_value.EpsilonGreedy --epsilon 0.2 0.0 --epsilon-reduction-rate 0.01'))
 
@@ -71,6 +83,9 @@ def test_k_armed_bandit_epsilon_greedy_epsilon_reduction():
 
 
 def test_k_armed_bandit_epsilon_greedy_optimistic():
+    """
+    Test.
+    """
 
     monitors = run(shlex.split('--random-seed 12345 --T 100 --n-runs 200 --environment rlai.environments.bandit.KArmedBandit --k 10 --agent rlai.agents.q_value.EpsilonGreedy --epsilon 0.0 --initial-q-value 5 --alpha 0.1'))
 
@@ -85,6 +100,9 @@ def test_k_armed_bandit_epsilon_greedy_optimistic():
 
 
 def test_k_armed_bandit_upper_confidence_bound():
+    """
+    Test.
+    """
 
     monitors = run(shlex.split('--random-seed 12345 --T 100 --n-runs 200 --environment rlai.environments.bandit.KArmedBandit --k 10 --agent rlai.agents.q_value.UpperConfidenceBound --c 0 1'))
 
@@ -99,6 +117,9 @@ def test_k_armed_bandit_upper_confidence_bound():
 
 
 def test_k_armed_bandit_preference_gradient_with_baseline():
+    """
+    Test.
+    """
 
     monitors = run(shlex.split('--random-seed 12345 --T 100 --n-runs 200 --environment rlai.environments.bandit.KArmedBandit --k 10 --q-star-mean 4 --agent rlai.agents.h_value.PreferenceGradient --step-size-alpha 0.1 --use-reward-baseline'))
 
@@ -113,6 +134,9 @@ def test_k_armed_bandit_preference_gradient_with_baseline():
 
 
 def test_k_armed_bandit_preference_gradient_without_baseline():
+    """
+    Test.
+    """
 
     monitors = run(shlex.split('--random-seed 12345 --T 100 --n-runs 200 --environment rlai.environments.bandit.KArmedBandit --k 10 --q-star-mean 4 --agent rlai.agents.h_value.PreferenceGradient --step-size-alpha 0.1'))
 
@@ -127,6 +151,9 @@ def test_k_armed_bandit_preference_gradient_without_baseline():
 
 
 def test_mancala():
+    """
+    Test.
+    """
 
     monitors = run(shlex.split(f'--random-seed 12345 --T 100 --n-runs 200 --environment rlai.environments.mancala.Mancala --initial-count 4 --agent {dump_agent()}'))
 
@@ -141,6 +168,9 @@ def test_mancala():
 
 
 def test_gamblers_problem():
+    """
+    Test.
+    """
 
     monitors = run(shlex.split(f'--random-seed 12345 --T 100 --n-runs 200 --environment rlai.environments.gamblers_problem.GamblersProblem --p-h 0.4 --agent {dump_agent()} --log INFO'))
 
@@ -155,12 +185,18 @@ def test_gamblers_problem():
 
 
 def test_unparsed_args():
+    """
+    Test.
+    """
 
     with pytest.raises(ValueError, match='Unparsed arguments'):
         run(shlex.split('--random-seed 12345 --T 100 --n-runs 200 --environment rlai.environments.bandit.KArmedBandit --k 10 --agent rlai.agents.q_value.EpsilonGreedy --epsilon 0.2 0.0 --testing'))
 
 
 def test_plot():
+    """
+    Test.
+    """
 
     # without pdf (without random seed)
     run(shlex.split('--T 100 --n-runs 200 --environment rlai.environments.bandit.KArmedBandit --k 10 --agent rlai.agents.q_value.EpsilonGreedy --epsilon 0.2 0.0 --plot --figure-name test'))
@@ -176,10 +212,21 @@ class DummyQSA:
 
     @staticmethod
     def get_initial_policy() -> TabularPolicy:
+        """
+        Get initial policy.
+
+        :return: Policy.
+        """
+
         return TabularPolicy(None, None)
 
 
 def dump_agent() -> str:
+    """
+    Dump agent.
+
+    :return: String path.
+    """
 
     # create dummy mdp agent for runner
     # noinspection PyTypeChecker

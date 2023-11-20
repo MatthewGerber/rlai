@@ -12,6 +12,9 @@ from rlai.q_S_A.tabular import TabularStateActionValueEstimator
 
 
 def test_policy_iteration():
+    """
+    Test.
+    """
 
     # state-value policy iteration
     random_state = RandomState(12345)
@@ -51,6 +54,9 @@ def test_policy_iteration():
 
 
 def test_value_iteration():
+    """
+    Test.
+    """
 
     # run policy iteration on v_pi
     random_state = RandomState(12345)

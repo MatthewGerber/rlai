@@ -16,6 +16,9 @@ from test.rlai.utils import tabular_pi_legacy_eq
 
 
 def test_learn():
+    """
+    Test.
+    """
 
     random_state = RandomState(12345)
 
@@ -89,6 +92,9 @@ def test_learn():
 
 
 def test_pit():
+    """
+    Test.
+    """
 
     pit = Pit(True, 5, True)
     pit.i = 0
@@ -100,6 +106,9 @@ def test_pit():
 
 
 def test_human_player_mutator():
+    """
+    Test.
+    """
 
     random = RandomState()
     mancala = Mancala(random, None, 5, None)
@@ -109,6 +118,9 @@ def test_human_player_mutator():
 
 
 def test_human_player():
+    """
+    Test.
+    """
 
     random_state = RandomState(12345)
 

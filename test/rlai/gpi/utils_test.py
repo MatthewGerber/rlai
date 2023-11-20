@@ -14,6 +14,9 @@ from test.rlai.utils import start_virtual_display_if_headless
 
 
 def test_resume_gym_valid_environment():
+    """
+    Test.
+    """
 
     start_virtual_display_if_headless()
 

@@ -11,6 +11,9 @@ from rlai.utils import sample_list_item
 
 
 def test_stochastic_environment_model():
+    """
+    Test.
+    """
 
     random_state = RandomState(12345)
 

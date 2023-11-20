@@ -2,6 +2,9 @@ from rlai.rewards import Reward
 
 
 def test_reward_overrides():
+    """
+    Test.
+    """
 
     reward = Reward(1, 2)
     reward2 = Reward(1, 2)

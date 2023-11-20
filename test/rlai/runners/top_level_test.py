@@ -6,6 +6,9 @@ from rlai.runners import top_level, trainer
 
 
 def test_train():
+    """
+    Test.
+    """
 
     checkpoint_path_top_level, agent_path_top_level = top_level.run(shlex.split(f'train --random-seed 12345 --agent rlai.agents.mdp.ActionValueMdpAgent --gamma 1 --environment rlai.environments.gridworld.Gridworld --id example_4_1 --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode Q_LEARNING --num-improvements 10 --num-episodes-per-improvement 5 --epsilon 0.01 --q-S-A rlai.q_S_A.tabular.TabularStateActionValueEstimator --make-final-policy-greedy True --num-improvements-per-checkpoint 10 --checkpoint-path {tempfile.NamedTemporaryFile(delete=False).name} --save-agent-path {tempfile.NamedTemporaryFile(delete=False).name}'))
     with open(agent_path_top_level, 'rb') as f:
@@ -19,6 +22,9 @@ def test_train():
 
 
 def test_help():
+    """
+    Test.
+    """
 
     top_level.run(shlex.split('help rlai.agents.mdp.ActionValueMdpAgent'))
     top_level.run(shlex.split('help rlai.agents.mdp.ParameterizedMdpAgent'))

@@ -12,6 +12,9 @@ from rlai.runners.trainer import run
 
 
 def test_continuous_learn():
+    """
+    Test.
+    """
 
     # set the following to True to update the fixture. if you do this, then you'll also need to start the robocode game
     # and uncomment some stuff in rlai.environments.network.TcpMdpEnvironment.read_from_client in order to update the
@@ -90,6 +93,9 @@ def test_continuous_learn():
 
 
 def test_feature_extractor():
+    """
+    Test.
+    """
 
     assert RobocodeFeatureExtractor.is_clockwise_move(0, 1)
     assert RobocodeFeatureExtractor.is_clockwise_move(-1, 1)

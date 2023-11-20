@@ -5,6 +5,9 @@ from rlai.runners.monitor import Monitor
 
 
 def test_monitor():
+    """
+    Test.
+    """
 
     T = 100
 

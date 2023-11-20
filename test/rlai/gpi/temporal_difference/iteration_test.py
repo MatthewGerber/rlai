@@ -30,6 +30,9 @@ from test.rlai.utils import tabular_estimator_legacy_eq, tabular_pi_legacy_eq
 
 
 def test_sarsa_iterate_value_q_pi():
+    """
+    Test.
+    """
 
     random_state = RandomState(12345)
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
@@ -64,6 +67,9 @@ def test_sarsa_iterate_value_q_pi():
 
 
 def test_sarsa_iterate_value_q_pi_make_greedy():
+    """
+    Test.
+    """
 
     random_state = RandomState(12345)
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
@@ -98,6 +104,9 @@ def test_sarsa_iterate_value_q_pi_make_greedy():
 
 
 def test_sarsa_iterate_value_q_pi_with_trajectory_planning():
+    """
+    Test.
+    """
 
     random_state = RandomState(12345)
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
@@ -141,6 +150,9 @@ def test_sarsa_iterate_value_q_pi_with_trajectory_planning():
 
 
 def test_q_learning_iterate_value_q_pi():
+    """
+    Test.
+    """
 
     random_state = RandomState(12345)
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
@@ -176,6 +188,9 @@ def test_q_learning_iterate_value_q_pi():
 
 
 def test_q_learning_iterate_value_q_pi_function_approximation_with_formula():
+    """
+    Test.
+    """
 
     random_state = RandomState(12345)
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state, 20)
@@ -221,6 +236,9 @@ def test_q_learning_iterate_value_q_pi_function_approximation_with_formula():
 
 
 def test_q_learning_iterate_value_q_pi_function_approximation_no_formula():
+    """
+    Test.
+    """
 
     random_state = RandomState(12345)
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state, 20)
@@ -268,6 +286,9 @@ def test_q_learning_iterate_value_q_pi_function_approximation_no_formula():
 
 
 def test_q_learning_iterate_value_q_pi_function_approximation_invalid_formula():
+    """
+    Test.
+    """
 
     random_state = RandomState(12345)
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state, 20)
@@ -304,6 +325,9 @@ def test_q_learning_iterate_value_q_pi_function_approximation_invalid_formula():
 
 
 def test_expected_sarsa_iterate_value_q_pi():
+    """
+    Test.
+    """
 
     random_state = RandomState(12345)
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
@@ -339,6 +363,9 @@ def test_expected_sarsa_iterate_value_q_pi():
 
 
 def test_n_step_q_learning_iterate_value_q_pi():
+    """
+    Test.
+    """
 
     random_state = RandomState(12345)
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
@@ -374,6 +401,9 @@ def test_n_step_q_learning_iterate_value_q_pi():
 
 
 def test_invalid_epsilon_iterate_value_q_pi():
+    """
+    Test.
+    """
 
     random_state = RandomState(12345)
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
@@ -400,6 +430,9 @@ def test_invalid_epsilon_iterate_value_q_pi():
 
 
 def test_iterate_value_q_pi_with_pdf():
+    """
+    Test.
+    """
 
     random_state = RandomState(12345)
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
@@ -427,6 +460,9 @@ def test_iterate_value_q_pi_with_pdf():
 
 
 def test_iterate_value_q_pi_multi_threaded():
+    """
+    Test.
+    """
 
     thread_manager = RunThreadManager(True)
 
@@ -491,6 +527,9 @@ def test_iterate_value_q_pi_multi_threaded():
 
 
 def test_iterate_value_q_pi_func_approx_multi_threaded():
+    """
+    Test.
+    """
 
     thread_manager = RunThreadManager(True)
 
@@ -539,6 +578,9 @@ def test_iterate_value_q_pi_func_approx_multi_threaded():
 
 
 def test_q_learning_iterate_value_q_pi_function_approximation_policy_ne():
+    """
+    Test.
+    """
 
     random_state = RandomState(12345)
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state, 20)
@@ -611,6 +653,9 @@ def test_q_learning_iterate_value_q_pi_function_approximation_policy_ne():
 
 
 def test_q_learning_iterate_value_q_pi_tabular_policy_ne():
+    """
+    Test.
+    """
 
     random_state = RandomState(12345)
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state, 20)

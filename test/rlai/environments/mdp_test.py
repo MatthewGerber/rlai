@@ -18,6 +18,9 @@ from rlai.states.mdp import MdpState
 
 
 def test_gamblers_problem():
+    """
+    Test.
+    """
 
     random_state = RandomState(12345)
     mdp_environment: GamblersProblem = GamblersProblem(
@@ -52,6 +55,9 @@ def test_gamblers_problem():
 
 
 def test_prioritized_planning_environment():
+    """
+    Test.
+    """
 
     rng = RandomState(12345)
 
@@ -77,6 +83,9 @@ def test_prioritized_planning_environment():
 
 
 def test_run():
+    """
+    Test.
+    """
 
     random_state = RandomState(12345)
 
@@ -110,6 +119,9 @@ def test_run():
 
 
 def test_check_marginal_probabilities():
+    """
+    Test.
+    """
 
     random = RandomState()
     gridworld = Gridworld.example_4_1(random, None)

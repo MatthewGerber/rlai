@@ -7,6 +7,9 @@ from rlai.policies.parameterized.continuous_action import ContinuousActionBetaDi
 
 
 def test_rescale():
+    """
+    Test.
+    """
 
     random_state = RandomState(12345)
 

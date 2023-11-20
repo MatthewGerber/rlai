@@ -23,6 +23,9 @@ from test.rlai.utils import tabular_estimator_legacy_eq, tabular_pi_legacy_eq
 
 
 def test_iterate_value_q_pi():
+    """
+    Test.
+    """
 
     random_state = RandomState(12345)
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
@@ -54,6 +57,9 @@ def test_iterate_value_q_pi():
 
 
 def test_off_policy_monte_carlo():
+    """
+    Test.
+    """
 
     # target agent
     random_state = RandomState(12345)
@@ -96,6 +102,9 @@ def test_off_policy_monte_carlo():
 
 
 def test_off_policy_monte_carlo_with_function_approximation():
+    """
+    Test.
+    """
 
     random_state = RandomState(12345)
 
@@ -157,6 +166,9 @@ def test_off_policy_monte_carlo_with_function_approximation():
 
 
 def test_invalid_iterate_value_q_pi():
+    """
+    Test.
+    """
 
     # target agent
     random_state = RandomState(12345)
@@ -203,6 +215,9 @@ def test_invalid_iterate_value_q_pi():
 
 
 def test_iterate_value_q_pi_with_pdf():
+    """
+    Test.
+    """
 
     random_state = RandomState(12345)
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
@@ -234,6 +249,9 @@ def test_iterate_value_q_pi_with_pdf():
 
 
 def test_iterate_value_q_pi_multi_threaded():
+    """
+    Test.
+    """
 
     thread_manager = RunThreadManager(True)
 

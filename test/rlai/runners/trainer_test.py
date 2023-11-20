@@ -13,6 +13,9 @@ from test.rlai.utils import start_virtual_display_if_headless
 
 
 def test_continuous_state_discretization():
+    """
+    Test.
+    """
 
     start_virtual_display_if_headless()
 
@@ -34,6 +37,9 @@ def test_continuous_state_discretization():
 
 
 def test_trajectory_sampling_planning():
+    """
+    Test.
+    """
 
     start_virtual_display_if_headless()
 
@@ -55,6 +61,9 @@ def test_trajectory_sampling_planning():
 
 
 def test_prioritized_sweeping_planning_low_threshold():
+    """
+    Test.
+    """
 
     start_virtual_display_if_headless()
 
@@ -76,6 +85,9 @@ def test_prioritized_sweeping_planning_low_threshold():
 
 
 def test_prioritized_sweeping_planning_high_threshold():
+    """
+    Test.
+    """
 
     start_virtual_display_if_headless()
 
@@ -97,6 +109,9 @@ def test_prioritized_sweeping_planning_high_threshold():
 
 
 def test_q_learning_with_patsy_formula():
+    """
+    Test.
+    """
 
     start_virtual_display_if_headless()
 
@@ -118,6 +133,9 @@ def test_q_learning_with_patsy_formula():
 
 
 def test_q_learning_with_state_action_interaction_feature_extractor():
+    """
+    Test.
+    """
 
     start_virtual_display_if_headless()
 
@@ -139,6 +157,9 @@ def test_q_learning_with_state_action_interaction_feature_extractor():
 
 
 def test_sarsa_with_model_plots():
+    """
+    Test.
+    """
 
     start_virtual_display_if_headless()
 
@@ -160,6 +181,9 @@ def test_sarsa_with_model_plots():
 
 
 def test_continuous_action_discretization():
+    """
+    Test.
+    """
 
     start_virtual_display_if_headless()
 
@@ -181,6 +205,9 @@ def test_continuous_action_discretization():
 
 
 def test_gym_cartpole_function_approximation():
+    """
+    Test.
+    """
 
     start_virtual_display_if_headless()
 
@@ -202,6 +229,9 @@ def test_gym_cartpole_function_approximation():
 
 
 def test_gym_cartpole_tabular():
+    """
+    Test.
+    """
 
     start_virtual_display_if_headless()
 
@@ -223,6 +253,9 @@ def test_gym_cartpole_tabular():
 
 
 def test_gym_cartpole_function_approximation_plot_model():
+    """
+    Test.
+    """
 
     start_virtual_display_if_headless()
 
@@ -244,6 +277,9 @@ def test_gym_cartpole_function_approximation_plot_model():
 
 
 def test_gym_continuous_mountain_car():
+    """
+    Test.
+    """
 
     start_virtual_display_if_headless()
 
@@ -265,6 +301,9 @@ def test_gym_continuous_mountain_car():
 
 
 def test_gridworld_plot_model_pdf():
+    """
+    Test.
+    """
 
     start_virtual_display_if_headless()
 
@@ -286,6 +325,9 @@ def test_gridworld_plot_model_pdf():
 
 
 def test_scale_learning_rate_with_logging():
+    """
+    Test.
+    """
 
     start_virtual_display_if_headless()
 
@@ -307,6 +349,9 @@ def test_scale_learning_rate_with_logging():
 
 
 def test_policy_gradient_reinforce_beta_with_baseline():
+    """
+    Test.
+    """
 
     start_virtual_display_if_headless()
 
@@ -328,6 +373,9 @@ def test_policy_gradient_reinforce_beta_with_baseline():
 
 
 def test_policy_gradient_reinforce_normal_with_baseline():
+    """
+    Test.
+    """
 
     start_virtual_display_if_headless()
 
@@ -349,6 +397,9 @@ def test_policy_gradient_reinforce_normal_with_baseline():
 
 
 def test_policy_gradient_reinforce_softmax_action_preferences_with_baseline():
+    """
+    Test.
+    """
 
     start_virtual_display_if_headless()
 
@@ -370,23 +421,35 @@ def test_policy_gradient_reinforce_softmax_action_preferences_with_baseline():
 
 
 def test_missing_arguments():
+    """
+    Test.
+    """
 
     run(shlex.split('--agent rlai.agents.mdp.ActionValueMdpAgent --gamma 1 --environment rlai.environments.gridworld.Gridworld --id example_4_1 --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode Q_LEARNING --num-improvements 10 --num-episodes-per-improvement 5 --epsilon 0.01 --q-S-A rlai.q_S_A.tabular.TabularStateActionValueEstimator --make-final-policy-greedy True'))
 
 
 def test_unparsed_arguments():
+    """
+    Test.
+    """
 
     with pytest.raises(ValueError, match='Unparsed arguments'):
         run(shlex.split('--agent rlai.agents.mdp.ActionValueMdpAgent --gamma 1 --environment rlai.environments.gridworld.Gridworld --id example_4_1 --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode Q_LEARNING --num-improvements 10 --num-episodes-per-improvement 5 --epsilon 0.01 --q-S-A rlai.q_S_A.tabular.TabularStateActionValueEstimator --make-final-policy-greedy True --XXXX'))
 
 
 def test_help():
+    """
+    Test.
+    """
 
     with pytest.raises(ValueError, match='No training function specified. Cannot train.'):
         run(shlex.split('--agent rlai.agents.mdp.ActionValueMdpAgent --help'))
 
 
 def test_resume():
+    """
+    Test.
+    """
 
     checkpoint_path, agent_path = run(shlex.split(f'--random-seed 12345 --agent rlai.agents.mdp.ActionValueMdpAgent --gamma 1 --environment rlai.environments.gridworld.Gridworld --id example_4_1 --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode Q_LEARNING --num-improvements 10 --num-episodes-per-improvement 5 --epsilon 0.01 --q-S-A rlai.q_S_A.tabular.TabularStateActionValueEstimator --make-final-policy-greedy True --num-improvements-per-checkpoint 10 --checkpoint-path {tempfile.NamedTemporaryFile(delete=False).name} --save-agent-path {tempfile.NamedTemporaryFile(delete=False).name}'))
 
@@ -406,6 +469,9 @@ def test_resume():
 
 
 def test_too_many_coefficients_for_plot_model():
+    """
+    Test.
+    """
 
     old_vals = (
         rlai.q_S_A.function_approximation.models.MAX_PLOT_COEFFICIENTS,

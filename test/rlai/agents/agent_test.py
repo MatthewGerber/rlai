@@ -10,6 +10,9 @@ from rlai.states.mdp import MdpState
 
 
 def test_agent_invalid_action():
+    """
+    Test.
+    """
 
     random = RandomState()
     agent = ActionValueMdpAgent('foo', random, 1.0, TabularStateActionValueEstimator(Gridworld.example_4_1(random, None), None, None))
@@ -30,6 +33,9 @@ def test_agent_invalid_action():
 
 
 def test_human_agent():
+    """
+    Test.
+    """
 
     agent = Human()
 

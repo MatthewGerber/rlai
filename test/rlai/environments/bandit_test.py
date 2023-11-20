@@ -4,6 +4,9 @@ from rlai.environments.bandit import Arm
 
 
 def test_arm():
+    """
+    Test.
+    """
 
     random = RandomState()
     arm = Arm(1, 0.0, 1.0, random)

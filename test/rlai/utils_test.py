@@ -19,6 +19,9 @@ from rlai.utils import (
 
 
 def test_incremental_averager():
+    """
+    Test.
+    """
 
     rng = RandomState(1234)
 
@@ -51,6 +54,9 @@ def test_incremental_averager():
 
 
 def test_sample_list_item():
+    """
+    Test.
+    """
 
     x = [1, 2, 3]
     p = np.array([0.1, 0.3, 0.6])
@@ -81,11 +87,17 @@ def test_sample_list_item():
 
 
 def test_import_function():
+    """
+    Test.
+    """
 
     assert import_function(None) is None
 
 
 def test_stdstream_tee():
+    """
+    Test.
+    """
 
     tee = StdStreamTee(sys.stdout, 10, True)
     sys.stdout = tee
@@ -101,6 +113,9 @@ def test_stdstream_tee():
 
 
 def test_run_thread_manager_initially_blocked():
+    """
+    Test.
+    """
 
     run_manager = RunThreadManager(False)
 
@@ -117,7 +132,10 @@ def test_run_thread_manager_initially_blocked():
     assert not wait_return
 
 
-def test_neareset_pd():
+def test_nearest_pd():
+    """
+    Test.
+    """
 
     diag = np.array([[0, 0], [0, 0]])
     np.fill_diagonal(diag, 1)

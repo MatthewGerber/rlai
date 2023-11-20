@@ -11,6 +11,9 @@ from test.rlai.utils import tabular_estimator_legacy_eq
 
 
 def test_evaluate_v_pi():
+    """
+    Test.
+    """
 
     random_state = RandomState(12345)
 
@@ -40,6 +43,9 @@ def test_evaluate_v_pi():
 
 
 def test_evaluate_q_pi():
+    """
+    Test.
+    """
 
     random_state = RandomState(12345)
     mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)

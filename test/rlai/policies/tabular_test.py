@@ -5,6 +5,9 @@ from rlai.policies.tabular import TabularPolicy
 
 
 def test_invalid_get_state_i():
+    """
+    Test.
+    """
 
     policy = TabularPolicy(None, None)
 
@@ -17,6 +20,9 @@ def test_invalid_get_state_i():
 
 
 def test_policy_not_equal():
+    """
+    Test.
+    """
 
     policy_1 = TabularPolicy(None, None)
     policy_2 = TabularPolicy(None, None)
