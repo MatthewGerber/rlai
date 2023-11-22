@@ -37,8 +37,7 @@ def evaluate_v_pi(
     value of delta.
     """
 
-    # noinspection PyTypeHints
-    agent.pi: TabularPolicy
+    assert isinstance(agent.pi, TabularPolicy)
 
     theta, num_iterations = check_termination_criteria(
         theta=theta,
@@ -58,8 +57,8 @@ def evaluate_v_pi(
         else:
             v_S_to_update = {s: 0.0 for s in agent.pi}
 
+        # track the maximum delta across all updates
         delta = 0.0
-
         for s in agent.pi:
 
             prev_v = v_S[s]
@@ -67,7 +66,16 @@ def evaluate_v_pi(
             # calculate expected value of current state using current estimates of successor state-values
             new_v = float(np.sum([
 
-                agent.pi[s][a] * environment.p_S_prime_R_given_S_A[s][a][s_prime][r] * (r.r + agent.gamma * v_S[s_prime])
+                (
+                    # probability of taking action a in state s
+                    agent.pi[s][a] *
+
+                    # probability of transitioning to the next state and obtaining the next reward
+                    environment.p_S_prime_R_given_S_A[s][a][s_prime][r] *
+
+                    # value of reward plus discounted value of next state
+                    (r.r + agent.gamma * v_S[s_prime])
+                )
 
                 for a in environment.p_S_prime_R_given_S_A[s]
                 for s_prime in environment.p_S_prime_R_given_S_A[s][a]
@@ -123,8 +131,7 @@ def evaluate_q_pi(
     (2) final value of delta.
     """
 
-    # noinspection PyTypeHints
-    agent.pi: TabularPolicy
+    assert isinstance(agent.pi, TabularPolicy)
 
     theta, num_iterations = check_termination_criteria(
         theta=theta,
@@ -156,9 +163,8 @@ def evaluate_q_pi(
                 for s in agent.pi
             }
 
+        # update each state-action value. track the maximum delta across all updates.
         delta = 0.0
-
-        # update each state-action value
         for s in agent.pi:
             for a in environment.p_S_prime_R_given_S_A[s]:
 

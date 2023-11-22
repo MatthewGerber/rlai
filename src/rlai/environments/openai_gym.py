@@ -44,7 +44,7 @@ class GymState(MdpState):
             environment: 'Gym',
             observation: np.ndarray,
             agent: MdpAgent,
-            terminal: bool,
+            terminal: bool
     ):
         """
         Initialize the state.

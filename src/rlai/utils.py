@@ -251,7 +251,13 @@ def get_base_argument_parser(
         **kwargs
 ) -> ArgumentParser:
     """
-    Get base argument parser.
+    Get base argument parser. The approach we take with regard to object initialization and command-line argument
+    parsing is that a list of arguments comes into the concrete class and is passed up the inheritance chain to the
+    root class. At each step along the way, a class parses the arguments that it needs to initialize itself. Once the
+    parsing and initialization are complete, there must be exactly zero unparsed arguments left.
+
+    Creation of the argument parser begins here with the base argument parser. A class in a hierarchy defines a child
+    argument parser with a parent parser obtained from its parent class.
 
     :param kwargs: Keyword arguments to pass to the ArgumentParser constructor.
     :return: Argument parser.

@@ -32,7 +32,11 @@ class Arm:
 
         # refill the reward buffer if it is empty or hasn't been initialized
         if self.q_star_buffer_idx >= len(self.q_star_buffer):
-            self.q_star_buffer = self.random_state.normal(loc=self.mean, scale=self.variance, size=ARM_QSTAR_BUFFER_SIZE)
+            self.q_star_buffer = self.random_state.normal(
+                loc=self.mean,
+                scale=self.variance,
+                size=ARM_QSTAR_BUFFER_SIZE
+            )
             self.q_star_buffer_idx = 0
 
         # return next value from buffer
@@ -111,7 +115,10 @@ class KArmedBandit(Environment):
             '--reset-probability',
             type=float,
             default=0.0,
-            help="Probability of resetting the bandit's arms at each time step. This effectively creates a nonstationary environment."
+            help=(
+                "Probability of resetting the bandit's arms at each time step. This effectively creates a "
+                "nonstationary environment."
+            )
         )
 
         parser.add_argument(

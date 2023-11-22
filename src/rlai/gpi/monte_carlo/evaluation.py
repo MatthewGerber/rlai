@@ -52,6 +52,8 @@ def evaluate_v_pi(
             if state not in state_first_t:
                 state_first_t[state] = t
 
+            # force exploring starts. if this is not forced, then the agent's policy might be deterministic at the first
+            # time step and might prevent exploration of all state-action sequences.
             if t == 0:
                 a = sample_list_item(state.AA, None, environment.random_state)
             else:
@@ -61,12 +63,11 @@ def evaluate_v_pi(
             t_state_reward.append((t, state, reward))
             state = next_state
             t += 1
-
             agent.sense(state, t)
 
         # work backwards through the trace to calculate discounted returns. need to work backward in order for the value
         # of g at each time step t to be properly discounted.
-        g = 0
+        g = 0.0
         for t, state, reward in reversed(t_state_reward):
 
             g = agent.gamma * g + reward.r

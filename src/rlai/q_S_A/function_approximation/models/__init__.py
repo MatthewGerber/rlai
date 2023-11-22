@@ -56,9 +56,15 @@ class FunctionApproximationModel(BaseFunctionApproximationModel, ABC):
             plot_coefficients = False
 
         # some return too many
-        elif feature_action_coefficients.shape[0] > MAX_PLOT_COEFFICIENTS or feature_action_coefficients.shape[1] > MAX_PLOT_ACTIONS:
+        elif (
+            feature_action_coefficients.shape[0] > MAX_PLOT_COEFFICIENTS or
+            feature_action_coefficients.shape[1] > MAX_PLOT_ACTIONS
+        ):
             plot_coefficients = False
-            warnings.warn(f'Feature-action coefficient DataFrame is too large to generate boxplots for ({feature_action_coefficients.shape}). Skipping feature-action coefficient boxplots.')
+            warnings.warn(
+                f'Feature-action coefficient DataFrame is too large to generate boxplots for '
+                f'({feature_action_coefficients.shape}). Skipping feature-action coefficient boxplots.'
+            )
 
         if plot_coefficients:
 
@@ -85,7 +91,10 @@ class FunctionApproximationModel(BaseFunctionApproximationModel, ABC):
             if self.feature_action_coefficients is None:
                 self.feature_action_coefficients = feature_action_coefficients
             else:
-                self.feature_action_coefficients = pd.concat([self.feature_action_coefficients, feature_action_coefficients], verify_integrity=False)
+                self.feature_action_coefficients = pd.concat(
+                    [self.feature_action_coefficients, feature_action_coefficients],
+                    verify_integrity=False
+                )
 
             if render:
 
@@ -118,7 +127,9 @@ class FunctionApproximationModel(BaseFunctionApproximationModel, ABC):
                 # coefficient values within the bin. only plot actions (columns) that have non-nan values for the
                 # current feature (row).
                 for i, feature_name in enumerate(feature_names):
-                    feature_df = self.feature_action_coefficients[self.feature_action_coefficients.feature_name == feature_name]
+                    feature_df = self.feature_action_coefficients[
+                        self.feature_action_coefficients.feature_name == feature_name
+                    ]
                     for j, action_name in enumerate(action_names):
                         if feature_df[action_name].notna().sum() > 0:
                             feature_df.boxplot(column=action_name, by='bin', ax=boxplot_axs[i, j])
@@ -135,7 +146,10 @@ class FunctionApproximationModel(BaseFunctionApproximationModel, ABC):
                         if i < boxplot_axs.shape[0] - 1:
                             ax.set_xlabel('')
                         else:
-                            ax.set_xlabel('Iteration' if num_improvement_bins is None else f'Bin of {improvements_per_bin} improvement(s)')
+                            ax.set_xlabel(
+                                'Iteration' if num_improvement_bins is None
+                                else f'Bin of {improvements_per_bin} improvement(s)'
+                            )
 
                         # only boxplots in the first row have tiles (action names)
                         if i == 0:

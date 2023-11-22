@@ -378,8 +378,10 @@ def get_argument_parser_for_train_function(
     add_argument(
         '--training-pool-max-iterations-without-improvement',
         type=int,
-        help='Maximum number of training pool iterations to allow before reverting to the best prior agent, or None to '
-             'never revert.'
+        help=(
+            'Maximum number of training pool iterations to allow before reverting to the best prior agent, or None to '
+            'never revert.'
+        )
     )
 
     return argument_parser

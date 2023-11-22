@@ -181,7 +181,11 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         parser.add_argument(
             '--formula',
             type=str,
-            help='Right-hand side of the Patsy-style formula to use when modeling the state-action value relationships. Ignore to directly use the output of the feature extractor. Note that the use of Patsy formulas will dramatically slow learning performance, since it is called at each time step.'
+            help=(
+                'Right-hand side of the Patsy-style formula to use when modeling the state-action value relationships. '
+                'Ignore to directly use the output of the feature extractor. Note that the use of Patsy formulas will '
+                'dramatically slow learning performance, since it is called at each time step.'
+            )
         )
 
         parser.add_argument(
@@ -193,7 +197,10 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         parser.add_argument(
             '--plot-model-per-improvements',
             type=int,
-            help='Number of policy improvements between plots of the state-action value model. Ignore to only plot the model at the end.'
+            help=(
+                'Number of policy improvements between plots of the state-action value model. Ignore to only plot the '
+                'model at the end.'
+            )
         )
 
         parser.add_argument(
@@ -421,7 +428,13 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
 
         if self.plot_model:
 
-            render = final or (self.plot_model_per_improvements is not None and self.evaluation_policy_improvement_count % self.plot_model_per_improvements == 0)
+            render = (
+                final or
+                (
+                    self.plot_model_per_improvements is not None and
+                    self.evaluation_policy_improvement_count % self.plot_model_per_improvements == 0
+                )
+            )
 
             return self.model.plot(
                 feature_extractor=self.feature_extractor,

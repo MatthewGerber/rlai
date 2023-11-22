@@ -86,7 +86,6 @@ def iterate_value_q_pi(
     while i < num_improvements:
 
         thread_manager.wait()
-
         if thread_manager.abort:
             break
 

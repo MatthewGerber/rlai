@@ -27,8 +27,7 @@ def improve_policy_with_q_pi(
     :return: Number of states in which the policy was improved.
     """
 
-    # noinspection PyTypeHints
-    agent.pi: TabularPolicy
+    assert isinstance(agent.pi, TabularPolicy)
 
     if epsilon is None:
         epsilon = 0.0
@@ -51,9 +50,20 @@ def improve_policy_with_q_pi(
     # fraction of epsilon spread across all actions in the state.
     policy_improvement = {
         s: {
-            a:
-                ((1.0 - epsilon) / S_num_maximizers[s]) + (epsilon / len(s.AA)) if a in q_pi[s] and q_pi[s][a] == S_max_q[s]
+            a: (
+
+                # actions that tie in maximizing value share the non-epsilon probability
+                ((1.0 - epsilon) / S_num_maximizers[s]) +
+
+                # all actions get an equal share of the epsilon probability
+                (epsilon / len(s.AA))
+
+                # the above only apply to value maximizers
+                if a in q_pi[s] and q_pi[s][a] == S_max_q[s]
+
+                # all other actions get a share of the epsilon probability
                 else epsilon / len(s.AA)
+            )
 
             # improve policy for all feasible actions in the state
             for a in s.AA

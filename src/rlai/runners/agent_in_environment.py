@@ -38,7 +38,10 @@ def run(
     del parsed_args.log
 
     if parsed_args.random_seed is None:
-        warnings.warn('No random seed provided to the trainer. Results will not be replicable. Consider passing --random-seed argument.')
+        warnings.warn(
+            'No random seed provided to the trainer. Results will not be replicable. Consider passing --random-seed '
+            'argument.'
+        )
         random_state = RandomState()
     else:
         random_state = RandomState(parsed_args.random_seed)
@@ -110,7 +113,9 @@ def run(
             num_runs_finished = r + 1
             if (num_runs_finished % num_runs_per_print) == 0:
                 percent_done = 100 * (num_runs_finished / parsed_args.n_runs)
-                logging.info(f'{percent_done:.0f}% complete (finished {num_runs_finished} of {parsed_args.n_runs} runs).')
+                logging.info(
+                    f'{percent_done:.0f}% complete (finished {num_runs_finished} of {parsed_args.n_runs} runs).'
+                )
 
         if parsed_args.plot:
 
@@ -167,7 +172,10 @@ def get_argument_parser_for_run() -> ArgumentParser:
 
     parser = get_base_argument_parser(
         prog='rlai run',
-        description='Run an agent within an environment. This does not support learning (e.g., monte carlo or temporal difference). See trainer.py for such methods.'
+        description=(
+            'Run an agent within an environment. This does not support learning (e.g., monte carlo or temporal '
+            'difference). See trainer.py for such methods.'
+        )
     )
 
     parser.add_argument(

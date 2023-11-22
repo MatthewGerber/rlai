@@ -269,8 +269,8 @@ class GridworldFeatureExtractor(StateActionInteractionFeatureExtractor):
 
         self.check_state_and_action_lists(states, actions)
 
-        rows = [int(state.i / self.num_cols) for state in states]
-        cols = [state.i % self.num_cols for state in states]
+        state_row = [int(state.i / self.num_cols) for state in states]
+        state_col = [state.i % self.num_cols for state in states]
 
         state_features = np.array([
             [
@@ -279,7 +279,7 @@ class GridworldFeatureExtractor(StateActionInteractionFeatureExtractor):
                 col,  # from left
                 self.num_cols - col - 1  # from right
             ]
-            for row, col in zip(rows, cols)
+            for row, col in zip(state_row, state_col)
         ])
 
         return self.interact(

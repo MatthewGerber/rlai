@@ -255,11 +255,11 @@ def get_bootstrapped_state_action_value(
         # EXPECTED_SARSA:  get expected q-value based on current policy and q-value estimates
         if mode == Mode.EXPECTED_SARSA:
             bootstrapped_s_a_value = sum(
-                (agent.pi[state][a] if state in agent.pi else 1 / len(state.AA)) * (q_S_A[state][a].get_value() if state in q_S_A and a in q_S_A[state] else 0.0)
+                (agent.pi[state][a] if state in agent.pi else 1 / len(state.AA)) *
+                (q_S_A[state][a].get_value() if state in q_S_A and a in q_S_A[state] else 0.0)
                 for a in state.AA
             )
         else:
-
             # SARSA:  agent determines the t-d target action as well as the episode's next action, which are the same
             # (we're on-policy).
             if mode == Mode.SARSA:

@@ -75,7 +75,10 @@ class SKLearnSGD(FunctionApproximationModel):
             '--sgd-alpha',
             type=float,
             default=0.0001,
-            help='Constant that multiplies the regularization term. The higher the value, the stronger the regularization. Also used to compute the learning rate when set to learning_rate is set to `optimal`.'
+            help=(
+                'Constant that multiplies the regularization term. The higher the value, the stronger the '
+                'regularization. Also used to compute the learning rate when set to learning_rate is set to `optimal`.'
+            )
         )
 
         # learning rate (step size)
@@ -163,8 +166,8 @@ class SKLearnSGD(FunctionApproximationModel):
 
         # TODO:  Add more here? (e.g., put max(y) in the exponent for some base we expose)
         if self.scale_eta0_for_y:
-            eta0_scalar = np.abs(np.array(y)).max()
-            self.model.eta0 = self.base_eta0 / eta0_scalar
+            eta0_scaler = np.abs(np.array(y)).max()
+            self.model.eta0 = self.base_eta0 / eta0_scaler
 
         # put tee on standard output in order to grab the loss value printed by sklearn
         stdout_tee = StdStreamTee(sys.stdout, 20, self.print_output)

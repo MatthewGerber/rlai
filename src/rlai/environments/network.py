@@ -66,6 +66,7 @@ class TcpMdpEnvironment(MdpEnvironment, ABC):
             self.server_connection, client_address = self.server_socket.accept()
             logging.info(f'Client connected:  {client_address}')
 
+            # read initial state from the client
             state_dict = json.loads(self.read_from_client())
             self.state, _ = self.extract_state_and_reward_from_client_dict(state_dict, 0)
 

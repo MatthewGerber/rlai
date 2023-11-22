@@ -28,6 +28,7 @@ class TabularPolicy(Policy):
         :return: Integer identifier.
         """
 
+        # build a unique state string from a multidimensional state array in the case of discretized continuous states
         if isinstance(state_descriptor, np.ndarray):
 
             if self.continuous_state_discretization_resolution is None:
@@ -41,6 +42,9 @@ class TabularPolicy(Policy):
         elif not isinstance(state_descriptor, str):
             raise ValueError(f'Unknown state space type:  {type(state_descriptor)}')
 
+        # lazy-initialize the state identifier. this will grow unbounded with increasing resolution of a discretized
+        # continuous state. tabular policies aren't well suited to such environments. function approximation is better.
+        # but we can still try, and if memory requirements aren't too great this will work okay.
         if state_descriptor not in self.state_id_str_int:
             self.state_id_str_int[state_descriptor] = len(self.state_id_str_int)
 

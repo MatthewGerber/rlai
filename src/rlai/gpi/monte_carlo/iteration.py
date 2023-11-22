@@ -65,7 +65,10 @@ def iterate_value_q_pi(
         raise ValueError('Planning environments are not currently supported for Monte Carlo iteration.')
 
     if (agent.q_S_A.epsilon is None or agent.q_S_A.epsilon == 0.0) and off_policy_agent is None:
-        warnings.warn('epsilon is 0.0 and there is no off-policy agent. Exploration and convergence not guaranteed. Consider passing epsilon > 0 or a soft off-policy agent to maintain exploration.')
+        warnings.warn(
+            'epsilon is 0.0 and there is no off-policy agent. Exploration and convergence not guaranteed. Consider '
+            'passing epsilon > 0 or a soft off-policy agent to maintain exploration.'
+        )
 
     if checkpoint_path is not None:
         checkpoint_path = os.path.expanduser(checkpoint_path)
@@ -84,7 +87,6 @@ def iterate_value_q_pi(
     while i < num_improvements:
 
         thread_manager.wait()
-
         if thread_manager.abort:
             break
 

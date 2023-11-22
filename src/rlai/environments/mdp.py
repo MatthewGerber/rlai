@@ -161,7 +161,9 @@ class ModelBasedMdpEnvironment(MdpEnvironment, ABC):
                 ])
 
                 if marginal_prob != 1.0:
-                    raise ValueError(f'Expected next-state/next-reward marginal probability of 1.0, but got {marginal_prob}.')
+                    raise ValueError(
+                        f'Expected next-state/next-reward marginal probability of 1.0, but got {marginal_prob}.'
+                    )
 
     def advance(
             self,
@@ -360,7 +362,10 @@ class PrioritizedSweepingMdpPlanningEnvironment(MdpPlanningEnvironment):
         parser.add_argument(
             '--priority-theta',
             type=float,
-            help='Threshold on priority values, below which state-action pairs are added to the priority queue. Note that all priority values are negative, with higher priorities being larger negative values.'
+            help=(
+                'Threshold on priority values, below which state-action pairs are added to the priority queue. Note '
+                'that all priority values are negative, with higher priorities being larger negative values.'
+            )
         )
 
         return parser

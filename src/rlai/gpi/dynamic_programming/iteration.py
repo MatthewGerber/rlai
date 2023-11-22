@@ -24,8 +24,8 @@ def iterate_policy_v_pi(
     :param agent: MDP agent. Must contain a policy `pi` that has been fully initialized with instances of
     `rlai.states.mdp.ModelBasedMdpState`.
     :param environment: Model-based MDP environment to evaluate.
-    :param theta: See `evaluate_v_pi`.
-    :param update_in_place: See `evaluate_v_pi`.
+    :param theta: Minimum tolerated change in state-value estimates, below which evaluation terminates.
+    :param update_in_place: Whether or not to update value estimates in place.
     :return: Final state-value estimates.
     """
 
@@ -71,8 +71,8 @@ def iterate_policy_q_pi(
     :param agent: MDP agent. Must contain a policy `pi` that has been fully initialized with instances of
     `rlai.states.mdp.ModelBasedMdpState`.
     :param environment: Model-based MDP environment to evaluate.
-    :param theta: See `evaluate_q_pi`.
-    :param update_in_place: See `evaluate_q_pi`.
+    :param theta: Minimum tolerated change in state-value estimates, below which evaluation terminates.
+    :param update_in_place: Whether or not to update value estimates in place.
     :return: Final state-action value estimates.
     """
 

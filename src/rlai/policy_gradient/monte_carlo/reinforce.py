@@ -188,7 +188,10 @@ def improve(
         elapsed_minutes = (datetime.now() - start_timestamp).total_seconds() / 60.0
         episodes_per_minute = episodes_finished / elapsed_minutes
         estimated_completion_timestamp = start_timestamp + timedelta(minutes=(num_episodes / episodes_per_minute))
-        logging.info(f'Finished {episodes_finished} of {num_episodes} episode(s) @ {episodes_per_minute:.1f}/min. Estimated completion:  {estimated_completion_timestamp}.')
+        logging.info(
+            f'Finished {episodes_finished} of {num_episodes} episode(s) @ {episodes_per_minute:.1f}/min. Estimated '
+            f'completion:  {estimated_completion_timestamp}.'
+        )
 
         # decrement episodes finished if we fell back to an earlier iteration
         if num_fallback_iterations > 0:
@@ -283,7 +286,10 @@ class TrainingPool:
 
         iteration_return = {}
         fallback_at_iteration_at_reward_to_iteration_to_reward = {}
-        fallback_re = re.compile('INFO:root:At training pool iteration (\\d+): {2}Falling back to policy/v_S at iteration (\\d+) with average return of ([\\-\\d.]+), after an average return of ([\\-\\d.]+) and .+')
+        fallback_re = re.compile(
+            'INFO:root:At training pool iteration (\\d+): {2}Falling back to policy/v_S at iteration (\\d+) with '
+            'average return of ([\\-\\d.]+), after an average return of ([\\-\\d.]+) and .+'
+        )
         with open(expanduser(log_path), 'r') as f:
             for line in f:
 
@@ -300,7 +306,11 @@ class TrainingPool:
                     at_reward = float(fallback_match.group(4))
                     to_iteration = int(fallback_match.group(2))
                     to_reward = float(fallback_match.group(3))
-                    fallback_at_iteration_at_reward_to_iteration_to_reward[at_iteration] = (at_reward, to_iteration, to_reward)
+                    fallback_at_iteration_at_reward_to_iteration_to_reward[at_iteration] = (
+                        at_reward,
+                        to_iteration,
+                        to_reward
+                    )
 
         plt.plot(list(iteration_return.keys()), list(iteration_return.values()), label='Pooled REINFORCE')
         to_iteration_color = {}
@@ -349,7 +359,10 @@ class TrainingPool:
 
             evaluation_averager.update(total_reward)
 
-        logging.info(f'Evaluated agent in {(datetime.now() - evaluation_start_timestamp).total_seconds():.1f} seconds. Average total reward:  {evaluation_averager.average:.2f}')
+        logging.info(
+            f'Evaluated agent in {(datetime.now() - evaluation_start_timestamp).total_seconds():.1f} seconds. Average '
+            f'total reward:  {evaluation_averager.average:.2f}'
+        )
 
         # write the policy and its performance to the pool for the current iteration
         with open(f'{self.training_pool_path}_{self.training_pool_iteration}', 'wb') as training_pool_file:
@@ -363,22 +376,38 @@ class TrainingPool:
         ) = self.select_best()
 
         # track the policy/v_S with the best average return
-        if self.training_pool_best_overall_average_return is None or best_average_return > self.training_pool_best_overall_average_return:
+        if (
+            self.training_pool_best_overall_average_return is None or
+            best_average_return > self.training_pool_best_overall_average_return
+        ):
             self.training_pool_best_overall_policy = best_policy
             self.training_pool_best_overall_v_S = best_v_S
             self.training_pool_best_overall_average_return = best_average_return
             self.training_pool_best_overall_iteration = self.training_pool_iteration
             self.training_pool_iterations_without_improvement = 0
-            logging.info(f'Bookmarked new best policy/v_S at training pool iteration {self.training_pool_iteration} with average return of {self.training_pool_best_overall_average_return}.')
+            logging.info(
+                f'Bookmarked new best policy/v_S at training pool iteration {self.training_pool_iteration} with '
+                f'average return of {self.training_pool_best_overall_average_return}.'
+            )
         else:
             self.training_pool_iterations_without_improvement += 1
-            logging.info(f'Training pool iterations without improvement:  {self.training_pool_iterations_without_improvement}')
+            logging.info(
+                f'Training pool iterations without improvement:  {self.training_pool_iterations_without_improvement}'
+            )
 
         # fall back to the best prior policy if we've failed to improve upon it for too many iterations. copy to prevent
         # changes to the original, which might get used again.
         num_fallback_iterations = 0
-        if self.training_pool_max_iterations_without_improvement is not None and self.training_pool_iterations_without_improvement > self.training_pool_max_iterations_without_improvement:
-            logging.info(f'At training pool iteration {self.training_pool_iteration}:  Falling back to policy/v_S at iteration {self.training_pool_best_overall_iteration} with average return of {self.training_pool_best_overall_average_return}, after an average return of {best_average_return} and {self.training_pool_iterations_without_improvement} iteration(s) without improvement.')
+        if (
+            self.training_pool_max_iterations_without_improvement is not None and
+            self.training_pool_iterations_without_improvement > self.training_pool_max_iterations_without_improvement
+        ):
+            logging.info(
+                f'At training pool iteration {self.training_pool_iteration}:  Falling back to policy/v_S at iteration '
+                f'{self.training_pool_best_overall_iteration} with average return of '
+                f'{self.training_pool_best_overall_average_return}, after an average return of {best_average_return} '
+                f'and {self.training_pool_iterations_without_improvement} iteration(s) without improvement.'
+            )
             self.agent.pi = deepcopy(self.training_pool_best_overall_policy)
             self.agent.v_S = deepcopy(self.training_pool_best_overall_v_S)
             num_fallback_iterations = self.training_pool_iterations_without_improvement
@@ -387,7 +416,10 @@ class TrainingPool:
         # greedy iteration always sets to the best overall. copy to prevent changes to the original, which might get
         # used again.
         elif greedy:
-            logging.info(f'Setting to greedy policy/v_S from iteration {self.training_pool_best_overall_iteration} with average return of {self.training_pool_best_overall_average_return}.')
+            logging.info(
+                f'Setting to greedy policy/v_S from iteration {self.training_pool_best_overall_iteration} with average '
+                f'return of {self.training_pool_best_overall_average_return}.'
+            )
             self.agent.pi = deepcopy(self.training_pool_best_overall_policy)
             self.agent.v_S = deepcopy(self.training_pool_best_overall_v_S)
 
@@ -420,7 +452,10 @@ class TrainingPool:
             logging.info(f'Waiting for pickles to appear for training pool iteration {self.training_pool_iteration}.')
             time.sleep(1.0)
             training_pool_policy_v_S_returns.clear()
-            for training_pool_filename in filter(lambda s: s.endswith(f'_{self.training_pool_iteration}'), os.listdir(self.training_pool_directory)):
+            for training_pool_filename in filter(
+                lambda s: s.endswith(f'_{self.training_pool_iteration}'),
+                os.listdir(self.training_pool_directory)
+            ):
                 try:
                     with open(join(self.training_pool_directory, training_pool_filename), 'rb') as f:
                         training_pool_policy_v_S_returns.append(pickle.load(f))
@@ -452,7 +487,10 @@ class TrainingPool:
             except Exception:
                 pass
 
-        logging.info(f'Selected policy for training pool iteration {self.training_pool_iteration} with an average return of {best_average_return:.2f}.')
+        logging.info(
+            f'Selected policy for training pool iteration {self.training_pool_iteration} with an average return of '
+            f'{best_average_return:.2f}.'
+        )
 
         return best_policy, best_v_S, best_average_return
 
