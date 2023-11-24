@@ -16,8 +16,10 @@ from rlai.environments.mdp import TrajectorySamplingMdpPlanningEnvironment, Stoc
 from rlai.gpi.temporal_difference.evaluation import Mode
 from rlai.gpi.temporal_difference.iteration import iterate_value_q_pi
 from rlai.gpi.utils import update_policy_iteration_plot, plot_policy_iteration
-from rlai.policies.function_approximation import FunctionApproximationPolicy
-from rlai.q_S_A.function_approximation.estimators import ApproximateStateActionValueEstimator
+from rlai.q_S_A.function_approximation.estimators import (
+    ApproximateStateActionValueEstimator,
+    FunctionApproximationPolicy
+)
 from rlai.q_S_A.function_approximation.models.feature_extraction import (
     StateActionIdentityFeatureExtractor
 )

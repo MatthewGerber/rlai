@@ -13,8 +13,10 @@ from rlai.environments.mdp import TrajectorySamplingMdpPlanningEnvironment, Stoc
 from rlai.gpi import PolicyImprovementEvent
 from rlai.gpi.monte_carlo.iteration import iterate_value_q_pi
 from rlai.gpi.utils import update_policy_iteration_plot, plot_policy_iteration
-from rlai.policies.function_approximation import FunctionApproximationPolicy
-from rlai.q_S_A.function_approximation.estimators import ApproximateStateActionValueEstimator
+from rlai.q_S_A.function_approximation.estimators import (
+    ApproximateStateActionValueEstimator,
+    FunctionApproximationPolicy
+)
 from rlai.q_S_A.function_approximation.models.sklearn import SKLearnSGD
 from rlai.q_S_A.tabular import TabularStateActionValueEstimator
 from rlai.utils import RunThreadManager
