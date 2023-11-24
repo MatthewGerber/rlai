@@ -43,7 +43,7 @@ The following command trains an agent for the continuous lunar lander environmen
 with a baseline state-value estimator:
 
 ```
-rlai train --random-seed 12345 --agent rlai.agents.mdp.ParameterizedMdpAgent --gamma 1.0 --environment rlai.environments.openai_gym.Gym --gym-id LunarLanderContinuous-v2 --render-every-nth-episode 100 --video-directory ~/Desktop/lunarlander_continuous_videos --plot-environment --T 500 --train-function rlai.policy_gradient.monte_carlo.reinforce.improve --num-episodes 50000 --plot-state-value True --v-S rlai.v_S.function_approximation.estimators.ApproximateStateValueEstimator --feature-extractor rlai.environments.openai_gym.ContinuousLunarLanderFeatureExtractor --function-approximation-model rlai.models.sklearn.SKLearnSGD --loss squared_error --sgd-alpha 0.0 --learning-rate constant --eta0 0.0001 --policy rlai.policies.parameterized.continuous_action.ContinuousActionBetaDistributionPolicy --policy-feature-extractor rlai.environments.openai_gym.ContinuousLunarLanderFeatureExtractor --plot-policy --alpha 0.0001 --update-upon-every-visit True --save-agent-path ~/Desktop/continuous_lunarlander_agent.pickle
+rlai train --random-seed 12345 --agent rlai.core.agents.ParameterizedMdpAgent --gamma 1.0 --environment rlai.core.environments.openai_gym.Gym --gym-id LunarLanderContinuous-v2 --render-every-nth-episode 100 --video-directory ~/Desktop/lunarlander_continuous_videos --plot-environment --T 500 --train-function rlai.policy_gradient.monte_carlo.reinforce.improve --num-episodes 50000 --plot-state-value True --v-S rlai.state_value.function_approximation.ApproximateStateValueEstimator --feature-extractor rlai.core.environments.openai_gym.ContinuousLunarLanderFeatureExtractor --function-approximation-model rlai.models.sklearn.SKLearnSGD --loss squared_error --sgd-alpha 0.0 --learning-rate constant --eta0 0.0001 --policy rlai.policy_gradient.policies.continuous_action.ContinuousActionBetaDistributionPolicy --policy-feature-extractor rlai.core.environments.openai_gym.ContinuousLunarLanderFeatureExtractor --plot-policy --alpha 0.0001 --update-upon-every-visit True --save-agent-path ~/Desktop/continuous_lunarlander_agent.pickle
 ```
 
 The arguments are explained below.
@@ -53,11 +53,11 @@ The arguments are explained below.
 * `--random-seed 12345`:  For reproducibility.
 
 ### Agent
-* `--agent rlai.agents.mdp.ParameterizedMdpAgent`:  Standard parameterized MDP agent. 
+* `--agent rlai.core.agents.ParameterizedMdpAgent`:  Standard parameterized MDP agent. 
 * `--gamma 1.0`:  Do not discount.
 
 ### Environment
-* `--environment rlai.environments.openai_gym.Gym`:  Environment class.
+* `--environment rlai.core.environments.openai_gym.Gym`:  Environment class.
 * `--gym-id LunarLanderContinuous-v2`:  OpenAI Gym environment identifier.
 * `--render-every-nth-episode 100`:  Render a video every 100 episodes.
 * `--video-directory ~/Desktop/lunarlander_continuous_videos`:  Where to store rendered videos.
@@ -71,8 +71,8 @@ algorithm.
 
 ### Baseline State-Value Estimator
 * `--plot-state-value True`:  Show a real-time plot of the estimated baseline state value.
-* `--v-S rlai.v_S.function_approximation.estimators.ApproximateStateValueEstimator`:  Baseline state-value estimator.  
-* `--feature-extractor rlai.environments.openai_gym.ContinuousLunarLanderFeatureExtractor`:  Feature extractor for the
+* `--v-S rlai.state_value.function_approximation.ApproximateStateValueEstimator`:  Baseline state-value estimator.  
+* `--feature-extractor rlai.core.environments.openai_gym.ContinuousLunarLanderFeatureExtractor`:  Feature extractor for the
 baseline state-value estimator.
 * `--function-approximation-model rlai.models.sklearn.SKLearnSGD`:  Use SKLearn's SGD for the baseline state-value 
 estimator.
@@ -82,9 +82,9 @@ estimator.
 * `--eta0 0.0001`:  Learning rate.
 
 ### Policy
-* `--policy rlai.policies.parameterized.continuous_action.ContinuousActionBetaDistributionPolicy`:  Use the beta
+* `--policy rlai.policy_gradient.policies.continuous_action.ContinuousActionBetaDistributionPolicy`:  Use the beta
 distribution to model the action-density distribution within the policy.
-* `--policy-feature-extractor rlai.environments.openai_gym.ContinuousLunarLanderFeatureExtractor`:  Feature extractor
+* `--policy-feature-extractor rlai.core.environments.openai_gym.ContinuousLunarLanderFeatureExtractor`:  Feature extractor
 for the policy gradient optimizer.
 * `--plot-policy`:  Show a real-time display of the action that is selected at each step.
 * `--alpha 0.0001`:  Learning rate for policy gradient updates.

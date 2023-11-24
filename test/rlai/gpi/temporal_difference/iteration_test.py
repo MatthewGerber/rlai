@@ -10,21 +10,21 @@ import numpy as np
 import pytest
 from numpy.random import RandomState
 
-from rlai.agents.mdp import ActionValueMdpAgent
-from rlai.environments.gridworld import Gridworld, GridworldFeatureExtractor
-from rlai.environments.mdp import TrajectorySamplingMdpPlanningEnvironment, StochasticEnvironmentModel
-from rlai.gpi.temporal_difference.evaluation import Mode
-from rlai.gpi.temporal_difference.iteration import iterate_value_q_pi
-from rlai.gpi.utils import update_policy_iteration_plot, plot_policy_iteration
-from rlai.q_S_A.function_approximation.estimators import (
+from rlai.core.agents import ActionValueMdpAgent
+from rlai.core.environments.gridworld import Gridworld, GridworldFeatureExtractor
+from rlai.core.environments.mdp import TrajectorySamplingMdpPlanningEnvironment, StochasticEnvironmentModel
+from rlai.gpi.state_action_value.function_approximation import (
     ApproximateStateActionValueEstimator,
     FunctionApproximationPolicy
 )
-from rlai.q_S_A.function_approximation.models.feature_extraction import (
+from rlai.gpi.state_action_value.function_approximation.models.feature_extraction import (
     StateActionIdentityFeatureExtractor
 )
-from rlai.q_S_A.function_approximation.models.sklearn import SKLearnSGD
-from rlai.q_S_A.tabular.estimators import TabularStateActionValueEstimator
+from rlai.gpi.state_action_value.function_approximation.models.sklearn import SKLearnSGD
+from rlai.gpi.state_action_value.tabular import TabularStateActionValueEstimator
+from rlai.gpi.temporal_difference.evaluation import Mode
+from rlai.gpi.temporal_difference.iteration import iterate_value_q_pi
+from rlai.gpi.utils import update_policy_iteration_plot, plot_policy_iteration
 from rlai.runners.trainer import run
 from rlai.utils import RunThreadManager
 from test.rlai.utils import tabular_estimator_legacy_eq, tabular_pi_legacy_eq
@@ -545,7 +545,7 @@ def test_iterate_value_q_pi_func_approx_multi_threaded():
         q_S_A = train_args['agent'].q_S_A
         train_args_wait_event.set()
 
-    cmd = '--random-seed 12345 --agent rlai.agents.mdp.ActionValueMdpAgent --gamma 1 --environment rlai.environments.gridworld.Gridworld --id example_4_1 --T 25 --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode SARSA --num-improvements 10 --num-episodes-per-improvement 10 --epsilon 0.05 --q-S-A rlai.q_S_A.function_approximation.estimators.ApproximateStateActionValueEstimator --function-approximation-model rlai.q_S_A.function_approximation.models.sklearn.SKLearnSGD --plot-model --feature-extractor rlai.environments.gridworld.GridworldFeatureExtractor --make-final-policy-greedy True'
+    cmd = '--random-seed 12345 --agent rlai.core.agents.ActionValueMdpAgent --gamma 1 --environment rlai.core.environments.gridworld.Gridworld --id example_4_1 --T 25 --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode SARSA --num-improvements 10 --num-episodes-per-improvement 10 --epsilon 0.05 --q-S-A rlai.gpi.state_action_value.function_approximation.ApproximateStateActionValueEstimator --function-approximation-model rlai.gpi.state_action_value.function_approximation.models.sklearn.SKLearnSGD --plot-model --feature-extractor rlai.core.environments.gridworld.GridworldFeatureExtractor --make-final-policy-greedy True'
     args = shlex.split(cmd)
 
     def train_thread_target():

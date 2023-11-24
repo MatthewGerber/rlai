@@ -4,7 +4,7 @@
 Perform iterative policy evaluation of an agent's policy within an environment, returning state values.
 
     :param agent: MDP agent. Must contain a policy `pi` that has been fully initialized with instances of
-    `rlai.states.mdp.ModelBasedMdpState`.
+    `rlai.core.states.ModelBasedMdpState`.
     :param environment: Model-based MDP environment to evaluate.
     :param theta: Minimum tolerated change in state-value estimates, below which evaluation terminates. Either `theta`
     or `num_iterations` (or both) can be specified, but passing neither will raise an exception.
@@ -63,7 +63,7 @@ Improve an agent's policy according to its state-action value estimates. This ma
 Run policy iteration on an agent using state-value estimates.
 
     :param agent: MDP agent. Must contain a policy `pi` that has been fully initialized with instances of
-    `rlai.states.mdp.ModelBasedMdpState`.
+    `rlai.core.states.ModelBasedMdpState`.
     :param environment: Model-based MDP environment to evaluate.
     :param theta: See `evaluate_q_pi`.
     :param update_in_place: See `evaluate_q_pi`.
@@ -74,7 +74,7 @@ Run policy iteration on an agent using state-value estimates.
 Run policy iteration on an agent using state-value estimates.
 
     :param agent: MDP agent. Must contain a policy `pi` that has been fully initialized with instances of
-    `rlai.states.mdp.ModelBasedMdpState`.
+    `rlai.core.states.ModelBasedMdpState`.
     :param environment: Model-based MDP environment to evaluate.
     :param theta: See `evaluate_v_pi`.
     :param update_in_place: See `evaluate_v_pi`.
@@ -85,7 +85,7 @@ Run policy iteration on an agent using state-value estimates.
 Run dynamic programming value iteration on an agent using state-value estimates.
 
     :param agent: MDP agent. Must contain a policy `pi` that has been fully initialized with instances of
-    `rlai.states.mdp.ModelBasedMdpState`.
+    `rlai.core.states.ModelBasedMdpState`.
     :param environment: Model-based MDP environment to evaluate.
     :param theta: See `evaluate_v_pi`.
     :param evaluation_iterations_per_improvement: Number of policy evaluation iterations to execute for each iteration
@@ -93,7 +93,7 @@ Run dynamic programming value iteration on an agent using state-value estimates.
     :param update_in_place: See `evaluate_v_pi`.
     :return: Final state-value estimates.
 ```
-### [rlai.environments.gamblers_problem.GamblersProblem](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/gamblers_problem.py#L16)
+### [rlai.core.environments.gamblers_problem.GamblersProblem](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/gamblers_problem.py#L16)
 ```
 Gambler's problem MDP environment.
 ```
@@ -102,7 +102,7 @@ Gambler's problem MDP environment.
 Run value iteration on an agent using state-action value estimates.
 
     :param agent: MDP agent. Must contain a policy `pi` that has been fully initialized with instances of
-    `rlai.states.mdp.ModelBasedMdpState`.
+    `rlai.core.states.ModelBasedMdpState`.
     :param environment: Model-based MDP environment to evaluate.
     :param theta: See `evaluate_q_pi`.
     :param evaluation_iterations_per_improvement: Number of policy evaluation iterations to execute for each iteration

@@ -13,18 +13,18 @@ from typing import Optional, Tuple
 import matplotlib.pyplot as plt
 import numpy as np
 
-from rlai.agents.mdp import ParameterizedMdpAgent
-from rlai.environments.mdp import MdpEnvironment
+from rlai.core.agents import ParameterizedMdpAgent
+from rlai.core.environments.mdp import MdpEnvironment
 from rlai.meta import rl_text
-from rlai.policies.parameterized import ParameterizedPolicy
-from rlai.policies.parameterized.continuous_action import ContinuousActionPolicy
+from rlai.policy_gradient.policies import ParameterizedPolicy
+from rlai.policy_gradient.policies.continuous_action import ContinuousActionPolicy
+from rlai.state_value import StateValueEstimator
 from rlai.utils import (
     IncrementalSampleAverager,
     RunThreadManager,
     ScatterPlot,
     insert_index_into_path
 )
-from rlai.v_S import StateValueEstimator
 
 
 @rl_text(chapter=13, page=326)

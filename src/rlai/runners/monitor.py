@@ -1,6 +1,6 @@
 from typing import Optional
 
-from rlai.actions import Action
+from rlai.core.actions import Action
 from rlai.utils import IncrementalSampleAverager
 
 

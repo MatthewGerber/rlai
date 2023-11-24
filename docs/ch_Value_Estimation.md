@@ -43,11 +43,11 @@ Approximate state-action value estimator.
 ```
 Approximate value estimator.
 ```
-### [rlai.v_S.function_approximation.estimators.ApproximateStateValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/v_S/function_approximation/estimators.py#L65)
+### [rlai.state_value.function_approximation.ApproximateStateValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/v_S/function_approximation/estimators.py#L65)
 ```
 Approximate state-value estimator.
 ```
-### [rlai.v_S.function_approximation.estimators.ApproximateValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/v_S/function_approximation/estimators.py#L17)
+### [rlai.state_value.function_approximation.estimators.ApproximateValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/v_S/function_approximation/estimators.py#L17)
 ```
 Approximate value estimator.
 ```

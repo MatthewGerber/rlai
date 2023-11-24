@@ -1,10 +1,10 @@
 import logging
 from typing import Dict, Tuple, Set
 
-from rlai.agents.mdp import ActionValueMdpAgent
-from rlai.environments.mdp import MdpEnvironment
+from rlai.core.agents import ActionValueMdpAgent
+from rlai.core.environments.mdp import MdpEnvironment
+from rlai.core.states import MdpState
 from rlai.meta import rl_text
-from rlai.states.mdp import MdpState
 from rlai.utils import IncrementalSampleAverager, sample_list_item
 
 

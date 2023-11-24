@@ -7,7 +7,7 @@ import tempfile
 import time
 from threading import Thread
 
-from rlai.environments.robocode_continuous_action import RobocodeFeatureExtractor
+from rlai.core.environments.robocode_continuous_action import RobocodeFeatureExtractor
 from rlai.runners.trainer import run
 
 
@@ -17,8 +17,8 @@ def test_continuous_learn():
     """
 
     # set the following to True to update the fixture. if you do this, then you'll also need to start the robocode game
-    # and uncomment some stuff in rlai.environments.network.TcpMdpEnvironment.read_from_client in order to update the
-    # test fixture. run a battle for 10 rounds to complete the fixture update.
+    # and uncomment some stuff in rlai.core.environments.network.TcpMdpEnvironment.read_from_client in order to update
+    # the test fixture. run a battle for 10 rounds to complete the fixture update.
     update_fixture = False
 
     # updating the fixture uses the game (per above) on 54321. running test needs to be on a different port to avoid
@@ -72,7 +72,7 @@ def test_continuous_learn():
 
     # run training and load resulting agent
     agent_path = tempfile.NamedTemporaryFile(delete=False).name
-    cmd = f'--random-seed 12345 --agent rlai.environments.robocode_continuous_action.RobocodeAgent --gamma 1.0 --environment rlai.environments.robocode_continuous_action.RobocodeEnvironment --port {robocode_port} --bullet-power-decay 0.75 --train-function rlai.policy_gradient.monte_carlo.reinforce.improve --num-episodes 10 --v-S rlai.v_S.function_approximation.estimators.ApproximateStateValueEstimator --feature-extractor rlai.environments.robocode_continuous_action.RobocodeFeatureExtractor --function-approximation-model rlai.models.sklearn.SKLearnSGD --loss squared_error --sgd-alpha 0.0 --learning-rate constant --eta0 0.00001 --policy rlai.policies.parameterized.continuous_action.ContinuousActionBetaDistributionPolicy --policy-feature-extractor rlai.environments.robocode_continuous_action.RobocodeFeatureExtractor --alpha 0.00001 --update-upon-every-visit True --save-agent-path {agent_path} --log DEBUG'
+    cmd = f'--random-seed 12345 --agent rlai.core.environments.robocode_continuous_action.RobocodeAgent --gamma 1.0 --environment rlai.core.environments.robocode_continuous_action.RobocodeEnvironment --port {robocode_port} --bullet-power-decay 0.75 --train-function rlai.policy_gradient.monte_carlo.reinforce.improve --num-episodes 10 --v-S rlai.state_value.function_approximation.ApproximateStateValueEstimator --feature-extractor rlai.core.environments.robocode_continuous_action.RobocodeFeatureExtractor --function-approximation-model rlai.models.sklearn.SKLearnSGD --loss squared_error --sgd-alpha 0.0 --learning-rate constant --eta0 0.00001 --policy rlai.policy_gradient.policies.continuous_action.ContinuousActionBetaDistributionPolicy --policy-feature-extractor rlai.core.environments.robocode_continuous_action.RobocodeFeatureExtractor --alpha 0.00001 --update-upon-every-visit True --save-agent-path {agent_path} --log DEBUG'
 
     run(shlex.split(cmd))
 

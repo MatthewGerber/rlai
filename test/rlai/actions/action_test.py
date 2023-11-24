@@ -1,6 +1,6 @@
 import numpy as np
 
-from rlai.actions import Action, DiscretizedAction
+from rlai.core.actions import Action, DiscretizedAction
 
 
 def test_action_eq_ne():

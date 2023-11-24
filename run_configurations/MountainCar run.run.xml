@@ -13,7 +13,7 @@
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
     <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/rlai/runners/agent_in_environment.py" />
-    <option name="PARAMETERS" value="--agent ../../../trained_agents/mountaincar/mountaincar_agent.pickle --environment rlai.environments.openai_gym.Gym --gym-id MountainCar-v0 --render-every-nth-episode 1 --n-runs 1 --T 2000 --plot" />
+    <option name="PARAMETERS" value="--agent ../../../trained_agents/mountaincar/mountaincar_agent.pickle --environment rlai.core.environments.openai_gym.Gym --gym-id MountainCar-v0 --render-every-nth-episode 1 --n-runs 1 --T 2000 --plot" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />

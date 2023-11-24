@@ -7,8 +7,8 @@ from typing import Optional
 
 from matplotlib.backends.backend_pdf import PdfPages
 
-from rlai.agents.mdp import MdpAgent, ActionValueMdpAgent
-from rlai.environments.mdp import MdpEnvironment, MdpPlanningEnvironment
+from rlai.core.agents import MdpAgent, ActionValueMdpAgent
+from rlai.core.environments.mdp import MdpEnvironment, MdpPlanningEnvironment
 from rlai.gpi import PolicyImprovementEvent
 from rlai.gpi.monte_carlo.evaluation import evaluate_q_pi
 from rlai.gpi.utils import plot_policy_iteration

@@ -12,12 +12,12 @@ example of running a random (untrained) agent in this environment. The episode t
 # Training
 Train a control agent for the acrobot environment with the following command.
 ```
-rlai train --agent "rlai.agents.mdp.ActionValueMdpAgent" --continuous-state-discretization-resolution 0.5 --gamma 0.9 --environment "rlai.environments.openai_gym.Gym" --gym-id "Acrobot-v1" --render-every-nth-episode 1000 --video-directory "~/Desktop/acrobat_videos" --train-function "rlai.gpi.temporal_difference.iteration.iterate_value_q_pi" --mode "Q_LEARNING" --num-improvements 10000 --num-episodes-per-improvement 10 --epsilon 0.05 --make-final-policy-greedy True --num-improvements-per-plot 100 --num-improvements-per-checkpoint 1000 --checkpoint-path "~/Desktop/acrobat_checkpoint.pickle" --save-agent-path "~/Desktop/acrobat_agent.pickle"
+rlai train --agent "rlai.core.agents.ActionValueMdpAgent" --continuous-state-discretization-resolution 0.5 --gamma 0.9 --environment "rlai.core.environments.openai_gym.Gym" --gym-id "Acrobot-v1" --render-every-nth-episode 1000 --video-directory "~/Desktop/acrobat_videos" --train-function "rlai.gpi.temporal_difference.iteration.iterate_value_q_pi" --mode "Q_LEARNING" --num-improvements 10000 --num-episodes-per-improvement 10 --epsilon 0.05 --make-final-policy-greedy True --num-improvements-per-plot 100 --num-improvements-per-checkpoint 1000 --checkpoint-path "~/Desktop/acrobat_checkpoint.pickle" --save-agent-path "~/Desktop/acrobat_agent.pickle"
 ```
 
 Arguments are explained below.
 * `train`:  Train the agent.
-* `--agent "rlai.agents.mdp.ActionValueMdpAgent"`:  Standard action-value MDP agent. 
+* `--agent "rlai.core.agents.ActionValueMdpAgent"`:  Standard action-value MDP agent. 
 * `--continuous-state-discretization-resolution 0.5`:  Discretize the continuous state space into discrete intervals 
   with resolution 0.5. The methods used here are for discrete-state problems, so some type of discretization of the 
   continuous state space is required.
@@ -25,7 +25,7 @@ Arguments are explained below.
   getting the agent to learn a useful policy. Without discounting, particularly in early iterations, the protracted
   fumbling about with poor actions would eventually be rewarded fully for a subsequent success. By discounting prior 
   actions, the agent eventually learns to focus on later actions that are instrumental to success.
-* `--environment "rlai.environments.openai_gym.Gym"`:  Environment class. 
+* `--environment "rlai.core.environments.openai_gym.Gym"`:  Environment class. 
 * `--gym-id "Acrobot-v1"`:  OpenAI Gym environment identifier.
 * `--render-every-nth-episode 1000`:  Render a video every 1000 episodes (100 improvements).
 * `--video-directory "~/Desktop/acrobat_videos"`:  Where to store rendered videos.

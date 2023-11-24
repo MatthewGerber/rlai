@@ -7,18 +7,18 @@ from threading import Thread
 import pytest
 from numpy.random import RandomState
 
-from rlai.agents.mdp import ActionValueMdpAgent
-from rlai.environments.gridworld import Gridworld, GridworldFeatureExtractor
-from rlai.environments.mdp import TrajectorySamplingMdpPlanningEnvironment, StochasticEnvironmentModel
+from rlai.core.agents import ActionValueMdpAgent
+from rlai.core.environments.gridworld import Gridworld, GridworldFeatureExtractor
+from rlai.core.environments.mdp import TrajectorySamplingMdpPlanningEnvironment, StochasticEnvironmentModel
 from rlai.gpi import PolicyImprovementEvent
 from rlai.gpi.monte_carlo.iteration import iterate_value_q_pi
-from rlai.gpi.utils import update_policy_iteration_plot, plot_policy_iteration
-from rlai.q_S_A.function_approximation.estimators import (
+from rlai.gpi.state_action_value.function_approximation import (
     ApproximateStateActionValueEstimator,
     FunctionApproximationPolicy
 )
-from rlai.q_S_A.function_approximation.models.sklearn import SKLearnSGD
-from rlai.q_S_A.tabular.estimators import TabularStateActionValueEstimator
+from rlai.gpi.state_action_value.function_approximation.models.sklearn import SKLearnSGD
+from rlai.gpi.state_action_value.tabular import TabularStateActionValueEstimator
+from rlai.gpi.utils import update_policy_iteration_plot, plot_policy_iteration
 from rlai.utils import RunThreadManager
 from test.rlai.utils import tabular_estimator_legacy_eq, tabular_pi_legacy_eq
 

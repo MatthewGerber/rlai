@@ -9,10 +9,10 @@ from typing import Dict, List, Callable, Optional, Tuple
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
-from rlai.agents.mdp import MdpAgent
-# plotting data and objects
-from rlai.policies.parameterized.continuous_action import ContinuousActionPolicy
+from rlai.core.agents import MdpAgent
+from rlai.policy_gradient.policies.continuous_action import ContinuousActionPolicy
 
+# plotting data and objects
 _iteration_ax: Optional[plt.Axes] = None
 _iteration_average_reward: Optional[List[int]] = None
 _iteration_average_reward_line: Optional[plt.Line2D] = None

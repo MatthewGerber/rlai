@@ -1,7 +1,7 @@
 import pytest
 
-from rlai.q_S_A.function_approximation.estimators import ApproximateStateActionValueEstimator
-from rlai.q_S_A.tabular.estimators import TabularStateActionValueEstimator
+from rlai.gpi.state_action_value.function_approximation import ApproximateStateActionValueEstimator
+from rlai.gpi.state_action_value.tabular import TabularStateActionValueEstimator
 
 
 # noinspection PyTypeChecker

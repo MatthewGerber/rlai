@@ -1,8 +1,8 @@
-from scipy import stats
+import jax.scipy.stats as jstats
 import matplotlib.pyplot as plt
 import numpy as np
-import jax.scipy.stats as jstats
 from jax import grad
+from scipy import stats
 
 
 def main():

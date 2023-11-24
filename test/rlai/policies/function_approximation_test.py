@@ -1,13 +1,13 @@
 import pytest
 from numpy.random import RandomState
 
-from rlai.agents.mdp import ActionValueMdpAgent
-from rlai.environments.gridworld import Gridworld, GridworldFeatureExtractor
+from rlai.core.agents import ActionValueMdpAgent
+from rlai.core.environments.gridworld import Gridworld, GridworldFeatureExtractor
+from rlai.core.states import MdpState
+from rlai.gpi.state_action_value.function_approximation import ApproximateStateActionValueEstimator
+from rlai.gpi.state_action_value.function_approximation.models.sklearn import SKLearnSGD
 from rlai.gpi.temporal_difference.evaluation import Mode
 from rlai.gpi.temporal_difference.iteration import iterate_value_q_pi
-from rlai.q_S_A.function_approximation.estimators import ApproximateStateActionValueEstimator
-from rlai.q_S_A.function_approximation.models.sklearn import SKLearnSGD
-from rlai.states.mdp import MdpState
 
 
 def test_policy_overrides():

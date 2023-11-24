@@ -1,14 +1,13 @@
 import logging
 from typing import Dict, Optional
 
-from rlai.actions import Action
-from rlai.agents.mdp import MdpAgent
-from rlai.environments.mdp import ModelBasedMdpEnvironment
+from rlai.core.actions import Action
+from rlai.core.agents import MdpAgent
+from rlai.core.environments.mdp import ModelBasedMdpEnvironment
+from rlai.core.states import MdpState
 from rlai.gpi.dynamic_programming.evaluation import evaluate_v_pi, evaluate_q_pi
-from rlai.gpi.dynamic_programming.improvement import improve_policy_with_v_pi
-from rlai.gpi.improvement import improve_policy_with_q_pi
+from rlai.gpi.state_action_value.tabular import TabularPolicy
 from rlai.meta import rl_text
-from rlai.states.mdp import MdpState
 
 
 @rl_text(chapter=4, page=80)
@@ -22,12 +21,14 @@ def iterate_policy_v_pi(
     Run policy iteration on an agent using state-value estimates.
 
     :param agent: MDP agent. Must contain a policy `pi` that has been fully initialized with instances of
-    `rlai.states.mdp.ModelBasedMdpState`.
+    `rlai.core.states.ModelBasedMdpState`.
     :param environment: Model-based MDP environment to evaluate.
     :param theta: Minimum tolerated change in state-value estimates, below which evaluation terminates.
     :param update_in_place: Whether or not to update value estimates in place.
     :return: Final state-value estimates.
     """
+
+    assert isinstance(agent.pi, TabularPolicy)
 
     v_pi: Optional[Dict[MdpState, float]] = None
     improving = True
@@ -45,8 +46,8 @@ def iterate_policy_v_pi(
             initial_v_S=v_pi
         )
 
-        improving = improve_policy_with_v_pi(
-            agent=agent,
+        improving = agent.pi.improve_with_v_pi(
+            gamma=agent.gamma,
             environment=environment,
             v_pi=v_pi
         ) > 0
@@ -69,12 +70,14 @@ def iterate_policy_q_pi(
     Run policy iteration on an agent using state-value estimates.
 
     :param agent: MDP agent. Must contain a policy `pi` that has been fully initialized with instances of
-    `rlai.states.mdp.ModelBasedMdpState`.
+    `rlai.core.states.ModelBasedMdpState`.
     :param environment: Model-based MDP environment to evaluate.
     :param theta: Minimum tolerated change in state-value estimates, below which evaluation terminates.
     :param update_in_place: Whether or not to update value estimates in place.
     :return: Final state-action value estimates.
     """
+
+    assert isinstance(agent.pi, TabularPolicy)
 
     q_pi: Optional[Dict[MdpState, Dict[Action, float]]] = None
     improving = True
@@ -92,10 +95,7 @@ def iterate_policy_q_pi(
             initial_q_S_A=q_pi
         )
 
-        improving = improve_policy_with_q_pi(
-            agent=agent,
-            q_pi=q_pi
-        ) > 0
+        improving = agent.pi.improve_with_q_pi(q_pi) > 0
 
         i += 1
 
@@ -116,7 +116,7 @@ def iterate_value_v_pi(
     Run dynamic programming value iteration on an agent using state-value estimates.
 
     :param agent: MDP agent. Must contain a policy `pi` that has been fully initialized with instances of
-    `rlai.states.mdp.ModelBasedMdpState`.
+    `rlai.core.states.ModelBasedMdpState`.
     :param environment: Model-based MDP environment to evaluate.
     :param theta: See `evaluate_v_pi`.
     :param evaluation_iterations_per_improvement: Number of policy evaluation iterations to execute for each iteration
@@ -124,6 +124,8 @@ def iterate_value_v_pi(
     :param update_in_place: See `evaluate_v_pi`.
     :return: Final state-value estimates.
     """
+
+    assert isinstance(agent.pi, TabularPolicy)
 
     v_pi: Optional[Dict[MdpState, float]] = None
     i = 0
@@ -140,8 +142,8 @@ def iterate_value_v_pi(
             initial_v_S=v_pi
         )
 
-        improve_policy_with_v_pi(
-            agent=agent,
+        agent.pi.improve_with_v_pi(
+            gamma=agent.gamma,
             environment=environment,
             v_pi=v_pi
         )
@@ -168,7 +170,7 @@ def iterate_value_q_pi(
     Run value iteration on an agent using state-action value estimates.
 
     :param agent: MDP agent. Must contain a policy `pi` that has been fully initialized with instances of
-    `rlai.states.mdp.ModelBasedMdpState`.
+    `rlai.core.states.ModelBasedMdpState`.
     :param environment: Model-based MDP environment to evaluate.
     :param theta: See `evaluate_q_pi`.
     :param evaluation_iterations_per_improvement: Number of policy evaluation iterations to execute for each iteration
@@ -176,6 +178,8 @@ def iterate_value_q_pi(
     :param update_in_place: See `evaluate_q_pi`.
     :return: Final state-action value estimates.
     """
+
+    assert isinstance(agent.pi, TabularPolicy)
 
     q_pi: Optional[Dict[MdpState, Dict[Action, float]]] = None
     i = 0
@@ -192,10 +196,7 @@ def iterate_value_q_pi(
             initial_q_S_A=q_pi
         )
 
-        improve_policy_with_q_pi(
-            agent=agent,
-            q_pi=q_pi
-        )
+        agent.pi.improve_with_q_pi(q_pi)
 
         i += 1
 

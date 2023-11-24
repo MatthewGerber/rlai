@@ -1,4 +1,4 @@
-from rlai.q_S_A.function_approximation.models.sklearn import SKLearnSGD
+from rlai.gpi.state_action_value.function_approximation.models.sklearn import SKLearnSGD
 
 
 def test_model_pickle_no_coefs_dict():

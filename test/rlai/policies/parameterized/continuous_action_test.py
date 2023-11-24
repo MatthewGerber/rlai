@@ -1,9 +1,9 @@
 import numpy as np
 from numpy.random import RandomState
 
-from rlai.agents.mdp import ParameterizedMdpAgent
-from rlai.environments.openai_gym import ContinuousFeatureExtractor, Gym
-from rlai.policies.parameterized.continuous_action import ContinuousActionBetaDistributionPolicy
+from rlai.core.agents import ParameterizedMdpAgent
+from rlai.core.environments.openai_gym import ContinuousFeatureExtractor, Gym
+from rlai.policy_gradient.policies.continuous_action import ContinuousActionBetaDistributionPolicy
 
 
 def test_rescale():

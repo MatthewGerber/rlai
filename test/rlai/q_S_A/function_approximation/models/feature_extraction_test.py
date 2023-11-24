@@ -6,10 +6,10 @@ import numpy.random
 import pytest
 from numpy.random import RandomState
 
-from rlai.actions import Action
-from rlai.environments.gridworld import GridworldFeatureExtractor, Gridworld
+from rlai.core.actions import Action
+from rlai.core.environments.gridworld import GridworldFeatureExtractor, Gridworld
+from rlai.core.states import MdpState
 from rlai.models.feature_extraction import NonstationaryFeatureScaler, OneHotCategoricalFeatureInteracter
-from rlai.states.mdp import MdpState
 
 
 def test_check_state_and_action_lists():

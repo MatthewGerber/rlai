@@ -1,10 +1,10 @@
 import pytest
 from numpy.random import RandomState
 
-from rlai.agents.mdp import ActionValueMdpAgent
-from rlai.environments.gridworld import Gridworld
+from rlai.core.agents import ActionValueMdpAgent
+from rlai.core.environments.gridworld import Gridworld
+from rlai.gpi.state_action_value.tabular import TabularStateActionValueEstimator
 from rlai.gpi.temporal_difference.evaluation import evaluate_q_pi, Mode
-from rlai.q_S_A.tabular.estimators import TabularStateActionValueEstimator
 
 
 def test_evaluate_q_pi_invalid_n_steps():

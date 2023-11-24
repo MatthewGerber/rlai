@@ -7,7 +7,7 @@ import numpy as np
 from sklearn.exceptions import NotFittedError
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 
-from rlai.environments.mdp import MdpEnvironment
+from rlai.core.environments.mdp import MdpEnvironment
 from rlai.meta import rl_text
 from rlai.utils import get_base_argument_parser
 

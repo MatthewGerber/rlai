@@ -1,5 +1,5 @@
-from rlai.actions import Action
-from rlai.states import State
+from rlai.core.actions import Action
+from rlai.core.states import State
 
 
 def test_ne():

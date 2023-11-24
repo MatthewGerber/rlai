@@ -4,11 +4,11 @@ import pickle
 import pytest
 from numpy.random import RandomState
 
-from rlai.agents.mdp import ActionValueMdpAgent
-from rlai.environments.openai_gym import Gym, CartpoleFeatureExtractor
+from rlai.core.agents import ActionValueMdpAgent
+from rlai.core.environments.openai_gym import Gym, CartpoleFeatureExtractor
+from rlai.gpi.state_action_value.tabular import TabularStateActionValueEstimator
 from rlai.gpi.temporal_difference.evaluation import Mode
 from rlai.gpi.temporal_difference.iteration import iterate_value_q_pi
-from rlai.q_S_A.tabular.estimators import TabularStateActionValueEstimator
 from test.rlai.utils import tabular_estimator_legacy_eq, tabular_pi_legacy_eq
 
 

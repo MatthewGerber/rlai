@@ -1,43 +1,43 @@
 [Home](index.md) > Feature Extractors
-### [rlai.environments.gridworld.GridworldFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/gridworld.py#L203)
+### [rlai.core.environments.gridworld.GridworldFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/gridworld.py#L203)
 ```
 A feature extractor for the gridworld. This extractor, being based on the `StateActionInteractionFeatureExtractor`,
     directly extracts the fully interacted state-action feature matrix. It returns numpy.ndarray feature matrices, which
     are not compatible with the Patsy formula-based interface.
 ```
-### [rlai.environments.gridworld.GridworldStateFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/gridworld.py#L329)
+### [rlai.core.environments.gridworld.GridworldStateFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/gridworld.py#L329)
 ```
 A feature extractor for the gridworld. This extractor does not interact feature values with actions. Its primary use
     is in state-value estimation (e.g., for the baseline of policy gradient methods).
 ```
-### [rlai.environments.openai_gym.CartpoleFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/openai_gym.py#L625)
+### [rlai.core.environments.openai_gym.CartpoleFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/openai_gym.py#L625)
 ```
 A feature extractor for the OpenAI cartpole environment. This extractor, being based on the
     `StateActionInteractionFeatureExtractor`, directly extracts the fully interacted state-action feature matrix. It
     returns numpy.ndarray feature matrices, which are not compatible with the Patsy formula-based interface.
 ```
-### [rlai.environments.openai_gym.ContinuousFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/openai_gym.py#L765)
+### [rlai.core.environments.openai_gym.ContinuousFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/openai_gym.py#L765)
 ```
 A feature extractor for continuous OpenAI environments.
 ```
-### [rlai.environments.openai_gym.ContinuousLunarLanderFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/openai_gym.py#L901)
+### [rlai.core.environments.openai_gym.ContinuousLunarLanderFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/openai_gym.py#L901)
 ```
 Feature extractor for the continuous lunar lander.
 ```
-### [rlai.environments.openai_gym.ContinuousMountainCarFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/openai_gym.py#L974)
+### [rlai.core.environments.openai_gym.ContinuousMountainCarFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/openai_gym.py#L974)
 ```
 Feature extractor for the continuous lunar lander.
 ```
-### [rlai.environments.openai_gym.SignedCodingFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/openai_gym.py#L848)
+### [rlai.core.environments.openai_gym.SignedCodingFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/openai_gym.py#L848)
 ```
 Signed-coding feature extractor. Forms a category from the conjunction of all state-feature signs and then places
     the continuous feature vector into its associated category.
 ```
-### [rlai.environments.robocode.RobocodeFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/robocode.py#L592)
+### [rlai.core.environments.robocode.RobocodeFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/robocode.py#L592)
 ```
 Robocode feature extractor.
 ```
-### [rlai.environments.robocode_continuous_action.RobocodeFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/robocode_continuous_action.py#L648)
+### [rlai.core.environments.robocode_continuous_action.RobocodeFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/robocode_continuous_action.py#L648)
 ```
 Robocode feature extractor.
 ```
@@ -83,7 +83,7 @@ A feature extractor that extracts features comprising the interaction (in a stat
     first form the cartesian product of (a) the one-hot action vector and (b) the state features. Each pair in this
     product is then multiplied to arrive at the full vector expression of the state-action pair.
 ```
-### [rlai.v_S.function_approximation.models.feature_extraction.StateFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/v_S/function_approximation/models/feature_extraction.py#L11)
+### [rlai.state_value.function_approximation.models.feature_extraction.StateFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/v_S/function_approximation/models/feature_extraction.py#L11)
 ```
 Feature extractor for states.
 ```

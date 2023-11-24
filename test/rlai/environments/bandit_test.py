@@ -1,6 +1,6 @@
 from numpy.random import RandomState
 
-from rlai.environments.bandit import Arm
+from rlai.core.environments.bandit import Arm
 
 
 def test_arm():

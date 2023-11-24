@@ -22,11 +22,11 @@ shown below (see [continuous mountain car](./case_studies/mountain_car_continuou
 # Model Coefficient Plots
 Consider the gridworld of Example 4.1 solved with temporal-difference q-learning and stochastic gradient descent based 
 on the four features extracted by 
-`rlai.environments.gridworld.GridworldFeatureExtractor`. These features quantify the agent's distance from the top, 
+`rlai.core.environments.gridworld.GridworldFeatureExtractor`. These features quantify the agent's distance from the top, 
 bottom, left, and right of the gridworld's borders. This approach can be executed with the following command (see the 
 [CLI Guide](cli_guide.md) for details):
 ```
-rlai train --agent rlai.agents.mdp.ActionValueMdpAgent --gamma 1 --environment rlai.environments.gridworld.Gridworld --id example_4_1 --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode Q_LEARNING --n-steps 5 --num-improvements 10 --num-episodes-per-improvement 100 --epsilon 0.05 --q-S-A rlai.q_S_A.function_approximation.estimators.ApproximateStateActionValueEstimator --plot-model --num-time-bins 10 --function-approximation-model rlai.q_S_A.function_approximation.models.sklearn.SKLearnSGD --feature-extractor rlai.environments.gridworld.GridworldFeatureExtractor
+rlai train --agent rlai.core.agents.ActionValueMdpAgent --gamma 1 --environment rlai.core.environments.gridworld.Gridworld --id example_4_1 --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode Q_LEARNING --n-steps 5 --num-improvements 10 --num-episodes-per-improvement 100 --epsilon 0.05 --q-S-A rlai.gpi.state_action_value.function_approximation.ApproximateStateActionValueEstimator --plot-model --num-time-bins 10 --function-approximation-model rlai.gpi.state_action_value.function_approximation.models.sklearn.SKLearnSGD --feature-extractor rlai.core.environments.gridworld.GridworldFeatureExtractor
 ```
 The above command should generate plots such as the following:
 

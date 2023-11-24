@@ -1,10 +1,9 @@
 import pytest
 from numpy.random import RandomState
 
-from rlai.agents.mdp import ActionValueMdpAgent
-from rlai.environments.gridworld import Gridworld
-from rlai.gpi.improvement import improve_policy_with_q_pi
-from rlai.q_S_A.tabular.estimators import TabularStateActionValueEstimator
+from rlai.core.agents import ActionValueMdpAgent
+from rlai.core.environments.gridworld import Gridworld
+from rlai.gpi.state_action_value.tabular import TabularStateActionValueEstimator, TabularPolicy
 
 
 def test_invalid_improve_policy_with_q_pi():
@@ -22,9 +21,10 @@ def test_invalid_improve_policy_with_q_pi():
         TabularStateActionValueEstimator(mdp_environment, epsilon, None)
     )
 
+    assert isinstance(mdp_agent.pi, TabularPolicy)
+
     with pytest.raises(ValueError, match='Epsilon must be >= 0'):
-        improve_policy_with_q_pi(
-            mdp_agent,
+        mdp_agent.pi.improve_with_q_pi(
             {},
-            -1
+            -1.0
         )

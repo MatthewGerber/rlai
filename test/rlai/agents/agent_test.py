@@ -1,12 +1,11 @@
 import pytest
 from numpy.random import RandomState
 
-from rlai.actions import Action
-from rlai.agents import Human
-from rlai.agents.mdp import ActionValueMdpAgent
-from rlai.environments.gridworld import Gridworld
-from rlai.q_S_A.tabular.estimators import TabularStateActionValueEstimator
-from rlai.states.mdp import MdpState
+from rlai.core.actions import Action
+from rlai.core.agents import Human, ActionValueMdpAgent
+from rlai.core.environments.gridworld import Gridworld
+from rlai.core.states import MdpState
+from rlai.gpi.state_action_value.tabular import TabularStateActionValueEstimator
 
 
 def test_agent_invalid_action():

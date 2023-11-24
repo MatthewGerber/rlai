@@ -45,11 +45,11 @@ specified.
 The most commonly used agent in RLAI is the `ActionValueMdpAgent`. Additional details can be shown by specifying this 
 agent within the `rlai help` command.
 ```
-rlai help rlai.agents.mdp.ActionValueMdpAgent
+rlai help rlai.core.agents.ActionValueMdpAgent
 ```
 The following output explains the `ActionValueMdpAgent`.
 ```
-usage: rlai.agents.mdp.ActionValueMdpAgent [--help] [--gamma GAMMA]
+usage: rlai.core.agents.ActionValueMdpAgent [--help] [--gamma GAMMA]
 
 optional arguments:
   --help         Print usage and argument descriptions.
@@ -60,11 +60,11 @@ As indicated, a discount factor needs to be supplied.
 ### `--environment`
 Moving on to the environment, we can explore the [OpenAI Gym](https://gym.openai.com/) integration.
 ```
-rlai help rlai.environments.openai_gym.Gym
+rlai help rlai.core.environments.openai_gym.Gym
 ```
 The following output explains what is required for Gym environments.
 ```
-usage: rlai.environments.openai_gym.Gym [--help] [--T T] [--gym-id GYM_ID] [--continuous-action-discretization-resolution CONTINUOUS_ACTION_DISCRETIZATION_RESOLUTION]
+usage: rlai.core.environments.openai_gym.Gym [--help] [--T T] [--gym-id GYM_ID] [--continuous-action-discretization-resolution CONTINUOUS_ACTION_DISCRETIZATION_RESOLUTION]
                                         [--render-every-nth-episode RENDER_EVERY_NTH_EPISODE] [--video-directory VIDEO_DIRECTORY]
 
 optional arguments:
@@ -116,11 +116,11 @@ optional arguments:
 The output above indicates the need for `--q-S-A`, which is the state-action value estimator to use. Explore the 
 tabular estimator as follows.
 ```
-rlai help rlai.q_S_A.tabular.estimators.TabularStateActionValueEstimator
+rlai help rlai.gpi.state_action_value.tabular.TabularStateActionValueEstimator
 ```
 The following output is generated.
 ```
-usage: rlai.q_S_A.tabular.estimators.TabularStateActionValueEstimator [--help] [--continuous-state-discretization-resolution CONTINUOUS_STATE_DISCRETIZATION_RESOLUTION]
+usage: rlai.gpi.state_action_value.tabular.TabularStateActionValueEstimator [--help] [--continuous-state-discretization-resolution CONTINUOUS_STATE_DISCRETIZATION_RESOLUTION]
 
 optional arguments:
   --help                Print usage and argument descriptions.
@@ -132,7 +132,7 @@ optional arguments:
 Putting it all together and adding the `--save-agent-path` option, we have the following full command for training an
 agent for the OpenAI Gym cartpole (inverted pendulum) environment.
 ```
-rlai train --agent rlai.agents.mdp.ActionValueMdpAgent --gamma 1.0 --environment rlai.environments.openai_gym.Gym --T 1000 --gym-id CartPole-v1 --render-every-nth-episode 5000 --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode Q_LEARNING --num-improvements 100 --num-episodes-per-improvement 50 --epsilon 0.01 --q-S-A rlai.q_S_A.tabular.estimators.TabularStateActionValueEstimator --continuous-state-discretization-resolution 0.1 --make-final-policy-greedy True --num-improvements-per-plot 100 --save-agent-path ~/Desktop/cartpole_agent.pickle
+rlai train --agent rlai.core.agents.ActionValueMdpAgent --gamma 1.0 --environment rlai.core.environments.openai_gym.Gym --T 1000 --gym-id CartPole-v1 --render-every-nth-episode 5000 --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode Q_LEARNING --num-improvements 100 --num-episodes-per-improvement 50 --epsilon 0.01 --q-S-A rlai.gpi.state_action_value.tabular.TabularStateActionValueEstimator --continuous-state-discretization-resolution 0.1 --make-final-policy-greedy True --num-improvements-per-plot 100 --save-agent-path ~/Desktop/cartpole_agent.pickle
 ```
 A video should be rendered at the start of training, and a plot will be rendered at the end similar to the following.
 ![cartpole](cli-cartpole.png)

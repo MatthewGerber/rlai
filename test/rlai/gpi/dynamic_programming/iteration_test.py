@@ -1,14 +1,14 @@
 from numpy.random import RandomState
 
-from rlai.agents.mdp import ActionValueMdpAgent
-from rlai.environments.gridworld import Gridworld
+from rlai.core.agents import ActionValueMdpAgent
+from rlai.core.environments.gridworld import Gridworld
 from rlai.gpi.dynamic_programming.iteration import (
     iterate_policy_v_pi,
     iterate_policy_q_pi,
     iterate_value_v_pi,
     iterate_value_q_pi
 )
-from rlai.q_S_A.tabular.estimators import TabularStateActionValueEstimator
+from rlai.gpi.state_action_value.tabular import TabularStateActionValueEstimator
 
 
 def test_policy_iteration():
