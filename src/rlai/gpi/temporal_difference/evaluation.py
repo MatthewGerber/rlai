@@ -3,12 +3,10 @@ import logging
 from functools import partial
 from typing import Dict, Set, Tuple, Optional
 
-from rlai.core.actions import Action
-from rlai.core.agents import MdpAgent, ActionValueMdpAgent
+from rlai.core import Action, MdpState, MdpAgent
 from rlai.core.environments.mdp import MdpEnvironment, MdpPlanningEnvironment, PrioritizedSweepingMdpPlanningEnvironment
-from rlai.core.states import MdpState
 from rlai.gpi import PolicyImprovementEvent
-from rlai.gpi.state_action_value import StateActionValueEstimator
+from rlai.gpi.state_action_value import StateActionValueEstimator, ActionValueMdpAgent
 from rlai.meta import rl_text
 from rlai.utils import IncrementalSampleAverager, sample_list_item
 

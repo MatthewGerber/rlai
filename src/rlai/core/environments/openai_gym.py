@@ -13,12 +13,16 @@ from gym.spaces import Discrete, Box
 from gym.wrappers import TimeLimit, RecordVideo
 from numpy.random import RandomState
 
-from rlai.core.actions import Action, DiscretizedAction, ContinuousMultiDimensionalAction
-from rlai.core.agents import MdpAgent
-from rlai.core.environments import Environment
+from rlai.core import (
+    Reward,
+    Action,
+    DiscretizedAction,
+    ContinuousMultiDimensionalAction,
+    MdpState,
+    MdpAgent,
+    Environment
+)
 from rlai.core.environments.mdp import ContinuousMdpEnvironment
-from rlai.core.rewards import Reward
-from rlai.core.states import MdpState
 from rlai.gpi.state_action_value.function_approximation.models.feature_extraction import (
     StateActionInteractionFeatureExtractor
 )
@@ -688,6 +692,8 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
         :param refit_scaler: Whether or not to refit the feature scaler before scaling the extracted features.
         :return: State-feature numpy.ndarray.
         """
+
+        states: List[GymState]
 
         self.check_state_and_action_lists(states, actions)
 

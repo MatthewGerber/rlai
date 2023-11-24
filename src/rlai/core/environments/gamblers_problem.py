@@ -3,11 +3,8 @@ from typing import List, Tuple, Optional
 
 from numpy.random import RandomState
 
-from rlai.core.actions import Action
-from rlai.core.environments import Environment
+from rlai.core import Reward, Action, MdpState, Environment
 from rlai.core.environments.mdp import ModelBasedMdpEnvironment
-from rlai.core.rewards import Reward
-from rlai.core.states import MdpState
 from rlai.meta import rl_text
 from rlai.utils import parse_arguments
 

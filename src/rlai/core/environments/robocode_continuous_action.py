@@ -7,15 +7,12 @@ import numpy as np
 from PyQt6.QtWidgets import QApplication
 from numpy.random import RandomState
 
-from rlai.core.actions import Action, ContinuousMultiDimensionalAction
-from rlai.core.agents import MdpAgent, ParameterizedMdpAgent
-from rlai.core.environments import Environment
+from rlai.core import Reward, Action, ContinuousMultiDimensionalAction, MdpState, MdpAgent, Environment
 from rlai.core.environments.mdp import ContinuousMdpEnvironment
 from rlai.core.environments.network import TcpMdpEnvironment
-from rlai.core.rewards import Reward
-from rlai.core.states import MdpState
 from rlai.meta import rl_text
 from rlai.models.feature_extraction import FeatureExtractor, NonstationaryFeatureScaler
+from rlai.policy_gradient import ParameterizedMdpAgent
 from rlai.policy_gradient.policies import ParameterizedPolicy
 from rlai.state_value import StateValueEstimator
 from rlai.state_value.function_approximation.models.feature_extraction import StateFeatureExtractor

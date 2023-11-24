@@ -1,9 +1,7 @@
 from abc import ABC, abstractmethod
 from argparse import ArgumentParser
 
-from rlai.core.actions import Action
-from rlai.core.policies import Policy
-from rlai.core.states import MdpState
+from rlai.core import Policy, Action, MdpState
 from rlai.meta import rl_text
 from rlai.utils import get_base_argument_parser
 

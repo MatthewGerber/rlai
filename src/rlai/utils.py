@@ -238,6 +238,8 @@ def get_argument_parser(
     """
 
     parser = None
+
+    # noinspection PyBroadException
     try:
         loaded_class = load_class(fully_qualified_class_name)
         parser = loaded_class.get_argument_parser()

@@ -1,9 +1,9 @@
 import pytest
 from numpy.random import RandomState
 
-from rlai.core.agents import ActionValueMdpAgent
+from rlai.gpi.state_action_value import ActionValueMdpAgent
 from rlai.core.environments.gridworld import Gridworld, GridworldFeatureExtractor
-from rlai.core.states import MdpState
+from rlai.core import MdpState
 from rlai.gpi.state_action_value.function_approximation import ApproximateStateActionValueEstimator
 from rlai.gpi.state_action_value.function_approximation.models.sklearn import SKLearnSGD
 from rlai.gpi.temporal_difference.evaluation import Mode

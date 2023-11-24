@@ -3,9 +3,7 @@ from typing import Dict
 
 from xvfbwrapper import Xvfb
 
-from rlai.core.actions import Action
-from rlai.core.policies import Policy
-from rlai.core.states import MdpState
+from rlai.core import Policy, Action, MdpState
 from rlai.gpi.state_action_value.tabular import TabularStateActionValueEstimator, TabularPolicy
 from rlai.utils import IncrementalSampleAverager
 

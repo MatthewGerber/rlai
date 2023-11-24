@@ -4,12 +4,8 @@ from typing import List, Optional, Tuple
 import numpy as np
 from numpy.random import RandomState
 
-from rlai.core.actions import Action
-from rlai.core.agents import Agent
-from rlai.core.environments import Environment
-from rlai.core.states import State
+from rlai.core import Action, State, Agent, Environment, Monitor
 from rlai.meta import rl_text
-from rlai.runners.monitor import Monitor
 from rlai.utils import parse_arguments
 
 ARM_QSTAR_BUFFER_SIZE = 1000

@@ -9,15 +9,13 @@ from matplotlib.backends.backend_pdf import PdfPages
 from numpy.random import RandomState
 from patsy.highlevel import dmatrix
 
-from rlai.core.actions import Action
-from rlai.core.agents import MdpAgent
+from rlai.core import Policy, Action, MdpState, MdpAgent
 from rlai.core.environments.mdp import MdpEnvironment
-from rlai.core.policies import Policy
-from rlai.core.states import MdpState
 from rlai.gpi import PolicyImprovementEvent
 from rlai.gpi.state_action_value import ValueEstimator, ActionValueEstimator, StateActionValueEstimator
 from rlai.gpi.state_action_value.function_approximation.models import FunctionApproximationModel, FeatureExtractor
 from rlai.meta import rl_text
+from rlai.models.sklearn import SKLearnSGD
 from rlai.utils import parse_arguments, load_class, log_with_border
 
 
@@ -332,11 +330,11 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         # if we have pending experience, then fit the model and reset the data.
         if self.experience_pending:
 
-            X = self.get_X(self.experience_states, self.experience_actions, True)
+            feature_matrix = self.extract_features(self.experience_states, self.experience_actions, True)
 
             # feature extractors may return a matrix with no columns if extraction was not possible
-            if X.shape[1] > 0:
-                self.model.fit(X, self.experience_values, self.weights)
+            if feature_matrix.shape[1] > 0:
+                self.model.fit(feature_matrix, self.experience_values, self.weights)
 
             self.experience_states.clear()
             self.experience_actions.clear()
@@ -364,19 +362,19 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         log_with_border(logging.DEBUG, f'Evaluating {len(actions)} action(s)')
 
         # replicate the state for each action, in order to evaluate each state-action pair.
-        X = self.get_X([state] * len(actions), actions, False)
+        feature_matrix = self.extract_features([state] * len(actions), actions, False)
 
         # feature extractors may return a matrix with no columns if extraction was not possible
-        if X.shape[1] == 0:  # pragma no cover
+        if feature_matrix.shape[1] == 0:  # pragma no cover
             return np.repeat(0.0, len(actions))
 
-        action_values = self.model.evaluate(X)
+        action_values = self.model.evaluate(feature_matrix)
 
         log_with_border(logging.DEBUG, 'Evaluation complete')
 
         return action_values
 
-    def get_X(
+    def extract_features(
             self,
             states: List[MdpState],
             actions: List[Action],
@@ -453,6 +451,8 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         :param time_step_detail_iteration: Iteration for which to plot time-step-level detail, or None for no detail.
         Passing -1 will plot detail for the most recently completed iteration.
         """
+
+        assert isinstance(self.model, SKLearnSGD)
 
         self.model.update_plot(time_step_detail_iteration)
 

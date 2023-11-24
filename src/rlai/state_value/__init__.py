@@ -4,7 +4,7 @@ from typing import Optional, Tuple, List
 
 from numpy.random import RandomState
 
-from rlai.core.states import MdpState
+from rlai.core import MdpState, Environment
 from rlai.meta import rl_text
 from rlai.utils import get_base_argument_parser
 
@@ -74,7 +74,7 @@ class StateValueEstimator(ABC):
             cls,
             args: List[str],
             random_state: RandomState,
-            environment
+            environment: Environment
     ) -> Tuple['StateValueEstimator', List[str]]:
         """
         Initialize a state-value estimator from arguments.

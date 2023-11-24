@@ -1,9 +1,9 @@
 import logging
 from typing import Dict, Tuple, Set
 
-from rlai.core.agents import ActionValueMdpAgent
+from rlai.core import MdpState
 from rlai.core.environments.mdp import MdpEnvironment
-from rlai.core.states import MdpState
+from rlai.gpi.state_action_value import ActionValueMdpAgent
 from rlai.meta import rl_text
 from rlai.utils import IncrementalSampleAverager, sample_list_item
 

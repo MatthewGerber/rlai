@@ -8,11 +8,8 @@ from typing import Tuple, Optional, Any, Dict
 import numpy as np
 from numpy.random import RandomState
 
-from rlai.core.actions import Action
-from rlai.core.agents import Agent, MdpAgent
+from rlai.core import Reward, Action, MdpState, Agent, MdpAgent
 from rlai.core.environments.mdp import MdpEnvironment
-from rlai.core.rewards import Reward
-from rlai.core.states import MdpState
 from rlai.meta import rl_text
 
 

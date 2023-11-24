@@ -7,10 +7,11 @@ from typing import Optional
 
 from matplotlib.backends.backend_pdf import PdfPages
 
-from rlai.core.agents import MdpAgent, ActionValueMdpAgent
+from rlai.core import MdpAgent
 from rlai.core.environments.mdp import MdpEnvironment, MdpPlanningEnvironment
 from rlai.gpi import PolicyImprovementEvent
 from rlai.gpi.monte_carlo.evaluation import evaluate_q_pi
+from rlai.gpi.state_action_value import ActionValueMdpAgent
 from rlai.gpi.utils import plot_policy_iteration
 from rlai.meta import rl_text
 from rlai.utils import RunThreadManager, insert_index_into_path

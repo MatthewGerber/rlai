@@ -208,23 +208,23 @@ class SKLearnSGD(FunctionApproximationModel):
 
     def evaluate(
             self,
-            X: np.ndarray
+            feature_matrix: np.ndarray
     ) -> np.ndarray:
         """
         Evaluate the model at a matrix of features.
 
-        :param X: Feature matrix (#obs, #features).
+        :param feature_matrix: Feature matrix (#obs, #features).
         :return: Vector of outcomes from the evaluation (#obs,).
         """
 
         try:
 
             # predict values using the currently fitted model
-            values = self.model.predict(X)
+            values = self.model.predict(feature_matrix)
 
         # the following exception will be thrown if the model has not yet been fitted. catch and return uniform values.
         except NotFittedError:
-            values = np.repeat(0.0, X.shape[0])
+            values = np.repeat(0.0, feature_matrix.shape[0])
 
         return values
 

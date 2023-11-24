@@ -13,9 +13,9 @@ from typing import Optional, Tuple
 import matplotlib.pyplot as plt
 import numpy as np
 
-from rlai.core.agents import ParameterizedMdpAgent
 from rlai.core.environments.mdp import MdpEnvironment
 from rlai.meta import rl_text
+from rlai.policy_gradient import ParameterizedMdpAgent
 from rlai.policy_gradient.policies import ParameterizedPolicy
 from rlai.policy_gradient.policies.continuous_action import ContinuousActionPolicy
 from rlai.state_value import StateValueEstimator
@@ -255,6 +255,7 @@ class TrainingPool:
             # might create the directory between the time we check for it here and attempt to make it. calling mkdir
             # when the directory exists will raise an exception. pass the exception and proceed, as the directory will
             # exist.
+            # noinspection PyBroadException
             try:
                 if not os.path.exists(training_pool_directory):
                     os.mkdir(training_pool_directory)
@@ -456,6 +457,7 @@ class TrainingPool:
                 lambda s: s.endswith(f'_{self.training_pool_iteration}'),
                 os.listdir(self.training_pool_directory)
             ):
+                # noinspection PyBroadException
                 try:
                     with open(join(self.training_pool_directory, training_pool_filename), 'rb') as f:
                         training_pool_policy_v_S_returns.append(pickle.load(f))
@@ -482,6 +484,7 @@ class TrainingPool:
                 lambda s: s.endswith(f'_{self.training_pool_iteration - 1}'),
                 os.listdir(self.training_pool_directory)
         ):
+            # noinspection PyBroadException
             try:
                 os.unlink(join(self.training_pool_directory, training_pool_filename))
             except Exception:

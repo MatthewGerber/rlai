@@ -1,7 +1,7 @@
 import numpy as np
 from numpy.random import RandomState
 
-from rlai.core.agents import ParameterizedMdpAgent
+from rlai.policy_gradient import ParameterizedMdpAgent
 from rlai.core.environments.openai_gym import ContinuousFeatureExtractor, Gym
 from rlai.policy_gradient.policies.continuous_action import ContinuousActionBetaDistributionPolicy
 

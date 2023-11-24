@@ -45,11 +45,11 @@ specified.
 The most commonly used agent in RLAI is the `ActionValueMdpAgent`. Additional details can be shown by specifying this 
 agent within the `rlai help` command.
 ```
-rlai help rlai.core.agents.ActionValueMdpAgent
+rlai help rlai.gpi.state_action_value.ActionValueMdpAgent
 ```
 The following output explains the `ActionValueMdpAgent`.
 ```
-usage: rlai.core.agents.ActionValueMdpAgent [--help] [--gamma GAMMA]
+usage: rlai.gpi.state_action_value.ActionValueMdpAgent [--help] [--gamma GAMMA]
 
 optional arguments:
   --help         Print usage and argument descriptions.
@@ -132,7 +132,7 @@ optional arguments:
 Putting it all together and adding the `--save-agent-path` option, we have the following full command for training an
 agent for the OpenAI Gym cartpole (inverted pendulum) environment.
 ```
-rlai train --agent rlai.core.agents.ActionValueMdpAgent --gamma 1.0 --environment rlai.core.environments.openai_gym.Gym --T 1000 --gym-id CartPole-v1 --render-every-nth-episode 5000 --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode Q_LEARNING --num-improvements 100 --num-episodes-per-improvement 50 --epsilon 0.01 --q-S-A rlai.gpi.state_action_value.tabular.TabularStateActionValueEstimator --continuous-state-discretization-resolution 0.1 --make-final-policy-greedy True --num-improvements-per-plot 100 --save-agent-path ~/Desktop/cartpole_agent.pickle
+rlai train --agent rlai.gpi.state_action_value.ActionValueMdpAgent --gamma 1.0 --environment rlai.core.environments.openai_gym.Gym --T 1000 --gym-id CartPole-v1 --render-every-nth-episode 5000 --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode Q_LEARNING --num-improvements 100 --num-episodes-per-improvement 50 --epsilon 0.01 --q-S-A rlai.gpi.state_action_value.tabular.TabularStateActionValueEstimator --continuous-state-discretization-resolution 0.1 --make-final-policy-greedy True --num-improvements-per-plot 100 --save-agent-path ~/Desktop/cartpole_agent.pickle
 ```
 A video should be rendered at the start of training, and a plot will be rendered at the end similar to the following.
 ![cartpole](cli-cartpole.png)

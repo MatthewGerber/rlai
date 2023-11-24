@@ -10,7 +10,7 @@ import numpy as np
 import pytest
 from numpy.random import RandomState
 
-from rlai.core.agents import ActionValueMdpAgent
+from rlai.gpi.state_action_value import ActionValueMdpAgent
 from rlai.core.environments.gridworld import Gridworld, GridworldFeatureExtractor
 from rlai.core.environments.mdp import TrajectorySamplingMdpPlanningEnvironment, StochasticEnvironmentModel
 from rlai.gpi.state_action_value.function_approximation import (
@@ -233,6 +233,7 @@ def test_q_learning_iterate_value_q_pi_function_approximation_with_formula():
         pi_fixture, q_S_A_fixture = pickle.load(file)
 
     assert isinstance(mdp_agent.pi, FunctionApproximationPolicy)
+    assert isinstance(mdp_agent.pi.estimator.model, SKLearnSGD)
     assert np.allclose(mdp_agent.pi.estimator.model.model.coef_, pi_fixture.estimator.model.model.coef_)
 
 
@@ -281,6 +282,7 @@ def test_q_learning_iterate_value_q_pi_function_approximation_no_formula():
         pi_fixture, q_S_A_fixture = pickle.load(file)
 
     assert isinstance(mdp_agent.pi, FunctionApproximationPolicy)
+    assert isinstance(mdp_agent.pi.estimator.model, SKLearnSGD)
     assert np.allclose(mdp_agent.pi.estimator.model.model.coef_, pi_fixture.estimator.model.model.coef_)
     assert mdp_agent.pi.format_state_action_probs(mdp_environment.SS) == pi_fixture.format_state_action_probs(mdp_environment.SS)
     assert mdp_agent.pi.format_state_action_values(mdp_environment.SS) == pi_fixture.format_state_action_values(mdp_environment.SS)
@@ -545,7 +547,7 @@ def test_iterate_value_q_pi_func_approx_multi_threaded():
         q_S_A = train_args['agent'].q_S_A
         train_args_wait_event.set()
 
-    cmd = '--random-seed 12345 --agent rlai.core.agents.ActionValueMdpAgent --gamma 1 --environment rlai.core.environments.gridworld.Gridworld --id example_4_1 --T 25 --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode SARSA --num-improvements 10 --num-episodes-per-improvement 10 --epsilon 0.05 --q-S-A rlai.gpi.state_action_value.function_approximation.ApproximateStateActionValueEstimator --function-approximation-model rlai.gpi.state_action_value.function_approximation.models.sklearn.SKLearnSGD --plot-model --feature-extractor rlai.core.environments.gridworld.GridworldFeatureExtractor --make-final-policy-greedy True'
+    cmd = '--random-seed 12345 --agent rlai.gpi.state_action_value.ActionValueMdpAgent --gamma 1 --environment rlai.core.environments.gridworld.Gridworld --id example_4_1 --T 25 --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode SARSA --num-improvements 10 --num-episodes-per-improvement 10 --epsilon 0.05 --q-S-A rlai.gpi.state_action_value.function_approximation.ApproximateStateActionValueEstimator --function-approximation-model rlai.gpi.state_action_value.function_approximation.models.sklearn.SKLearnSGD --plot-model --feature-extractor rlai.core.environments.gridworld.GridworldFeatureExtractor --make-final-policy-greedy True'
     args = shlex.split(cmd)
 
     def train_thread_target():

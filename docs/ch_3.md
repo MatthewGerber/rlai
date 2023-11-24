@@ -3,7 +3,7 @@
 ```
 MDP environment.
 ```
-### [rlai.core.states.MdpState](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/states/mdp.py#L10)
+### [rlai.core.MdpState](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/states/mdp.py#L10)
 ```
 State of an MDP.
 ```

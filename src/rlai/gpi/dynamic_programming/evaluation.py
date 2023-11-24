@@ -4,10 +4,8 @@ from typing import Optional, Dict, Tuple
 
 import numpy as np
 
-from rlai.core.actions import Action
-from rlai.core.agents import MdpAgent
+from rlai.core import Action, MdpState, MdpAgent
 from rlai.core.environments.mdp import ModelBasedMdpEnvironment
-from rlai.core.states import MdpState
 from rlai.gpi.state_action_value.tabular import TabularPolicy
 from rlai.meta import rl_text
 
@@ -25,7 +23,7 @@ def evaluate_v_pi(
     Perform iterative policy evaluation of an agent's policy within an environment, returning state values.
 
     :param agent: MDP agent. Must contain a policy `pi` that has been fully initialized with instances of
-    `rlai.core.states.ModelBasedMdpState`.
+    `rlai.core.ModelBasedMdpState`.
     :param environment: Model-based MDP environment to evaluate.
     :param theta: Minimum tolerated change in state-value estimates, below which evaluation terminates. Either `theta`
     or `num_iterations` (or both) can be specified, but passing neither will raise an exception.

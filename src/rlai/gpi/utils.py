@@ -9,7 +9,7 @@ from typing import Dict, List, Callable, Optional, Tuple
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
-from rlai.core.agents import MdpAgent
+from rlai.core import MdpAgent
 from rlai.policy_gradient.policies.continuous_action import ContinuousActionPolicy
 
 # plotting data and objects

@@ -6,9 +6,9 @@ from typing import Optional, Union
 
 from matplotlib.backends.backend_pdf import PdfPages
 
-from rlai.core.agents import ActionValueMdpAgent
 from rlai.core.environments.mdp import MdpEnvironment, MdpPlanningEnvironment
 from rlai.gpi import PolicyImprovementEvent
+from rlai.gpi.state_action_value import ActionValueMdpAgent
 from rlai.gpi.temporal_difference.evaluation import evaluate_q_pi, Mode
 from rlai.gpi.utils import plot_policy_iteration
 from rlai.meta import rl_text

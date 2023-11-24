@@ -3,10 +3,8 @@ import pickle
 
 from numpy.random import RandomState
 
-from rlai.core.actions import Action
 from rlai.core.environments.mdp import StochasticEnvironmentModel
-from rlai.core.rewards import Reward
-from rlai.core.states import State
+from rlai.core import Reward, Action, State
 from rlai.utils import sample_list_item
 
 

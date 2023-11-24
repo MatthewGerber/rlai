@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 
-from rlai.core.states import MdpState
+from rlai.core import MdpState
 from rlai.meta import rl_text
 from rlai.models.feature_extraction import FeatureExtractor
 

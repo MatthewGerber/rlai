@@ -26,7 +26,7 @@ on the four features extracted by
 bottom, left, and right of the gridworld's borders. This approach can be executed with the following command (see the 
 [CLI Guide](cli_guide.md) for details):
 ```
-rlai train --agent rlai.core.agents.ActionValueMdpAgent --gamma 1 --environment rlai.core.environments.gridworld.Gridworld --id example_4_1 --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode Q_LEARNING --n-steps 5 --num-improvements 10 --num-episodes-per-improvement 100 --epsilon 0.05 --q-S-A rlai.gpi.state_action_value.function_approximation.ApproximateStateActionValueEstimator --plot-model --num-time-bins 10 --function-approximation-model rlai.gpi.state_action_value.function_approximation.models.sklearn.SKLearnSGD --feature-extractor rlai.core.environments.gridworld.GridworldFeatureExtractor
+rlai train --agent rlai.gpi.state_action_value.ActionValueMdpAgent --gamma 1 --environment rlai.core.environments.gridworld.Gridworld --id example_4_1 --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode Q_LEARNING --n-steps 5 --num-improvements 10 --num-episodes-per-improvement 100 --epsilon 0.05 --q-S-A rlai.gpi.state_action_value.function_approximation.ApproximateStateActionValueEstimator --plot-model --num-time-bins 10 --function-approximation-model rlai.gpi.state_action_value.function_approximation.models.sklearn.SKLearnSGD --feature-extractor rlai.core.environments.gridworld.GridworldFeatureExtractor
 ```
 The above command should generate plots such as the following:
 

@@ -8,10 +8,10 @@ import pytest
 from numpy.random import RandomState
 from numpy.testing import assert_allclose
 
-from rlai.core.agents import ActionValueMdpAgent
+from rlai.gpi.state_action_value import ActionValueMdpAgent
 from rlai.gpi.state_action_value.tabular import TabularPolicy
 from rlai.runners.agent_in_environment import run
-from rlai.runners.monitor import Monitor
+from rlai.core import Monitor
 
 
 def test_k_armed_bandit_epsilon_greedy_no_resets():
@@ -19,7 +19,7 @@ def test_k_armed_bandit_epsilon_greedy_no_resets():
     Test.
     """
 
-    monitors = run(shlex.split('--random-seed 12345 --T 100 --n-runs 200 --environment rlai.core.environments.bandit.KArmedBandit --k 10 --agent rlai.core.agents.EpsilonGreedy --epsilon 0.2 0.0'))
+    monitors = run(shlex.split('--random-seed 12345 --T 100 --n-runs 200 --environment rlai.core.environments.bandit.KArmedBandit --k 10 --agent rlai.core.EpsilonGreedyQValueAgent --epsilon 0.2 0.0'))
 
     # uncomment the following line and run test to update fixture
     # with open(f'{os.path.dirname(__file__)}/fixtures/test_k_armed_bandit_epsilon_greedy_no_resets.pickle', 'wb') as file:
@@ -36,7 +36,7 @@ def test_k_armed_bandit_epsilon_greedy_resets_no_alpha():
     Test.
     """
 
-    monitors = run(shlex.split('--random-seed 12345 --T 100 --n-runs 200 --environment rlai.core.environments.bandit.KArmedBandit --k 10 --reset-probability 0.005 --agent rlai.core.agents.EpsilonGreedy --epsilon 0.2 0.0'))
+    monitors = run(shlex.split('--random-seed 12345 --T 100 --n-runs 200 --environment rlai.core.environments.bandit.KArmedBandit --k 10 --reset-probability 0.005 --agent rlai.core.EpsilonGreedyQValueAgent --epsilon 0.2 0.0'))
 
     # uncomment the following line and run test to update fixture
     # with open(f'{os.path.dirname(__file__)}/fixtures/test_k_armed_bandit_epsilon_greedy_resets_no_alpha.pickle', 'wb') as file:
@@ -53,7 +53,7 @@ def test_k_armed_bandit_epsilon_greedy_resets_with_alpha():
     Test.
     """
 
-    monitors = run(shlex.split('--random-seed 12345 --T 100 --n-runs 200 --environment rlai.core.environments.bandit.KArmedBandit --k 10 --reset-probability 0.005 --agent rlai.core.agents.EpsilonGreedy --epsilon 0.2 0.0 --alpha 0.1'))
+    monitors = run(shlex.split('--random-seed 12345 --T 100 --n-runs 200 --environment rlai.core.environments.bandit.KArmedBandit --k 10 --reset-probability 0.005 --agent rlai.core.EpsilonGreedyQValueAgent --epsilon 0.2 0.0 --alpha 0.1'))
 
     # uncomment the following line and run test to update fixture
     # with open(f'{os.path.dirname(__file__)}/fixtures/test_k_armed_bandit_epsilon_greedy_resets_with_alpha.pickle', 'wb') as file:
@@ -70,7 +70,7 @@ def test_k_armed_bandit_epsilon_greedy_epsilon_reduction():
     Test.
     """
 
-    monitors = run(shlex.split('--random-seed 12345 --T 100 --n-runs 200 --environment rlai.core.environments.bandit.KArmedBandit --k 10 --agent rlai.core.agents.EpsilonGreedy --epsilon 0.2 0.0 --epsilon-reduction-rate 0.01'))
+    monitors = run(shlex.split('--random-seed 12345 --T 100 --n-runs 200 --environment rlai.core.environments.bandit.KArmedBandit --k 10 --agent rlai.core.EpsilonGreedyQValueAgent --epsilon 0.2 0.0 --epsilon-reduction-rate 0.01'))
 
     # uncomment the following line and run test to update fixture
     # with open(f'{os.path.dirname(__file__)}/fixtures/test_k_armed_bandit_epsilon_greedy_epsilon_reduction.pickle', 'wb') as file:
@@ -87,7 +87,7 @@ def test_k_armed_bandit_epsilon_greedy_optimistic():
     Test.
     """
 
-    monitors = run(shlex.split('--random-seed 12345 --T 100 --n-runs 200 --environment rlai.core.environments.bandit.KArmedBandit --k 10 --agent rlai.core.agents.EpsilonGreedy --epsilon 0.0 --initial-q-value 5 --alpha 0.1'))
+    monitors = run(shlex.split('--random-seed 12345 --T 100 --n-runs 200 --environment rlai.core.environments.bandit.KArmedBandit --k 10 --agent rlai.core.EpsilonGreedyQValueAgent --epsilon 0.0 --initial-q-value 5 --alpha 0.1'))
 
     # uncomment the following line and run test to update fixture
     # with open(f'{os.path.dirname(__file__)}/fixtures/test_k_armed_bandit_epsilon_greedy_optimistic.pickle', 'wb') as file:
@@ -104,7 +104,7 @@ def test_k_armed_bandit_upper_confidence_bound():
     Test.
     """
 
-    monitors = run(shlex.split('--random-seed 12345 --T 100 --n-runs 200 --environment rlai.core.environments.bandit.KArmedBandit --k 10 --agent rlai.core.agents.UpperConfidenceBound --c 0 1'))
+    monitors = run(shlex.split('--random-seed 12345 --T 100 --n-runs 200 --environment rlai.core.environments.bandit.KArmedBandit --k 10 --agent rlai.core.UpperConfidenceBoundAgent --c 0 1'))
 
     # uncomment the following line and run test to update fixture
     # with open(f'{os.path.dirname(__file__)}/fixtures/test_k_armed_bandit_upper_confidence_bound.pickle', 'wb') as file:
@@ -121,7 +121,7 @@ def test_k_armed_bandit_preference_gradient_with_baseline():
     Test.
     """
 
-    monitors = run(shlex.split('--random-seed 12345 --T 100 --n-runs 200 --environment rlai.core.environments.bandit.KArmedBandit --k 10 --q-star-mean 4 --agent rlai.core.agents.PreferenceGradient --step-size-alpha 0.1 --use-reward-baseline'))
+    monitors = run(shlex.split('--random-seed 12345 --T 100 --n-runs 200 --environment rlai.core.environments.bandit.KArmedBandit --k 10 --q-star-mean 4 --agent rlai.core.PreferenceGradientAgent --step-size-alpha 0.1 --use-reward-baseline'))
 
     # uncomment the following line and run test to update fixture
     # with open(f'{os.path.dirname(__file__)}/fixtures/test_k_armed_bandit_preference_gradient_with_baseline.pickle', 'wb') as file:
@@ -138,7 +138,7 @@ def test_k_armed_bandit_preference_gradient_without_baseline():
     Test.
     """
 
-    monitors = run(shlex.split('--random-seed 12345 --T 100 --n-runs 200 --environment rlai.core.environments.bandit.KArmedBandit --k 10 --q-star-mean 4 --agent rlai.core.agents.PreferenceGradient --step-size-alpha 0.1'))
+    monitors = run(shlex.split('--random-seed 12345 --T 100 --n-runs 200 --environment rlai.core.environments.bandit.KArmedBandit --k 10 --q-star-mean 4 --agent rlai.core.PreferenceGradientAgent --step-size-alpha 0.1'))
 
     # uncomment the following line and run test to update fixture
     # with open(f'{os.path.dirname(__file__)}/fixtures/test_k_armed_bandit_preference_gradient_without_baseline.pickle', 'wb') as file:
@@ -190,7 +190,7 @@ def test_unparsed_args():
     """
 
     with pytest.raises(ValueError, match='Unparsed arguments'):
-        run(shlex.split('--random-seed 12345 --T 100 --n-runs 200 --environment rlai.core.environments.bandit.KArmedBandit --k 10 --agent rlai.core.agents.EpsilonGreedy --epsilon 0.2 0.0 --testing'))
+        run(shlex.split('--random-seed 12345 --T 100 --n-runs 200 --environment rlai.core.environments.bandit.KArmedBandit --k 10 --agent rlai.core.EpsilonGreedyQValueAgent --epsilon 0.2 0.0 --testing'))
 
 
 def test_plot():
@@ -199,10 +199,10 @@ def test_plot():
     """
 
     # without pdf (without random seed)
-    run(shlex.split('--T 100 --n-runs 200 --environment rlai.core.environments.bandit.KArmedBandit --k 10 --agent rlai.core.agents.EpsilonGreedy --epsilon 0.2 0.0 --plot --figure-name test'))
+    run(shlex.split('--T 100 --n-runs 200 --environment rlai.core.environments.bandit.KArmedBandit --k 10 --agent rlai.core.EpsilonGreedyQValueAgent --epsilon 0.2 0.0 --plot --figure-name test'))
 
     # with pdf
-    run(shlex.split(f'--random-seed 12345 --T 100 --n-runs 200 --environment rlai.core.environments.bandit.KArmedBandit --k 10 --agent rlai.core.agents.EpsilonGreedy --epsilon 0.2 0.0 --plot --pdf-save-path {tempfile.NamedTemporaryFile(delete=False).name}'))
+    run(shlex.split(f'--random-seed 12345 --T 100 --n-runs 200 --environment rlai.core.environments.bandit.KArmedBandit --k 10 --agent rlai.core.EpsilonGreedyQValueAgent --epsilon 0.2 0.0 --plot --pdf-save-path {tempfile.NamedTemporaryFile(delete=False).name}'))
 
 
 class DummyQSA:

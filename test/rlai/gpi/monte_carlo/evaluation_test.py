@@ -3,7 +3,7 @@ import pickle
 
 from numpy.random import RandomState
 
-from rlai.core.agents import ActionValueMdpAgent
+from rlai.gpi.state_action_value import ActionValueMdpAgent
 from rlai.core.environments.gridworld import Gridworld
 from rlai.gpi.monte_carlo.evaluation import evaluate_v_pi, evaluate_q_pi
 from rlai.gpi.state_action_value.tabular import TabularStateActionValueEstimator

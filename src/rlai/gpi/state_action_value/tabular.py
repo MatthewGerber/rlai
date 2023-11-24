@@ -5,11 +5,8 @@ from typing import Optional, Dict, Iterator, List, Tuple, Iterable, Union
 import numpy as np
 from numpy.random import RandomState
 
-from rlai.core.actions import Action
-from rlai.core.agents import MdpAgent
+from rlai.core import Policy, Action, MdpState, MdpAgent
 from rlai.core.environments.mdp import MdpEnvironment, ModelBasedMdpEnvironment
-from rlai.core.policies import Policy
-from rlai.core.states import MdpState
 from rlai.gpi import PolicyImprovementEvent
 from rlai.gpi.state_action_value import ValueEstimator, ActionValueEstimator, StateActionValueEstimator
 from rlai.meta import rl_text

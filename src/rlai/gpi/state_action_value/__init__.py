@@ -7,13 +7,11 @@ from matplotlib import pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 from numpy.random import RandomState
 
-from rlai.core.actions import Action
+from rlai.core import Policy, Action, MdpState, Agent, StochasticMdpAgent, Environment
 from rlai.core.environments.mdp import MdpEnvironment
-from rlai.core.policies import Policy
-from rlai.core.states import MdpState
 from rlai.gpi import PolicyImprovementEvent
 from rlai.meta import rl_text
-from rlai.utils import get_base_argument_parser, log_with_border
+from rlai.utils import get_base_argument_parser, log_with_border, parse_arguments, load_class
 
 
 @rl_text(chapter='Value Estimation', page=23)
@@ -322,3 +320,100 @@ class StateActionValueEstimator(ABC):
         :param other: Other estimator.
         :return: True if not equal and False otherwise.
         """
+
+
+@rl_text(chapter='Agents', page=1)
+class ActionValueMdpAgent(StochasticMdpAgent):
+    """
+    A stochastic MDP agent whose policy is based on action-value estimation. This agent is generally appropriate for
+    discrete and continuous state spaces in which we estimate the value of actions using tabular and
+    function-approximation methods, respectively. The action space need to be discrete in all of these cases. If the
+    action space is continuous, then consider the `ParameterizedMdpAgent`.
+    """
+
+    @classmethod
+    def get_argument_parser(
+            cls
+    ) -> ArgumentParser:
+        """
+        Get argument parser.
+
+        :return: Argument parser.
+        """
+
+        parser = ArgumentParser(
+            prog=f'{cls.__module__}.{cls.__name__}',
+            parents=[super().get_argument_parser()],
+            allow_abbrev=False,
+            add_help=False
+        )
+
+        parser.add_argument(
+            '--q-S-A',
+            type=str,
+            help='Fully-qualified type name of state-action value estimator to use.'
+        )
+
+        return parser
+
+    @classmethod
+    def init_from_arguments(
+            cls,
+            args: List[str],
+            random_state: RandomState,
+            environment: Environment
+    ) -> Tuple[List[Agent], List[str]]:
+        """
+        Initialize an MDP agent from arguments.
+
+        :param args: Arguments.
+        :param random_state: Random state.
+        :param environment: Environment.
+        :return: 2-tuple of a list of agents and a list of unparsed arguments.
+        """
+
+        parsed_args, unparsed_args = parse_arguments(cls, args)
+
+        # load state-action value estimator
+        estimator_class = load_class(parsed_args.q_S_A)
+        q_S_A, unparsed_args = estimator_class.init_from_arguments(
+            args=unparsed_args,
+            random_state=random_state,
+            environment=environment
+        )
+        del parsed_args.q_S_A
+
+        # noinspection PyUnboundLocalVariable
+        agent = cls(
+            name=f'action-value (gamma={parsed_args.gamma})',
+            random_state=random_state,
+            q_S_A=q_S_A,
+            **vars(parsed_args)
+        )
+
+        return [agent], unparsed_args
+
+    def __init__(
+            self,
+            name: str,
+            random_state: RandomState,
+            gamma: float,
+            q_S_A: StateActionValueEstimator
+    ):
+        """
+        Initialize the agent.
+
+        :param name: Name of the agent.
+        :param random_state: Random state.
+        :param gamma: Discount.
+        :param q_S_A: State-action value estimator.
+        """
+
+        super().__init__(
+            name=name,
+            random_state=random_state,
+            pi=q_S_A.get_initial_policy(),
+            gamma=gamma
+        )
+
+        self.q_S_A = q_S_A

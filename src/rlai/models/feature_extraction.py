@@ -86,7 +86,7 @@ class NonstationaryFeatureScaler:
         Scale features.
 
         :param X: Feature matrix.
-        :param refit_before_scaling: Whether or not to refit the scaler using `X` before scaling.
+        :param refit_before_scaling: Whether or not to refit the scaler using `feature_matrix` before scaling.
         :return: Scaled feature matrix.
         """
 

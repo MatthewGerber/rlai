@@ -60,12 +60,12 @@ class FunctionApproximationModel(ABC):
     @abstractmethod
     def evaluate(
             self,
-            X: np.ndarray,
+            feature_matrix: np.ndarray,
     ) -> np.ndarray:
         """
         Evaluate the model at a matrix of features.
 
-        :param X: Feature matrix (#obs, #features).
+        :param feature_matrix: Feature matrix (#obs, #features).
         :return: Vector of outcomes from the evaluation (#obs,).
         """
 

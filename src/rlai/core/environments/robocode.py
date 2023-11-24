@@ -6,13 +6,9 @@ from typing import List, Tuple, Dict, Any, Optional
 import numpy as np
 from numpy.random import RandomState
 
-from rlai.core.actions import Action
-from rlai.core.agents import MdpAgent, ActionValueMdpAgent
-from rlai.core.environments import Environment
+from rlai.core import Reward, Action, MdpState, MdpAgent, Environment
 from rlai.core.environments.network import TcpMdpEnvironment
-from rlai.core.rewards import Reward
-from rlai.core.states import MdpState
-from rlai.gpi.state_action_value import StateActionValueEstimator
+from rlai.gpi.state_action_value import StateActionValueEstimator, ActionValueMdpAgent
 from rlai.gpi.state_action_value.function_approximation.models.feature_extraction import FeatureExtractor
 from rlai.meta import rl_text
 from rlai.utils import parse_arguments

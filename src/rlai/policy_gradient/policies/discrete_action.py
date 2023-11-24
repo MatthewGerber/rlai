@@ -5,10 +5,8 @@ from typing import List, Tuple, Dict
 import numpy as np
 from jax import numpy as jnp, grad
 
-from rlai.core.actions import Action
+from rlai.core import Policy, Action, MdpState
 from rlai.core.environments.mdp import MdpEnvironment
-from rlai.core.policies import Policy
-from rlai.core.states import MdpState
 from rlai.gpi.state_action_value.function_approximation.models import FeatureExtractor
 from rlai.meta import rl_text
 from rlai.policy_gradient.policies import ParameterizedPolicy

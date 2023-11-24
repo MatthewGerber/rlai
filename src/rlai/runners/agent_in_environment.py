@@ -11,9 +11,9 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 from numpy.random import RandomState
 
+from rlai.core import Monitor
 from rlai.meta import rl_text
 from rlai.policy_gradient.policies.continuous_action import ContinuousActionPolicy
-from rlai.runners.monitor import Monitor
 from rlai.utils import load_class, get_base_argument_parser
 
 

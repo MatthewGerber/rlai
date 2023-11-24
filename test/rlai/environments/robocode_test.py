@@ -45,6 +45,7 @@ def test_learn():
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                     s.connect(('127.0.0.1', robocode_port))
 
+                    # noinspection PyBroadException
                     try:
 
                         while t < len(state_sequence):

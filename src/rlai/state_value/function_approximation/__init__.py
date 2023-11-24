@@ -4,8 +4,8 @@ from typing import List, Tuple, Optional
 import numpy as np
 from numpy.random import RandomState
 
+from rlai.core import MdpState
 from rlai.core.environments.mdp import MdpEnvironment
-from rlai.core.states import MdpState
 from rlai.meta import rl_text
 from rlai.models import FunctionApproximationModel
 from rlai.state_value import StateValueEstimator, ValueEstimator
@@ -184,7 +184,7 @@ class ApproximateStateValueEstimator(StateValueEstimator):
         # if we have pending experience, then fit the model and reset the data.
         if self.experience_pending:
 
-            X = self.get_X(self.experience_states, True)
+            X = self.extract_features(self.experience_states, True)
 
             # feature extractors may return a matrix with no columns if extraction was not possible
             if X.shape[1] > 0:
@@ -215,16 +215,16 @@ class ApproximateStateValueEstimator(StateValueEstimator):
         :return: Estimate.
         """
 
-        # get feature vector
-        X = self.get_X([state], False)
+        # extract feature matrix
+        feature_matrix = self.extract_features([state], False)
 
         # feature extractors may return a matrix with no columns if extraction was not possible
-        if X.shape[1] == 0:  # pragma no cover
+        if feature_matrix.shape[1] == 0:  # pragma no cover
             return 0.0
 
-        return self.model.evaluate(X)[0]
+        return self.model.evaluate(feature_matrix)[0]
 
-    def get_X(
+    def extract_features(
             self,
             states: List[MdpState],
             refit_scaler: bool

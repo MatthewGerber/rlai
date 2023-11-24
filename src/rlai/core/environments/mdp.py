@@ -8,13 +8,8 @@ from typing import List, Tuple, Optional, Dict, Any
 import numpy as np
 from numpy.random import RandomState
 
-from rlai.core.actions import Action
-from rlai.core.agents import Agent
-from rlai.core.environments import Environment
-from rlai.core.rewards import Reward
-from rlai.core.states import State, MdpState
+from rlai.core import Reward, Action, State, MdpState, Agent, Environment, Monitor
 from rlai.meta import rl_text
-from rlai.runners.monitor import Monitor
 from rlai.utils import IncrementalSampleAverager, sample_list_item, parse_arguments, get_base_argument_parser
 
 

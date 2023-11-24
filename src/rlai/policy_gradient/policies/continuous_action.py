@@ -12,10 +12,8 @@ from numpy.random import RandomState
 from scipy import stats
 from tabulate import tabulate
 
-from rlai.core.actions import Action, ContinuousMultiDimensionalAction
+from rlai.core import Policy, Action, ContinuousMultiDimensionalAction, MdpState
 from rlai.core.environments.mdp import ContinuousMdpEnvironment
-from rlai.core.policies import Policy
-from rlai.core.states import MdpState
 from rlai.meta import rl_text
 from rlai.policy_gradient.policies import ParameterizedPolicy
 from rlai.state_value.function_approximation.models.feature_extraction import StateFeatureExtractor

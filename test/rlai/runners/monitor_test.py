@@ -1,7 +1,7 @@
 import numpy as np
 from numpy.random import RandomState
 
-from rlai.runners.monitor import Monitor
+from rlai.core import Monitor
 
 
 def test_monitor():

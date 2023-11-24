@@ -5,9 +5,8 @@ from typing import List, Tuple, Union, Dict
 import numpy as np
 import pandas as pd
 
-from rlai.core.actions import Action
+from rlai.core import Action, MdpState
 from rlai.core.environments.mdp import MdpEnvironment
-from rlai.core.states import MdpState
 from rlai.meta import rl_text
 from rlai.models.feature_extraction import FeatureExtractor as BaseFeatureExtractor, OneHotCategoricalFeatureInteracter
 from rlai.utils import parse_arguments

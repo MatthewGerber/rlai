@@ -1,6 +1,6 @@
 from numpy.random import RandomState
 
-from rlai.core.agents import ActionValueMdpAgent
+from rlai.gpi.state_action_value import ActionValueMdpAgent
 from rlai.core.environments.gridworld import Gridworld
 from rlai.gpi.dynamic_programming.iteration import (
     iterate_policy_v_pi,

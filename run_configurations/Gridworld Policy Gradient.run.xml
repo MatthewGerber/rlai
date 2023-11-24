@@ -13,7 +13,7 @@
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
     <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/rlai/runners/trainer.py" />
-    <option name="PARAMETERS" value="--random-seed 12345 --agent rlai.core.agents.ParameterizedMdpAgent --gamma 1 --environment rlai.core.environments.gridworld.Gridworld --id example_4_1 --train-function rlai.policy_gradient.monte_carlo.reinforce.improve --num-episodes 1000 --v-S rlai.state_value.function_approximation.ApproximateStateValueEstimator --feature-extractor rlai.core.environments.gridworld.GridworldStateFeatureExtractor --function-approximation-model rlai.models.sklearn.SKLearnSGD --loss squared_error --sgd-alpha 0.0 --learning-rate constant --eta0 0.001 --policy rlai.policy_gradient.policies.discrete_action.SoftMaxInActionPreferencesPolicy --policy-feature-extractor rlai.core.environments.gridworld.GridworldFeatureExtractor --alpha 0.001 --update-upon-every-visit True" />
+    <option name="PARAMETERS" value="--random-seed 12345 --agent rlai.policy_gradient.ParameterizedMdpAgent --gamma 1 --environment rlai.core.environments.gridworld.Gridworld --id example_4_1 --train-function rlai.policy_gradient.monte_carlo.reinforce.improve --num-episodes 1000 --v-S rlai.state_value.function_approximation.ApproximateStateValueEstimator --feature-extractor rlai.core.environments.gridworld.GridworldStateFeatureExtractor --function-approximation-model rlai.models.sklearn.SKLearnSGD --loss squared_error --sgd-alpha 0.0 --learning-rate constant --eta0 0.001 --policy rlai.policy_gradient.policies.discrete_action.SoftMaxInActionPreferencesPolicy --policy-feature-extractor rlai.core.environments.gridworld.GridworldFeatureExtractor --alpha 0.001 --update-upon-every-visit True" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />
@@ -35,7 +35,7 @@
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
     <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/rlai/runners/trainer.py" />
-    <option name="PARAMETERS" value="--random-seed 12345 --agent rlai.core.agents.ParameterizedMdpAgent --gamma 1 --environment rlai.core.environments.gridworld.Gridworld --id example_4_1 --train-function rlai.policy_gradient.monte_carlo.reinforce.improve --num-episodes 1000 --policy rlai.policy_gradient.policies.discrete_action.SoftMaxInActionPreferencesPolicy --policy-feature-extractor rlai.core.environments.gridworld.GridworldFeatureExtractor --alpha 0.0001 --update-upon-every-visit True" />
+    <option name="PARAMETERS" value="--random-seed 12345 --agent rlai.policy_gradient.ParameterizedMdpAgent --gamma 1 --environment rlai.core.environments.gridworld.Gridworld --id example_4_1 --train-function rlai.policy_gradient.monte_carlo.reinforce.improve --num-episodes 1000 --policy rlai.policy_gradient.policies.discrete_action.SoftMaxInActionPreferencesPolicy --policy-feature-extractor rlai.core.environments.gridworld.GridworldFeatureExtractor --alpha 0.0001 --update-upon-every-visit True" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />

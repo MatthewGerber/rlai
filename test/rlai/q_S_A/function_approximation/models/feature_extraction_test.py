@@ -6,9 +6,8 @@ import numpy.random
 import pytest
 from numpy.random import RandomState
 
-from rlai.core.actions import Action
+from rlai.core import Action, MdpState
 from rlai.core.environments.gridworld import GridworldFeatureExtractor, Gridworld
-from rlai.core.states import MdpState
 from rlai.models.feature_extraction import NonstationaryFeatureScaler, OneHotCategoricalFeatureInteracter
 
 

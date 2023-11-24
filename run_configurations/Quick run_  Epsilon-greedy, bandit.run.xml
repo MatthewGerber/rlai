@@ -13,7 +13,7 @@
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
     <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/rlai/runners/agent_in_environment.py" />
-    <option name="PARAMETERS" value="--random-seed 12345 --T 500 --n-runs 100 --figure-name &quot;Quick run:  Epsilon-greedy, bandit&quot; --pdf-save-path &quot;../figures/Quick run:  Epsilon-greedy, bandit.pdf&quot; --environment rlai.core.environments.bandit.KArmedBandit --k 10 --agent rlai.core.agents.EpsilonGreedy --epsilon 0.1 0.01 --plot" />
+    <option name="PARAMETERS" value="--random-seed 12345 --T 500 --n-runs 100 --figure-name &quot;Quick run:  Epsilon-greedy, bandit&quot; --pdf-save-path &quot;../figures/Quick run:  Epsilon-greedy, bandit.pdf&quot; --environment rlai.core.environments.bandit.KArmedBandit --k 10 --agent rlai.core.EpsilonGreedyQValueAgent --epsilon 0.1 0.01 --plot" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />

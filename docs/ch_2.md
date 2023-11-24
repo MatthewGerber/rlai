@@ -3,11 +3,11 @@
 ```
 Bandit arm.
 ```
-### [rlai.core.agents.EpsilonGreedy](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/agents/q_value.py#L122)
+### [rlai.core.EpsilonGreedyQValueAgent](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/agents/q_value.py#L122)
 ```
 Nonassociative, epsilon-greedy agent.
 ```
-### [rlai.core.agents.q_value.QValue](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/agents/q_value.py#L18)
+### [rlai.core.q_value.QValueAgent](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/agents/q_value.py#L18)
 ```
 Nonassociative, q-value agent.
 ```
@@ -20,11 +20,11 @@ K-armed bandit.
 An incremental, constant-time and -memory sample averager. Supports both decreasing (i.e., unweighted sample
     average) and constant (i.e., exponential recency-weighted average, pp. 32-33) step sizes.
 ```
-### [rlai.core.agents.UpperConfidenceBound](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/agents/q_value.py#L280)
+### [rlai.core.UpperConfidenceBoundAgent](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/agents/q_value.py#L280)
 ```
 Nonassociatve, upper-confidence-bound agent.
 ```
-### [rlai.core.agents.PreferenceGradient](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/agents/h_value.py#L16)
+### [rlai.core.PreferenceGradientAgent](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/agents/h_value.py#L16)
 ```
 Preference-gradient agent.
 ```

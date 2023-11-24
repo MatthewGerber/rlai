@@ -1,4 +1,4 @@
-from rlai.core.rewards import Reward
+from rlai.core import Reward
 
 
 def test_reward_overrides():
