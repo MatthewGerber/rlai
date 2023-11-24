@@ -11,7 +11,7 @@ from rlai.environments import Environment
 from rlai.meta import rl_text
 from rlai.policies import Policy
 from rlai.policies.parameterized import ParameterizedPolicy
-from rlai.q_S_A import StateActionValueEstimator
+from rlai.q_S_A.estimators import StateActionValueEstimator
 from rlai.rewards import Reward
 from rlai.states.mdp import MdpState
 from rlai.utils import sample_list_item, parse_arguments, load_class

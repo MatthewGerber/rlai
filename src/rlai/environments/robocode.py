@@ -11,7 +11,7 @@ from rlai.agents.mdp import MdpAgent, ActionValueMdpAgent
 from rlai.environments import Environment
 from rlai.environments.network import TcpMdpEnvironment
 from rlai.meta import rl_text
-from rlai.q_S_A import StateActionValueEstimator
+from rlai.q_S_A.estimators import StateActionValueEstimator
 from rlai.q_S_A.function_approximation.models.feature_extraction import FeatureExtractor
 from rlai.rewards import Reward
 from rlai.states.mdp import MdpState

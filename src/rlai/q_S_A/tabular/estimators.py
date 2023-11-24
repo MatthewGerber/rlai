@@ -10,7 +10,7 @@ from rlai.environments.mdp import MdpEnvironment
 from rlai.gpi import PolicyImprovementEvent
 from rlai.gpi.improvement import improve_policy_with_q_pi
 from rlai.meta import rl_text
-from rlai.q_S_A import ValueEstimator, ActionValueEstimator, StateActionValueEstimator
+from rlai.q_S_A.estimators import ValueEstimator, ActionValueEstimator, StateActionValueEstimator
 from rlai.q_S_A.tabular import TabularPolicy
 from rlai.states.mdp import MdpState
 from rlai.utils import IncrementalSampleAverager, parse_arguments, log_with_border
