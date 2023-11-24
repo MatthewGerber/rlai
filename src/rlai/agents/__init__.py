@@ -7,7 +7,7 @@ from numpy.random import RandomState
 from rlai.actions import Action
 from rlai.environments import Environment
 from rlai.meta import rl_text
-from rlai.policies.tabular import TabularPolicy
+from rlai.policies import Policy
 from rlai.states import State
 from rlai.states.mdp import MdpState
 from rlai.utils import get_base_argument_parser
@@ -169,6 +169,14 @@ class Human(Agent):
     An interactive, human-driven agent that prompts for actions at each time step.
     """
 
+    class DummyPolicy(Policy):
+
+        def __contains__(self, state: MdpState) -> bool:
+            return True
+
+        def __getitem__(self, state: MdpState) -> Dict[Action, float]:
+            return {}
+
     @classmethod
     def init_from_arguments(
             cls,
@@ -246,6 +254,4 @@ class Human(Agent):
             random_state=RandomState(12345)
         )
 
-        # TODO:  This is a hack to make the human agent compatible with tabular methods, which request state
-        # identifiers during operation.
-        self.pi = TabularPolicy(None, None)
+        self.pi = Human.DummyPolicy()

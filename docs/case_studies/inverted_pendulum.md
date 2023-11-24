@@ -24,7 +24,7 @@ challenges. First, the tabular approach...
 ## Training
 Train a control agent for the inverted pendulum environment with the following command.
 ```
-rlai train --agent rlai.agents.mdp.ActionValueMdpAgent --continuous-state-discretization-resolution 0.1 --gamma 1 --environment rlai.environments.openai_gym.Gym --gym-id CartPole-v1 --render-every-nth-episode 5000 --video-directory ~/Desktop/cartpole_videos --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode Q_LEARNING --num-improvements 5000 --num-episodes-per-improvement 50 --T 1000 --epsilon 0.01 --q-S-A rlai.q_S_A.tabular.TabularStateActionValueEstimator --make-final-policy-greedy True --num-improvements-per-plot 100 --save-agent-path ~/Desktop/cartpole_agent.pickle
+rlai train --agent rlai.agents.mdp.ActionValueMdpAgent --continuous-state-discretization-resolution 0.1 --gamma 1 --environment rlai.environments.openai_gym.Gym --gym-id CartPole-v1 --render-every-nth-episode 5000 --video-directory ~/Desktop/cartpole_videos --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode Q_LEARNING --num-improvements 5000 --num-episodes-per-improvement 50 --T 1000 --epsilon 0.01 --q-S-A rlai.q_S_A.tabular.estimators.TabularStateActionValueEstimator --make-final-policy-greedy True --num-improvements-per-plot 100 --save-agent-path ~/Desktop/cartpole_agent.pickle
 ```
 
 Arguments are explained below.

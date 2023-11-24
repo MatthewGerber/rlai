@@ -8,7 +8,7 @@ from rlai.agents.mdp import ActionValueMdpAgent
 from rlai.environments.openai_gym import Gym, CartpoleFeatureExtractor
 from rlai.gpi.temporal_difference.evaluation import Mode
 from rlai.gpi.temporal_difference.iteration import iterate_value_q_pi
-from rlai.q_S_A.tabular import TabularStateActionValueEstimator
+from rlai.q_S_A.tabular.estimators import TabularStateActionValueEstimator
 from test.rlai.utils import tabular_estimator_legacy_eq, tabular_pi_legacy_eq
 
 

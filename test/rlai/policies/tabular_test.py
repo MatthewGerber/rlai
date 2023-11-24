@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from rlai.policies.tabular import TabularPolicy
+from rlai.q_S_A.tabular import TabularPolicy
 
 
 def test_invalid_get_state_i():

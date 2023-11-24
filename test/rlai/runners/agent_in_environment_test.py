@@ -9,7 +9,7 @@ from numpy.random import RandomState
 from numpy.testing import assert_allclose
 
 from rlai.agents.mdp import ActionValueMdpAgent
-from rlai.policies.tabular import TabularPolicy
+from rlai.q_S_A.tabular import TabularPolicy
 from rlai.runners.agent_in_environment import run
 from rlai.runners.monitor import Monitor
 

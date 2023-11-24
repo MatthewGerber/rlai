@@ -1,6 +1,6 @@
 import logging
 from argparse import ArgumentParser
-from typing import Dict, Optional, Iterable, Iterator, List, Tuple
+from typing import Optional, Dict, Iterator, List, Tuple, Iterable
 
 from numpy.random import RandomState
 
@@ -10,8 +10,8 @@ from rlai.environments.mdp import MdpEnvironment
 from rlai.gpi import PolicyImprovementEvent
 from rlai.gpi.improvement import improve_policy_with_q_pi
 from rlai.meta import rl_text
-from rlai.policies.tabular import TabularPolicy
-from rlai.q_S_A import StateActionValueEstimator, ActionValueEstimator, ValueEstimator
+from rlai.q_S_A import ValueEstimator, ActionValueEstimator, StateActionValueEstimator
+from rlai.q_S_A.tabular import TabularPolicy
 from rlai.states.mdp import MdpState
 from rlai.utils import IncrementalSampleAverager, parse_arguments, log_with_border
 
@@ -273,7 +273,7 @@ class TabularStateActionValueEstimator(StateActionValueEstimator):
 
     def get_initial_policy(
             self
-    ) -> TabularPolicy:
+    ) -> 'TabularPolicy':
         """
         Get the initial policy defined by the estimator.
 

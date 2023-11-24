@@ -9,7 +9,7 @@ from rlai.agents.mdp import MdpAgent, ActionValueMdpAgent
 from rlai.environments import Environment
 from rlai.environments.mdp import MdpEnvironment
 from rlai.meta import rl_text
-from rlai.q_S_A.tabular import TabularStateActionValueEstimator
+from rlai.q_S_A.tabular.estimators import TabularStateActionValueEstimator
 from rlai.rewards import Reward
 from rlai.states.mdp import MdpState
 from rlai.utils import parse_arguments

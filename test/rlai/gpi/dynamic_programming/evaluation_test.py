@@ -8,7 +8,7 @@ from numpy.random import RandomState
 from rlai.agents.mdp import ActionValueMdpAgent
 from rlai.environments.gridworld import Gridworld
 from rlai.gpi.dynamic_programming.evaluation import evaluate_v_pi, evaluate_q_pi, check_termination_criteria
-from rlai.q_S_A.tabular import TabularStateActionValueEstimator
+from rlai.q_S_A.tabular.estimators import TabularStateActionValueEstimator
 
 
 def test_evaluate_v_pi():

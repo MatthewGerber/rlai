@@ -4,7 +4,7 @@ from rlai.agents.mdp import MdpAgent
 from rlai.environments.mdp import ModelBasedMdpEnvironment
 from rlai.gpi.improvement import improve_policy_with_q_pi
 from rlai.meta import rl_text
-from rlai.policies.tabular import TabularPolicy
+from rlai.q_S_A.tabular import TabularPolicy
 from rlai.states.mdp import MdpState
 
 

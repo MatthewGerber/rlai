@@ -5,8 +5,7 @@ from xvfbwrapper import Xvfb
 
 from rlai.actions import Action
 from rlai.policies import Policy
-from rlai.policies.tabular import TabularPolicy
-from rlai.q_S_A.tabular import TabularStateActionValueEstimator
+from rlai.q_S_A.tabular.estimators import TabularStateActionValueEstimator, TabularPolicy
 from rlai.states.mdp import MdpState
 from rlai.utils import IncrementalSampleAverager
 

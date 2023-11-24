@@ -116,11 +116,11 @@ optional arguments:
 The output above indicates the need for `--q-S-A`, which is the state-action value estimator to use. Explore the 
 tabular estimator as follows.
 ```
-rlai help rlai.q_S_A.tabular.TabularStateActionValueEstimator
+rlai help rlai.q_S_A.tabular.estimators.TabularStateActionValueEstimator
 ```
 The following output is generated.
 ```
-usage: rlai.q_S_A.tabular.TabularStateActionValueEstimator [--help] [--continuous-state-discretization-resolution CONTINUOUS_STATE_DISCRETIZATION_RESOLUTION]
+usage: rlai.q_S_A.tabular.estimators.TabularStateActionValueEstimator [--help] [--continuous-state-discretization-resolution CONTINUOUS_STATE_DISCRETIZATION_RESOLUTION]
 
 optional arguments:
   --help                Print usage and argument descriptions.
@@ -132,7 +132,7 @@ optional arguments:
 Putting it all together and adding the `--save-agent-path` option, we have the following full command for training an
 agent for the OpenAI Gym cartpole (inverted pendulum) environment.
 ```
-rlai train --agent rlai.agents.mdp.ActionValueMdpAgent --gamma 1.0 --environment rlai.environments.openai_gym.Gym --T 1000 --gym-id CartPole-v1 --render-every-nth-episode 5000 --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode Q_LEARNING --num-improvements 100 --num-episodes-per-improvement 50 --epsilon 0.01 --q-S-A rlai.q_S_A.tabular.TabularStateActionValueEstimator --continuous-state-discretization-resolution 0.1 --make-final-policy-greedy True --num-improvements-per-plot 100 --save-agent-path ~/Desktop/cartpole_agent.pickle
+rlai train --agent rlai.agents.mdp.ActionValueMdpAgent --gamma 1.0 --environment rlai.environments.openai_gym.Gym --T 1000 --gym-id CartPole-v1 --render-every-nth-episode 5000 --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode Q_LEARNING --num-improvements 100 --num-episodes-per-improvement 50 --epsilon 0.01 --q-S-A rlai.q_S_A.tabular.estimators.TabularStateActionValueEstimator --continuous-state-discretization-resolution 0.1 --make-final-policy-greedy True --num-improvements-per-plot 100 --save-agent-path ~/Desktop/cartpole_agent.pickle
 ```
 A video should be rendered at the start of training, and a plot will be rendered at the end similar to the following.
 ![cartpole](cli-cartpole.png)

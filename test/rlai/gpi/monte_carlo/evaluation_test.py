@@ -6,7 +6,7 @@ from numpy.random import RandomState
 from rlai.agents.mdp import ActionValueMdpAgent
 from rlai.environments.gridworld import Gridworld
 from rlai.gpi.monte_carlo.evaluation import evaluate_v_pi, evaluate_q_pi
-from rlai.q_S_A.tabular import TabularStateActionValueEstimator
+from rlai.q_S_A.tabular.estimators import TabularStateActionValueEstimator
 from test.rlai.utils import tabular_estimator_legacy_eq
 
 

@@ -8,7 +8,7 @@ from rlai.gpi.dynamic_programming.iteration import (
     iterate_value_v_pi,
     iterate_value_q_pi
 )
-from rlai.q_S_A.tabular import TabularStateActionValueEstimator
+from rlai.q_S_A.tabular.estimators import TabularStateActionValueEstimator
 
 
 def test_policy_iteration():

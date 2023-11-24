@@ -8,7 +8,7 @@ from rlai.actions import Action
 from rlai.agents.mdp import MdpAgent
 from rlai.environments.mdp import ModelBasedMdpEnvironment
 from rlai.meta import rl_text
-from rlai.policies.tabular import TabularPolicy
+from rlai.q_S_A.tabular import TabularPolicy
 from rlai.states.mdp import MdpState
 
 

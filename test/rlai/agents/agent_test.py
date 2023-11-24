@@ -5,7 +5,7 @@ from rlai.actions import Action
 from rlai.agents import Human
 from rlai.agents.mdp import ActionValueMdpAgent
 from rlai.environments.gridworld import Gridworld
-from rlai.q_S_A.tabular import TabularStateActionValueEstimator
+from rlai.q_S_A.tabular.estimators import TabularStateActionValueEstimator
 from rlai.states.mdp import MdpState
 
 

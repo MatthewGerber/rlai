@@ -24,7 +24,7 @@ from rlai.q_S_A.function_approximation.models.feature_extraction import (
     StateActionIdentityFeatureExtractor
 )
 from rlai.q_S_A.function_approximation.models.sklearn import SKLearnSGD
-from rlai.q_S_A.tabular import TabularStateActionValueEstimator
+from rlai.q_S_A.tabular.estimators import TabularStateActionValueEstimator
 from rlai.runners.trainer import run
 from rlai.utils import RunThreadManager
 from test.rlai.utils import tabular_estimator_legacy_eq, tabular_pi_legacy_eq
