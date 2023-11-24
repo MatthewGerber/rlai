@@ -4,7 +4,7 @@ import pickle
 from numpy.random import RandomState
 
 from rlai.actions import Action
-from rlai.planning.environment_models import StochasticEnvironmentModel
+from rlai.environments.mdp import StochasticEnvironmentModel
 from rlai.rewards import Reward
 from rlai.states import State
 from rlai.utils import sample_list_item

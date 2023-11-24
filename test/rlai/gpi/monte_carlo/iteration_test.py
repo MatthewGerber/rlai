@@ -9,11 +9,10 @@ from numpy.random import RandomState
 
 from rlai.agents.mdp import ActionValueMdpAgent
 from rlai.environments.gridworld import Gridworld, GridworldFeatureExtractor
-from rlai.environments.mdp import TrajectorySamplingMdpPlanningEnvironment
+from rlai.environments.mdp import TrajectorySamplingMdpPlanningEnvironment, StochasticEnvironmentModel
 from rlai.gpi import PolicyImprovementEvent
 from rlai.gpi.monte_carlo.iteration import iterate_value_q_pi
 from rlai.gpi.utils import update_policy_iteration_plot, plot_policy_iteration
-from rlai.planning.environment_models import StochasticEnvironmentModel
 from rlai.policies.function_approximation import FunctionApproximationPolicy
 from rlai.q_S_A.function_approximation.estimators import ApproximateStateActionValueEstimator
 from rlai.q_S_A.function_approximation.models.sklearn import SKLearnSGD

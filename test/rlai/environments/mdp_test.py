@@ -8,9 +8,8 @@ from rlai.actions import Action
 from rlai.agents.mdp import ActionValueMdpAgent
 from rlai.environments.gamblers_problem import GamblersProblem
 from rlai.environments.gridworld import Gridworld
-from rlai.environments.mdp import PrioritizedSweepingMdpPlanningEnvironment
+from rlai.environments.mdp import PrioritizedSweepingMdpPlanningEnvironment, StochasticEnvironmentModel
 from rlai.gpi.dynamic_programming.iteration import iterate_value_v_pi
-from rlai.planning.environment_models import StochasticEnvironmentModel
 from rlai.q_S_A.tabular import TabularStateActionValueEstimator
 from rlai.rewards import Reward
 from rlai.runners.monitor import Monitor
