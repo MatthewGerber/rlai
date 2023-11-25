@@ -70,9 +70,9 @@ for these environments. Below is a list of environments that are not covered in 
 or are not covered at all (e.g., Robocode). They are more difficult to train agents for and are instructive for 
 understanding how agents are parameterized and rewarded.
 
-## OpenAI Gym
-[OpenAI Gym](https://gym.openai.com) is a collection of environments that range from traditional control to advanced 
-robotics. Case studies have been developed for the following OpenAI Gym environments, which are ordered roughly by 
+## Gymnasium
+[Gymnasium](https://gymnasium.farama.org) is a collection of environments that range from traditional control to 
+advanced robotics. Case studies have been developed for the following environments, which are ordered roughly by 
 increasing complexity:
 
 * [Inverted Pendulum](case_studies/inverted_pendulum.md)
@@ -80,9 +80,15 @@ increasing complexity:
 * [Mountain Car](case_studies/mountain_car.md)
 * [Mountain Car with Continuous Control](case_studies/mountain_car_continuous.md)
 * [Lunar Lander with Continuous Control](case_studies/lunar_lander_continuous.md)
-* [MuJoCo Swimming Worm with Continuous Control](case_studies/mujoco_swimming_worm.md)
+* [MuJoCo Swimming Worm with Continuous Control](case_studies/mujoco_swimming_worm.md) 
   * A follow-up using [process-level parallelization](case_studies/mujoco_swimming_worm_pooled.md) for faster, better 
     results.
+  * See the MuJoCo section below for tips on installing MuJoCo.
+
+## MuJoCo
+RLAI works with [MuJoCo](https://mujoco.org/) either via Gymnasium described above or directly via the 
+MuJoCo-provided Python bindings. See [here](https://github.com/google-deepmind/mujoco#installation) for installation 
+instructions.
 
 ## Robocode
 [Robocode](https://github.com/robo-code/robocode) is a simulation-based robotic combat programming game with a 

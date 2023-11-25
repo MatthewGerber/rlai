@@ -330,11 +330,15 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         # if we have pending experience, then fit the model and reset the data.
         if self.experience_pending:
 
-            feature_matrix = self.extract_features(self.experience_states, self.experience_actions, True)
+            state_action_feature_matrix = self.extract_features(
+                self.experience_states,
+                self.experience_actions,
+                True
+            )
 
             # feature extractors may return a matrix with no columns if extraction was not possible
-            if feature_matrix.shape[1] > 0:
-                self.model.fit(feature_matrix, self.experience_values, self.weights)
+            if state_action_feature_matrix.shape[1] > 0:
+                self.model.fit(state_action_feature_matrix, self.experience_values, self.weights)
 
             self.experience_states.clear()
             self.experience_actions.clear()
@@ -362,13 +366,13 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         log_with_border(logging.DEBUG, f'Evaluating {len(actions)} action(s)')
 
         # replicate the state for each action, in order to evaluate each state-action pair.
-        feature_matrix = self.extract_features([state] * len(actions), actions, False)
+        state_action_feature_matrix = self.extract_features([state] * len(actions), actions, False)
 
         # feature extractors may return a matrix with no columns if extraction was not possible
-        if feature_matrix.shape[1] == 0:  # pragma no cover
+        if state_action_feature_matrix.shape[1] == 0:  # pragma no cover
             return np.repeat(0.0, len(actions))
 
-        action_values = self.model.evaluate(feature_matrix)
+        action_values = self.model.evaluate(state_action_feature_matrix)
 
         log_with_border(logging.DEBUG, 'Evaluation complete')
 
@@ -389,22 +393,25 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         :return: State-feature numpy.ndarray.
         """
 
-        X = self.feature_extractor.extract(states, actions, refit_scaler)
+        state_action_feature_matrix = self.feature_extractor.extract(states, actions, refit_scaler)
 
         # if no formula, then the feature extraction result must be a numpy.ndarray to be used directly.
         if self.formula is None:
-            if not isinstance(X, np.ndarray):  # pragma no cover
+            if not isinstance(state_action_feature_matrix, np.ndarray):  # pragma no cover
                 raise ValueError('Expected feature extractor to return a numpy.ndarray if not a pandas.DataFrame')
 
         # formulas only work with dataframes
-        elif isinstance(X, pd.DataFrame):
-            X = dmatrix(self.formula, X)
+        elif isinstance(state_action_feature_matrix, pd.DataFrame):
+            state_action_feature_matrix = dmatrix(self.formula, state_action_feature_matrix)
 
         # invalid otherwise
         else:
-            raise ValueError(f'Invalid combination of formula {self.formula} and feature extractor result {type(X)}')
+            raise ValueError(
+                f'Invalid combination of formula {self.formula} and feature extractor result '
+                f'{type(state_action_feature_matrix)}'
+            )
 
-        return X
+        return state_action_feature_matrix
 
     def plot(
             self,
@@ -685,7 +692,10 @@ class FunctionApproximationPolicy(Policy):
         max_value = max(values)
         num_maximizers = sum(value == max_value for value in values)
         action_prob = {
-            action: (((1.0 - self.estimator.epsilon) / num_maximizers) if value == max_value else 0.0) + self.estimator.epsilon / len(values)
+            action: (
+                ((1.0 - self.estimator.epsilon) / num_maximizers) if value == max_value
+                else 0.0
+            ) + self.estimator.epsilon / len(values)
             for action, value in zip(state.AA, values)
         }
 

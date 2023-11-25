@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Acrobat resume train" type="PythonConfigurationType" factoryName="Python" folderName="OpenAI Gym">
+  <configuration default="false" name="Acrobat resume train" type="PythonConfigurationType" factoryName="Python" folderName="Gymnasium">
     <module name="rlai" />
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />

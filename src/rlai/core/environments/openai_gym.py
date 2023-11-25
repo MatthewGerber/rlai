@@ -6,11 +6,11 @@ from itertools import product
 from time import sleep
 from typing import List, Tuple, Optional, Union, Dict
 
-import gym
+import gymnasium
 import numpy as np
 from PyQt6.QtWidgets import QApplication
-from gym.spaces import Discrete, Box
-from gym.wrappers import TimeLimit, RecordVideo
+from gymnasium.spaces import Discrete, Box
+from gymnasium.wrappers import TimeLimit, RecordVideo
 from numpy.random import RandomState
 
 from rlai.core import (
@@ -222,7 +222,7 @@ class Gym(ContinuousMdpEnvironment):
             else:
                 fuel_used = required_fuel
 
-        observation, reward, done, _ = self.gym_native.step(action=gym_action)
+        observation, reward, done, _, _ = self.gym_native.step(action=gym_action)
 
         # update fuel remaining if needed
         fuel_remaining = None
@@ -316,7 +316,7 @@ class Gym(ContinuousMdpEnvironment):
         if self.plot_environment:
             self.state_reward_scatter_plot.reset_y_range()
 
-        observation = self.gym_native.reset()
+        observation, _ = self.gym_native.reset()
 
         # append fuel level to state of certain continuous environments
         if self.gym_id in [Gym.MCC_V0, Gym.LLC_V2]:
@@ -380,15 +380,16 @@ class Gym(ContinuousMdpEnvironment):
         :return: Either a native Gym environment or a wrapped native Gym environment.
         """
 
-        gym_native = gym.make(
-            id=self.gym_id
+        record_video = self.render_every_nth_episode is not None and self.video_directory is not None
+
+        gym_native = gymnasium.make(
+            id=self.gym_id,
+            max_episode_steps=self.T,
+            render_mode='rgb_array' if record_video else None
         )
 
-        # the native gym object uses the max value, so set it to something crazy huge if we're not given a T.
-        gym_native._max_episode_steps = 999999999999 if self.T is None else self.T
-
         # save videos via wrapper if we have a video directory
-        if self.render_every_nth_episode is not None and self.video_directory is not None:
+        if record_video:
             try:
                 gym_native = RecordVideo(
                     env=gym_native,
@@ -541,40 +542,40 @@ class Gym(ContinuousMdpEnvironment):
         if self.continuous_action_discretization_resolution is not None and not isinstance(self.gym_native.action_space, Box):
             raise ValueError('Continuous-action discretization is only valid for Box action-space environments.')
 
+        action_space = self.gym_native.action_space
+
         # action space is already discrete:  initialize n actions from it.
-        if isinstance(self.gym_native.action_space, Discrete):
+        if isinstance(action_space, Discrete):
             self.actions = [
                 Action(
                     i=i
                 )
-                for i in range(self.gym_native.action_space.n)
+                for i in range(action_space.n)
             ]
 
         # action space is continuous and we lack a discretization resolution:  initialize a single, multi-dimensional
         # action including the min and max values of the dimensions. a policy gradient approach will be required.
-        elif isinstance(self.gym_native.action_space, Box) and self.continuous_action_discretization_resolution is None:
+        elif isinstance(action_space, Box) and self.continuous_action_discretization_resolution is None:
             self.actions = [
                 ContinuousMultiDimensionalAction(
                     value=None,
-                    min_values=self.gym_native.action_space.low,
-                    max_values=self.gym_native.action_space.high
+                    min_values=action_space.low,
+                    max_values=action_space.high
                 )
             ]
 
         # action space is continuous and we have a discretization resolution:  discretize it. this is generally not a
         # great approach, as it results in high-dimensional action spaces. but here goes.
-        elif isinstance(self.gym_native.action_space, Box) and self.continuous_action_discretization_resolution is not None:
-
-            box = self.gym_native.action_space
+        elif isinstance(action_space, Box) and self.continuous_action_discretization_resolution is not None:
 
             # continuous n-dimensional action space with identical bounds on each dimension
-            if len(box.shape) == 1:
+            if len(action_space.shape) == 1:
                 action_discretizations = [
                     np.linspace(low, high, math.ceil((high - low) / self.continuous_action_discretization_resolution))
-                    for low, high in zip(box.low, box.high)
+                    for low, high in zip(action_space.low, action_space.high)
                 ]
             else:  # pragma no cover
-                raise ValueError(f'Unknown format of continuous action space:  {box}')
+                raise ValueError(f'Unknown format of continuous action space:  {action_space}')
 
             self.actions = [
                 DiscretizedAction(
@@ -698,12 +699,12 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
         self.check_state_and_action_lists(states, actions)
 
         # extract and scale features
-        X = np.array([
+        state_action_feature_matrix = np.array([
             np.append(state.observation, state.observation ** 2)
             for state in states
         ])
 
-        X = self.feature_scaler.scale_features(X, refit_scaler)
+        state_action_feature_matrix = self.feature_scaler.scale_features(state_action_feature_matrix, refit_scaler)
 
         # interact feature vectors per state category
         state_categories = [
@@ -714,15 +715,17 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
             for state in states
         ]
 
-        X = self.state_category_interacter.interact(X, state_categories)
+        state_action_feature_matrix = self.state_category_interacter.interact(
+            state_action_feature_matrix, state_categories
+        )
 
         # interact features per action
-        X = self.interact(
-            state_features=X,
+        state_action_feature_matrix = self.interact(
+            state_features=state_action_feature_matrix,
             actions=actions
         )
 
-        return X
+        return state_action_feature_matrix
 
     def __init__(
             self,
@@ -734,10 +737,12 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
         :param environment: Environment.
         """
 
-        if not isinstance(environment.gym_native.action_space, Discrete):  # pragma no cover
+        action_space = environment.gym_native.action_space
+
+        if not isinstance(action_space, Discrete):  # pragma no cover
             raise ValueError('Expected a discrete action space, but did not get one.')
 
-        if environment.gym_native.action_space.n != 2:  # pragma no cover
+        if action_space.n != 2:  # pragma no cover
             raise ValueError('Expected two actions:  left and right')
 
         super().__init__(
