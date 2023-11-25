@@ -51,7 +51,7 @@ The following command trains an agent for the MuJoCo swimming worm environment u
 with a baseline state-value estimator:
 
 ```
-rlai train --random-seed 12345 --agent rlai.policy_gradient.ParameterizedMdpAgent --gamma 1.0 --environment rlai.core.environments.openai_gym.Gym --gym-id Swimmer-v2 --render-every-nth-episode 500 --video-directory ~/Desktop/swimmer_videos --T 500 --train-function rlai.policy_gradient.monte_carlo.reinforce.improve --num-episodes 50000 --v-S rlai.state_value.function_approximation.ApproximateStateValueEstimator --feature-extractor rlai.core.environments.openai_gym.SignedCodingFeatureExtractor --function-approximation-model rlai.models.sklearn.SKLearnSGD --loss squared_error --sgd-alpha 0.0 --learning-rate constant --eta0 0.001 --policy rlai.policy_gradient.policies.continuous_action.ContinuousActionBetaDistributionPolicy --policy-feature-extractor rlai.core.environments.openai_gym.SignedCodingFeatureExtractor --alpha 0.00001 --update-upon-every-visit True --num-episodes-per-checkpoint 500 --checkpoint-path ~/Desktop/swimmer_checkpoint.pickle --save-agent-path ~/Desktop/swimmer_agent.pickle --log DEBUG
+rlai train --random-seed 12345 --agent rlai.policy_gradient.ParameterizedMdpAgent --gamma 1.0 --environment rlai.core.environments.gymnasium.Gym --gym-id Swimmer-v2 --render-every-nth-episode 500 --video-directory ~/Desktop/swimmer_videos --T 500 --train-function rlai.policy_gradient.monte_carlo.reinforce.improve --num-episodes 50000 --v-S rlai.state_value.function_approximation.ApproximateStateValueEstimator --feature-extractor rlai.core.environments.gymnasium.SignedCodingFeatureExtractor --function-approximation-model rlai.models.sklearn.SKLearnSGD --loss squared_error --sgd-alpha 0.0 --learning-rate constant --eta0 0.001 --policy rlai.policy_gradient.policies.continuous_action.ContinuousActionBetaDistributionPolicy --policy-feature-extractor rlai.core.environments.gymnasium.SignedCodingFeatureExtractor --alpha 0.00001 --update-upon-every-visit True --num-episodes-per-checkpoint 500 --checkpoint-path ~/Desktop/swimmer_checkpoint.pickle --save-agent-path ~/Desktop/swimmer_agent.pickle --log DEBUG
 ```
 
 The arguments are explained below.
@@ -65,7 +65,7 @@ The arguments are explained below.
 * `--gamma 1.0`:  Do not discount.
 
 ### Environment
-* `--environment rlai.core.environments.openai_gym.Gym`:  Environment class.
+* `--environment rlai.core.environments.gymnasium.Gym`:  Environment class.
 * `--gym-id Swimmer-v2`:  OpenAI Gym environment identifier.
 * `--render-every-nth-episode 500`:  Render a video every 500 episodes.
 * `--video-directory ~/Desktop/swimmer_videos`:  Where to store rendered videos.
@@ -78,7 +78,7 @@ algorithm.
 
 ### Baseline State-Value Estimator
 * `--v-S rlai.state_value.function_approximation.ApproximateStateValueEstimator`:  Baseline state-value estimator.  
-* `--feature-extractor rlai.core.environments.openai_gym.SignedCodingFeatureExtractor`:  Feature extractor for the
+* `--feature-extractor rlai.core.environments.gymnasium.SignedCodingFeatureExtractor`:  Feature extractor for the
 baseline state-value estimator.
 * `--function-approximation-model rlai.models.sklearn.SKLearnSGD`:  Use SKLearn's SGD for the baseline state-value 
 estimator.
@@ -90,7 +90,7 @@ estimator.
 ### Policy
 * `--policy rlai.policy_gradient.policies.continuous_action.ContinuousActionBetaDistributionPolicy`:  Use the beta
 distribution to model the action-density distribution within the policy.
-* `--policy-feature-extractor rlai.core.environments.openai_gym.SignedCodingFeatureExtractor`:  Feature extractor
+* `--policy-feature-extractor rlai.core.environments.gymnasium.SignedCodingFeatureExtractor`:  Feature extractor
 for the policy gradient optimizer.
 * `--alpha 0.00001`:  Learning rate for policy gradient updates. See the results for details. This was set to 0.0001 
   for ~50,000 training episodes, at which point a degenerate policy was produced. Restarting from a reasonable policy 

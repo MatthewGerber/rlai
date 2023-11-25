@@ -12,7 +12,7 @@ example of running a random (untrained) agent in this environment. The episode t
 # Training
 Train a control agent for the acrobot environment with the following command.
 ```
-rlai train --agent "rlai.gpi.state_action_value.ActionValueMdpAgent" --continuous-state-discretization-resolution 0.5 --gamma 0.9 --environment "rlai.core.environments.openai_gym.Gym" --gym-id "Acrobot-v1" --render-every-nth-episode 1000 --video-directory "~/Desktop/acrobat_videos" --train-function "rlai.gpi.temporal_difference.iteration.iterate_value_q_pi" --mode "Q_LEARNING" --num-improvements 10000 --num-episodes-per-improvement 10 --epsilon 0.05 --make-final-policy-greedy True --num-improvements-per-plot 100 --num-improvements-per-checkpoint 1000 --checkpoint-path "~/Desktop/acrobat_checkpoint.pickle" --save-agent-path "~/Desktop/acrobat_agent.pickle"
+rlai train --agent "rlai.gpi.state_action_value.ActionValueMdpAgent" --continuous-state-discretization-resolution 0.5 --gamma 0.9 --environment "rlai.core.environments.gymnasium.Gym" --gym-id "Acrobot-v1" --render-every-nth-episode 1000 --video-directory "~/Desktop/acrobat_videos" --train-function "rlai.gpi.temporal_difference.iteration.iterate_value_q_pi" --mode "Q_LEARNING" --num-improvements 10000 --num-episodes-per-improvement 10 --epsilon 0.05 --make-final-policy-greedy True --num-improvements-per-plot 100 --num-improvements-per-checkpoint 1000 --checkpoint-path "~/Desktop/acrobat_checkpoint.pickle" --save-agent-path "~/Desktop/acrobat_agent.pickle"
 ```
 
 Arguments are explained below.
@@ -25,7 +25,7 @@ Arguments are explained below.
   getting the agent to learn a useful policy. Without discounting, particularly in early iterations, the protracted
   fumbling about with poor actions would eventually be rewarded fully for a subsequent success. By discounting prior 
   actions, the agent eventually learns to focus on later actions that are instrumental to success.
-* `--environment "rlai.core.environments.openai_gym.Gym"`:  Environment class. 
+* `--environment "rlai.core.environments.gymnasium.Gym"`:  Environment class. 
 * `--gym-id "Acrobot-v1"`:  OpenAI Gym environment identifier.
 * `--render-every-nth-episode 1000`:  Render a video every 1000 episodes (100 improvements).
 * `--video-directory "~/Desktop/acrobat_videos"`:  Where to store rendered videos.

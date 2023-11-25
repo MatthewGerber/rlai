@@ -24,7 +24,7 @@ challenges. First, the tabular approach...
 ## Training
 Train a control agent for the inverted pendulum environment with the following command.
 ```
-rlai train --agent rlai.gpi.state_action_value.ActionValueMdpAgent --continuous-state-discretization-resolution 0.1 --gamma 1 --environment rlai.core.environments.openai_gym.Gym --gym-id CartPole-v1 --render-every-nth-episode 5000 --video-directory ~/Desktop/cartpole_videos --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode Q_LEARNING --num-improvements 5000 --num-episodes-per-improvement 50 --T 1000 --epsilon 0.01 --q-S-A rlai.gpi.state_action_value.tabular.TabularStateActionValueEstimator --make-final-policy-greedy True --num-improvements-per-plot 100 --save-agent-path ~/Desktop/cartpole_agent.pickle
+rlai train --agent rlai.gpi.state_action_value.ActionValueMdpAgent --continuous-state-discretization-resolution 0.1 --gamma 1 --environment rlai.core.environments.gymnasium.Gym --gym-id CartPole-v1 --render-every-nth-episode 5000 --video-directory ~/Desktop/cartpole_videos --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode Q_LEARNING --num-improvements 5000 --num-episodes-per-improvement 50 --T 1000 --epsilon 0.01 --q-S-A rlai.gpi.state_action_value.tabular.TabularStateActionValueEstimator --make-final-policy-greedy True --num-improvements-per-plot 100 --save-agent-path ~/Desktop/cartpole_agent.pickle
 ```
 
 Arguments are explained below.
@@ -41,7 +41,7 @@ Arguments are explained below.
   balancing achieved.
   
 ### Environment
-* `--environment rlai.core.environments.openai_gym.Gym`:  Environment class. 
+* `--environment rlai.core.environments.gymnasium.Gym`:  Environment class. 
 * `--gym-id CartPole-v1`:  OpenAI Gym environment identifier.
 * `--render-every-nth-episode 5000`:  Render a video every 5000 episodes (100 improvements).
 * `--video-directory ~/Desktop/cartpole_videos`:  Where to store rendered videos.
@@ -104,7 +104,7 @@ presents training with hyperparameters values that generate a high-performance a
 manual experimentation was required. A later section will show what happens when these values are changed.
 
 ```
-rlai train --agent rlai.gpi.state_action_value.ActionValueMdpAgent --gamma 0.95 --environment rlai.core.environments.openai_gym.Gym --gym-id CartPole-v1 --render-every-nth-episode 100 --video-directory ~/Desktop/cartpole_videos --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode SARSA --num-improvements 15000 --num-episodes-per-improvement 1 --num-updates-per-improvement 1 --epsilon 0.2 --q-S-A rlai.gpi.state_action_value.function_approximation.ApproximateStateActionValueEstimator --function-approximation-model rlai.gpi.state_action_value.function_approximation.models.sklearn.SKLearnSGD --loss squared_error --sgd-alpha 0.0 --learning-rate constant --eta0 0.0001 --feature-extractor rlai.core.environments.openai_gym.CartpoleFeatureExtractor --make-final-policy-greedy True --num-improvements-per-plot 100 --num-improvements-per-checkpoint 100 --checkpoint-path ~/Desktop/cartpole_checkpoint.pickle --save-agent-path ~/Desktop/cartpole_agent.pickle
+rlai train --agent rlai.gpi.state_action_value.ActionValueMdpAgent --gamma 0.95 --environment rlai.core.environments.gymnasium.Gym --gym-id CartPole-v1 --render-every-nth-episode 100 --video-directory ~/Desktop/cartpole_videos --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode SARSA --num-improvements 15000 --num-episodes-per-improvement 1 --num-updates-per-improvement 1 --epsilon 0.2 --q-S-A rlai.gpi.state_action_value.function_approximation.ApproximateStateActionValueEstimator --function-approximation-model rlai.gpi.state_action_value.function_approximation.models.sklearn.SKLearnSGD --loss squared_error --sgd-alpha 0.0 --learning-rate constant --eta0 0.0001 --feature-extractor rlai.core.environments.gymnasium.CartpoleFeatureExtractor --make-final-policy-greedy True --num-improvements-per-plot 100 --num-improvements-per-checkpoint 100 --checkpoint-path ~/Desktop/cartpole_checkpoint.pickle --save-agent-path ~/Desktop/cartpole_agent.pickle
 ```
 
 Arguments are explained below (many explanations are given above and not duplicated here).
@@ -117,7 +117,7 @@ Arguments are explained below (many explanations are given above and not duplica
 * `--gamma 0.95`
 
 ### Environment
-* `--environment rlai.core.environments.openai_gym.Gym`
+* `--environment rlai.core.environments.gymnasium.Gym`
 * `--gym-id CartPole-v1`
 * `--render-every-nth-episode 100`
 * `--video-directory ~/Desktop/cartpole_videos`
@@ -140,7 +140,7 @@ scikit-learn's stochastic gradient descent. Documentation for the model and its 
 * `--sgd-alpha 0.0`
 * `--learning-rate constant`
 * `--eta0 0.0001`
-* `--feature-extractor rlai.core.environments.openai_gym.CartpoleFeatureExtractor`:  Use the feature extractor specified.
+* `--feature-extractor rlai.core.environments.gymnasium.CartpoleFeatureExtractor`:  Use the feature extractor specified.
 
 ### Other Parameters
 * `--make-final-policy-greedy True`

@@ -40,7 +40,7 @@ class Reward:
 
         :return: String.
         """
-        return f'Reward {self.i}: {self.r}'
+        return f'Reward{"" if self.i is None else " " + str(self.i)}: {self.r}'
 
     def __hash__(
             self
@@ -113,7 +113,7 @@ class Action:
         :return: String.
         """
 
-        return f'{self.i}:  {self.name}'
+        return f'{self.i}:  {"Action" + str(self.i) if self.name is None else self.name}'
 
     def __hash__(
             self

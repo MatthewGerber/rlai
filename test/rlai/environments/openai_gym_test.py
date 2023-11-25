@@ -5,7 +5,7 @@ import pytest
 from numpy.random import RandomState
 
 from rlai.gpi.state_action_value import ActionValueMdpAgent
-from rlai.core.environments.openai_gym import Gym, CartpoleFeatureExtractor
+from rlai.core.environments.gymnasium import Gym, CartpoleFeatureExtractor
 from rlai.gpi.state_action_value.tabular import TabularStateActionValueEstimator
 from rlai.gpi.temporal_difference.evaluation import Mode
 from rlai.gpi.temporal_difference.iteration import iterate_value_q_pi

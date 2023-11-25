@@ -67,6 +67,15 @@ class GymState(MdpState):
 
         self.observation = observation
 
+    def __str__(self) -> str:
+        """
+        Get string.
+
+        :return: String.
+        """
+
+        return f'{self.observation}'
+
 
 @rl_text(chapter='Environments', page=1)
 class Gym(ContinuousMdpEnvironment):
@@ -84,6 +93,8 @@ class Gym(ContinuousMdpEnvironment):
     MCC_V0_FUEL_CONSUMPTION_FULL_THROTTLE = 1.0 / 300.0
 
     SWIMMER_V2 = 'Swimmer-v2'
+
+    CARTPOLE_V1 = 'CartPole-v1'
 
     @classmethod
     def get_argument_parser(
@@ -222,7 +233,7 @@ class Gym(ContinuousMdpEnvironment):
             else:
                 fuel_used = required_fuel
 
-        observation, reward, done, _, _ = self.gym_native.step(action=gym_action)
+        observation, reward, terminated, _, _ = self.gym_native.step(action=gym_action)
 
         # update fuel remaining if needed
         fuel_remaining = None
@@ -234,7 +245,7 @@ class Gym(ContinuousMdpEnvironment):
 
             reward = 0.0
 
-            if done:
+            if terminated:
 
                 # the ideal state is zeros across position/movement
                 state_reward = -np.abs(observation[0:6]).sum()
@@ -266,9 +277,9 @@ class Gym(ContinuousMdpEnvironment):
                 self.mcc_curr_goal_x_pos = min(Gym.MCC_V0_GOAL_X_POS, self.mcc_curr_goal_x_pos + 0.05)
 
                 # mark state and stats recorder as done. must manually mark stats recorder to allow premature reset.
-                done = True
+                terminated = True
                 if hasattr(self.gym_native, 'stats_recorder'):
-                    self.gym_native.stats_recorder.done = done
+                    self.gym_native.stats_recorder.done = terminated
 
                 reward = curr_distance + fuel_remaining
 
@@ -292,7 +303,7 @@ class Gym(ContinuousMdpEnvironment):
         self.state = GymState(
             environment=self,
             observation=observation,
-            terminal=done,
+            terminal=terminated,
             agent=agent
         )
 
@@ -548,9 +559,17 @@ class Gym(ContinuousMdpEnvironment):
         if isinstance(action_space, Discrete):
             self.actions = [
                 Action(
-                    i=i
+                    i=i,
+                    name=name
                 )
-                for i in range(action_space.n)
+                for i, name in zip(
+                    range(action_space.n),
+                    [
+                        'push-left',
+                        'push-right'
+                    ] if self.gym_id == Gym.CARTPOLE_V1
+                    else [None] * action_space.n
+                )
             ]
 
         # action space is continuous and we lack a discretization resolution:  initialize a single, multi-dimensional

@@ -13,7 +13,7 @@
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
     <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/rlai/runners/agent_in_environment.py" />
-    <option name="PARAMETERS" value="--agent ../../../trained_agents/swimmer/swimmer-agent.pickle --environment rlai.core.environments.openai_gym.Gym --gym-id Swimmer-v2 --render-every-nth-episode 1 --video-directory ~/Desktop/swimmer_videos_run --n-runs 1 --T 500 --plot --plot-environment" />
+    <option name="PARAMETERS" value="--agent ../../../trained_agents/swimmer/swimmer-agent.pickle --environment rlai.core.environments.gymnasium.Gym --gym-id Swimmer-v2 --render-every-nth-episode 1 --video-directory ~/Desktop/swimmer_videos_run --n-runs 1 --T 500 --plot --plot-environment" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />

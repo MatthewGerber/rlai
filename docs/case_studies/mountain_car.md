@@ -13,7 +13,7 @@ terminate.
 # Training
 Train a control agent for the mountain car environment with the following command.
 ```
-rlai train --agent "rlai.gpi.state_action_value.ActionValueMdpAgent" --continuous-state-discretization-resolution 0.005 --gamma 0.95 --environment "rlai.core.environments.openai_gym.Gym" --gym-id "MountainCar-v0" --render-every-nth-episode 1000 --video-directory "~/Desktop/mountaincar_videos" --train-function "rlai.gpi.temporal_difference.iteration.iterate_value_q_pi" --mode "Q_LEARNING" --num-improvements 10000 --num-episodes-per-improvement 1 --epsilon 0.01 --make-final-policy-greedy True --num-improvements-per-plot 100 --num-improvements-per-checkpoint 100 --checkpoint-path "~/Desktop/mountaincar_checkpoint.pickle" --save-agent-path "~/Desktop/mountaincar_agent.pickle"
+rlai train --agent "rlai.gpi.state_action_value.ActionValueMdpAgent" --continuous-state-discretization-resolution 0.005 --gamma 0.95 --environment "rlai.core.environments.gymnasium.Gym" --gym-id "MountainCar-v0" --render-every-nth-episode 1000 --video-directory "~/Desktop/mountaincar_videos" --train-function "rlai.gpi.temporal_difference.iteration.iterate_value_q_pi" --mode "Q_LEARNING" --num-improvements 10000 --num-episodes-per-improvement 1 --epsilon 0.01 --make-final-policy-greedy True --num-improvements-per-plot 100 --num-improvements-per-checkpoint 100 --checkpoint-path "~/Desktop/mountaincar_checkpoint.pickle" --save-agent-path "~/Desktop/mountaincar_agent.pickle"
 ```
 
 Arguments are explained below.
@@ -26,7 +26,7 @@ Arguments are explained below.
   getting the agent to learn a useful policy. Without discounting, particularly in early iterations, the protracted
   fumbling about with poor actions would eventually be rewarded fully for a subsequent success. By discounting prior 
   actions, the agent eventually learns to focus on later actions that are instrumental to success.
-* `--environment "rlai.core.environments.openai_gym.Gym"`:  Environment class. 
+* `--environment "rlai.core.environments.gymnasium.Gym"`:  Environment class. 
 * `--gym-id "MountainCar-v0"`:  OpenAI Gym environment identifier.
 * `--render-every-nth-episode 1000`:  Render a video every 1000 episodes (1000 improvements).
 * `--video-directory "~/Desktop/mountaincar_videos"`:  Where to store rendered videos.
