@@ -396,7 +396,7 @@ class Gym(ContinuousMdpEnvironment):
         gym_native = gymnasium.make(
             id=self.gym_id,
             max_episode_steps=self.T,
-            render_mode='rgb_array' if record_video else None
+            render_mode='rgb_array' if record_video else 'human'
         )
 
         # save videos via wrapper if we have a video directory
