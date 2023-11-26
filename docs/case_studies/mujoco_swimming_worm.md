@@ -3,7 +3,7 @@
 {:toc}
 
 # Introduction
-You can read more about this environment [here](https://gym.openai.com/envs/Swimmer-v2/). Many of the 
+You can read more about this environment [here](https://gymnasium.farama.org/environments/mujoco/swimmer/). Many of the 
 issues involved in solving this environment are addressed in the 
 [continuous mountain car](mountain_car_continuous.md) and 
 [continuous lunar lander](lunar_lander_continuous.md) case studies, so we will focus here on details specific to the
@@ -66,7 +66,7 @@ The arguments are explained below.
 
 ### Environment
 * `--environment rlai.core.environments.gymnasium.Gym`:  Environment class.
-* `--gym-id Swimmer-v2`:  OpenAI Gym environment identifier.
+* `--gym-id Swimmer-v2`:  Gym environment identifier.
 * `--render-every-nth-episode 500`:  Render a video every 500 episodes.
 * `--video-directory ~/Desktop/swimmer_videos`:  Where to store rendered videos.
 * `--T 500`:  Limit episodes to 500 steps.

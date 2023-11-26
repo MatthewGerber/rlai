@@ -312,7 +312,6 @@ def parse_arguments(
         parser.print_help()
         print()
         unparsed_args.append('--help')
-
     del parsed_args.help
 
     # set logging level

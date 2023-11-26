@@ -58,7 +58,7 @@ optional arguments:
 As indicated, a discount factor needs to be supplied.
 
 ### `--environment`
-Moving on to the environment, we can explore the [OpenAI Gym](https://gym.openai.com/) integration.
+Moving on to the environment, we can explore the [Gymnasium](https://gymnasium.farama.org/) integration.
 ```
 rlai help rlai.core.environments.gymnasium.Gym
 ```
@@ -130,7 +130,7 @@ optional arguments:
 
 ### Complete Command
 Putting it all together and adding the `--save-agent-path` option, we have the following full command for training an
-agent for the OpenAI Gym cartpole (inverted pendulum) environment.
+agent for the Gym cartpole (inverted pendulum) environment.
 ```
 rlai train --agent rlai.gpi.state_action_value.ActionValueMdpAgent --gamma 1.0 --environment rlai.core.environments.gymnasium.Gym --T 1000 --gym-id CartPole-v1 --render-every-nth-episode 5000 --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode Q_LEARNING --num-improvements 100 --num-episodes-per-improvement 50 --epsilon 0.01 --q-S-A rlai.gpi.state_action_value.tabular.TabularStateActionValueEstimator --continuous-state-discretization-resolution 0.1 --make-final-policy-greedy True --num-improvements-per-plot 100 --save-agent-path ~/Desktop/cartpole_agent.pickle
 ```

@@ -5,9 +5,9 @@
 # Introduction
 The inverted pendulum is also known as cart-pole balancing, where the goal is to keep a bottom-hinged pole balanced for
 as long as possible by moving a cart left or right. Imagine balancing a broom with the handle's end in your open palm. 
-You can read more about this environment [here](https://gym.openai.com/envs/CartPole-v1/). Below is an example of 
-running a random (untrained) agent in this environment. The episode terminates almost immediately as the agent loses 
-balance control.
+You can read more about this environment [here](https://gymnasium.farama.org/environments/classic_control/cart_pole/). 
+Below is an example of running a random (untrained) agent in this environment. The episode terminates almost immediately
+as the agent loses balance control.
 
 {% include youtubePlayer.html id="rGnf9CFwD7M" %}
 
@@ -42,7 +42,7 @@ Arguments are explained below.
   
 ### Environment
 * `--environment rlai.core.environments.gymnasium.Gym`:  Environment class. 
-* `--gym-id CartPole-v1`:  OpenAI Gym environment identifier.
+* `--gym-id CartPole-v1`:  Gym environment identifier.
 * `--render-every-nth-episode 5000`:  Render a video every 5000 episodes (100 improvements).
 * `--video-directory ~/Desktop/cartpole_videos`:  Where to store rendered videos.
   

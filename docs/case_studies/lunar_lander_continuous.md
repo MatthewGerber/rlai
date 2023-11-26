@@ -4,8 +4,8 @@
 
 # Introduction
 
-You can read more about this environment [here](https://gym.openai.com/envs/LunarLanderContinuous-v2/). Many of the 
-issues involved in solving this environment are addressed in the 
+You can read more about this environment [here](https://gymnasium.farama.org/environments/box2d/lunar_lander/). Many of 
+the issues involved in solving this environment are addressed in the
 [continuous mountain car](mountain_car_continuous.md) case study, so we will focus here on details specific to the 
 continuous lunar lander environment.
 
@@ -20,7 +20,7 @@ accordingly. See
 for details.
 
 ### Reward
-Looking at the OpenAI Gym reward calculation 
+Looking at the Gym reward calculation 
 [code](https://github.com/openai/gym/blob/2754d9737e7033bbdca7e69c9e5e08156facc7f4/gym/envs/box2d/lunar_lander.py#L360-L385)
 for the lunar lander, one sees a complicated arrangement of scaling factors and transformations. A goal in this case 
 study was to simplify this reward function. The ideal terminal state is easy to describe:  zeros across the position and 
@@ -58,7 +58,7 @@ The arguments are explained below.
 
 ### Environment
 * `--environment rlai.core.environments.gymnasium.Gym`:  Environment class.
-* `--gym-id LunarLanderContinuous-v2`:  OpenAI Gym environment identifier.
+* `--gym-id LunarLanderContinuous-v2`:  Gym environment identifier.
 * `--render-every-nth-episode 100`:  Render a video every 100 episodes.
 * `--video-directory ~/Desktop/lunarlander_continuous_videos`:  Where to store rendered videos.
 * `--plot-environment`:  Show a real-time plot of state and reward values.

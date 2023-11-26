@@ -7,15 +7,16 @@
 ### Environment
 This is similar to the [discrete-control mountain car](mountain_car.md) except that, here, control is achieved through
 continuous-valued forward and backward acceleration. You can read more about this environment 
-[here](https://gym.openai.com/envs/MountainCarContinuous-v0/). Continuous control complicates the use of action-value 
-estimation with tabular and function approximation methods, which assume that actions can be enumerated from a discrete 
-set. Although it is possible to discretize a continuous action space and then apply action-value methods to the 
-discretized space, the resulting estimators will need to cover an arbitrarily high dimensionality that is determined by 
-the discretization resolution. A fundamentally different approach is called for and can be found in policy gradient 
-methods. The continuous mountain car presents a simple setting in which to explore policy gradient methods, as there is 
-only one action dimension:  accelerate with force ranging from [-1, +1], where negative forces accelerate to the left 
-and positive forces accelerate to the right. The task for policy gradient methods is to model the action distribution 
-(e.g., car acceleration) in terms of the state features (e.g., position and velocity of the car).
+[here](https://gymnasium.farama.org/environments/classic_control/mountain_car_continuous/). Continuous control 
+complicates the use of action-value estimation with tabular and function approximation methods, which assume that 
+actions can be enumerated from a discrete set. Although it is possible to discretize a continuous action space and then 
+apply action-value methods to the discretized space, the resulting estimators will need to cover an arbitrarily high 
+dimensionality that is determined by the discretization resolution. A fundamentally different approach is called for and 
+can be found in policy gradient methods. The continuous mountain car presents a simple setting in which to explore 
+policy gradient methods, as there is only one action dimension:  accelerate with force ranging from [-1, +1], where 
+negative forces accelerate to the left and positive forces accelerate to the right. The task for policy gradient methods 
+is to model the action distribution (e.g., car acceleration) in terms of the state features (e.g., position and velocity 
+of the car).
 
 ### Beta Distribution
 In the case of the continuous mountain car, the action distribution can be modeled with a 
@@ -33,8 +34,8 @@ narrow or wide as desired. As indicated, the x-axis represents a continuous-valu
 policy is defined to be the beta distribution, then we can do all the usual things with the policy:  sample actions from
 it, reshape it, and integrate over it. If the environment defines more than one action dimension (e.g., one for 
 forward/backward acceleration and one for braking force), then we could extend this approach to use two separate beta 
-distributions, one for each action. We'll stick with a single action (beta distribution) in the case of the OpenAI 
-continuous mountain car environment.
+distributions, one for each action. We'll stick with a single action (beta distribution) in the case of the continuous 
+mountain car environment.
 
 How do we connect the policy (i.e., the beta distribution) to the state features (i.e., the position and velocity of the 
 car)? We do this by modeling the shape parameters in terms of the state features. For example, `a` could be modeled as 
@@ -142,7 +143,7 @@ The approach taken here is substantially more complicated than, say, tabular act
 understand how state features determine PDF shape parameters, how the shape parameters determine actions, and how 
 actions generate returns that deviate from baseline state-value estimates that are estimated separately using 
 traditional function approximation methods. RLAI instruments and displays many of these values in real time while
-rendering OpenAI environments. An example screenshot is shown below:
+rendering environments. An example screenshot is shown below:
 
 ![displays](./mountain-car-continuous-figs/displays.png)
 
@@ -162,7 +163,7 @@ and throttle use depletes the fuel level accordingly. All rewards become zero on
 for details).
 
 ### Reward
-By default, OpenAI only provides a positive reward when the car reaches the goal. Each step prior to the goal receives a
+By default, Gym only provides a positive reward when the car reaches the goal. Each step prior to the goal receives a
 negative reward for fuel use. There is a default time limit of 200 steps, and the episode terminates upon reaching this 
 limit. In this setup, a random policy might take many episodes to receive a positive reward. By providing intermediate 
 rewards for partial climbs, the agent can learn more quickly. Within RLAI, this is done by rewarding the agent at the
@@ -202,7 +203,7 @@ start of the episode.
 
 ### Environment
 * `--environment rlai.core.environments.gymnasium.Gym`:  Environment class.
-* `--gym-id MountainCarContinuous-v0`:  OpenAI Gym environment identifier.
+* `--gym-id MountainCarContinuous-v0`:  Gym environment identifier.
 * `--render-every-nth-episode 50`:  Render a video every 50 episodes.
 * `--video-directory ~/Desktop/mountaincar_continuous_videos`:  Where to store rendered videos.
 * `--T 1000`:  Limit episodes to 1000 steps.
@@ -228,7 +229,7 @@ estimator.
 ### Policy
 * `--policy rlai.policy_gradient.policies.continuous_action.ContinuousActionBetaDistributionPolicy`:  Use the beta
 distribution to model the action-density distribution within the policy.
-* `--policy-feature-extractor rlai.core.environments.openai_gym.ContinuousMountainCarFeatureExtractor`:  Feature extractor
+* `--policy-feature-extractor rlai.core.environments.gymnasium.ContinuousMountainCarFeatureExtractor`:  Feature extractor
 for the policy gradient optimizer.
 * `--alpha 0.01`:  Learning rate for policy gradient updates.
 * `--update-upon-every-visit True`:  Update the policy's action-density distribution every time a state is encountered

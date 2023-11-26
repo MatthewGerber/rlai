@@ -81,7 +81,7 @@ class GymState(MdpState):
 @rl_text(chapter='Environments', page=1)
 class Gym(ContinuousMdpEnvironment):
     """
-    Generalized Gym environment. Any OpenAI Gym environment can be executed by supplying the appropriate identifier.
+    Generalized Gym environment. Any Gym environment can be executed by supplying the appropriate identifier.
     """
 
     LLC_V2 = 'LunarLanderContinuous-v2'
@@ -117,7 +117,7 @@ class Gym(ContinuousMdpEnvironment):
         parser.add_argument(
             '--gym-id',
             type=str,
-            help='Gym identifier. See https://gym.openai.com/envs for a list of environments (e.g., CartPole-v1).'
+            help='Gym identifier. See https://gymnasium.farama.org for a list of environments (e.g., CartPole-v1).'
         )
 
         parser.add_argument(
@@ -366,7 +366,10 @@ class Gym(ContinuousMdpEnvironment):
         """
 
         # subtract 1 from number of resets to render first episode
-        check_result = self.render_every_nth_episode is not None and (self.num_resets - 1) % self.render_every_nth_episode == 0
+        check_result = (
+            self.render_every_nth_episode is not None and
+            (self.num_resets - 1) % self.render_every_nth_episode == 0
+        )
 
         if render_manually is not None:
             if render_manually:
@@ -402,10 +405,20 @@ class Gym(ContinuousMdpEnvironment):
         gym_native = gymnasium.make(
             id=self.gym_id,
             max_episode_steps=self.T,
-            render_mode='rgb_array' if record_video else 'human'
+            render_mode=(
+
+                # emit an rgb array for the step's frame if we're recording video
+                'rgb_array' if record_video
+
+                # emit human-scaled rendering if we're not recording a video but we need to render
+                else 'human' if self.render_every_nth_episode
+
+                # otherwise, do not render.
+                else None
+            )
         )
 
-        # save videos via wrapper if we have a video directory
+        # save videos via wrapper if we are recording
         if record_video:
             try:
                 gym_native = RecordVideo(
@@ -417,7 +430,7 @@ class Gym(ContinuousMdpEnvironment):
             # pickled checkpoints can come from another os where the video directory is valid, but the directory might
             # not be valid on the current os. warn about permission errors and skip video saving.
             except PermissionError as ex:
-                warnings.warn(f'Permission error when initializing OpenAI Gym monitor. Videos will not be saved. Error:  {ex}')
+                warnings.warn(f'Permission error when initializing Gym monitor. Videos will not be saved. Error:  {ex}')
 
         gym_native.reset(seed=self.random_state.randint(1000))
 
@@ -443,7 +456,14 @@ class Gym(ContinuousMdpEnvironment):
         :return: List of names.
         """
 
-        if self.gym_id == Gym.LLC_V2:
+        if self.gym_id == Gym.CARTPOLE_V1:
+            names = [
+                'pos',
+                'vel',
+                'ang',
+                'angV'
+            ]
+        elif self.gym_id == Gym.LLC_V2:
             names = [
                 'posX',
                 'posY',
@@ -519,7 +539,7 @@ class Gym(ContinuousMdpEnvironment):
 
         :param random_state: Random state.
         :param T: Maximum number of steps to run, or None for no limit.
-        :param gym_id: Gym identifier. See https://gym.openai.com/envs for a list.
+        :param gym_id: Gym identifier. See https://gymnasium.farama.org for a list.
         :param continuous_action_discretization_resolution: A discretization resolution for continuous-action
         environments. Providing this value allows the environment to be used with discrete-action methods via
         discretization of the continuous-action dimensions.
@@ -570,10 +590,14 @@ class Gym(ContinuousMdpEnvironment):
                 )
                 for i, name in zip(
                     range(action_space.n),
+
+                    # cartpole action names
                     [
                         'push-left',
                         'push-right'
                     ] if self.gym_id == Gym.CARTPOLE_V1
+
+                    # fallback action names:  all none
                     else [None] * action_space.n
                 )
             ]
@@ -654,7 +678,7 @@ class Gym(ContinuousMdpEnvironment):
 @rl_text(chapter='Feature Extractors', page=1)
 class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
     """
-    A feature extractor for the OpenAI cartpole environment. This extractor, being based on the
+    A feature extractor for the Gym cartpole environment. This extractor, being based on the
     `StateActionInteractionFeatureExtractor`, directly extracts the fully interacted state-action feature matrix. It
     returns numpy.ndarray feature matrices, which are not compatible with the Patsy formula-based interface.
     """
@@ -725,13 +749,13 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
 
         # extract and scale features
         state_action_feature_matrix = np.array([
-            np.append(state.observation, state.observation ** 2)
+            state.observation
             for state in states
         ])
 
         state_action_feature_matrix = self.feature_scaler.scale_features(state_action_feature_matrix, refit_scaler)
 
-        # interact feature vectors per state category
+        # interact feature vectors per state category, where the category indicates the joint sign of the state values.
         state_categories = [
             OneHotCategory(*[
                 obs_feature < 0.0
@@ -741,7 +765,8 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
         ]
 
         state_action_feature_matrix = self.state_category_interacter.interact(
-            state_action_feature_matrix, state_categories
+            state_action_feature_matrix,
+            state_categories
         )
 
         # interact features per action
@@ -800,7 +825,7 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
 @rl_text(chapter='Feature Extractors', page=1)
 class ContinuousFeatureExtractor(StateFeatureExtractor):
     """
-    A feature extractor for continuous OpenAI environments.
+    A feature extractor for continuous Gym environments.
     """
 
     @classmethod

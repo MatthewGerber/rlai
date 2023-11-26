@@ -41,6 +41,7 @@ def evaluate_v_pi(
         # start the environment in a random state
         state = environment.reset_for_new_run(agent)
         agent.reset_for_new_run(state)
+        agent.q_S_A.reset_for_new_run(state)
 
         # simulate until episode termination, keeping a trace of states and their immediate rewards, as well as the
         # times of their first visits.

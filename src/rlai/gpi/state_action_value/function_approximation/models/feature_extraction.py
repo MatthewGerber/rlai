@@ -18,16 +18,6 @@ class FeatureExtractor(BaseFeatureExtractor):
     Feature extractor.
     """
 
-    def reset_for_new_run(
-            self,
-            state: MdpState
-    ):
-        """
-        Reset the feature extractor for a new run.
-
-        :param state: Initial state.
-        """
-
     @abstractmethod
     def extract(
             self,

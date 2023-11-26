@@ -55,7 +55,10 @@ def run(
         raise ValueError('No training function specified. Cannot train.')
 
     if parsed_args.random_seed is None:
-        warnings.warn('No random seed provided to the trainer. Results will not be replicable. Consider passing --random-seed argument.')
+        warnings.warn(
+            'No random seed provided to the trainer. Results will not be replicable. Consider passing --random-seed '
+            'argument.'
+        )
         random_state = RandomState()
     else:
         random_state = RandomState(parsed_args.random_seed)

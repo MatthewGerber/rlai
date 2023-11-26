@@ -7,8 +7,8 @@ Diagnostic and interpretation tools are standard issue for statistical models, t
 developed and covered within RL. These tools are particularly important when value functions are approximated with 
 models rather than calculated directly in tabular fashion.
 
-# OpenAI Gym Displays
-RLAI instruments and displays many values in real time while rendering OpenAI environments. An example screenshot is 
+# Gym Displays
+RLAI instruments and displays many values in real time while rendering Gym environments. An example screenshot is 
 shown below (see [continuous mountain car](./case_studies/mountain_car_continuous.md) for more information):
 
 ![displays](./case_studies/mountain-car-continuous-figs/displays.png)

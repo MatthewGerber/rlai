@@ -212,7 +212,7 @@ def resume_from_checkpoint(
 
     resume_function(**resume_args)
 
-    # some environments (e.g., openai gym) hold resources that need to be released
+    # some environments (e.g., gym) hold resources that need to be released
     resume_args['environment'].close()
 
     return resume_args['agent']

@@ -7,6 +7,7 @@ import numpy as np
 from sklearn.exceptions import NotFittedError
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 
+from rlai.core import MdpState
 from rlai.core.environments.mdp import MdpEnvironment
 from rlai.meta import rl_text
 from rlai.utils import get_base_argument_parser
@@ -17,6 +18,16 @@ class FeatureExtractor(ABC):
     """
     Feature extractor.
     """
+
+    def reset_for_new_run(
+            self,
+            state: MdpState
+    ):
+        """
+        Reset the feature extractor for a new run.
+
+        :param state: Initial state.
+        """
 
     @classmethod
     def get_argument_parser(

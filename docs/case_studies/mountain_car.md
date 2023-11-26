@@ -4,9 +4,9 @@
   
 # Introduction
 The mountain car is not sufficiently powerful to climb the hill directly, but must instead develop a strategy based on 
-the surrounding slopes. You can read more about this environment [here](https://gym.openai.com/envs/MountainCar-v0/). 
-Below is an example of running a random (untrained) agent in this environment. The episode takes quite a long time to 
-terminate.
+the surrounding slopes. You can read more about this environment 
+[here](https://gymnasium.farama.org/environments/classic_control/mountain_car/). Below is an example of running a random 
+(untrained) agent in this environment. The episode takes quite a long time to terminate.
 
 {% include youtubePlayer.html id="fnB_84YAW08" %}
 
@@ -27,7 +27,7 @@ Arguments are explained below.
   fumbling about with poor actions would eventually be rewarded fully for a subsequent success. By discounting prior 
   actions, the agent eventually learns to focus on later actions that are instrumental to success.
 * `--environment "rlai.core.environments.gymnasium.Gym"`:  Environment class. 
-* `--gym-id "MountainCar-v0"`:  OpenAI Gym environment identifier.
+* `--gym-id "MountainCar-v0"`:  Gym environment identifier.
 * `--render-every-nth-episode 1000`:  Render a video every 1000 episodes (1000 improvements).
 * `--video-directory "~/Desktop/mountaincar_videos"`:  Where to store rendered videos.
 * `--train-function "rlai.gpi.temporal_difference.iteration.iterate_value_q_pi"`:  Run iterative temporal-differencing 

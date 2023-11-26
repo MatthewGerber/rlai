@@ -40,7 +40,7 @@ There are several ways to use the package.
 
 Looking for a place to dig in? Below are a few ideas organized by area of interest.
 
-* Explore new OpenAI Gym environments:  OpenAI Gym provides a wide range of interesting environments, and
+* Explore new Gym environments:  Gym provides a wide range of interesting environments, and
   experimenting with them can be as simple as modifying an existing training command (e.g., the one for
   [inverted pendulum](case_studies/inverted_pendulum.md)) and replacing the 
   `--gym-id` with something else. Other changes might be needed depending on the environment, but Gym is particularly

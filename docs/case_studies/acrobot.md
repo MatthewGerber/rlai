@@ -4,7 +4,8 @@
   
 # Introduction
 The acrobot is a two-joint, two-link mechanism, and the goal is to get the end of the mechanism to touch the horizontal 
-height marker. You can read more about this environment [here](https://gym.openai.com/envs/Acrobot-v1/). Below is an 
+height marker. You can read more about this environment 
+[here](https://gymnasium.farama.org/environments/classic_control/acrobot/). Below is an 
 example of running a random (untrained) agent in this environment. The episode takes quite a long time to terminate.
 
 {% include youtubePlayer.html id="ACst59L0RLQ" %}
@@ -26,7 +27,7 @@ Arguments are explained below.
   fumbling about with poor actions would eventually be rewarded fully for a subsequent success. By discounting prior 
   actions, the agent eventually learns to focus on later actions that are instrumental to success.
 * `--environment "rlai.core.environments.gymnasium.Gym"`:  Environment class. 
-* `--gym-id "Acrobot-v1"`:  OpenAI Gym environment identifier.
+* `--gym-id "Acrobot-v1"`:  Gym environment identifier.
 * `--render-every-nth-episode 1000`:  Render a video every 1000 episodes (100 improvements).
 * `--video-directory "~/Desktop/acrobat_videos"`:  Where to store rendered videos.
 * `--train-function "rlai.gpi.temporal_difference.iteration.iterate_value_q_pi"`:  Run iterative temporal-differencing 

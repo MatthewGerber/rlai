@@ -149,7 +149,13 @@ def iterate_value_q_pi(
         i += 1
 
         if num_improvements_per_plot is not None and i % num_improvements_per_plot == 0:
-            plot_policy_iteration(iteration_average_reward, iteration_total_states, iteration_num_states_improved, elapsed_seconds_average_rewards, pdf)
+            plot_policy_iteration(
+                iteration_average_reward,
+                iteration_total_states,
+                iteration_num_states_improved,
+                elapsed_seconds_average_rewards,
+                pdf
+            )
 
         if num_improvements_per_checkpoint is not None and i % num_improvements_per_checkpoint == 0:
 

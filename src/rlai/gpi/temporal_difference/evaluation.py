@@ -94,6 +94,7 @@ def evaluate_q_pi(
         # reset the environment for the new run, and reset the agent accordingly.
         curr_state = environment.reset_for_new_run(agent)
         agent.reset_for_new_run(curr_state)
+        agent.q_S_A.reset_for_new_run(curr_state)
 
         # simulate until episode termination. begin by taking an action in the first state.
         curr_t = 0
