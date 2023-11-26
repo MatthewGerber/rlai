@@ -178,6 +178,7 @@ def iterate_value_q_pi(
 
             checkpoint_path_with_index = insert_index_into_path(checkpoint_path, i)
             final_checkpoint_path = checkpoint_path_with_index
+            os.makedirs(os.path.dirname(final_checkpoint_path), exist_ok=True)
             with open(checkpoint_path_with_index, 'wb') as checkpoint_file:
                 pickle.dump(resume_args, checkpoint_file)
 
