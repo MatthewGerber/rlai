@@ -1,3 +1,4 @@
+import logging
 import math
 import os
 import warnings
@@ -233,7 +234,12 @@ class Gym(ContinuousMdpEnvironment):
             else:
                 fuel_used = required_fuel
 
-        observation, reward, terminated, _, _ = self.gym_native.step(action=gym_action)
+        observation, reward, terminated, truncated, _ = self.gym_native.step(action=gym_action)
+
+        # truncation is a special case of termination
+        if truncated and not terminated:
+            logging.info(f'Episode was truncated after {t + 1} step(s). Terminating.')
+            terminated = truncated
 
         # update fuel remaining if needed
         fuel_remaining = None
