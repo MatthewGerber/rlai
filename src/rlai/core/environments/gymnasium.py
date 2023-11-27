@@ -289,6 +289,13 @@ class Gym(ContinuousMdpEnvironment):
 
                 reward = curr_distance + fuel_remaining
 
+        elif self.gym_id == Gym.CARTPOLE_V1:
+
+            if not terminated or truncated:
+                reward = self.get_cartpole_reward(observation)
+            else:
+                reward = 0.0
+
         # call render if rendering manually
         if self.check_render_current_episode(True):
             self.gym_native.render()
@@ -316,6 +323,20 @@ class Gym(ContinuousMdpEnvironment):
         self.previous_observation = observation
 
         return self.state, Reward(i=None, r=reward)
+
+    @staticmethod
+    def get_cartpole_reward(
+            observation: np.ndarray
+    ) -> float:
+        """
+        Get cartpole reward.
+
+        :param observation: Observation (state).
+        :return: Reward.
+        """
+
+        total_deviation = np.abs(observation).sum()
+        return 2.0 * (1.0 - (1.0 / (1.0 + np.exp(1.5 * -total_deviation))))
 
     def reset_for_new_run(
             self,
