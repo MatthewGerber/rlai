@@ -337,7 +337,7 @@ class Gym(ContinuousMdpEnvironment):
 
         total_deviation = np.abs(observation).sum()
 
-        return 2.0 * (1.0 - (1.0 / (1.0 + np.exp(1.5 * -total_deviation))))
+        return 2.0 * (1.0 - (1.0 / (1.0 + np.exp(1.0 * -total_deviation))))
 
     def reset_for_new_run(
             self,
@@ -770,12 +770,12 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
         self.check_state_and_action_lists(states, actions)
 
         # extract and scale features
-        state_action_feature_matrix = np.array([
+        state_feature_matrix = np.array([
             np.append(state.observation, state.observation ** 2.0)
             for state in states
         ])
 
-        state_action_feature_matrix = self.feature_scaler.scale_features(state_action_feature_matrix, refit_scaler)
+        state_scaled_feature_matrix = self.feature_scaler.scale_features(state_feature_matrix, refit_scaler)
 
         # interact feature vectors per state category, where the category indicates the joint sign of the state values.
         state_categories = [
@@ -786,14 +786,14 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
             for state in states
         ]
 
-        state_action_feature_matrix = self.state_category_interacter.interact(
-            state_action_feature_matrix,
+        state_category_feature_matrix = self.state_category_interacter.interact(
+            state_scaled_feature_matrix,
             state_categories
         )
 
         # interact features per action
         state_action_feature_matrix = self.interact(
-            state_features=state_action_feature_matrix,
+            state_features=state_category_feature_matrix,
             actions=actions
         )
 
@@ -838,7 +838,7 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
         ])
 
         self.feature_scaler = NonstationaryFeatureScaler(
-            num_observations_refit_feature_scaler=2000,
+            num_observations_refit_feature_scaler=5000,
             refit_history_length=100000,
             refit_weight_decay=0.99999
         )
