@@ -8,23 +8,23 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from matplotlib.backends.backend_pdf import PdfPages
 
-from rlai.gpi.state_action_value.function_approximation.models.feature_extraction import FeatureExtractor
+from rlai.gpi.state_action_value.function_approximation.models.feature_extraction import StateActionFeatureExtractor
 from rlai.meta import rl_text
-from rlai.models import FunctionApproximationModel as BaseFunctionApproximationModel
+from rlai.models import FunctionApproximationModel
 
 MAX_PLOT_COEFFICIENTS = 50
 MAX_PLOT_ACTIONS = 20
 
 
 @rl_text(chapter=9, page=197)
-class FunctionApproximationModel(BaseFunctionApproximationModel, ABC):
+class StateActionFunctionApproximationModel(FunctionApproximationModel, ABC):
     """
-    Function approximation model.
+    Base class for models that approximate state-action value functions.
     """
 
     def plot(
             self,
-            feature_extractor: FeatureExtractor,
+            feature_extractor: StateActionFeatureExtractor,
             policy_improvement_count: int,
             num_improvement_bins: Optional[int],
             render: bool,
@@ -43,7 +43,7 @@ class FunctionApproximationModel(BaseFunctionApproximationModel, ABC):
         """
 
         # TODO:  update the current function to follow the ui/background thread pattern used elsewhere to surface plots
-        # in the jupyter notebook.
+        #   in the jupyter notebook.
         if threading.current_thread() != threading.main_thread():
             return
 
@@ -169,7 +169,7 @@ class FunctionApproximationModel(BaseFunctionApproximationModel, ABC):
 
     def get_feature_action_coefficients(
             self,
-            feature_extractor: FeatureExtractor
+            feature_extractor: StateActionFeatureExtractor
     ) -> Optional[pd.DataFrame]:
         """
         Get a pandas.DataFrame containing one row per feature and one column per action, with the cells containing the
@@ -187,7 +187,7 @@ class FunctionApproximationModel(BaseFunctionApproximationModel, ABC):
         Initialize the model.
         """
 
-        BaseFunctionApproximationModel.__init__(self)
+        FunctionApproximationModel.__init__(self)
 
         self.feature_action_coefficients: Optional[pd.DataFrame] = None
 

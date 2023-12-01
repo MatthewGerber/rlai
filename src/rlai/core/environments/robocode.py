@@ -9,7 +9,7 @@ from numpy.random import RandomState
 from rlai.core import Reward, Action, MdpState, MdpAgent, Environment
 from rlai.core.environments.network import TcpMdpEnvironment
 from rlai.gpi.state_action_value import StateActionValueEstimator, ActionValueMdpAgent
-from rlai.gpi.state_action_value.function_approximation.models.feature_extraction import FeatureExtractor
+from rlai.gpi.state_action_value.function_approximation.models.feature_extraction import StateActionFeatureExtractor
 from rlai.meta import rl_text
 from rlai.utils import parse_arguments
 
@@ -585,7 +585,7 @@ class RobocodeState(MdpState):
 
 
 @rl_text(chapter='Feature Extractors', page=1)
-class RobocodeFeatureExtractor(FeatureExtractor):
+class RobocodeFeatureExtractor(StateActionFeatureExtractor):
     """
     Robocode feature extractor.
     """
@@ -620,7 +620,7 @@ class RobocodeFeatureExtractor(FeatureExtractor):
             cls,
             args: List[str],
             environment: RobocodeEnvironment
-    ) -> Tuple[FeatureExtractor, List[str]]:
+    ) -> Tuple[StateActionFeatureExtractor, List[str]]:
         """
         Initialize a feature extractor from arguments.
 
@@ -649,7 +649,9 @@ class RobocodeFeatureExtractor(FeatureExtractor):
 
         :param states: States.
         :param actions: Actions.
-        :param refit_scaler: Whether or not to refit the feature scaler before scaling the extracted features.
+        :param refit_scaler: Whether or not to refit the feature scaler before scaling the extracted features. This is
+        only appropriate in settings where nonstationarity is desired (e.g., during training). During evaluation, the
+        scaler should remain fixed, which means this should be False.
         :return: State-feature numpy.ndarray.
         """
 

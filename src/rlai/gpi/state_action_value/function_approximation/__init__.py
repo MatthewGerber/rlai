@@ -13,9 +13,11 @@ from rlai.core import Policy, Action, MdpState, MdpAgent
 from rlai.core.environments.mdp import MdpEnvironment
 from rlai.gpi import PolicyImprovementEvent
 from rlai.gpi.state_action_value import ValueEstimator, ActionValueEstimator, StateActionValueEstimator
-from rlai.gpi.state_action_value.function_approximation.models import FunctionApproximationModel, FeatureExtractor
+from rlai.gpi.state_action_value.function_approximation.models import StateActionFunctionApproximationModel, StateActionFeatureExtractor
+from rlai.gpi.state_action_value.function_approximation.models.sklearn import SKLearnSGD
 from rlai.meta import rl_text
-from rlai.models.sklearn import SKLearnSGD
+from rlai.models.feature_extraction import NonstationaryFeatureScaler
+from rlai.models.sklearn import SKLearnSGD as BaseSKLearnSGD
 from rlai.utils import parse_arguments, load_class, log_with_border
 
 
@@ -338,7 +340,14 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
 
             # feature extractors may return a matrix with no columns if extraction was not possible
             if state_action_feature_matrix.shape[1] > 0:
-                self.model.fit(state_action_feature_matrix, self.experience_values, self.weights)
+                self.model.fit(
+                    state_action_feature_matrix,
+                    self.value_scaler.scale_features(
+                        np.array(self.experience_values).reshape(-1, 1),
+                        True
+                    ).flatten(),
+                    self.weights
+                )
 
             self.experience_states.clear()
             self.experience_actions.clear()
@@ -365,7 +374,8 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
 
         log_with_border(logging.DEBUG, f'Evaluating {len(actions)} action(s)')
 
-        # replicate the state for each action, in order to evaluate each state-action pair.
+        # replicate the state for each action, in order to evaluate each state-action pair. don't allow the feature
+        # scaler to refit, since it needs to be stationary during evaluation.
         state_action_feature_matrix = self.extract_features([state] * len(actions), actions, False)
 
         # feature extractors may return a matrix with no columns if extraction was not possible
@@ -389,7 +399,9 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
 
         :param states: States.
         :param actions: Actions.
-        :param refit_scaler: Whether or not to refit the feature scaler before scaling the extracted features.
+        :param refit_scaler: Whether or not to refit the feature scaler before scaling the extracted features. This is
+        only appropriate in settings where nonstationarity is desired (e.g., during training). During evaluation, the
+        scaler should remain fixed, which means this should be False.
         :return: State-feature numpy.ndarray.
         """
 
@@ -461,14 +473,14 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
 
         assert isinstance(self.model, SKLearnSGD)
 
-        self.model.update_plot(time_step_detail_iteration)
+        self.model.sklearn_sgd.update_plot(time_step_detail_iteration)
 
     def __init__(
             self,
             environment: MdpEnvironment,
             epsilon: Optional[float],
-            model: FunctionApproximationModel,
-            feature_extractor: FeatureExtractor,
+            model: StateActionFunctionApproximationModel,
+            feature_extractor: StateActionFeatureExtractor,
             formula: Optional[str],
             plot_model: bool,
             plot_model_per_improvements: Optional[int],
@@ -519,6 +531,12 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         self.experience_values: List[float] = []
         self.weights: Optional[np.ndarray] = None
         self.experience_pending: bool = False
+
+        self.value_scaler = NonstationaryFeatureScaler(
+            num_observations_refit_feature_scaler=5000,
+            refit_history_length=100000,
+            refit_weight_decay=0.99999
+        )
 
     def __getitem__(
             self,

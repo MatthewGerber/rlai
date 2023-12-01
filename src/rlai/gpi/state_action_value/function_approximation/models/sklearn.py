@@ -1,26 +1,74 @@
-from typing import Optional, Dict
+from typing import Optional, Dict, Any, List, Tuple
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 from matplotlib.backends.backend_pdf import PdfPages
+from numpy.random import RandomState
 
 from rlai.gpi.state_action_value.function_approximation.models import (
-    FeatureExtractor,
-    FunctionApproximationModel
+    StateActionFeatureExtractor,
+    StateActionFunctionApproximationModel
 )
 from rlai.meta import rl_text
+from rlai.models import FunctionApproximationModel
 from rlai.models.sklearn import SKLearnSGD as BaseSKLearnSGD
 
 
 @rl_text(chapter=9, page=200)
-class SKLearnSGD(FunctionApproximationModel, BaseSKLearnSGD):
+class SKLearnSGD(StateActionFunctionApproximationModel):
     """
-    Extension of the base SKLearnSGD features specific to state-action modeling.
+    State-action value modeler based on the SKLearnSGD algorithm.
     """
+
+    @classmethod
+    def init_from_arguments(
+            cls,
+            args: List[str],
+            random_state: RandomState
+    ) -> Tuple[FunctionApproximationModel, List[str]]:
+        """
+        Initialize a model from arguments.
+
+        :param args: Arguments.
+        :param random_state: Random state.
+        :return: 2-tuple of a model and a list of unparsed arguments.
+        """
+
+        sklearn_sgd, unparsed_args = BaseSKLearnSGD.init_from_arguments(args, random_state)
+
+        assert isinstance(sklearn_sgd, BaseSKLearnSGD)
+
+        state_action_sklearn_sgd = cls(
+            sklearn_sgd=sklearn_sgd
+        )
+
+        return state_action_sklearn_sgd, unparsed_args
+
+    def fit(self, X: Any, y: Any, weight: Optional[np.ndarray]):
+        """
+        Fit the model to a matrix of feature vectors and a vector of returns.
+
+        :param X: Feature matrix (#obs, #features).
+        :param y: Outcome vector (#obs,).
+        :param weight: Weights (#obs,).
+        """
+
+        self.sklearn_sgd.fit(X, y, weight)
+
+    def evaluate(self, feature_matrix: np.ndarray) -> np.ndarray:
+        """
+        Evaluate the model at a matrix of features.
+
+        :param feature_matrix: Feature matrix (#obs, #features).
+        :return: Vector of outcomes from the evaluation (#obs,).
+        """
+
+        return self.sklearn_sgd.evaluate(feature_matrix)
 
     def plot(
             self,
-            feature_extractor: FeatureExtractor,
+            feature_extractor: StateActionFeatureExtractor,
             policy_improvement_count: int,
             num_improvement_bins: Optional[int],
             render: bool,
@@ -38,8 +86,7 @@ class SKLearnSGD(FunctionApproximationModel, BaseSKLearnSGD):
         :return: Matplotlib figure, if one was generated and not plotting to PDF.
         """
 
-        FunctionApproximationModel.plot(
-            self,
+        super().plot(
             feature_extractor=feature_extractor,
             policy_improvement_count=policy_improvement_count,
             num_improvement_bins=num_improvement_bins,
@@ -47,15 +94,14 @@ class SKLearnSGD(FunctionApproximationModel, BaseSKLearnSGD):
             pdf=pdf
         )
 
-        return BaseSKLearnSGD.plot(
-            self,
+        return self.sklearn_sgd.plot(
             render=render,
             pdf=pdf
         )
 
     def get_feature_action_coefficients(
             self,
-            feature_extractor: FeatureExtractor
+            feature_extractor: StateActionFeatureExtractor
     ) -> Optional[pd.DataFrame]:
         """
         Get a pandas.DataFrame containing one row per feature and one column per action, with the cells containing the
@@ -72,10 +118,10 @@ class SKLearnSGD(FunctionApproximationModel, BaseSKLearnSGD):
 
         # model might not yet be fit (e.g., if called from jupyter notebook) and won't have a coefficients attribute in
         # such cases
-        if not hasattr(self.model, 'coef_'):  # pragma no cover
+        if not hasattr(self.sklearn_sgd.model, 'coef_'):  # pragma no cover
             return None
 
-        coefficients = self.model.coef_
+        coefficients = self.sklearn_sgd.model.coef_
 
         all_feature_names = [
             feature
@@ -96,7 +142,7 @@ class SKLearnSGD(FunctionApproximationModel, BaseSKLearnSGD):
 
         # create dataframe
         df_index = all_feature_names
-        if self.model.fit_intercept:
+        if self.sklearn_sgd.model.fit_intercept:
             df_index.append('intercept')
 
         coefficients_df = pd.DataFrame(
@@ -120,30 +166,44 @@ class SKLearnSGD(FunctionApproximationModel, BaseSKLearnSGD):
             raise ValueError('Failed to extract all coefficients.')
 
         # add intercept if we fit one
-        if self.model.fit_intercept:
-            coefficients_df.loc['intercept', :] = self.model.intercept_[0]
+        if self.sklearn_sgd.model.fit_intercept:
+            coefficients_df.loc['intercept', :] = self.sklearn_sgd.model.intercept_[0]
 
         return coefficients_df
 
     def __init__(
             self,
-            scale_eta0_for_y: bool,
-            **kwargs
+            sklearn_sgd: BaseSKLearnSGD
     ):
         """
         Initialize the model.
 
-        :param scale_eta0_for_y: Whether or not to scale the value of eta0 for y.
-        :param kwargs: Keyword arguments to pass to SGDRegressor.
+        :param sklearn_sgd: SKLearnSGD instance.
         """
 
-        FunctionApproximationModel.__init__(self)
+        super().__init__()
 
-        BaseSKLearnSGD.__init__(
-            self,
-            scale_eta0_for_y=scale_eta0_for_y,
-            **kwargs
-        )
+        self.sklearn_sgd = sklearn_sgd
+
+    def __eq__(self, other: object) -> bool:
+        """
+        Check equality.
+
+        :param other: Other object.
+        :return: True if equal.
+        """
+
+        return self.sklearn_sgd.__eq__(other)
+
+    def __ne__(self, other: object) -> bool:
+        """
+        Check inequality.
+
+        :param other: Other object.
+        :return: True if not equal.
+        """
+
+        return self.sklearn_sgd.__ne__(other)
 
     def __getstate__(
             self
@@ -156,8 +216,8 @@ class SKLearnSGD(FunctionApproximationModel, BaseSKLearnSGD):
 
         state = dict(self.__dict__)
 
-        FunctionApproximationModel.deflate_state(state)
-        BaseSKLearnSGD.deflate_state(state)
+        super().deflate_state(state)
+        BaseSKLearnSGD.deflate_state(state['sklearn_sgd'].__dict__)
 
         return state
 
@@ -171,7 +231,7 @@ class SKLearnSGD(FunctionApproximationModel, BaseSKLearnSGD):
         :param state: Unpickled state.
         """
 
-        FunctionApproximationModel.inflate_state(state)
-        BaseSKLearnSGD.inflate_state(state)
+        super().inflate_state(state)
+        state['sklearn_sgd'].__dict__ = BaseSKLearnSGD.inflate_state(state['sklearn_sgd'])
 
         self.__dict__ = state

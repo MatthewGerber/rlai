@@ -12,7 +12,7 @@ from rlai.utils import get_base_argument_parser
 @rl_text(chapter=9, page=197)
 class FunctionApproximationModel(ABC):
     """
-    Function approximation model.
+    Base class for models that approximate functions.
     """
 
     @classmethod
@@ -47,14 +47,14 @@ class FunctionApproximationModel(ABC):
             self,
             X: Any,
             y: Any,
-            weight: Optional[float]
+            weight: Optional[np.ndarray]
     ):
         """
-        Fit the model to a matrix of features and a vector of returns.
+        Fit the model to a matrix of feature vectors and a vector of returns.
 
-        :param X: Feature matrix.
-        :param y: Returns.
-        :param weight: Weight.
+        :param X: Feature matrix (#obs, #features).
+        :param y: Outcome vector (#obs,).
+        :param weight: Weights (#obs,).
         """
 
     @abstractmethod

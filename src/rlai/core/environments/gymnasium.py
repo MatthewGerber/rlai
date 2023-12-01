@@ -337,7 +337,10 @@ class Gym(ContinuousMdpEnvironment):
 
         total_deviation = np.abs(observation).sum()
 
-        return 2.0 * (1.0 - (1.0 / (1.0 + np.exp(1.0 * -total_deviation))))
+        # logit-like nonlinear
+        # 2.0 * (1.0 - (1.0 / (1.0 + np.exp(1.0 * -total_deviation))))
+
+        return max(0.0, 1.0 - (total_deviation / 5.0))
 
     def reset_for_new_run(
             self,
@@ -761,7 +764,9 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
 
         :param states: States.
         :param actions: Actions.
-        :param refit_scaler: Whether or not to refit the feature scaler before scaling the extracted features.
+        :param refit_scaler: Whether or not to refit the feature scaler before scaling the extracted features. This is
+        only appropriate in settings where nonstationarity is desired (e.g., during training). During evaluation, the
+        scaler should remain fixed, which means this should be False.
         :return: State-feature numpy.ndarray.
         """
 
@@ -771,7 +776,7 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
 
         # extract and scale features
         state_feature_matrix = np.array([
-            np.append(state.observation, state.observation ** 2.0)
+            state.observation
             for state in states
         ])
 
@@ -902,7 +907,9 @@ class ContinuousFeatureExtractor(StateFeatureExtractor):
         Extract state features.
 
         :param state: State.
-        :param refit_scaler: Whether or not to refit the feature scaler before scaling the extracted features.
+        :param refit_scaler: Whether or not to refit the feature scaler before scaling the extracted features. This is
+        only appropriate in settings where nonstationarity is desired (e.g., during training). During evaluation, the
+        scaler should remain fixed, which means this should be False.
         :return: State-feature vector.
         """
 
@@ -943,7 +950,9 @@ class SignedCodingFeatureExtractor(ContinuousFeatureExtractor):
         Extract state features.
 
         :param state: State.
-        :param refit_scaler: Whether to refit the feature scaler before scaling the extracted features.
+        :param refit_scaler: Whether or not to refit the feature scaler before scaling the extracted features. This is
+        only appropriate in settings where nonstationarity is desired (e.g., during training). During evaluation, the
+        scaler should remain fixed, which means this should be False.
         :return: State-feature vector.
         """
 
@@ -995,7 +1004,9 @@ class ContinuousLunarLanderFeatureExtractor(ContinuousFeatureExtractor):
         Extract state features.
 
         :param state: State.
-        :param refit_scaler: Whether or not to refit the feature scaler before scaling the extracted features.
+        :param refit_scaler: Whether or not to refit the feature scaler before scaling the extracted features. This is
+        only appropriate in settings where nonstationarity is desired (e.g., during training). During evaluation, the
+        scaler should remain fixed, which means this should be False.
         :return: State-feature vector.
         """
 
@@ -1068,7 +1079,9 @@ class ContinuousMountainCarFeatureExtractor(ContinuousFeatureExtractor):
         Extract state features.
 
         :param state: State.
-        :param refit_scaler: Whether or not to refit the feature scaler before scaling the extracted features.
+        :param refit_scaler: Whether or not to refit the feature scaler before scaling the extracted features. This is
+        only appropriate in settings where nonstationarity is desired (e.g., during training). During evaluation, the
+        scaler should remain fixed, which means this should be False.
         :return: State-feature vector.
         """
 

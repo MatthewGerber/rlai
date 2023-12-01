@@ -7,7 +7,7 @@ from jax import numpy as jnp, grad
 
 from rlai.core import Policy, Action, MdpState
 from rlai.core.environments.mdp import MdpEnvironment
-from rlai.gpi.state_action_value.function_approximation.models import FeatureExtractor
+from rlai.gpi.state_action_value.function_approximation.models import StateActionFeatureExtractor
 from rlai.meta import rl_text
 from rlai.policy_gradient.policies import ParameterizedPolicy
 from rlai.utils import parse_arguments, load_class
@@ -19,7 +19,7 @@ class SoftMaxInActionPreferencesPolicy(ParameterizedPolicy):
     Parameterized policy that implements a soft-max over action preferences. The policy gradient calculation is coded up
     manually. See the `SoftMaxInActionPreferencesJaxPolicy` for a similar policy in which the gradient is calculated
     using the JAX library. This is only compatible with feature extractors derived from
-    `rlai.gpi.state_action_value.function_approximation.models.feature_extraction.FeatureExtractor`, which return
+    `rlai.gpi.state_action_value.function_approximation.models.feature_extraction.StateActionFeatureExtractor`, which return
     state-action feature vectors.
     """
 
@@ -152,7 +152,7 @@ class SoftMaxInActionPreferencesPolicy(ParameterizedPolicy):
 
     def __init__(
             self,
-            feature_extractor: FeatureExtractor
+            feature_extractor: StateActionFeatureExtractor
     ):
         """
         Initialize the parameterized policy.
@@ -242,7 +242,7 @@ class SoftMaxInActionPreferencesJaxPolicy(ParameterizedPolicy):
     """
     Parameterized policy that implements a soft-max over action preferences. The policy gradient calculation is
     performed using the JAX library. This is only compatible with feature extractors derived from
-    `rlai.gpi.state_action_value.function_approximation.models.feature_extraction.FeatureExtractor`, which return
+    `rlai.gpi.state_action_value.function_approximation.models.feature_extraction.StateActionFeatureExtractor`, which return
     state-action feature vectors.
     """
 
@@ -382,7 +382,7 @@ class SoftMaxInActionPreferencesJaxPolicy(ParameterizedPolicy):
 
     def __init__(
             self,
-            feature_extractor: FeatureExtractor
+            feature_extractor: StateActionFeatureExtractor
     ):
         """
         Initialize the parameterized policy.

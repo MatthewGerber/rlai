@@ -16,7 +16,9 @@ from rlai.utils import get_base_argument_parser
 @rl_text(chapter=9, page=197)
 class FeatureExtractor(ABC):
     """
-    Feature extractor.
+    Base feature extractor for all others. This class does not define any extraction function, since the signature of
+    such a function depends on what, conceptually, we're extracting features from. The definition of this signature is
+    deferred to inheriting classes that are closer to their conceptual extraction targets.
     """
 
     def reset_for_new_run(
@@ -143,13 +145,13 @@ class NonstationaryFeatureScaler:
 
         # scale features
         try:
-            X = self.feature_scaler.transform(X)
+            scaled_X = self.feature_scaler.transform(X)
 
         # the following exception will be thrown if the scaler has not yet been fitted. catch and ignore scaling.
         except NotFittedError:
-            pass
+            scaled_X = X
 
-        return X
+        return scaled_X
 
     def __init__(
             self,

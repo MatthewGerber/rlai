@@ -10,9 +10,9 @@ import numpy as np
 import pytest
 from numpy.random import RandomState
 
-from rlai.gpi.state_action_value import ActionValueMdpAgent
 from rlai.core.environments.gridworld import Gridworld, GridworldFeatureExtractor
 from rlai.core.environments.mdp import TrajectorySamplingMdpPlanningEnvironment, StochasticEnvironmentModel
+from rlai.gpi.state_action_value import ActionValueMdpAgent
 from rlai.gpi.state_action_value.function_approximation import (
     ApproximateStateActionValueEstimator,
     FunctionApproximationPolicy
@@ -25,6 +25,7 @@ from rlai.gpi.state_action_value.tabular import TabularStateActionValueEstimator
 from rlai.gpi.temporal_difference.evaluation import Mode
 from rlai.gpi.temporal_difference.iteration import iterate_value_q_pi
 from rlai.gpi.utils import update_policy_iteration_plot, plot_policy_iteration
+from rlai.models.sklearn import SKLearnSGD as BaseSKLearnSGD
 from rlai.runners.trainer import run
 from rlai.utils import RunThreadManager
 from test.rlai.utils import tabular_estimator_legacy_eq, tabular_pi_legacy_eq
@@ -198,7 +199,7 @@ def test_q_learning_iterate_value_q_pi_function_approximation_with_formula():
     q_S_A = ApproximateStateActionValueEstimator(
         mdp_environment,
         0.05,
-        SKLearnSGD(random_state=random_state, scale_eta0_for_y=False),
+        SKLearnSGD(BaseSKLearnSGD(scale_eta0_for_y=False, random_state=random_state)),
         StateActionIdentityFeatureExtractor(mdp_environment),
         f'C(s, levels={[s.i for s in mdp_environment.SS]}):C(a, levels={[a.i for a in mdp_environment.SS[0].AA]})',
         False,
@@ -226,15 +227,18 @@ def test_q_learning_iterate_value_q_pi_function_approximation_with_formula():
     )
 
     # uncomment the following line and run test to update fixture
-    # with open(f'{os.path.dirname(__file__)}/fixtures/test_q_learning_iterate_value_q_pi_function_approximation.pickle', 'wb') as file:
-    #     pickle.dump((mdp_agent.pi, q_S_A), file)
+    with open(f'{os.path.dirname(__file__)}/fixtures/test_q_learning_iterate_value_q_pi_function_approximation.pickle', 'wb') as file:
+        pickle.dump((mdp_agent.pi, q_S_A), file)
 
     with open(f'{os.path.dirname(__file__)}/fixtures/test_q_learning_iterate_value_q_pi_function_approximation.pickle', 'rb') as file:
         pi_fixture, q_S_A_fixture = pickle.load(file)
 
     assert isinstance(mdp_agent.pi, FunctionApproximationPolicy)
     assert isinstance(mdp_agent.pi.estimator.model, SKLearnSGD)
-    assert np.allclose(mdp_agent.pi.estimator.model.model.coef_, pi_fixture.estimator.model.model.coef_)
+    assert np.allclose(
+        mdp_agent.pi.estimator.model.sklearn_sgd.model.coef_,
+        pi_fixture.estimator.model.sklearn_sgd.coef_
+    )
 
 
 def test_q_learning_iterate_value_q_pi_function_approximation_no_formula():
@@ -247,7 +251,7 @@ def test_q_learning_iterate_value_q_pi_function_approximation_no_formula():
     q_S_A = ApproximateStateActionValueEstimator(
         mdp_environment,
         0.05,
-        SKLearnSGD(random_state=random_state, scale_eta0_for_y=False),
+        SKLearnSGD(BaseSKLearnSGD(scale_eta0_for_y=False, random_state=random_state)),
         GridworldFeatureExtractor(mdp_environment),
         None,
         False,
@@ -275,15 +279,15 @@ def test_q_learning_iterate_value_q_pi_function_approximation_no_formula():
     )
 
     # uncomment the following line and run test to update fixture
-    # with open(f'{os.path.dirname(__file__)}/fixtures/test_q_learning_iterate_value_q_pi_function_approximation_no_formula.pickle', 'wb') as file:
-    #     pickle.dump((mdp_agent.pi, q_S_A), file)
+    with open(f'{os.path.dirname(__file__)}/fixtures/test_q_learning_iterate_value_q_pi_function_approximation_no_formula.pickle', 'wb') as file:
+        pickle.dump((mdp_agent.pi, q_S_A), file)
 
     with open(f'{os.path.dirname(__file__)}/fixtures/test_q_learning_iterate_value_q_pi_function_approximation_no_formula.pickle', 'rb') as file:
         pi_fixture, q_S_A_fixture = pickle.load(file)
 
     assert isinstance(mdp_agent.pi, FunctionApproximationPolicy)
     assert isinstance(mdp_agent.pi.estimator.model, SKLearnSGD)
-    assert np.allclose(mdp_agent.pi.estimator.model.model.coef_, pi_fixture.estimator.model.model.coef_)
+    assert np.allclose(mdp_agent.pi.estimator.model.sklearn_sgd.model.coef_, pi_fixture.estimator.model.sklearn_sgd.model.coef_)
     assert mdp_agent.pi.format_state_action_probs(mdp_environment.SS) == pi_fixture.format_state_action_probs(mdp_environment.SS)
     assert mdp_agent.pi.format_state_action_values(mdp_environment.SS) == pi_fixture.format_state_action_values(mdp_environment.SS)
 
@@ -298,7 +302,7 @@ def test_q_learning_iterate_value_q_pi_function_approximation_invalid_formula():
     q_S_A = ApproximateStateActionValueEstimator(
         mdp_environment,
         0.05,
-        SKLearnSGD(random_state=random_state, scale_eta0_for_y=False),
+        SKLearnSGD(BaseSKLearnSGD(scale_eta0_for_y=False, random_state=random_state)),
         GridworldFeatureExtractor(mdp_environment),
         f'C(s, levels={[s.i for s in mdp_environment.SS]}):C(a, levels={[a.i for a in mdp_environment.SS[0].AA]})',
         False,
@@ -591,7 +595,7 @@ def test_q_learning_iterate_value_q_pi_function_approximation_policy_ne():
     q_S_A_1 = ApproximateStateActionValueEstimator(
         mdp_environment,
         epsilon,
-        SKLearnSGD(random_state=random_state, scale_eta0_for_y=False),
+        SKLearnSGD(BaseSKLearnSGD(scale_eta0_for_y=False, random_state=random_state)),
         GridworldFeatureExtractor(mdp_environment),
         None,
         False,
@@ -621,7 +625,7 @@ def test_q_learning_iterate_value_q_pi_function_approximation_policy_ne():
     q_S_A_2 = ApproximateStateActionValueEstimator(
         mdp_environment,
         epsilon,
-        SKLearnSGD(random_state=random_state, scale_eta0_for_y=False),
+        SKLearnSGD(BaseSKLearnSGD(scale_eta0_for_y=False, random_state=random_state)),
         GridworldFeatureExtractor(mdp_environment),
         None,
         False,

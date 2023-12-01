@@ -154,19 +154,23 @@ class SKLearnSGD(FunctionApproximationModel):
             self,
             X: Any,
             y: Any,
-            weight: Optional[float]
+            weight: Optional[np.ndarray]
     ):
         """
-        Fit the model to a matrix of features (one row per observations) and a vector of returns.
+        Fit the model to a matrix of feature vectors and a vector of returns.
 
-        :param X: Feature matrix (#obs, #features)
+        :param X: Feature matrix (#obs, #features).
         :param y: Outcome vector (#obs,).
-        :param weight: Weight.
+        :param weight: Weights (#obs,).
         """
 
         # TODO:  Add more here? (e.g., put max(y) in the exponent for some base we expose)
         if self.scale_eta0_for_y:
-            eta0_scaler = np.abs(np.array(y)).max()
+            eta0_scaler = 1000.0 * max(
+                2.0 * (-0.5 + 1.0 / (1.0 + np.exp(-abs(y_value) / 100.0)))
+                for y_value in y
+            )
+            eta0_scaler = max(1.0, eta0_scaler)
             self.model.eta0 = self.base_eta0 / eta0_scaler
 
         # put tee on standard output in order to grab the loss value printed by sklearn

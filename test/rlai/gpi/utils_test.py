@@ -49,8 +49,8 @@ def test_resume_gym_valid_environment():
     resume_environment.close()
 
     # uncomment the following line and run test to update fixture
-    # with open(f'{os.path.dirname(__file__)}/fixtures/test_resume_gym_valid_environment.pickle', 'wb') as file:
-    #     pickle.dump(agent.pi, file)
+    with open(f'{os.path.dirname(__file__)}/fixtures/test_resume_gym_valid_environment.pickle', 'wb') as file:
+        pickle.dump(agent.pi, file)
 
     with open(f'{os.path.dirname(__file__)}/fixtures/test_resume_gym_valid_environment.pickle', 'rb') as file:
         pi_fixture = pickle.load(file)

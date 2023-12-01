@@ -1,13 +1,14 @@
 import pytest
 from numpy.random import RandomState
 
-from rlai.gpi.state_action_value import ActionValueMdpAgent
-from rlai.core.environments.gridworld import Gridworld, GridworldFeatureExtractor
 from rlai.core import MdpState
+from rlai.core.environments.gridworld import Gridworld, GridworldFeatureExtractor
+from rlai.gpi.state_action_value import ActionValueMdpAgent
 from rlai.gpi.state_action_value.function_approximation import ApproximateStateActionValueEstimator
 from rlai.gpi.state_action_value.function_approximation.models.sklearn import SKLearnSGD
 from rlai.gpi.temporal_difference.evaluation import Mode
 from rlai.gpi.temporal_difference.iteration import iterate_value_q_pi
+from rlai.models.sklearn import SKLearnSGD as BaseSKLearnSGD
 
 
 def test_policy_overrides():
@@ -24,7 +25,7 @@ def test_policy_overrides():
     q_S_A = ApproximateStateActionValueEstimator(
         mdp_environment,
         epsilon,
-        SKLearnSGD(random_state=random_state, scale_eta0_for_y=False),
+        SKLearnSGD(BaseSKLearnSGD(scale_eta0_for_y=False, random_state=random_state)),
         GridworldFeatureExtractor(mdp_environment),
         None,
         False,
@@ -59,7 +60,7 @@ def test_policy_overrides():
     q_S_A_2 = ApproximateStateActionValueEstimator(
         mdp_environment_2,
         epsilon,
-        SKLearnSGD(random_state=random_state, scale_eta0_for_y=False),
+        SKLearnSGD(BaseSKLearnSGD(scale_eta0_for_y=False, random_state=random_state)),
         GridworldFeatureExtractor(mdp_environment_2),
         None,
         False,

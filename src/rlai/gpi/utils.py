@@ -121,7 +121,7 @@ def plot_policy_iteration(
     iterations = list(range(1, len(iteration_average_reward) + 1))
     _iteration_average_reward_line, = _iteration_ax.plot(iterations, iteration_average_reward, '-', label='average')
     _iteration_ax.set_xlabel('Iteration')
-    _iteration_ax.set_ylabel('Reward per episode')
+    _iteration_ax.set_ylabel('Average total undiscounted reward per episode within iteration')
     _iteration_ax.legend(loc='upper left')
     _iteration_ax.grid()
 
@@ -137,8 +137,8 @@ def plot_policy_iteration(
     _time_ax = axs[1]
     seconds, averages = get_second_averages(elapsed_seconds_average_rewards)
     _elapsed_seconds_average_reward_line, = _time_ax.plot(seconds, averages, '-', label='average')
-    _time_ax.set_xlabel('Elapsed time (seconds)')
-    _time_ax.set_ylabel('Reward per episode')
+    _time_ax.set_xlabel('Elapsed time (second intervals)')
+    _time_ax.set_ylabel('Average total undiscounted reward per episode within interval')
     _time_ax.legend()
     _time_ax.grid()
 

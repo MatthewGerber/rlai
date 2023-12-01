@@ -8,12 +8,12 @@ import pandas as pd
 from rlai.core import Action, MdpState
 from rlai.core.environments.mdp import MdpEnvironment
 from rlai.meta import rl_text
-from rlai.models.feature_extraction import FeatureExtractor as BaseFeatureExtractor, OneHotCategoricalFeatureInteracter
+from rlai.models.feature_extraction import FeatureExtractor, OneHotCategoricalFeatureInteracter
 from rlai.utils import parse_arguments
 
 
 @rl_text(chapter=9, page=197)
-class FeatureExtractor(BaseFeatureExtractor):
+class StateActionFeatureExtractor(FeatureExtractor):
     """
     Feature extractor.
     """
@@ -30,7 +30,9 @@ class FeatureExtractor(BaseFeatureExtractor):
 
         :param states: States.
         :param actions: Actions.
-        :param refit_scaler: Whether or not to refit the feature scaler before scaling the extracted features.
+        :param refit_scaler: Whether or not to refit the feature scaler before scaling the extracted features. This is
+        only appropriate in settings where nonstationarity is desired (e.g., during training). During evaluation, the
+        scaler should remain fixed, which means this should be False.
         :return: State-feature pandas.DataFrame, numpy.ndarray. A DataFrame is only valid with Patsy-style formula
         designs.
         """
@@ -69,9 +71,11 @@ class FeatureExtractor(BaseFeatureExtractor):
         Initialize the feature extractor.
         """
 
+        super().__init__()
+
 
 @rl_text(chapter='Feature Extractors', page=1)
-class StateActionInteractionFeatureExtractor(FeatureExtractor, ABC):
+class StateActionInteractionFeatureExtractor(StateActionFeatureExtractor, ABC):
     """
     A feature extractor that extracts features comprising the interaction (in a statistical modeling sense) of
     state features with categorical actions. Categorical actions are coded as one-hot vectors with length equal to the
@@ -135,7 +139,7 @@ class StateActionInteractionFeatureExtractor(FeatureExtractor, ABC):
 
 
 @rl_text(chapter='Feature Extractors', page=1)
-class StateActionIdentityFeatureExtractor(FeatureExtractor):
+class StateActionIdentityFeatureExtractor(StateActionFeatureExtractor):
     """
     Simple state/action identifier extractor. Generates features named "s" and "a" for each observation. The
     interpretation of the feature values (i.e., state and action identifiers) depends on the environment. The values
@@ -172,7 +176,7 @@ class StateActionIdentityFeatureExtractor(FeatureExtractor):
             cls,
             args: List[str],
             environment: MdpEnvironment
-    ) -> Tuple[FeatureExtractor, List[str]]:
+    ) -> Tuple[StateActionFeatureExtractor, List[str]]:
         """
         Initialize a feature extractor from arguments.
 
@@ -204,7 +208,9 @@ class StateActionIdentityFeatureExtractor(FeatureExtractor):
 
         :param states: States.
         :param actions: Actions.
-        :param refit_scaler: Whether or not to refit the feature scaler before scaling the extracted features.
+        :param refit_scaler: Whether or not to refit the feature scaler before scaling the extracted features. This is
+        only appropriate in settings where nonstationarity is desired (e.g., during training). During evaluation, the
+        scaler should remain fixed, which means this should be False.
         :return: State-feature pandas.DataFrame.
         """
 

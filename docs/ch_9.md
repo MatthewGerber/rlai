@@ -3,7 +3,7 @@
 ```
 Function approximation model.
 ```
-### [rlai.models.feature_extraction.FeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/models/feature_extraction.py#L16)
+### [rlai.models.feature_extraction.StateActionFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/models/feature_extraction.py#L16)
 ```
 Feature extractor.
 ```
@@ -11,7 +11,7 @@ Feature extractor.
 ```
 Function approximation model.
 ```
-### [rlai.q_S_A.function_approximation.models.feature_extraction.FeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/q_S_A/function_approximation/models/feature_extraction.py#L17)
+### [rlai.q_S_A.function_approximation.models.feature_extraction.StateActionFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/q_S_A/function_approximation/models/feature_extraction.py#L17)
 ```
 Feature extractor.
 ```
