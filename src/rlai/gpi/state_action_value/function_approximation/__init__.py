@@ -342,15 +342,15 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
 
             # feature extractors may return a matrix with no columns if extraction was not possible
             if state_action_feature_matrix.shape[1] > 0:
-                self.model.fit(state_action_feature_matrix, self.experience_values, self.weights)
-                # self.model.fit(
-                #     state_action_feature_matrix,
-                #     self.value_scaler.scale_features(
-                #         np.array(self.experience_values).reshape(-1, 1),
-                #         True
-                #     ).flatten(),
-                #     self.weights
-                # )
+                # self.model.fit(state_action_feature_matrix, self.experience_values, self.weights)
+                self.model.fit(
+                    state_action_feature_matrix,
+                    self.value_scaler.scale_features(
+                        np.array(self.experience_values).reshape(-1, 1),
+                        True
+                    ).flatten(),
+                    self.weights
+                )
 
             self.experience_states.clear()
             self.experience_actions.clear()
@@ -386,6 +386,8 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
             return np.repeat(0.0, len(actions))
 
         action_values = self.model.evaluate(state_action_feature_matrix)
+
+        action_values = self.value_scaler.invert_scaled_features(action_values.reshape((-1, 1))).flatten()
 
         log_with_border(logging.DEBUG, 'Evaluation complete')
 

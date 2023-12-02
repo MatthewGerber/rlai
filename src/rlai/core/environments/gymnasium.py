@@ -337,7 +337,7 @@ class Gym(ContinuousMdpEnvironment):
 
         total_deviation = np.abs(observation).sum()
 
-        return max(0.0, 1.0 - (total_deviation / 5.0))
+        return max(0.0, 1.0 - (total_deviation / 3.0))
 
     def reset_for_new_run(
             self,
@@ -773,7 +773,7 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
 
         # extract and scale features
         state_feature_matrix = np.array([
-            state.observation
+            state.observation  # np.append(state.observation, state.observation ** 2.0)
             for state in states
         ])
 

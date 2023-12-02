@@ -184,11 +184,11 @@ class ApproximateStateValueEstimator(StateValueEstimator):
         # if we have pending experience, then fit the model and reset the data.
         if self.experience_pending:
 
-            X = self.extract_features(self.experience_states, True)
+            feature_matrix = self.extract_features(self.experience_states, True)
 
             # feature extractors may return a matrix with no columns if extraction was not possible
-            if X.shape[1] > 0:
-                self.model.fit(X, self.experience_values, self.weights)
+            if feature_matrix.shape[1] > 0:
+                self.model.fit(feature_matrix, self.experience_values, self.weights)
 
             self.experience_states.clear()
             self.experience_values.clear()

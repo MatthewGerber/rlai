@@ -92,13 +92,13 @@ class NonstationaryFeatureScaler:
 
     def scale_features(
             self,
-            X: np.ndarray,
+            feature_matrix: np.ndarray,
             refit_before_scaling: bool
     ) -> np.ndarray:
         """
         Scale features.
 
-        :param X: Feature matrix.
+        :param feature_matrix: Feature matrix.
         :param refit_before_scaling: Whether or not to refit the scaler using `feature_matrix` before scaling.
         :return: Scaled feature matrix.
         """
@@ -107,12 +107,12 @@ class NonstationaryFeatureScaler:
 
             # append feature matrix to the refit history
             if self.refit_history is None:
-                self.refit_history = X
+                self.refit_history = feature_matrix
             else:
-                self.refit_history = np.append(self.refit_history, X, axis=0)
+                self.refit_history = np.append(self.refit_history, feature_matrix, axis=0)
 
             # refit scaler if we've extracted enough
-            self.num_observations += X.shape[0]
+            self.num_observations += feature_matrix.shape[0]
             if self.num_observations >= self.num_observations_refit_feature_scaler:
 
                 # get recent history up to specified length (note that the rows will be ordered most recent first)
@@ -129,7 +129,10 @@ class NonstationaryFeatureScaler:
                 self.feature_scaler.fit(history_to_fit, sample_weight=sample_weights)
 
                 # delete old rows from history and reset number of extractions
-                num_rows_to_delete = max(history_length + self.num_observations_refit_feature_scaler - self.refit_history_length, 0)
+                num_rows_to_delete = max(
+                    history_length + self.num_observations_refit_feature_scaler - self.refit_history_length,
+                    0
+                )
                 num_rows_to_delete = min(num_rows_to_delete, self.refit_history.shape[0])
                 if num_rows_to_delete > 0:
                     rows_to_delete = list(range(num_rows_to_delete))
@@ -141,17 +144,38 @@ class NonstationaryFeatureScaler:
             # exponentially increasing following the first refit, but we'll quickly overflow. this is a compromise, and
             # it seems to work. it also addresses the case where the scaler has not yet been refit.
             else:
-                self.feature_scaler.partial_fit(X)
+                self.feature_scaler.partial_fit(feature_matrix)
 
-        # scale features
         try:
-            scaled_X = self.feature_scaler.transform(X)
+
+            scaled_feature_matrix = self.feature_scaler.transform(feature_matrix)
 
         # the following exception will be thrown if the scaler has not yet been fitted. catch and ignore scaling.
         except NotFittedError:
-            scaled_X = X
+            scaled_feature_matrix = feature_matrix
 
-        return scaled_X
+        return scaled_feature_matrix
+
+    def invert_scaled_features(
+            self,
+            feature_matrix: np.ndarray
+    ) -> np.ndarray:
+        """
+        Invert scaled features back to their original representation.
+
+        :param feature_matrix: Feature matrix.
+        :return: Feature matrix in original representation.
+        """
+
+        try:
+
+            inverted_feature_matrix = self.feature_scaler.inverse_transform(feature_matrix)
+
+        # the following exception will be thrown if the scaler has not yet been fitted. catch and ignore scaling.
+        except NotFittedError:
+            inverted_feature_matrix = feature_matrix
+
+        return inverted_feature_matrix
 
     def __init__(
             self,
