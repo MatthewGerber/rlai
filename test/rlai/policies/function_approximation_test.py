@@ -25,7 +25,7 @@ def test_policy_overrides():
     q_S_A = ApproximateStateActionValueEstimator(
         mdp_environment,
         epsilon,
-        SKLearnSGD(BaseSKLearnSGD(scale_eta0_for_y=False, random_state=random_state)),
+        SKLearnSGD(BaseSKLearnSGD(random_state=random_state)),
         GridworldFeatureExtractor(mdp_environment),
         None,
         False,
@@ -60,7 +60,7 @@ def test_policy_overrides():
     q_S_A_2 = ApproximateStateActionValueEstimator(
         mdp_environment_2,
         epsilon,
-        SKLearnSGD(BaseSKLearnSGD(scale_eta0_for_y=False, random_state=random_state)),
+        SKLearnSGD(BaseSKLearnSGD(random_state=random_state)),
         GridworldFeatureExtractor(mdp_environment_2),
         None,
         False,

@@ -8,10 +8,10 @@ import pytest
 from numpy.random import RandomState
 from numpy.testing import assert_allclose
 
+from rlai.core import Monitor
 from rlai.gpi.state_action_value import ActionValueMdpAgent
 from rlai.gpi.state_action_value.tabular import TabularPolicy
 from rlai.runners.agent_in_environment import run
-from rlai.core import Monitor
 
 
 def test_k_armed_bandit_epsilon_greedy_no_resets():

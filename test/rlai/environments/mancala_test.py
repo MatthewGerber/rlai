@@ -6,9 +6,9 @@ import pytest
 from numpy.random import RandomState
 
 from rlai.core import Human
-from rlai.gpi.state_action_value import ActionValueMdpAgent
 from rlai.core.environments.mancala import Mancala, Pit
 from rlai.gpi.monte_carlo.iteration import iterate_value_q_pi
+from rlai.gpi.state_action_value import ActionValueMdpAgent
 from rlai.gpi.state_action_value.tabular import TabularStateActionValueEstimator
 from rlai.gpi.utils import resume_from_checkpoint
 from rlai.utils import sample_list_item

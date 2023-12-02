@@ -199,7 +199,7 @@ def test_q_learning_iterate_value_q_pi_function_approximation_with_formula():
     q_S_A = ApproximateStateActionValueEstimator(
         mdp_environment,
         0.05,
-        SKLearnSGD(BaseSKLearnSGD(scale_eta0_for_y=False, random_state=random_state)),
+        SKLearnSGD(BaseSKLearnSGD(random_state=random_state)),
         StateActionIdentityFeatureExtractor(mdp_environment),
         f'C(s, levels={[s.i for s in mdp_environment.SS]}):C(a, levels={[a.i for a in mdp_environment.SS[0].AA]})',
         False,
@@ -227,8 +227,8 @@ def test_q_learning_iterate_value_q_pi_function_approximation_with_formula():
     )
 
     # uncomment the following line and run test to update fixture
-    with open(f'{os.path.dirname(__file__)}/fixtures/test_q_learning_iterate_value_q_pi_function_approximation.pickle', 'wb') as file:
-        pickle.dump((mdp_agent.pi, q_S_A), file)
+    # with open(f'{os.path.dirname(__file__)}/fixtures/test_q_learning_iterate_value_q_pi_function_approximation.pickle', 'wb') as file:
+    #     pickle.dump((mdp_agent.pi, q_S_A), file)
 
     with open(f'{os.path.dirname(__file__)}/fixtures/test_q_learning_iterate_value_q_pi_function_approximation.pickle', 'rb') as file:
         pi_fixture, q_S_A_fixture = pickle.load(file)
@@ -237,7 +237,7 @@ def test_q_learning_iterate_value_q_pi_function_approximation_with_formula():
     assert isinstance(mdp_agent.pi.estimator.model, SKLearnSGD)
     assert np.allclose(
         mdp_agent.pi.estimator.model.sklearn_sgd.model.coef_,
-        pi_fixture.estimator.model.sklearn_sgd.coef_
+        pi_fixture.estimator.model.sklearn_sgd.model.coef_
     )
 
 
@@ -251,7 +251,7 @@ def test_q_learning_iterate_value_q_pi_function_approximation_no_formula():
     q_S_A = ApproximateStateActionValueEstimator(
         mdp_environment,
         0.05,
-        SKLearnSGD(BaseSKLearnSGD(scale_eta0_for_y=False, random_state=random_state)),
+        SKLearnSGD(BaseSKLearnSGD(random_state=random_state)),
         GridworldFeatureExtractor(mdp_environment),
         None,
         False,
@@ -279,8 +279,8 @@ def test_q_learning_iterate_value_q_pi_function_approximation_no_formula():
     )
 
     # uncomment the following line and run test to update fixture
-    with open(f'{os.path.dirname(__file__)}/fixtures/test_q_learning_iterate_value_q_pi_function_approximation_no_formula.pickle', 'wb') as file:
-        pickle.dump((mdp_agent.pi, q_S_A), file)
+    # with open(f'{os.path.dirname(__file__)}/fixtures/test_q_learning_iterate_value_q_pi_function_approximation_no_formula.pickle', 'wb') as file:
+    #     pickle.dump((mdp_agent.pi, q_S_A), file)
 
     with open(f'{os.path.dirname(__file__)}/fixtures/test_q_learning_iterate_value_q_pi_function_approximation_no_formula.pickle', 'rb') as file:
         pi_fixture, q_S_A_fixture = pickle.load(file)
@@ -302,7 +302,7 @@ def test_q_learning_iterate_value_q_pi_function_approximation_invalid_formula():
     q_S_A = ApproximateStateActionValueEstimator(
         mdp_environment,
         0.05,
-        SKLearnSGD(BaseSKLearnSGD(scale_eta0_for_y=False, random_state=random_state)),
+        SKLearnSGD(BaseSKLearnSGD(random_state=random_state)),
         GridworldFeatureExtractor(mdp_environment),
         f'C(s, levels={[s.i for s in mdp_environment.SS]}):C(a, levels={[a.i for a in mdp_environment.SS[0].AA]})',
         False,
@@ -595,7 +595,7 @@ def test_q_learning_iterate_value_q_pi_function_approximation_policy_ne():
     q_S_A_1 = ApproximateStateActionValueEstimator(
         mdp_environment,
         epsilon,
-        SKLearnSGD(BaseSKLearnSGD(scale_eta0_for_y=False, random_state=random_state)),
+        SKLearnSGD(BaseSKLearnSGD(random_state=random_state)),
         GridworldFeatureExtractor(mdp_environment),
         None,
         False,
@@ -625,7 +625,7 @@ def test_q_learning_iterate_value_q_pi_function_approximation_policy_ne():
     q_S_A_2 = ApproximateStateActionValueEstimator(
         mdp_environment,
         epsilon,
-        SKLearnSGD(BaseSKLearnSGD(scale_eta0_for_y=False, random_state=random_state)),
+        SKLearnSGD(BaseSKLearnSGD(random_state=random_state)),
         GridworldFeatureExtractor(mdp_environment),
         None,
         False,

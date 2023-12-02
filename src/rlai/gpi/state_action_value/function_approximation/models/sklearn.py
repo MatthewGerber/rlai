@@ -1,4 +1,4 @@
-from typing import Optional, Dict, Any, List, Tuple
+from typing import Optional, Any, List, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -45,18 +45,26 @@ class SKLearnSGD(StateActionFunctionApproximationModel):
 
         return state_action_sklearn_sgd, unparsed_args
 
-    def fit(self, X: Any, y: Any, weight: Optional[np.ndarray]):
+    def fit(
+            self,
+            feature_matrix: Any,
+            outcomes: Any,
+            weights: Optional[np.ndarray]
+    ):
         """
-        Fit the model to a matrix of feature vectors and a vector of returns.
+        Fit the model to a matrix of feature vectors and a vector of outcomes.
 
-        :param X: Feature matrix (#obs, #features).
-        :param y: Outcome vector (#obs,).
-        :param weight: Weights (#obs,).
+        :param feature_matrix: Feature matrix (#obs, #features).
+        :param outcomes: Outcome vector (#obs,).
+        :param weights: Weights (#obs,).
         """
 
-        self.sklearn_sgd.fit(X, y, weight)
+        self.sklearn_sgd.fit(feature_matrix, outcomes, weights)
 
-    def evaluate(self, feature_matrix: np.ndarray) -> np.ndarray:
+    def evaluate(
+            self,
+            feature_matrix: np.ndarray
+    ) -> np.ndarray:
         """
         Evaluate the model at a matrix of features.
 
@@ -185,7 +193,10 @@ class SKLearnSGD(StateActionFunctionApproximationModel):
 
         self.sklearn_sgd = sklearn_sgd
 
-    def __eq__(self, other: object) -> bool:
+    def __eq__(
+            self,
+            other: object
+    ) -> bool:
         """
         Check equality.
 
@@ -193,9 +204,15 @@ class SKLearnSGD(StateActionFunctionApproximationModel):
         :return: True if equal.
         """
 
-        return self.sklearn_sgd.__eq__(other)
+        if not isinstance(other, SKLearnSGD):
+            raise ValueError(f'Expected a {SKLearnSGD}')
 
-    def __ne__(self, other: object) -> bool:
+        return self.sklearn_sgd.__eq__(other.sklearn_sgd)
+
+    def __ne__(
+            self,
+            other: object
+    ) -> bool:
         """
         Check inequality.
 
@@ -203,35 +220,7 @@ class SKLearnSGD(StateActionFunctionApproximationModel):
         :return: True if not equal.
         """
 
-        return self.sklearn_sgd.__ne__(other)
+        if not isinstance(other, SKLearnSGD):
+            raise ValueError(f'Expected a {SKLearnSGD}')
 
-    def __getstate__(
-            self
-    ) -> Dict:
-        """
-        Get the state to pickle for the current instance.
-
-        :return: State dictionary.
-        """
-
-        state = dict(self.__dict__)
-
-        super().deflate_state(state)
-        BaseSKLearnSGD.deflate_state(state['sklearn_sgd'].__dict__)
-
-        return state
-
-    def __setstate__(
-            self,
-            state: Dict
-    ):
-        """
-        Set the unpickled state for the current instance.
-
-        :param state: Unpickled state.
-        """
-
-        super().inflate_state(state)
-        state['sklearn_sgd'].__dict__ = BaseSKLearnSGD.inflate_state(state['sklearn_sgd'])
-
-        self.__dict__ = state
+        return self.sklearn_sgd.__ne__(other.sklearn_sgd)

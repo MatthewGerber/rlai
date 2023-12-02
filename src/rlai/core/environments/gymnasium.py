@@ -337,9 +337,6 @@ class Gym(ContinuousMdpEnvironment):
 
         total_deviation = np.abs(observation).sum()
 
-        # logit-like nonlinear
-        # 2.0 * (1.0 - (1.0 / (1.0 + np.exp(1.0 * -total_deviation))))
-
         return max(0.0, 1.0 - (total_deviation / 5.0))
 
     def reset_for_new_run(

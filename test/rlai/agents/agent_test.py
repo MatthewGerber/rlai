@@ -2,8 +2,8 @@ import pytest
 from numpy.random import RandomState
 
 from rlai.core import Action, MdpState, Human
-from rlai.gpi.state_action_value import ActionValueMdpAgent
 from rlai.core.environments.gridworld import Gridworld
+from rlai.gpi.state_action_value import ActionValueMdpAgent
 from rlai.gpi.state_action_value.tabular import TabularStateActionValueEstimator
 
 

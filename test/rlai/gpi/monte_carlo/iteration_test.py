@@ -7,11 +7,11 @@ from threading import Thread
 import pytest
 from numpy.random import RandomState
 
-from rlai.gpi.state_action_value import ActionValueMdpAgent
 from rlai.core.environments.gridworld import Gridworld, GridworldFeatureExtractor
 from rlai.core.environments.mdp import TrajectorySamplingMdpPlanningEnvironment, StochasticEnvironmentModel
 from rlai.gpi import PolicyImprovementEvent
 from rlai.gpi.monte_carlo.iteration import iterate_value_q_pi
+from rlai.gpi.state_action_value import ActionValueMdpAgent
 from rlai.gpi.state_action_value.function_approximation import (
     ApproximateStateActionValueEstimator,
     FunctionApproximationPolicy
@@ -19,9 +19,9 @@ from rlai.gpi.state_action_value.function_approximation import (
 from rlai.gpi.state_action_value.function_approximation.models.sklearn import SKLearnSGD
 from rlai.gpi.state_action_value.tabular import TabularStateActionValueEstimator
 from rlai.gpi.utils import update_policy_iteration_plot, plot_policy_iteration
+from rlai.models.sklearn import SKLearnSGD as BaseSKLearnSGD
 from rlai.utils import RunThreadManager
 from test.rlai.utils import tabular_estimator_legacy_eq, tabular_pi_legacy_eq
-from rlai.models.sklearn import SKLearnSGD as BaseSKLearnSGD
 
 
 def test_iterate_value_q_pi():
@@ -115,7 +115,7 @@ def test_off_policy_monte_carlo_with_function_approximation():
     q_S_A = ApproximateStateActionValueEstimator(
         mdp_environment,
         0.05,
-        SKLearnSGD(BaseSKLearnSGD(scale_eta0_for_y=False, random_state=random_state)),
+        SKLearnSGD(BaseSKLearnSGD(random_state=random_state)),
         GridworldFeatureExtractor(mdp_environment),
         None,
         False,
@@ -151,8 +151,8 @@ def test_off_policy_monte_carlo_with_function_approximation():
     )
 
     # uncomment the following line and run test to update fixture
-    with open(f'{os.path.dirname(__file__)}/fixtures/test_off_policy_monte_carlo_with_function_approximationo.pickle', 'wb') as file:
-        pickle.dump((mdp_agent.pi, q_S_A), file)
+    # with open(f'{os.path.dirname(__file__)}/fixtures/test_off_policy_monte_carlo_with_function_approximationo.pickle', 'wb') as file:
+    #     pickle.dump((mdp_agent.pi, q_S_A), file)
 
     with open(f'{os.path.dirname(__file__)}/fixtures/test_off_policy_monte_carlo_with_function_approximationo.pickle', 'rb') as file:
         pi_fixture, q_S_A_fixture = pickle.load(file)

@@ -104,12 +104,6 @@ class SKLearnSGD(FunctionApproximationModel):
             help='The exponent for inverse scaling learning rate.'
         )
 
-        parser.add_argument(
-            '--scale-eta0-for-y',
-            action='store_true',
-            help='Pass this flag to scale eta0 dynamically with respect to y.'
-        )
-
         # other stuff
         parser.add_argument(
             '--verbose',
@@ -152,33 +146,24 @@ class SKLearnSGD(FunctionApproximationModel):
 
     def fit(
             self,
-            X: Any,
-            y: Any,
-            weight: Optional[np.ndarray]
+            feature_matrix: Any,
+            outcomes: Any,
+            weights: Optional[np.ndarray]
     ):
         """
-        Fit the model to a matrix of feature vectors and a vector of returns.
+        Fit the model to a matrix of feature vectors and a vector of outcomes.
 
-        :param X: Feature matrix (#obs, #features).
-        :param y: Outcome vector (#obs,).
-        :param weight: Weights (#obs,).
+        :param feature_matrix: Feature matrix (#obs, #features).
+        :param outcomes: Outcome vector (#obs,).
+        :param weights: Weights (#obs,).
         """
-
-        # TODO:  Add more here? (e.g., put max(y) in the exponent for some base we expose)
-        if self.scale_eta0_for_y:
-            eta0_scaler = 1000.0 * max(
-                2.0 * (-0.5 + 1.0 / (1.0 + np.exp(-abs(y_value) / 100.0)))
-                for y_value in y
-            )
-            eta0_scaler = max(1.0, eta0_scaler)
-            self.model.eta0 = self.base_eta0 / eta0_scaler
 
         # put tee on standard output in order to grab the loss value printed by sklearn
         stdout_tee = StdStreamTee(sys.stdout, 20, self.print_output)
         sys.stdout = stdout_tee
 
         # update fit
-        self.model.partial_fit(X=X, y=y, sample_weight=weight)
+        self.model.partial_fit(X=feature_matrix, y=outcomes, sample_weight=weights)
 
         # reassign standard output
         sys.stdout = sys.__stdout__
@@ -202,9 +187,9 @@ class SKLearnSGD(FunctionApproximationModel):
             if self.plot_iteration not in self.iteration_eta0_values:
                 self.iteration_eta0_values[self.plot_iteration] = []
 
-            for y_value in y:
-                self.iteration_y_values[self.plot_iteration].append(y_value)
-                self.y_averager.update(y_value)
+            for outcome in outcomes:
+                self.iteration_y_values[self.plot_iteration].append(outcome)
+                self.y_averager.update(outcome)
                 self.iteration_loss_values[self.plot_iteration].append(avg_loss)
                 self.loss_averager.update(avg_loss)
                 self.iteration_eta0_values[self.plot_iteration].append(self.model.eta0)
@@ -388,19 +373,16 @@ class SKLearnSGD(FunctionApproximationModel):
 
     def __init__(
             self,
-            scale_eta0_for_y: bool,
             **kwargs
     ):
         """
         Initialize the model.
 
-        :param scale_eta0_for_y: Whether or not to scale the value of eta0 for y.
         :param kwargs: Keyword arguments to pass to SGDRegressor.
         """
 
         super().__init__()
 
-        self.scale_eta0_for_y = scale_eta0_for_y
         self.model_kwargs = kwargs
 
         # verbose is required in order to capture standard output for plotting. if a verbosity level is not passed or
@@ -449,20 +431,6 @@ class SKLearnSGD(FunctionApproximationModel):
 
         state = dict(self.__dict__)
 
-        self.deflate_state(state)
-
-        return state
-
-    @staticmethod
-    def deflate_state(
-            state: Dict
-    ):
-        """
-        Modify the state dictionary to exclude particular items.
-
-        :param state: State dictionary.
-        """
-
         # clear other memory intensive attributes
         state['plot_iteration'] = 0
         state['iteration_y_values'] = {}
@@ -491,6 +459,8 @@ class SKLearnSGD(FunctionApproximationModel):
         # the plot data lock cannot be pickled
         state['plot_data_lock'] = None
 
+        return state
+
     def __setstate__(
             self,
             state: Dict
@@ -501,22 +471,10 @@ class SKLearnSGD(FunctionApproximationModel):
         :param state: Unpickled state.
         """
 
-        self.inflate_state(state)
-
-        self.__dict__ = state
-
-    @staticmethod
-    def inflate_state(
-            state: Dict
-    ):
-        """
-        Modify the state to include items that weren't pickled.
-
-        :param state: Pickled state dictionary.
-        """
-
         # initialize new lock, which couldn't be pickled.
         state['plot_data_lock'] = threading.Lock()
+
+        self.__dict__ = state
 
     def __eq__(
             self,

@@ -324,30 +324,6 @@ def test_gridworld_plot_model_pdf():
     )
 
 
-def test_scale_learning_rate_with_logging():
-    """
-    Test.
-    """
-
-    start_virtual_display_if_headless()
-
-    checkpoint_path, agent_path = run(shlex.split(f'--random-seed 12345 --agent rlai.gpi.state_action_value.ActionValueMdpAgent --gamma 1 --environment rlai.core.environments.gridworld.Gridworld --id example_4_1 --T 25 --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode Q_LEARNING --num-improvements 5 --num-episodes-per-improvement 50 --epsilon 0.05 --q-S-A rlai.gpi.state_action_value.function_approximation.ApproximateStateActionValueEstimator --function-approximation-model rlai.gpi.state_action_value.function_approximation.models.sklearn.SKLearnSGD --scale-eta0-for-y --feature-extractor rlai.core.environments.gridworld.GridworldFeatureExtractor --make-final-policy-greedy True --num-improvements-per-checkpoint 5 --checkpoint-path {tempfile.NamedTemporaryFile(delete=False).name} --save-agent-path {tempfile.NamedTemporaryFile(delete=False).name} --log INFO'))
-
-    _, agent = load_checkpoint_and_agent(checkpoint_path, agent_path)
-
-    # uncomment the following line and run test to update fixture
-    # with open(f'{os.path.dirname(__file__)}/fixtures/test_scale_learning_rate_with_logging.pickle', 'wb') as f:
-    #     pickle.dump(agent, f)
-
-    with open(f'{os.path.dirname(__file__)}/fixtures/test_scale_learning_rate_with_logging.pickle', 'rb') as f:
-        agent_fixture = pickle.load(f)
-
-    assert_run(
-        agent,
-        agent_fixture
-    )
-
-
 def test_policy_gradient_reinforce_beta_with_baseline():
     """
     Test.

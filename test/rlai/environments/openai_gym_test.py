@@ -4,8 +4,8 @@ import pickle
 import pytest
 from numpy.random import RandomState
 
-from rlai.gpi.state_action_value import ActionValueMdpAgent
 from rlai.core.environments.gymnasium import Gym, CartpoleFeatureExtractor
+from rlai.gpi.state_action_value import ActionValueMdpAgent
 from rlai.gpi.state_action_value.tabular import TabularStateActionValueEstimator
 from rlai.gpi.temporal_difference.evaluation import Mode
 from rlai.gpi.temporal_difference.iteration import iterate_value_q_pi
@@ -45,8 +45,8 @@ def test_learn():
     )
 
     # uncomment the following line and run test to update fixture
-    with open(f'{os.path.dirname(__file__)}/fixtures/test_gym.pickle', 'wb') as file:
-        pickle.dump((mdp_agent.pi, q_S_A), file)
+    # with open(f'{os.path.dirname(__file__)}/fixtures/test_gym.pickle', 'wb') as file:
+    #     pickle.dump((mdp_agent.pi, q_S_A), file)
 
     with open(f'{os.path.dirname(__file__)}/fixtures/test_gym.pickle', 'rb') as file:
         fixture_pi, fixture_q_S_A = pickle.load(file)

@@ -13,11 +13,13 @@ from rlai.core import Policy, Action, MdpState, MdpAgent
 from rlai.core.environments.mdp import MdpEnvironment
 from rlai.gpi import PolicyImprovementEvent
 from rlai.gpi.state_action_value import ValueEstimator, ActionValueEstimator, StateActionValueEstimator
-from rlai.gpi.state_action_value.function_approximation.models import StateActionFunctionApproximationModel, StateActionFeatureExtractor
+from rlai.gpi.state_action_value.function_approximation.models import (
+    StateActionFunctionApproximationModel,
+    StateActionFeatureExtractor
+)
 from rlai.gpi.state_action_value.function_approximation.models.sklearn import SKLearnSGD
 from rlai.meta import rl_text
 from rlai.models.feature_extraction import NonstationaryFeatureScaler
-from rlai.models.sklearn import SKLearnSGD as BaseSKLearnSGD
 from rlai.utils import parse_arguments, load_class, log_with_border
 
 
@@ -340,14 +342,15 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
 
             # feature extractors may return a matrix with no columns if extraction was not possible
             if state_action_feature_matrix.shape[1] > 0:
-                self.model.fit(
-                    state_action_feature_matrix,
-                    self.value_scaler.scale_features(
-                        np.array(self.experience_values).reshape(-1, 1),
-                        True
-                    ).flatten(),
-                    self.weights
-                )
+                self.model.fit(state_action_feature_matrix, self.experience_values, self.weights)
+                # self.model.fit(
+                #     state_action_feature_matrix,
+                #     self.value_scaler.scale_features(
+                #         np.array(self.experience_values).reshape(-1, 1),
+                #         True
+                #     ).flatten(),
+                #     self.weights
+                # )
 
             self.experience_states.clear()
             self.experience_actions.clear()
