@@ -32,7 +32,8 @@ from rlai.models.feature_extraction import (
     NonstationaryFeatureScaler,
     FeatureExtractor,
     OneHotCategoricalFeatureInteracter,
-    OneHotCategory
+    OneHotCategory,
+    StateDimensionSegment
 )
 from rlai.state_value.function_approximation.models.feature_extraction import StateFeatureExtractor
 from rlai.utils import parse_arguments, ScatterPlot
@@ -291,9 +292,7 @@ class Gym(ContinuousMdpEnvironment):
 
         elif self.gym_id == Gym.CARTPOLE_V1:
 
-            if not terminated or truncated:
-                reward = self.get_cartpole_reward(observation)
-            else:
+            if terminated and not truncated:
                 reward = 0.0
 
         # call render if rendering manually
@@ -323,21 +322,6 @@ class Gym(ContinuousMdpEnvironment):
         self.previous_observation = observation
 
         return self.state, Reward(i=None, r=reward)
-
-    @staticmethod
-    def get_cartpole_reward(
-            observation: np.ndarray
-    ) -> float:
-        """
-        Get cartpole reward.
-
-        :param observation: Observation (state).
-        :return: Reward.
-        """
-
-        total_deviation = np.abs(observation).sum()
-
-        return max(0.0, 1.0 - (total_deviation / 3.0))
 
     def reset_for_new_run(
             self,
@@ -773,17 +757,18 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
 
         # extract and scale features
         state_feature_matrix = np.array([
-            state.observation  # np.append(state.observation, state.observation ** 2.0)
+            state.observation
             for state in states
         ])
 
         state_scaled_feature_matrix = self.feature_scaler.scale_features(state_feature_matrix, refit_scaler)
 
-        # interact feature vectors per state category, where the category indicates the joint sign of the state values.
+        # interact feature vectors per state category, where the category indicates the joint indicator of the state
+        # dimension segments.
         state_categories = [
             OneHotCategory(*[
-                obs_feature < 0.0
-                for obs_feature in state.observation
+                state_dimension_segment.get_indicator(state.observation)
+                for state_dimension_segment in self.state_dimension_segments
             ])
             for state in states
         ]
@@ -814,7 +799,7 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
         action_space = environment.gym_native.action_space
 
         if not isinstance(action_space, Discrete):  # pragma no cover
-            raise ValueError('Expected a discrete action space, but did not get one.')
+            raise ValueError(f'Expected a {Discrete} action space.')
 
         if action_space.n != 2:  # pragma no cover
             raise ValueError('Expected two actions:  left and right')
@@ -834,15 +819,52 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
         )
 
         # create interacter over cartesian product of state categories
+        state_space = environment.gym_native.observation_space
+        if not isinstance(state_space, Box):
+            raise ValueError(f'Expected a {Box} observation space.')
+
+        self.state_dimension_segments = (
+
+            # cart position is [-2.4, 2.4]
+            [
+                StateDimensionSegment(0, high - 0.5, high)
+                for high in np.arange(-2.5, 2.5, 0.5)
+            ] +
+
+            # cart velocity is (-inf, inf)
+            [
+                StateDimensionSegment(1, None, 0.0)
+            ] +
+
+            # pole angle is [-.2095, .2095]
+            [
+                StateDimensionSegment(2, high - 0.15, high)
+                for high in reversed(np.arange(0.0, -0.2095, -0.15))
+            ] +
+            [
+                StateDimensionSegment(2, low, low + 0.15)
+                for low in np.arange(0.0, 0.2095, 0.15)
+            ] +
+
+            # pole angle velocity is (-inf, inf)
+            [
+                StateDimensionSegment(3, None, 0.0)
+            ]
+
+        )
+
         self.state_category_interacter = OneHotCategoricalFeatureInteracter([
             OneHotCategory(*args)
-            for args in product(*([[True, False]] * 4))
+            for args in product(*[
+                state_dimension_segment.get_indicator_range()
+                for state_dimension_segment in self.state_dimension_segments
+            ])
         ])
 
         self.feature_scaler = NonstationaryFeatureScaler(
-            num_observations_refit_feature_scaler=5000,
-            refit_history_length=100000,
-            refit_weight_decay=0.99999
+            num_observations_refit_feature_scaler=1000,
+            refit_history_length=10000,
+            refit_weight_decay=0.99
         )
 
 

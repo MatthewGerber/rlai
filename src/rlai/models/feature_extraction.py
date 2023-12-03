@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 from argparse import ArgumentParser
-from itertools import product
 from typing import List, Tuple, Any, Optional
 
 import numpy as np
@@ -224,14 +223,15 @@ class OneHotCategoricalFeatureInteracter:
         if num_rows != num_cats:
             raise ValueError(f'Expected {num_rows} categorical values but got {num_cats}')
 
+        num_cols = feature_matrix.shape[1]
         categorical_array = np.array(categorical_values).reshape(-1, 1)
         encoded_categoricals = self.category_encoder.transform(categorical_array).toarray()
-
-        # interact each feature-vector with its associated one-hot encoded categorical vector
-        interacted_state_features = np.array([
-            [level * value for level, value in product(encoded_categorical, features_vector)]
-            for features_vector, encoded_categorical in zip(feature_matrix, encoded_categoricals)
-        ])
+        interacted_state_features = np.zeros((num_rows, num_cols * encoded_categoricals.shape[1]))
+        for i, feature_vector in enumerate(feature_matrix):
+            cat_idx = np.where(encoded_categoricals[i] == 1.0)[0][0]
+            start_idx = cat_idx * num_cols
+            end_idx = start_idx + num_cols - 1
+            interacted_state_features[i, start_idx:end_idx + 1] = feature_vector
 
         return interacted_state_features
 
@@ -320,3 +320,65 @@ class OneHotCategory:
         """
 
         return self.id
+
+
+class StateDimensionSegment:
+    """
+    Segment of a state dimension.
+    """
+
+    @staticmethod
+    def get_indicator_range() -> List[bool]:
+        """
+        Get list of indicators.
+
+        :return: Indicators.
+        """
+
+        return [True, False]
+
+    def __init__(
+            self,
+            dimension: int,
+            low: Optional[float],
+            high: Optional[float]
+    ):
+        """
+        Initialize the segment.
+
+        :param dimension: Dimension index.
+        :param low: Low value (inclusive) of the segment.
+        :param high: High value (exclusive) of the segment.
+        """
+
+        self.dimension = dimension
+        self.low = low
+        self.high = high
+
+    def __str__(
+            self
+    ) -> str:
+        """
+        Get string.
+
+        :return: String.
+        """
+
+        return f'd{self.dimension}:  {"(" if self.low is None else "["}{self.low}, {self.high})'
+
+    def get_indicator(
+            self,
+            state: np.ndarray
+    ) -> bool:
+        """
+        Get indicator for a state value.
+
+        :param state: State vector.
+        :return: Indicator.
+        """
+
+        dimension_value = state[self.dimension]
+        low_indicator = self.low is None or dimension_value >= self.low
+        high_indicator = self.high is None or dimension_value < self.high
+
+        return low_indicator and high_indicator

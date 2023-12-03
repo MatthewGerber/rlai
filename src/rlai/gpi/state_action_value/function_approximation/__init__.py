@@ -538,9 +538,9 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         self.experience_pending: bool = False
 
         self.value_scaler = NonstationaryFeatureScaler(
-            num_observations_refit_feature_scaler=5000,
-            refit_history_length=100000,
-            refit_weight_decay=0.99999
+            num_observations_refit_feature_scaler=1000,
+            refit_history_length=10000,
+            refit_weight_decay=0.99
         )
 
     def __getitem__(
