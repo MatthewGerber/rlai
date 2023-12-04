@@ -4,7 +4,7 @@ from typing import List, Tuple, Any, Optional
 
 import numpy as np
 from sklearn.exceptions import NotFittedError
-from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.preprocessing import StandardScaler
 
 from rlai.core import MdpState
 from rlai.core.environments.mdp import MdpEnvironment
@@ -224,11 +224,9 @@ class OneHotCategoricalFeatureInteracter:
             raise ValueError(f'Expected {num_rows} categorical values but got {num_cats}')
 
         num_cols = feature_matrix.shape[1]
-        categorical_array = np.array(categorical_values).reshape(-1, 1)
-        encoded_categoricals = self.category_encoder.transform(categorical_array).toarray()
-        interacted_state_features = np.zeros((num_rows, num_cols * encoded_categoricals.shape[1]))
+        interacted_state_features = np.zeros((num_rows, num_cols * len(self.category_idx)))
         for i, feature_vector in enumerate(feature_matrix):
-            cat_idx = np.where(encoded_categoricals[i] == 1.0)[0][0]
+            cat_idx = self.category_idx[categorical_values[i]]
             start_idx = cat_idx * num_cols
             end_idx = start_idx + num_cols - 1
             interacted_state_features[i, start_idx:end_idx + 1] = feature_vector
@@ -246,8 +244,13 @@ class OneHotCategoricalFeatureInteracter:
         See `rlai.models.feature_extraction.OneHotCategory` for a general-purpose category class.
         """
 
-        self.category_encoder = OneHotEncoder(categories=[categories])
-        self.category_encoder.fit(np.array([categories]).reshape(-1, 1))
+        # self.category_encoder = OneHotEncoder(categories=[categories])
+        # self.category_encoder.fit(np.array([categories]).reshape(-1, 1))
+
+        self.category_idx = {
+            category: i
+            for i, category in enumerate(categories)
+        }
 
 
 @rl_text(chapter='Feature Extractors', page=1)

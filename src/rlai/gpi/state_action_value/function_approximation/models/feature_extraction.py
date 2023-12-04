@@ -217,7 +217,7 @@ class StateActionIdentityFeatureExtractor(StateActionFeatureExtractor):
         self.check_state_and_action_lists(states, actions)
 
         return pd.DataFrame([
-            (state.i, action.i)
+            (state.id, action.id)
             for state, action in zip(states, actions)
         ], columns=['s', 'a'])
 

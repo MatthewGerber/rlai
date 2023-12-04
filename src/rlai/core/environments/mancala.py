@@ -452,12 +452,12 @@ class Mancala(MdpEnvironment):
 
         for i, pit in enumerate(self.board):
 
-            pit.i = i
+            pit.id = i
 
             # non-store pit (i.e., pockets) have actions associated with them. Action.i indexes the particular pit
             # within the board.
             if not pit.store:
-                pit.action = Action(pit.i)
+                pit.action = Action(pit.id)
 
         # Action.name indicates the i-th pit from the player's perspective
         for i, pit in enumerate(self.player_1_pockets):

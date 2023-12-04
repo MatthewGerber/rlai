@@ -774,8 +774,8 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
         ]
 
         state_category_feature_matrix = self.state_category_interacter.interact(
-            state_scaled_feature_matrix,
-            state_categories
+            feature_matrix=state_scaled_feature_matrix,
+            categorical_values=state_categories
         )
 
         # interact features per action
@@ -827,28 +827,34 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
 
             # cart position is [-2.4, 2.4]
             [
-                StateDimensionSegment(0, high - 0.5, high)
-                for high in np.arange(-2.5, 2.5, 0.5)
+                StateDimensionSegment(0, None, -1.2),
+                StateDimensionSegment(0, -1.2, 0.0),
+                StateDimensionSegment(0, 0.0, 1.2),
+                StateDimensionSegment(0, 1.2, None),
             ] +
 
             # cart velocity is (-inf, inf)
             [
-                StateDimensionSegment(1, None, 0.0)
+                StateDimensionSegment(1, None, -1.5),
+                StateDimensionSegment(1, -1.5, 0.0),
+                StateDimensionSegment(1, 0.0, 1.5),
+                StateDimensionSegment(1, 1.5, None)
             ] +
 
             # pole angle is [-.2095, .2095]
             [
-                StateDimensionSegment(2, high - 0.15, high)
-                for high in reversed(np.arange(0.0, -0.2095, -0.15))
-            ] +
-            [
-                StateDimensionSegment(2, low, low + 0.15)
-                for low in np.arange(0.0, 0.2095, 0.15)
+                StateDimensionSegment(2, None, -0.1),
+                StateDimensionSegment(2, -0.1, 0.0),
+                StateDimensionSegment(2, 0.0, 0.1),
+                StateDimensionSegment(2, 0.1, None),
             ] +
 
             # pole angle velocity is (-inf, inf)
             [
-                StateDimensionSegment(3, None, 0.0)
+                StateDimensionSegment(3, None, -1.5),
+                StateDimensionSegment(3, -1.5, 0.0),
+                StateDimensionSegment(3, 0.0, 1.5),
+                StateDimensionSegment(3, 1.5, None)
             ]
 
         )

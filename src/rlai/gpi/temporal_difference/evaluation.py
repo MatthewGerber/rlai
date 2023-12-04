@@ -78,7 +78,7 @@ def evaluate_q_pi(
     # access to the state-action value estimators.
     if isinstance(environment, PrioritizedSweepingMdpPlanningEnvironment):
         environment.bootstrap_function = partial(
-            get_bootstrapped_state_action_value,
+            get_state_action_value,
             mode=mode,
             agent=agent,
             q_S_A=agent.q_S_A,
@@ -169,7 +169,7 @@ def evaluate_q_pi(
 
             # get the next state's bootstrapped value and next action, based on the bootstrapping mode. note that the
             # bootstrapped next state-action value is only used if we're performing n-step updates below.
-            next_state_q_s_a, next_a = get_bootstrapped_state_action_value(
+            next_state_q_s_a, next_a = get_state_action_value(
                 state=next_state,
                 t=next_t,
                 mode=mode,
@@ -202,14 +202,7 @@ def evaluate_q_pi(
 
             total_reward += next_reward.r
 
-        # flush out the remaining n-step updates. if we terminated because we reached a terminal state, then all next-
-        # state values for the updates are zero. if instead we terminated because we reached the maximum number of time
-        # steps, then use the bootstrapped next-state value instead. this is an important distinction because these
-        # value can be dramatically different, and when discounting is not used (or is very small), the resulting value
-        # estimates can be correspondingly different.
-        if curr_state.terminal:
-            next_state_q_s_a = 0.0
-
+        # flush out the remaining n-step updates
         flush_n_steps = len(t_state_a_g) + 1
         while len(t_state_a_g) > 0:
             update_state_action_value_estimator(
@@ -235,7 +228,7 @@ def evaluate_q_pi(
     return evaluated_states, episode_reward_averager.get_value()
 
 
-def get_bootstrapped_state_action_value(
+def get_state_action_value(
         state: MdpState,
         t: int,
         mode: Mode,
@@ -244,13 +237,13 @@ def get_bootstrapped_state_action_value(
         environment: MdpEnvironment
 ) -> Tuple[float, Optional[Action]]:
     """
-    Get the bootstrapped state-action value for a state, also returning the next action.
+    Get the state-action value for a state, also returning the next action.
 
     :param state: State.
     :param t: Time step.
     :param mode: Bootstrap mode.
     :param agent: Agent.
-    :param q_S_A: Current state-action value estimates.
+    :param q_S_A: Current state-action value estimator.
     :param environment: Environment.
     :return: 2-tuple of the state's bootstrapped state-action value and the next action.
     """
@@ -259,13 +252,14 @@ def get_bootstrapped_state_action_value(
 
     # if the state is terminal, then all q-values are zero.
     if state.terminal:
-        bootstrapped_s_a_value = 0.0
+        q_s_a = 0.0
+
     else:
 
         # EXPECTED_SARSA:  get expected q-value based on current policy and q-value estimates. this is an off-policy
         # mode.
         if mode == Mode.EXPECTED_SARSA:
-            bootstrapped_s_a_value = sum(
+            q_s_a = sum(
                 (agent.pi[state][a] if state in agent.pi else 1.0 / len(state.AA)) *
                 (q_S_A[state][a].get_value() if state in q_S_A and a in q_S_A[state] else 0.0)
                 for a in state.AA
@@ -291,15 +285,15 @@ def get_bootstrapped_state_action_value(
 
             # get the state-action value if we have an estimate for it; otherwise, it's zero.
             if state in q_S_A and td_target_a in q_S_A[state]:
-                bootstrapped_s_a_value = q_S_A[state][td_target_a].get_value()
+                q_s_a = q_S_A[state][td_target_a].get_value()
             else:
-                bootstrapped_s_a_value = 0.0
+                q_s_a = 0.0
 
         # if we're off-policy, then we won't yet have a next action. ask the agent for an action now.
         if next_a is None:
             next_a = agent.act(t)
 
-    return bootstrapped_s_a_value, next_a
+    return q_s_a, next_a
 
 
 def update_state_action_value_estimator(
