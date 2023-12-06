@@ -342,7 +342,6 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
 
             # feature extractors may return a matrix with no columns if extraction was not possible
             if state_action_feature_matrix.shape[1] > 0:
-                # self.model.fit(state_action_feature_matrix, self.experience_values, self.weights)
                 self.model.fit(
                     state_action_feature_matrix,
                     self.value_scaler.scale_features(

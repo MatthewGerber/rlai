@@ -1,4 +1,3 @@
-import logging
 import math
 import os
 import warnings
@@ -291,6 +290,9 @@ class Gym(ContinuousMdpEnvironment):
                     self.gym_native.stats_recorder.done = terminated
 
                 reward = curr_distance + fuel_remaining
+
+        elif self.gym_id == Gym.CARTPOLE_V1:
+            reward = max(0.0, 10.0 - np.abs(observation).sum())
 
         # call render if rendering manually
         if self.check_render_current_episode(True):

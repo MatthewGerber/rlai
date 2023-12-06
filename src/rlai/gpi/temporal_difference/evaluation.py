@@ -3,6 +3,8 @@ import logging
 from functools import partial
 from typing import Dict, Set, Tuple, Optional
 
+import numpy as np
+
 from rlai.core import Action, MdpState, MdpAgent
 from rlai.core.environments.mdp import MdpEnvironment, MdpPlanningEnvironment, PrioritizedSweepingMdpPlanningEnvironment
 from rlai.gpi import PolicyImprovementEvent
@@ -141,8 +143,8 @@ def evaluate_q_pi(
             # termination.
             if curr_state.truncated:
                 if truncation_time_step is None:
-                    truncation_time_step = next_t
-                    logging.info(f'Episode was truncated after {truncation_time_step} step(s).')
+                    truncation_time_step = curr_t
+                    logging.info(f'Episode was truncated after {curr_t} step(s).')
             else:
                 t_state_a_g[curr_t] = (curr_state, curr_a, 0.0)
 
@@ -157,24 +159,26 @@ def evaluate_q_pi(
             else:
                 shape_reward_first_t = max(0, curr_t - n_steps + 1)
 
-            t_shaped_reward = agent.shape_reward(
-                reward=next_reward,
-                first_t=shape_reward_first_t,
-                final_t=curr_t
-            )
+            t_shaped_reward = {
+                t: shaped_reward
+                for t, shaped_reward in agent.shape_reward(
+                    reward=next_reward,
+                    first_t=shape_reward_first_t,
+                    final_t=curr_t
+                ).items()
+
+                # reward shapers might return invalid time steps. ignore these.
+                if t in t_state_a_g
+            }
 
             # add shaped returns to their return accumulators
             t_state_a_g.update({
-
                 t: (
                     t_state_a_g[t][0],
                     t_state_a_g[t][1],
                     t_state_a_g[t][2] + shaped_reward
                 )
                 for t, shaped_reward in t_shaped_reward.items()
-
-                # reward shapers might return invalid time steps. ignore these.
-                if t in t_state_a_g
             })
 
             # get the next state's bootstrapped value and next action, based on the bootstrapping mode. note that the
@@ -209,15 +213,24 @@ def evaluate_q_pi(
             curr_t = next_t
             curr_state = next_state
             curr_a = next_a
-
             total_reward += next_reward.r
 
+            # if we've truncated and the shaped reward has converged to zero, then there's no point in running longer.
+            if truncation_time_step is not None:
+                shaped_reward_values = np.array(list(t_shaped_reward.values()))
+                if np.allclose(shaped_reward_values, np.zeros_like(shaped_reward_values)):
+                    logging.info(
+                        f'Shaped rewards converged to zero after {curr_t - truncation_time_step} post-truncation '
+                        f'step(s). Forcing episode termination.'
+                    )
+                    next_state_q_s_a = 0.0
+                    break
+
         # flush out the remaining n-step updates
-        flush_n_steps = len(t_state_a_g) + 1
         while len(t_state_a_g) > 0:
             update_state_action_value_estimator(
                 q_S_A=agent.q_S_A,
-                n_steps=flush_n_steps,
+                n_steps=curr_t - next(iter(t_state_a_g.keys())) + 1,
                 curr_t=curr_t,
                 t_state_a_g=t_state_a_g,
                 agent=agent,
@@ -227,7 +240,6 @@ def evaluate_q_pi(
                 planning_environment=planning_environment,
                 num_updates_per_improvement=num_updates_per_improvement
             )
-            curr_t += 1
 
         episode_reward_averager.update(total_reward)
 
