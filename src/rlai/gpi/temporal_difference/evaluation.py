@@ -102,7 +102,8 @@ def evaluate_q_pi(
         total_reward = 0.0
         t_state_a_g: Dict[int, Tuple[MdpState, Action, float]] = {}  # dictionary from time steps to tuples of state, action, and truncated return.
         next_state_q_s_a = 0.0
-        while not curr_state.terminal and (environment.T is None or curr_t < environment.T):
+        truncation_time_step = None
+        while not curr_state.terminal:
 
             advance_result, next_reward = environment.advance(
                 state=curr_state,
@@ -133,8 +134,17 @@ def evaluate_q_pi(
             agent.sense(next_state, next_t)
 
             # initialize the n-step, truncated return accumulator at the current time for the current state and action.
-            # we'll add discounted, shaped rewards to the initial value here.
-            t_state_a_g[curr_t] = (curr_state, curr_a, 0.0)
+            # we'll add discounted, shaped rewards to the initial value here. only do this at non-truncated time steps.
+            # the detail here is that truncation is imposed by passing --T to the environment. stopping the episode
+            # artificially after --T steps means that steps near the end might receive an artificially low return value
+            # compared with the value they would have obtained if the episode were permitted to run to natural
+            # termination.
+            if curr_state.truncated:
+                if truncation_time_step is None:
+                    truncation_time_step = next_t
+                    logging.info(f'Episode was truncated after {truncation_time_step} step(s).')
+            else:
+                t_state_a_g[curr_t] = (curr_state, curr_a, 0.0)
 
             # ask the agent to shape the reward, returning the time steps whose returns should be updated and the shaped
             # reward associated with each. if n_steps is None, then shape the reward all the way back to the start

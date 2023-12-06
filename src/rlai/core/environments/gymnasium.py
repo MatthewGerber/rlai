@@ -50,7 +50,8 @@ class GymState(MdpState):
             environment: 'Gym',
             observation: np.ndarray,
             agent: MdpAgent,
-            terminal: bool
+            terminal: bool,
+            truncated: bool
     ):
         """
         Initialize the state.
@@ -58,13 +59,19 @@ class GymState(MdpState):
         :param environment: Environment.
         :param observation: Observation.
         :param agent: Agent.
-        :param terminal: Whether the state is terminal.
+        :param terminal: Whether the state is terminal, meaning the episode has terminated naturally due to the
+        dynamics of the environment. For example, the natural dynamics of the environment might terminate when the agent
+        reaches a predefined goal state.
+        :param truncated: Whether the state is truncated, meaning the episode has ended for some reason other than the
+        natural dynamics of the environment. For example, imposing an artificial time limit on an episode might cause
+        the episode to end without the agent in a predefined goal state.
         """
 
         super().__init__(
             i=agent.pi.get_state_i(observation),
             AA=environment.actions,
-            terminal=terminal
+            terminal=terminal,
+            truncated=truncated
         )
 
         self.observation = observation
@@ -237,11 +244,6 @@ class Gym(ContinuousMdpEnvironment):
 
         observation, reward, terminated, truncated, _ = self.gym_native.step(action=gym_action)
 
-        # truncation is a special case of termination
-        if truncated and not terminated:
-            logging.info(f'Episode was truncated after {t + 1} step(s). Terminating.')
-            terminated = truncated
-
         # update fuel remaining if needed
         fuel_remaining = None
         if fuel_used is not None:
@@ -290,11 +292,6 @@ class Gym(ContinuousMdpEnvironment):
 
                 reward = curr_distance + fuel_remaining
 
-        elif self.gym_id == Gym.CARTPOLE_V1:
-
-            if terminated and not truncated:
-                reward = 0.0
-
         # call render if rendering manually
         if self.check_render_current_episode(True):
             self.gym_native.render()
@@ -315,8 +312,9 @@ class Gym(ContinuousMdpEnvironment):
         self.state = GymState(
             environment=self,
             observation=observation,
+            agent=agent,
             terminal=terminated,
-            agent=agent
+            truncated=truncated
         )
 
         self.previous_observation = observation
@@ -352,8 +350,9 @@ class Gym(ContinuousMdpEnvironment):
         self.state = GymState(
             environment=self,
             observation=observation,
+            agent=agent,
             terminal=False,
-            agent=agent
+            truncated=False
         )
 
         return self.state
@@ -829,32 +828,28 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
             [
                 StateDimensionSegment(0, None, -1.2),
                 StateDimensionSegment(0, -1.2, 0.0),
-                StateDimensionSegment(0, 0.0, 1.2),
-                StateDimensionSegment(0, 1.2, None),
+                StateDimensionSegment(0, 0.0, 1.2)
             ] +
 
             # cart velocity is (-inf, inf)
             [
                 StateDimensionSegment(1, None, -1.5),
                 StateDimensionSegment(1, -1.5, 0.0),
-                StateDimensionSegment(1, 0.0, 1.5),
-                StateDimensionSegment(1, 1.5, None)
+                StateDimensionSegment(1, 0.0, 1.5)
             ] +
 
             # pole angle is [-.2095, .2095]
             [
                 StateDimensionSegment(2, None, -0.1),
                 StateDimensionSegment(2, -0.1, 0.0),
-                StateDimensionSegment(2, 0.0, 0.1),
-                StateDimensionSegment(2, 0.1, None),
+                StateDimensionSegment(2, 0.0, 0.1)
             ] +
 
             # pole angle velocity is (-inf, inf)
             [
                 StateDimensionSegment(3, None, -1.5),
                 StateDimensionSegment(3, -1.5, 0.0),
-                StateDimensionSegment(3, 0.0, 1.5),
-                StateDimensionSegment(3, 1.5, None)
+                StateDimensionSegment(3, 0.0, 1.5)
             ]
 
         )
@@ -869,8 +864,8 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
 
         self.feature_scaler = NonstationaryFeatureScaler(
             num_observations_refit_feature_scaler=1000,
-            refit_history_length=10000,
-            refit_weight_decay=0.99
+            refit_history_length=30000,
+            refit_weight_decay=0.9999
         )
 
 

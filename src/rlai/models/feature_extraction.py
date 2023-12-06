@@ -223,12 +223,12 @@ class OneHotCategoricalFeatureInteracter:
         if num_rows != num_cats:
             raise ValueError(f'Expected {num_rows} categorical values but got {num_cats}')
 
-        num_cols = feature_matrix.shape[1]
-        interacted_state_features = np.zeros((num_rows, num_cols * len(self.category_idx)))
+        num_features = feature_matrix.shape[1]
+        interacted_state_features = np.zeros((num_rows, num_features * len(self.category_idx)))
         for i, feature_vector in enumerate(feature_matrix):
             cat_idx = self.category_idx[categorical_values[i]]
-            start_idx = cat_idx * num_cols
-            end_idx = start_idx + num_cols - 1
+            start_idx = cat_idx * num_features
+            end_idx = start_idx + num_features - 1
             interacted_state_features[i, start_idx:end_idx + 1] = feature_vector
 
         return interacted_state_features
@@ -243,9 +243,6 @@ class OneHotCategoricalFeatureInteracter:
         :param categories: List of categories that will be one-hot encoded. These can be of any type that is hashable.
         See `rlai.models.feature_extraction.OneHotCategory` for a general-purpose category class.
         """
-
-        # self.category_encoder = OneHotEncoder(categories=[categories])
-        # self.category_encoder.fit(np.array([categories]).reshape(-1, 1))
 
         self.category_idx = {
             category: i
@@ -381,7 +378,7 @@ class StateDimensionSegment:
         """
 
         dimension_value = state[self.dimension]
-        low_indicator = self.low is None or dimension_value >= self.low
-        high_indicator = self.high is None or dimension_value < self.high
+        above_low = self.low is None or dimension_value >= self.low
+        below_high = self.high is None or dimension_value < self.high
 
-        return low_indicator and high_indicator
+        return above_low and below_high

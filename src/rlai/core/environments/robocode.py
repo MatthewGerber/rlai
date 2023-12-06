@@ -355,7 +355,8 @@ class RobocodeEnvironment(TcpMdpEnvironment):
             most_recent_scanned_robot=most_recent_scanned_robot,
             most_recent_scanned_robot_age_turns=most_recent_scanned_robot_age_turns,
             AA=self.robot_actions,
-            terminal=terminal
+            terminal=terminal,
+            truncated=False
         )
 
         # calculate reward
@@ -488,7 +489,8 @@ class RobocodeState(MdpState):
             most_recent_scanned_robot: Optional[Dict],
             most_recent_scanned_robot_age_turns: Optional[int],
             AA: List[Action],
-            terminal: bool
+            terminal: bool,
+            truncated: bool
     ):
         """
         Initialize the state.
@@ -525,13 +527,19 @@ class RobocodeState(MdpState):
         :param most_recent_scanned_robot: Scanned enemy.
         :param most_recent_scanned_robot_age_turns: Age of scanned enemy, in turns.
         :param AA: List of actions that can be taken.
-        :param terminal: Whether or not the state is terminal.
+        :param terminal: Whether the state is terminal, meaning the episode has terminated naturally due to the
+        dynamics of the environment. For example, the natural dynamics of the environment might terminate when the agent
+        reaches a predefined goal state.
+        :param truncated: Whether the state is truncated, meaning the episode has ended for some reason other than the
+        natural dynamics of the environment. For example, imposing an artificial time limit on an episode might cause
+        the episode to end without the agent in a predefined goal state.
         """
 
         super().__init__(
             i=None,
             AA=AA,
-            terminal=terminal
+            terminal=terminal,
+            truncated=truncated
         )
 
         self.battle_field_height = battle_field_height

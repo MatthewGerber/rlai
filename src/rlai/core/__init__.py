@@ -219,7 +219,7 @@ class ContinuousMultiDimensionalAction(Action):
 @rl_text(chapter='States', page=1)
 class State:
     """
-    State.
+    Base state for all other states.
     """
 
     def is_feasible(
@@ -315,14 +315,20 @@ class MdpState(State, ABC):
             self,
             i: Optional[int],
             AA: List[Action],
-            terminal: bool
+            terminal: bool,
+            truncated: bool
     ):
         """
         Initialize the MDP state.
 
         :param i: State index.
         :param AA: All actions that can be taken from this state.
-        :param terminal: Whether or not the state is terminal.
+        :param terminal: Whether the state is terminal, meaning the episode has terminated naturally due to the
+        dynamics of the environment. For example, the natural dynamics of the environment might terminate when the agent
+        reaches a predefined goal state.
+        :param truncated: Whether the state is truncated, meaning the episode has ended for some reason other than the
+        natural dynamics of the environment. For example, imposing an artificial time limit on an episode might cause
+        the episode to end without the agent in a predefined goal state.
         """
 
         super().__init__(
@@ -331,6 +337,7 @@ class MdpState(State, ABC):
         )
 
         self.terminal = terminal
+        self.truncated = truncated
 
 
 @rl_text(chapter=1, page=6)

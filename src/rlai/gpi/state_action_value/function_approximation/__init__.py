@@ -539,8 +539,8 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
 
         self.value_scaler = NonstationaryFeatureScaler(
             num_observations_refit_feature_scaler=1000,
-            refit_history_length=10000,
-            refit_weight_decay=0.99
+            refit_history_length=30000,
+            refit_weight_decay=0.9999
         )
 
     def __getitem__(

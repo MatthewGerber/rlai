@@ -44,7 +44,8 @@ class MancalaState(MdpState):
         super().__init__(
             i=state_i,
             AA=mancala.get_feasible_actions(agent_is_player_1),
-            terminal=mancala.is_terminal()
+            terminal=mancala.is_terminal(),
+            truncated=False
         )
 
 
