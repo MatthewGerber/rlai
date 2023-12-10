@@ -292,7 +292,7 @@ class Gym(ContinuousMdpEnvironment):
                 reward = curr_distance + fuel_remaining
 
         elif self.gym_id == Gym.CARTPOLE_V1:
-            reward = max(0.0, 10.0 - np.abs(observation).sum())
+            reward = np.exp(-(np.abs(observation).sum() / 5.0))
 
         # call render if rendering manually
         if self.check_render_current_episode(True):
