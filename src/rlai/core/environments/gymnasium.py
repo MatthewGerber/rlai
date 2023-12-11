@@ -295,11 +295,11 @@ class Gym(ContinuousMdpEnvironment):
             reward = np.exp(
                 -(
                     np.abs([
-                        observation[0] * 2.0,
-                        observation[1],
-                        observation[2] * 2.0,
-                        observation[3]
-                    ]).sum() / 2.5
+                        observation[0],
+                        # observation[1],
+                        # observation[2] * 10.0,
+                        # observation[3]
+                    ]).sum()
                 )
             )
 
@@ -767,7 +767,7 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
 
         # extract and scale features
         state_feature_matrix = np.array([
-            state.observation
+            np.append(state.observation, [1.0])
             for state in states
         ])
 

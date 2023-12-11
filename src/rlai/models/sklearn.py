@@ -384,6 +384,7 @@ class SKLearnSGD(FunctionApproximationModel):
         super().__init__()
 
         self.model_kwargs = kwargs
+        kwargs['fit_intercept'] = False
 
         # verbose is required in order to capture standard output for plotting. if a verbosity level is not passed or
         # passed as 0, then set flag indicating that we should not print captured output back to stdout; otherwise,
