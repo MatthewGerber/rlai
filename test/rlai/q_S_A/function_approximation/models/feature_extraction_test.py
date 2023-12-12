@@ -20,7 +20,7 @@ def test_check_state_and_action_lists():
     gw = Gridworld.example_4_1(random, T=None)
     fex = GridworldFeatureExtractor(gw)
 
-    states = [MdpState(i=None, AA=[], terminal=False)]
+    states = [MdpState(i=None, AA=[], terminal=False, truncated=False)]
     actions = [Action(0)]
     fex.check_state_and_action_lists(states, actions)
 

@@ -24,7 +24,7 @@ def test_agent_invalid_action():
     # test infeasible action
     action = Action(1, 'foo')
     agent.__act__ = lambda t: action
-    state = MdpState(1, [], False)
+    state = MdpState(1, [], False, truncated=False)
     agent.sense(state, 0)
     with pytest.raises(ValueError, match=f'Action {action} is not feasible in state {state}'):
         agent.act(0)
@@ -40,7 +40,7 @@ def test_human_agent():
     a1 = Action(0, 'Foo')
     a2 = Action(1, 'Bar')
 
-    state = MdpState(1, [a1, a2], False)
+    state = MdpState(1, [a1, a2], False, truncated=False)
     agent.sense(state, 0)
 
     call_num = 0

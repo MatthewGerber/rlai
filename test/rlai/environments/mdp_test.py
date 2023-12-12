@@ -66,9 +66,9 @@ def test_prioritized_planning_environment():
         10
     )
 
-    planning_environment.add_state_action_priority(MdpState(1, [], False), Action(1), 0.2)
-    planning_environment.add_state_action_priority(MdpState(2, [], False), Action(2), 0.1)
-    planning_environment.add_state_action_priority(MdpState(3, [], False), Action(3), 0.3)
+    planning_environment.add_state_action_priority(MdpState(1, [], False, False), Action(1), 0.2)
+    planning_environment.add_state_action_priority(MdpState(2, [], False, False), Action(2), 0.1)
+    planning_environment.add_state_action_priority(MdpState(3, [], False, False), Action(3), 0.3)
 
     s, a = planning_environment.get_state_action_with_highest_priority()
     assert s.i == 2 and a.i == 2

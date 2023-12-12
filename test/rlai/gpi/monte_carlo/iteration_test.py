@@ -159,7 +159,7 @@ def test_off_policy_monte_carlo_with_function_approximation():
 
     assert mdp_agent.pi == pi_fixture and q_S_A == q_S_A_fixture
     assert isinstance(mdp_agent.pi, FunctionApproximationPolicy)
-    assert str(mdp_agent.pi.estimator[mdp_environment.SS[5]][mdp_environment.SS[5].AA[1]]).startswith('-2.4305')
+    assert str(mdp_agent.pi.estimator[mdp_environment.SS[5]][mdp_environment.SS[5].AA[1]]).startswith('-4.0209')
 
     # make greedy
     q_S_A.epsilon = 0.0

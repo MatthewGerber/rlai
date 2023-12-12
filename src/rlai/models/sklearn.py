@@ -395,8 +395,14 @@ class SKLearnSGD(FunctionApproximationModel):
 
         # verbose is required in order to capture standard output for plotting.
         kwargs['verbose'] = 1
-        kwargs['fit_intercept'] = not kwargs['no_intercept']
-        del kwargs['no_intercept']
+
+        # check whether an intercept should be fitted
+        if 'no_intercept' in kwargs:
+            kwargs['fit_intercept'] = not kwargs['no_intercept']
+            del kwargs['no_intercept']
+        else:
+            kwargs['fit_intercept'] = True
+
         self.model_kwargs = kwargs
         self.model = SGDRegressor(**self.model_kwargs)
         self.base_eta0 = self.model.eta0

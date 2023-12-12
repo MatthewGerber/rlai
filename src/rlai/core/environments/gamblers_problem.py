@@ -105,7 +105,8 @@ class GamblersProblem(ModelBasedMdpEnvironment):
                     if a.i <= min(capital, 100 - capital)
                 ],
 
-                terminal=capital == 0 or capital == 100
+                terminal=capital == 0 or capital == 100,
+                truncated=False
             )
 
             # include terminal capital levels of 0 and 100

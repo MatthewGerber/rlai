@@ -176,7 +176,8 @@ class Gridworld(ModelBasedMdpEnvironment):
             MdpState(
                 i=row_i * n_columns + col_j,
                 AA=AA,
-                terminal=False
+                terminal=False,
+                truncated=False
             )
             for row_i in range(n_rows)
             for col_j in range(n_columns)

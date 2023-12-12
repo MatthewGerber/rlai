@@ -542,7 +542,7 @@ class PrioritizedSweepingMdpPlanningEnvironment(MdpPlanningEnvironment):
         parsed_args, unparsed_args = parse_arguments(cls, args)
 
         planning_environment = cls(
-            name=f"prioritized planning (theta={parsed_args.priority_theta})",
+            name=f'prioritized planning (theta={parsed_args.priority_theta})',
             random_state=random_state,
             model=StochasticEnvironmentModel(),
             **vars(parsed_args)
@@ -586,6 +586,9 @@ class PrioritizedSweepingMdpPlanningEnvironment(MdpPlanningEnvironment):
                 target_value = r + agent.gamma * self.bootstrap_function(state=planning_state, t=t+1)[0]
                 priority = -abs(target_value - self.q_S_A[pred_state][pred_action].get_value())
                 self.add_state_action_priority(pred_state, pred_action, priority)
+
+        if self.T is not None and t > self.T:
+            planning_state.truncated = self.state.truncated = True
 
         return (planning_state, planning_a, self.state), Reward(None, r)
 
@@ -790,6 +793,7 @@ class TrajectorySamplingMdpPlanningEnvironment(MdpPlanningEnvironment):
 
         # sample next state and reward from model
         self.state, r = self.model.sample_next_state_and_reward(state, a, self.random_state)
+        self.state.truncated = self.T is not None and t > self.T
 
         return (state, a, self.state), Reward(None, r)
 
