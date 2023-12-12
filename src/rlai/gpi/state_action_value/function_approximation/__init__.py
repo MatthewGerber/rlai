@@ -19,7 +19,7 @@ from rlai.gpi.state_action_value.function_approximation.models import (
 )
 from rlai.gpi.state_action_value.function_approximation.models.sklearn import SKLearnSGD
 from rlai.meta import rl_text
-from rlai.models.feature_extraction import NonstationaryFeatureScaler
+from rlai.models.feature_extraction import StationaryFeatureScaler
 from rlai.utils import parse_arguments, load_class, log_with_border
 
 
@@ -536,11 +536,7 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         self.weights: Optional[np.ndarray] = None
         self.experience_pending: bool = False
 
-        self.value_scaler = NonstationaryFeatureScaler(
-            num_observations_refit_feature_scaler=1000,
-            refit_history_length=30000,
-            refit_weight_decay=0.9999
-        )
+        self.value_scaler = StationaryFeatureScaler()
 
     def __getitem__(
             self,

@@ -32,7 +32,8 @@ from rlai.models.feature_extraction import (
     FeatureExtractor,
     OneHotCategoricalFeatureInteracter,
     OneHotCategory,
-    StateDimensionSegment
+    StateDimensionSegment,
+    StationaryFeatureScaler
 )
 from rlai.state_value.function_approximation.models.feature_extraction import StateFeatureExtractor
 from rlai.utils import parse_arguments, ScatterPlot
@@ -873,11 +874,7 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
             ])
         ])
 
-        self.feature_scaler = NonstationaryFeatureScaler(
-            num_observations_refit_feature_scaler=1000,
-            refit_history_length=30000,
-            refit_weight_decay=0.9999
-        )
+        self.feature_scaler = StationaryFeatureScaler()
 
 
 @rl_text(chapter='Feature Extractors', page=1)

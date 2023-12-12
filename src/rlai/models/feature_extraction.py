@@ -75,7 +75,103 @@ class FeatureExtractor(ABC):
 
 
 @rl_text(chapter='Feature Extractors', page=1)
-class NonstationaryFeatureScaler:
+class FeatureScaler(ABC):
+    """
+    Base class for all feature scalers.
+    """
+
+    @abstractmethod
+    def scale_features(
+            self,
+            feature_matrix: np.ndarray,
+            refit_before_scaling: bool
+    ) -> np.ndarray:
+        """
+        Scale features.
+
+        :param feature_matrix: Feature matrix.
+        :param refit_before_scaling: Whether or not to refit the scaler using `feature_matrix` before scaling.
+        :return: Scaled feature matrix.
+        """
+
+    @abstractmethod
+    def invert_scaled_features(
+            self,
+            feature_matrix: np.ndarray
+    ) -> np.ndarray:
+        """
+        Invert scaled features back to their original representation.
+
+        :param feature_matrix: Feature matrix.
+        :return: Feature matrix in original representation.
+        """
+
+
+@rl_text(chapter='Feature Extractors', page=1)
+class StationaryFeatureScaler(FeatureScaler):
+    """
+    Stationary feature scaler.
+    """
+
+    def __init__(
+            self
+    ):
+        """
+        Initialize the scaler.
+        """
+
+        self.feature_scaler = StandardScaler()
+
+    def scale_features(
+            self,
+            feature_matrix: np.ndarray,
+            refit_before_scaling: bool
+    ) -> np.ndarray:
+        """
+        Scale features.
+
+        :param feature_matrix: Feature matrix.
+        :param refit_before_scaling: Whether or not to refit the scaler using `feature_matrix` before scaling.
+        :return: Scaled feature matrix.
+        """
+
+        if refit_before_scaling:
+            self.feature_scaler.partial_fit(feature_matrix)
+
+        try:
+
+            scaled_feature_matrix = self.feature_scaler.transform(feature_matrix)
+
+        # the following exception will be thrown if the scaler has not yet been fitted. catch and ignore scaling.
+        except NotFittedError:
+            scaled_feature_matrix = feature_matrix
+
+        return scaled_feature_matrix
+
+    def invert_scaled_features(
+            self,
+            feature_matrix: np.ndarray
+    ) -> np.ndarray:
+        """
+        Invert scaled features back to their original representation.
+
+        :param feature_matrix: Feature matrix.
+        :return: Feature matrix in original representation.
+        """
+
+        try:
+
+            inverted_feature_matrix = self.feature_scaler.inverse_transform(feature_matrix)
+
+        # the following exception will be thrown if the scaler has not yet been fitted. catch and ignore scaling.
+        except NotFittedError:
+            inverted_feature_matrix = feature_matrix
+
+        return inverted_feature_matrix
+
+
+@rl_text(chapter='Feature Extractors', page=1)
+class NonstationaryFeatureScaler(FeatureScaler):
     """
     It is common for function approximation models to require some sort of state-feature scaling in order to converge
     upon optimal solutions. For example, in stochastic gradient descent, the use of state features with different scales
