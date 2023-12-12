@@ -297,9 +297,7 @@ class Gym(ContinuousMdpEnvironment):
                 -(
                     np.abs([
                         observation[0],
-                        # observation[1],
-                        # observation[2] * 10.0,
-                        # observation[3]
+                        observation[2] * 7.5,
                     ]).sum()
                 )
             )
