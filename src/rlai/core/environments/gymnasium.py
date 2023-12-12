@@ -954,10 +954,10 @@ class ContinuousFeatureExtractor(StateFeatureExtractor):
         super().__init__()
 
         self.feature_scaler = NonstationaryFeatureScaler(
-                num_observations_refit_feature_scaler=2000,
-                refit_history_length=100000,
-                refit_weight_decay=0.99999
-            )
+            num_observations_refit_feature_scaler=2000,
+            refit_history_length=100000,
+            refit_weight_decay=0.99999
+        )
 
 
 @rl_text(chapter='Feature Extractors', page=1)
