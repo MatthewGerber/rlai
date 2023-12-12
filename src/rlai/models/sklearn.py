@@ -104,6 +104,12 @@ class SKLearnSGD(FunctionApproximationModel):
             help='The exponent for inverse scaling learning rate.'
         )
 
+        parser.add_argument(
+            '--no-intercept',
+            action='store_true',
+            help='Pass this flag to not fit an intercept term.'
+        )
+
         # other stuff
         parser.add_argument(
             '--verbose',
@@ -383,16 +389,15 @@ class SKLearnSGD(FunctionApproximationModel):
 
         super().__init__()
 
-        self.model_kwargs = kwargs
-        kwargs['fit_intercept'] = False
+        # if a verbosity level is not passed or passed as 0, then set flag indicating that we should not print captured
+        # output back to stdout; otherwise, print captured output back to stdout as the caller expects.
+        self.print_output = kwargs.get('verbose', 0) != 0
 
-        # verbose is required in order to capture standard output for plotting. if a verbosity level is not passed or
-        # passed as 0, then set flag indicating that we should not print captured output back to stdout; otherwise,
-        # print captured output back to stdout as the caller expects.
-        passed_verbose = kwargs.get('verbose', 0)
+        # verbose is required in order to capture standard output for plotting.
         kwargs['verbose'] = 1
-        self.print_output = passed_verbose != 0
-
+        kwargs['fit_intercept'] = not kwargs['no_intercept']
+        del kwargs['no_intercept']
+        self.model_kwargs = kwargs
         self.model = SGDRegressor(**self.model_kwargs)
         self.base_eta0 = self.model.eta0
 
