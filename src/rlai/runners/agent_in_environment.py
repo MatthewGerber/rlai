@@ -91,7 +91,7 @@ def run(
 
         logging.info(f'Running {agent} agent in {environment} environment.')
 
-        # manually set the environment on continuous action policies, as they require a reference but do not pickle it.
+        # manually set the environment on continuous-action policies, as they require a reference but do not pickle it.
         if hasattr(agent, 'pi') and isinstance(agent.pi, ContinuousActionPolicy):
             agent.pi.environment = environment
 

@@ -1439,22 +1439,17 @@ class Environment(ABC):
             monitor: 'Monitor'
     ):
         """
-        Run the environment with an agent.
+        Run the environment with an agent. This routine does not provide any learning functionality. It only steps
+        through the environment with the agent.
 
         :param agent: Agent to run.
         :param monitor: Monitor.
         """
 
-        t = 0
         have_T = self.T is not None
-        while True:
-
-            terminate = self.run_step(t, agent, monitor)
-
+        t = 0
+        while (not have_T or t < self.T) and not self.run_step(t, agent, monitor):
             t += 1
-
-            if terminate or (have_T and t >= self.T):
-                break
 
     @abstractmethod
     def run_step(

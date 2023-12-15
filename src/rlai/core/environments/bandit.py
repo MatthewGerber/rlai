@@ -226,10 +226,8 @@ class KArmedBandit(Environment):
 
         action = agent.act(t=t)
         monitor.report(t=t, agent_action=action, optimal_action=Action(self.best_arm.i))
-
         reward = self.pull(action.i)
         monitor.report(t=t, action_reward=reward)
-
         agent.reward(reward)
 
         return False
