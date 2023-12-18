@@ -190,11 +190,16 @@ class ModelBasedMdpEnvironment(MdpEnvironment, ABC):
         ])
 
         # sample next state and reward
-        self.state, next_reward = sample_list_item(
+        next_state, next_reward = sample_list_item(
             x=s_prime_rewards,
             probs=probs,
             random_state=self.random_state
         )
+
+        # copy next state (so we don't modify reference object) and set truncation
+        self.state = copy(next_state)
+        assert isinstance(self.state, MdpState)
+        self.state.truncated = self.T is not None and t >= self.T
 
         return self.state, next_reward
 
@@ -579,7 +584,8 @@ class PrioritizedSweepingMdpPlanningEnvironment(MdpPlanningEnvironment):
         else:
 
             # sample next state and reward from model
-            self.state, r = self.model.sample_next_state_and_reward(planning_state, planning_a, self.random_state)
+            next_state, r = self.model.sample_next_state_and_reward(planning_state, planning_a, self.random_state)
+            self.state = copy(next_state)
 
             # add predecessors into priority queue
             for pred_state, pred_action, r in self.get_predecessor_state_action_rewards(planning_state):
@@ -587,7 +593,7 @@ class PrioritizedSweepingMdpPlanningEnvironment(MdpPlanningEnvironment):
                 priority = -abs(target_value - self.q_S_A[pred_state][pred_action].get_value())
                 self.add_state_action_priority(pred_state, pred_action, priority)
 
-        if self.T is not None and t > self.T:
+        if self.T is not None and t >= self.T:
             planning_state.truncated = self.state.truncated = True
 
         return (planning_state, planning_a, self.state), Reward(None, r)
@@ -792,8 +798,9 @@ class TrajectorySamplingMdpPlanningEnvironment(MdpPlanningEnvironment):
             a = self.model.sample_action(state, self.random_state)
 
         # sample next state and reward from model
-        self.state, r = self.model.sample_next_state_and_reward(state, a, self.random_state)
-        self.state.truncated = self.T is not None and t > self.T
+        next_state, r = self.model.sample_next_state_and_reward(state, a, self.random_state)
+        self.state = copy(next_state)
+        self.state.truncated = self.T is not None and t >= self.T
 
         return (state, a, self.state), Reward(None, r)
 

@@ -13,7 +13,7 @@
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
     <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/rlai/runners/trainer.py" />
-    <option name="PARAMETERS" value="--random-seed 12345 --agent rlai.gpi.state_action_value.ActionValueMdpAgent --gamma 1 --environment rlai.core.environments.mancala.Mancala --initial-count 4 --train-function rlai.gpi.monte_carlo.iteration.iterate_value_q_pi --num-improvements 1000 --num-episodes-per-improvement 500 --epsilon 0.05 --q-S-A rlai.gpi.state_action_value.tabular.TabularStateActionValueEstimator --make-final-policy-greedy True --num-improvements-per-plot 20 --num-improvements-per-checkpoint 100 --checkpoint-path ~/Desktop/mancala_mc_checkpoint.pickle --save-agent-path ~/Desktop/mancala_mc_agent.pickle" />
+    <option name="PARAMETERS" value="--random-seed 12345 --agent rlai.gpi.state_action_value.ActionValueMdpAgent --gamma 1.0 --environment rlai.core.environments.mancala.Mancala --initial-count 4 --train-function rlai.gpi.monte_carlo.iteration.iterate_value_q_pi --num-improvements 1000 --num-episodes-per-improvement 500 --epsilon 0.05 --q-S-A rlai.gpi.state_action_value.tabular.TabularStateActionValueEstimator --make-final-policy-greedy True --num-improvements-per-plot 20 --num-improvements-per-checkpoint 100 --checkpoint-path ~/Desktop/mancala_mc_checkpoint.pickle --save-agent-path ~/Desktop/mancala_mc_agent.pickle --log INFO" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />

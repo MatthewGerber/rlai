@@ -131,10 +131,6 @@ def evaluate_q_pi(
                 if planning_environment is not None:
                     planning_environment.model.update(curr_state, curr_a, next_state, next_reward)
 
-            # allow the agent to sense the next state at the next time step
-            next_t = curr_t + 1
-            agent.sense(next_state, next_t)
-
             # initialize the n-step, truncated return accumulator at the current time for the current state and action.
             # we'll add discounted, shaped rewards to the initial value here. only do this at non-truncated time steps.
             # the detail here is that truncation is imposed by passing --T to the environment. stopping the episode
@@ -147,6 +143,10 @@ def evaluate_q_pi(
                     logging.info(f'Episode was truncated after {curr_t} step(s).')
             else:
                 t_state_a_g[curr_t] = (curr_state, curr_a, 0.0)
+
+            # allow the agent to sense the next state at the next time step
+            next_t = curr_t + 1
+            agent.sense(next_state, next_t)
 
             # ask the agent to shape the reward, returning the time steps whose returns should be updated and the shaped
             # reward associated with each. if n_steps is None, then shape the reward all the way back to the start

@@ -109,7 +109,12 @@ def improve(
         t = 0
         state_action_first_t = None if update_upon_every_visit else {}
         t_state_action_reward = []
-        while not state.terminal and (environment.T is None or t < environment.T):
+        truncation_time_step = None
+        while not state.terminal:
+
+            if state.truncated and truncation_time_step is None:
+                truncation_time_step = t
+                logging.info(f'Episode was truncated after {t} step(s).')
 
             a = agent.act(t)
             state_a = (state, a)
@@ -125,8 +130,19 @@ def improve(
             t_state_action_reward.append((t, state_a, next_reward))
             state = next_state
             t += 1
-
             agent.sense(state, t)
+
+            # if we've truncated and the discounted reward has converged to zero, then there's no point in running
+            # longer.
+            if truncation_time_step is not None:
+                steps_past_truncation = (t - truncation_time_step)
+                discounted_reward = next_reward.r * (agent.gamma ** steps_past_truncation)
+                if np.isclose(discounted_reward, 0.0):
+                    logging.info(
+                        f'Discounted reward converged to zero after {steps_past_truncation} post-truncation step(s). '
+                        'Forcing episode termination.'
+                    )
+                    break
 
         # work backwards through the trace to calculate discounted returns. need to work backward in order for the value
         # of g at each time step t to be properly discounted.
@@ -134,6 +150,10 @@ def improve(
         for i, (t, state_a, reward) in enumerate(reversed(t_state_action_reward)):
 
             g = agent.gamma * g + reward.r
+
+            # only update value estimates before the truncation time step if we have one
+            if truncation_time_step is not None and t >= truncation_time_step:
+                continue
 
             # if we're doing every-visit, or if the current time step was the first visit to the state-action, then g is
             # the discounted sample value. use it to update the policy.
@@ -351,13 +371,30 @@ class TrainingPool:
             self.agent.reset_for_new_run(state)
             total_reward = 0.0
             t = 0
-            while not state.terminal and (self.environment.T is None or t < self.environment.T):
+            truncation_time_step = None
+            while not state.terminal:
+
+                if state.truncated and truncation_time_step is None:
+                    truncation_time_step = t
+
                 a = self.agent.act(t)
                 next_state, next_reward = self.environment.advance(state, t, a, self.agent)
                 total_reward += next_reward.r
                 state = next_state
                 t += 1
                 self.agent.sense(state, t)
+
+                # if we've truncated and the discounted reward has converged to zero, then there's no point in running
+                # longer.
+                if truncation_time_step is not None:
+                    steps_past_truncation = (t - truncation_time_step)
+                    discounted_reward = next_reward.r * (self.agent.gamma ** steps_past_truncation)
+                    if np.isclose(discounted_reward, 0.0):
+                        logging.info(
+                            f'Discounted reward converged to zero after {steps_past_truncation} post-truncation step(s). '
+                            'Forcing episode termination.'
+                        )
+                        break
 
             evaluation_averager.update(total_reward)
 

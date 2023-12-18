@@ -20,13 +20,17 @@ class MancalaState(MdpState):
     def __init__(
             self,
             mancala: 'Mancala',
-            agent_to_sense_state: MdpAgent
+            agent_to_sense_state: MdpAgent,
+            truncated: bool
     ):
         """
         Initialize the state.
 
         :param mancala: Mancala environment
         :param agent_to_sense_state: Agent that will sense the state.
+        :param truncated: Whether the state is truncated, meaning the episode has ended for some reason other than the
+        natural dynamics of the environment. For example, imposing an artificial time limit on an episode might cause
+        the episode to end without the agent in a predefined goal state.
         """
 
         agent_is_player_1 = agent_to_sense_state != mancala.player_2
@@ -45,7 +49,7 @@ class MancalaState(MdpState):
             i=state_i,
             AA=mancala.get_feasible_actions(agent_is_player_1),
             terminal=mancala.is_terminal(),
-            truncated=False
+            truncated=truncated
         )
 
 
@@ -219,7 +223,8 @@ class Mancala(MdpEnvironment):
         go_again = self.sow_and_capture(picked_pocket)
         self.state = MancalaState(
             mancala=self,
-            agent_to_sense_state=agent if go_again else self.player_2
+            agent_to_sense_state=agent if go_again else self.player_2,
+            truncated=self.T is not None and t >= self.T
         )
 
         # check for termination
@@ -243,7 +248,8 @@ class Mancala(MdpEnvironment):
                 go_again = self.sow_and_capture(picked_pocket)
                 self.state = MancalaState(
                     mancala=self,
-                    agent_to_sense_state=self.player_2 if go_again else agent
+                    agent_to_sense_state=self.player_2 if go_again else agent,
+                    truncated=self.T is not None and t >= self.T
                 )
 
                 # check for termination
@@ -277,7 +283,8 @@ class Mancala(MdpEnvironment):
 
         self.state = MancalaState(
             mancala=self,
-            agent_to_sense_state=agent
+            agent_to_sense_state=agent,
+            truncated=False
         )
 
         return self.state

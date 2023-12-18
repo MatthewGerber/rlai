@@ -1,6 +1,8 @@
 import logging
 from typing import Dict, Tuple, Set
 
+import numpy as np
+
 from rlai.core import MdpState
 from rlai.core.environments.mdp import MdpEnvironment
 from rlai.gpi.state_action_value import ActionValueMdpAgent
@@ -48,7 +50,12 @@ def evaluate_v_pi(
         t = 0
         state_first_t = {}
         t_state_reward = []
-        while not state.terminal and (environment.T is None or t < environment.T):
+        truncation_time_step = None
+        while not state.terminal:
+
+            if state.truncated and truncation_time_step is None:
+                truncation_time_step = t
+                logging.info(f'Episode was truncated after {t} step(s).')
 
             if state not in state_first_t:
                 state_first_t[state] = t
@@ -60,11 +67,23 @@ def evaluate_v_pi(
             else:
                 a = agent.act(t)
 
-            next_state, reward = environment.advance(state, t, a, agent)
-            t_state_reward.append((t, state, reward))
+            next_state, next_reward = environment.advance(state, t, a, agent)
+            t_state_reward.append((t, state, next_reward))
             state = next_state
             t += 1
             agent.sense(state, t)
+
+            # if we've truncated and the discounted reward has converged to zero, then there's no point in running
+            # longer.
+            if truncation_time_step is not None:
+                steps_past_truncation = (t - truncation_time_step)
+                discounted_reward = next_reward.r * (agent.gamma ** steps_past_truncation)
+                if np.isclose(discounted_reward, 0.0):
+                    logging.info(
+                        f'Discounted reward converged to zero after {steps_past_truncation} post-truncation step(s). '
+                        'Forcing episode termination.'
+                    )
+                    break
 
         # work backwards through the trace to calculate discounted returns. need to work backward in order for the value
         # of g at each time step t to be properly discounted.
@@ -73,14 +92,19 @@ def evaluate_v_pi(
 
             g = agent.gamma * g + reward.r
 
+            # only update value estimates before the truncation time step if we have one
+            if truncation_time_step is not None and t >= truncation_time_step:
+                continue
+
             # if the current time step was the first visit to the state, then g is the discounted sample value. add it
             # to our average.
             if state_first_t[state] == t:
-
-                if state not in v_pi:
-                    v_pi[state] = IncrementalSampleAverager()
-
-                v_pi[state].update(g)
+                if state in v_pi:
+                    value_estimator = v_pi[state]
+                else:
+                    value_estimator = IncrementalSampleAverager()
+                    v_pi[state] = value_estimator
+                value_estimator.update(g)
 
         episodes_finished = episode_i + 1
         if episodes_finished % episodes_per_print == 0:
@@ -102,9 +126,8 @@ def evaluate_q_pi(
         off_policy_agent: ActionValueMdpAgent = None,
 ) -> Tuple[Set[MdpState], float]:
     """
-    Perform Monte Carlo evaluation of an agent's policy within an environment, returning state-action values. This
-    evaluation function operates over rewards obtained at the end of episodes, so it is only appropriate for episodic
-    tasks.
+    Perform Monte Carlo evaluation of an agent's policy within an environment. This evaluation function operates over
+    rewards obtained at the end of episodes, so it is only appropriate for episodic tasks.
 
     :param agent: Agent containing target policy to be optimized.
     :param environment: Environment.
@@ -144,9 +167,16 @@ def evaluate_q_pi(
         state_action_first_t = None if update_upon_every_visit else {}
         t_state_action_reward = []
         total_reward = 0.0
-        while not state.terminal and (environment.T is None or t < environment.T):
+        truncation_time_step = None
+        while not state.terminal:
 
-            evaluated_states.add(state)
+            # mark truncation time and exclude the state from those that were properly evaluated
+            if state.truncated:
+                if truncation_time_step is None:
+                    truncation_time_step = t
+                    logging.info(f'Episode was truncated after {t} step(s).')
+            else:
+                evaluated_states.add(state)
 
             if exploring_starts and t == 0:
                 a = sample_list_item(state.AA, None, environment.random_state)
@@ -164,8 +194,19 @@ def evaluate_q_pi(
             total_reward += next_reward.r
             state = next_state
             t += 1
-
             episode_generation_agent.sense(state, t)
+
+            # if we've truncated and the discounted reward has converged to zero, then there's no point in running
+            # longer.
+            if truncation_time_step is not None:
+                steps_past_truncation = (t - truncation_time_step)
+                discounted_reward = next_reward.r * (agent.gamma ** steps_past_truncation)
+                if np.isclose(discounted_reward, 0.0):
+                    logging.info(
+                        f'Discounted reward converged to zero after {steps_past_truncation} post-truncation step(s). '
+                        'Forcing episode termination.'
+                    )
+                    break
 
         # work backwards through the trace to calculate discounted returns. need to work backward in order for the value
         # of g at each time step t to be properly discounted. here, w is the importance-sampling weight of the agent's
@@ -175,6 +216,10 @@ def evaluate_q_pi(
         for t, state_a, reward in reversed(t_state_action_reward):
 
             g = agent.gamma * g + reward.r
+
+            # only update value estimates before the truncation time step if we have one
+            if truncation_time_step is not None and t >= truncation_time_step:
+                continue
 
             # if we're doing every-visit, or if the current time step was the first visit to the state-action, then g
             # is the discounted sample value. add it to our average.

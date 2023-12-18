@@ -125,6 +125,9 @@ class TcpMdpEnvironment(MdpEnvironment, ABC):
             except Exception as ex:  # pragma no cover
                 logging.info(f'Exception while closing socket upon episode termination:  {ex}')
 
+        if self.T is not None and t >= self.T:
+            self.state.truncated = True
+
         return self.state, reward
 
     @abstractmethod
