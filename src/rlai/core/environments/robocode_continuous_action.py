@@ -11,7 +11,7 @@ from rlai.core import Reward, Action, ContinuousMultiDimensionalAction, MdpState
 from rlai.core.environments.mdp import ContinuousMdpEnvironment
 from rlai.core.environments.network import TcpMdpEnvironment
 from rlai.meta import rl_text
-from rlai.models.feature_extraction import FeatureExtractor, NonstationaryFeatureScaler
+from rlai.models.feature_extraction import FeatureExtractor, StationaryFeatureScaler
 from rlai.policy_gradient import ParameterizedMdpAgent
 from rlai.policy_gradient.policies import ParameterizedPolicy
 from rlai.state_value import StateValueEstimator
@@ -1368,11 +1368,7 @@ class RobocodeFeatureExtractor(StateFeatureExtractor):
 
         self.scanned_robot_decay = 0.75
         self.robot_actions = environment.robot_actions
-        self.feature_scaler = NonstationaryFeatureScaler(
-            num_observations_refit_feature_scaler=2000,
-            refit_history_length=100000,
-            refit_weight_decay=0.99999
-        )
+        self.feature_scaler = StationaryFeatureScaler()
 
 
 @rl_text(chapter='Actions', page=1)

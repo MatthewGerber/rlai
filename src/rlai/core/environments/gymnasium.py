@@ -28,14 +28,15 @@ from rlai.gpi.state_action_value.function_approximation.models.feature_extractio
 )
 from rlai.meta import rl_text
 from rlai.models.feature_extraction import (
-    NonstationaryFeatureScaler,
     FeatureExtractor,
     OneHotCategoricalFeatureInteracter,
     OneHotCategory,
-    StateDimensionSegment,
     StationaryFeatureScaler
 )
-from rlai.state_value.function_approximation.models.feature_extraction import StateFeatureExtractor
+from rlai.state_value.function_approximation.models.feature_extraction import (
+    StateFeatureExtractor,
+    OneHotStateSegmentFeatureInteracter
+)
 from rlai.utils import parse_arguments, ScatterPlot
 
 
@@ -247,7 +248,7 @@ class Gym(ContinuousMdpEnvironment):
         # update fuel remaining if needed
         fuel_remaining = None
         if fuel_used is not None:
-            fuel_remaining = max(0.0, state.observation[-1] - fuel_used)
+            fuel_remaining = max(0.0, float(state.observation[-1] - fuel_used))
             observation = np.append(observation, fuel_remaining)
 
         if self.gym_id == Gym.LLC_V2:
@@ -695,7 +696,10 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
     """
     A feature extractor for the Gym cartpole environment. This extractor, being based on the
     `StateActionInteractionFeatureExtractor`, directly extracts the fully interacted state-action feature matrix. It
-    returns numpy.ndarray feature matrices, which are not compatible with the Patsy formula-based interface.
+    returns numpy.ndarray feature matrices, which are not compatible with the Patsy formula-based interface. Lastly, and
+    importantly, it adds a constant term to the state-feature vector before all interactions, which results in a
+    separate intercept term being present for each state segment and action combination. The function approximator
+    should not add its own intercept term.
     """
 
     @classmethod
@@ -764,27 +768,23 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
 
         self.check_state_and_action_lists(states, actions)
 
-        # extract and scale features
-        state_feature_matrix = np.array([
-            np.append(state.observation, [1.0])
+        # get the raw state matrix
+        state_matrix = np.array([
+            state.observation
             for state in states
         ])
 
+        # extract and scale features for each state vector
+        state_feature_matrix = np.array([
+            np.append(state_vector, [1.0])
+            for state_vector in state_matrix
+        ])
         state_scaled_feature_matrix = self.feature_scaler.scale_features(state_feature_matrix, refit_scaler)
 
-        # interact feature vectors per state category, where the category indicates the joint indicator of the state
-        # dimension segments.
-        state_categories = [
-            OneHotCategory(*[
-                state_dimension_segment.get_indicator(state.observation)
-                for state_dimension_segment in self.state_dimension_segments
-            ])
-            for state in states
-        ]
-
-        state_category_feature_matrix = self.state_category_interacter.interact(
-            feature_matrix=state_scaled_feature_matrix,
-            categorical_values=state_categories
+        # interact the feature matrix with its state-segment indicators
+        state_category_feature_matrix = self.state_segment_interacter.interact(
+            state_matrix,
+            state_scaled_feature_matrix
         )
 
         # interact features per action
@@ -827,50 +827,20 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
             ]
         )
 
-        # create interacter over cartesian product of state categories
-        state_space = environment.gym_native.observation_space
-        if not isinstance(state_space, Box):
-            raise ValueError(f'Expected a {Box} observation space.')
-
-        self.state_dimension_segments = (
+        self.state_segment_interacter = OneHotStateSegmentFeatureInteracter({
 
             # cart position is [-2.4, 2.4]
-            [
-                StateDimensionSegment(0, None, -1.2),
-                StateDimensionSegment(0, -1.2, 0.0),
-                StateDimensionSegment(0, 0.0, 1.2)
-            ] +
+            0: [-1.2, 0, 1.2],
 
-            # cart velocity is (-inf, inf)
-            [
-                StateDimensionSegment(1, None, -1.5),
-                StateDimensionSegment(1, -1.5, 0.0),
-                StateDimensionSegment(1, 0.0, 1.5)
-            ] +
+            # cart velocity is (-inf, inf) but typical values are in [-2.0, 2.0]
+            1: [-1.5, 0.0, 1.5],
 
             # pole angle is [-.2095, .2095]
-            [
-                StateDimensionSegment(2, None, -0.1),
-                StateDimensionSegment(2, -0.1, 0.0),
-                StateDimensionSegment(2, 0.0, 0.1)
-            ] +
+            2: [-0.1, 0.0, 0.1],
 
-            # pole angle velocity is (-inf, inf)
-            [
-                StateDimensionSegment(3, None, -1.5),
-                StateDimensionSegment(3, -1.5, 0.0),
-                StateDimensionSegment(3, 0.0, 1.5)
-            ]
-
-        )
-
-        self.state_category_interacter = OneHotCategoricalFeatureInteracter([
-            OneHotCategory(*args)
-            for args in product(*[
-                state_dimension_segment.get_indicator_range()
-                for state_dimension_segment in self.state_dimension_segments
-            ])
-        ])
+            # pole angle velocity is (-inf, inf) but typical values are in [-2.0, 2.0]
+            3: [-1.5, 0.0, 1.5]
+        })
 
         self.feature_scaler = StationaryFeatureScaler()
 
@@ -878,7 +848,8 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
 @rl_text(chapter='Feature Extractors', page=1)
 class ContinuousFeatureExtractor(StateFeatureExtractor):
     """
-    A feature extractor for continuous Gym environments.
+    A feature extractor for continuous Gym environments. Extracts a scaled (standardized) version of the Gym state
+    observation.
     """
 
     @classmethod
@@ -936,7 +907,7 @@ class ContinuousFeatureExtractor(StateFeatureExtractor):
         :param refit_scaler: Whether or not to refit the feature scaler before scaling the extracted features. This is
         only appropriate in settings where nonstationarity is desired (e.g., during training). During evaluation, the
         scaler should remain fixed, which means this should be False.
-        :return: State-feature vector.
+        :return: Scaled (standardized) state-feature vector.
         """
 
         return self.feature_scaler.scale_features(
@@ -953,18 +924,14 @@ class ContinuousFeatureExtractor(StateFeatureExtractor):
 
         super().__init__()
 
-        self.feature_scaler = NonstationaryFeatureScaler(
-            num_observations_refit_feature_scaler=2000,
-            refit_history_length=100000,
-            refit_weight_decay=0.99999
-        )
+        self.feature_scaler = StationaryFeatureScaler()
 
 
 @rl_text(chapter='Feature Extractors', page=1)
 class SignedCodingFeatureExtractor(ContinuousFeatureExtractor):
     """
     Signed-coding feature extractor. Forms a category from the conjunction of all state-feature signs and then places
-    the continuous feature vector into its associated category.
+    the continuous feature vector into its associated category. Works for all continuous-valued state spaces in Gym.
     """
 
     def extract(
@@ -982,26 +949,22 @@ class SignedCodingFeatureExtractor(ContinuousFeatureExtractor):
         :return: State-feature vector.
         """
 
-        if self.state_category_interacter is None:
-            self.state_category_interacter = OneHotCategoricalFeatureInteracter([
-                OneHotCategory(*category_args)
-                for category_args in product(*([[True, False]] * state.observation.shape[0]))
-            ])
+        state_matrix = np.array([state.observation])
 
-        # form the one-hot state category
-        state_category = OneHotCategory(*[
-            value < 0.0
-            for value in state.observation
-        ])
+        if self.state_category_interacter is None:
+            self.state_category_interacter = OneHotStateSegmentFeatureInteracter({
+                dimension: [0.0]
+                for dimension in range(state_matrix.shape[1])
+            })
 
         # extract and encode feature values
-        raw_feature_values = super().extract(state, refit_scaler)
-        encoded_feature_values = self.state_category_interacter.interact(
-            np.array([raw_feature_values]),
-            [state_category]
+        scaled_feature_vector = super().extract(state, refit_scaler)
+        interacted_feature_vector = self.state_category_interacter.interact(
+            state_matrix,
+            np.array([scaled_feature_vector])
         )[0]
 
-        return encoded_feature_values
+        return interacted_feature_vector
 
     def __init__(
             self
@@ -1012,13 +975,15 @@ class SignedCodingFeatureExtractor(ContinuousFeatureExtractor):
 
         super().__init__()
 
+        # this is a generic feature extractor for all gym environments. as such, we don't know the dimensionality of the
+        # state space until the first call to extract. do lazy-init here.
         self.state_category_interacter = None
 
 
 @rl_text(chapter='Feature Extractors', page=1)
 class ContinuousLunarLanderFeatureExtractor(ContinuousFeatureExtractor):
     """
-    Feature extractor for the continuous lunar lander.
+    Feature extractor for the continuous lunar lander environment.
     """
 
     def extract(
@@ -1037,7 +1002,7 @@ class ContinuousLunarLanderFeatureExtractor(ContinuousFeatureExtractor):
         """
 
         # extract raw feature values
-        raw_feature_values = super().extract(state, refit_scaler)
+        scaled_feature_vector = super().extract(state, refit_scaler)
 
         # features:
         #   0 (x pos)
@@ -1059,15 +1024,15 @@ class ContinuousLunarLanderFeatureExtractor(ContinuousFeatureExtractor):
 
         # encode feature values
         encoded_feature_idxs = [0, 2, 3, 4, 5]
-        feature_values_to_encode = raw_feature_values[encoded_feature_idxs]
+        feature_values_to_encode = scaled_feature_vector[encoded_feature_idxs]
         encoded_feature_values = self.state_category_interacter.interact(
             np.array([feature_values_to_encode]),
             [state_category]
         )[0]
 
         # get unencoded feature values
-        both_legs_in_contact = 1.0 if all(raw_feature_values[6:8] == 1.0) else 0.0
-        unencoded_feature_values = np.append(raw_feature_values[[1, 6, 7, 8]], [both_legs_in_contact])
+        both_legs_in_contact = 1.0 if np.all(state.observation[6:8] == 1.0) else 0.0
+        unencoded_feature_values = np.append(scaled_feature_vector[[1, 6, 7, 8]], [both_legs_in_contact])
 
         # combine encoded and unencoded feature values
         final_feature_values = np.append(encoded_feature_values, unencoded_feature_values)
@@ -1093,7 +1058,7 @@ class ContinuousLunarLanderFeatureExtractor(ContinuousFeatureExtractor):
 @rl_text(chapter='Feature Extractors', page=1)
 class ContinuousMountainCarFeatureExtractor(ContinuousFeatureExtractor):
     """
-    Feature extractor for the continuous lunar lander.
+    Feature extractor for the continuous mountain car environment.
     """
 
     def extract(
@@ -1112,22 +1077,13 @@ class ContinuousMountainCarFeatureExtractor(ContinuousFeatureExtractor):
         """
 
         # extract raw feature values
-        raw_feature_values = super().extract(state, refit_scaler)
-
-        # encode features
-        state_category = OneHotCategory(*[
-            obs_feature < Gym.MCC_V0_TROUGH_X_POS if i == 0 else  # shift the x midpoint to the trough
-            obs_feature <= 0.0 if i == 2 else  # fuel bottoms out at zero
-            obs_feature < 0.0
-            for i, obs_feature in enumerate(state.observation)
-        ])
-
-        encoded_feature_values = self.state_category_interacter.interact(
-            np.array([raw_feature_values]),
-            [state_category]
+        scaled_feature_matrix = super().extract(state, refit_scaler)
+        interacted_feature_vector = self.state_category_interacter.interact(
+            np.array([state.observation]),
+            np.array([scaled_feature_matrix])
         )[0]
 
-        return encoded_feature_values
+        return interacted_feature_vector
 
     def __init__(
             self
@@ -1139,7 +1095,14 @@ class ContinuousMountainCarFeatureExtractor(ContinuousFeatureExtractor):
         super().__init__()
 
         # interact features with relevant state categories
-        self.state_category_interacter = OneHotCategoricalFeatureInteracter([
-            OneHotCategory(*category_args)
-            for category_args in product(*([[True, False]] * 3))
-        ])
+        self.state_category_interacter = OneHotStateSegmentFeatureInteracter({
+
+            # shift the x-location midpoint to the trough
+            0: [Gym.MCC_V0_TROUGH_X_POS],
+
+            # velocity switches at zero
+            1: [0.0],
+
+            # fuel bottoms out at zero
+            2: [0.0]
+        })
