@@ -36,7 +36,7 @@ class Arm:
             self.q_star_buffer_idx = 0
 
         # return next value from buffer
-        value = self.q_star_buffer[self.q_star_buffer_idx]
+        value = float(self.q_star_buffer[self.q_star_buffer_idx])
         self.q_star_buffer_idx += 1
 
         return value
@@ -168,7 +168,7 @@ class KArmedBandit(Environment):
             agent: Agent
     ) -> State:
         """
-        Reset the the bandit, initializing arms to new expected values.
+        Reset the bandit, initializing arms to new expected values.
 
         :param agent: Agent.
         :return: New State.
@@ -177,7 +177,11 @@ class KArmedBandit(Environment):
         super().reset_for_new_run(agent)
 
         # get new arm reward means and initialize new arms
-        q_star_means = self.random_state.normal(loc=self.q_star_mean, scale=self.q_star_variance, size=self.k)
+        q_star_means = self.random_state.normal(
+            loc=self.q_star_mean,
+            scale=self.q_star_variance,
+            size=self.k
+        )
 
         self.arms = [
             Arm(
@@ -186,7 +190,7 @@ class KArmedBandit(Environment):
                 variance=self.reward_variance,
                 random_state=self.random_state
             )
-            for i, mean in enumerate(q_star_means)
+            for (i, mean) in enumerate(q_star_means)
         ]
 
         self.best_arm = max(self.arms, key=lambda arm: arm.mean)

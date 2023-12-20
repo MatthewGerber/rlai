@@ -222,7 +222,7 @@ class ApproximateStateValueEstimator(StateValueEstimator):
         if feature_matrix.shape[1] == 0:  # pragma no cover
             return 0.0
 
-        return self.model.evaluate(feature_matrix)[0]
+        return float(self.model.evaluate(feature_matrix)[0])
 
     def extract_features(
             self,
@@ -233,7 +233,7 @@ class ApproximateStateValueEstimator(StateValueEstimator):
         Extract features for states.
 
         :param states: States.
-        :param refit_scaler: Whether or not to refit the feature scaler before scaling the extracted features. This is
+        :param refit_scaler: Whether to refit the feature scaler before scaling the extracted features. This is
         only appropriate in settings where nonstationarity is desired (e.g., during training). During evaluation, the
         scaler should remain fixed, which means this should be False.
         :return: State-feature numpy.ndarray.

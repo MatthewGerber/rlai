@@ -562,7 +562,7 @@ class Gym(ContinuousMdpEnvironment):
         :param render_every_nth_episode: If passed, the environment will render an episode video per this value.
         :param video_directory: Directory in which to store rendered videos.
         :param steps_per_second: Number of steps per second when displaying videos.
-        :param plot_environment: Whether or not to plot the environment.
+        :param plot_environment: Whether to plot the environment.
         :param progressive_reward: Use progressive reward.
         """
 
@@ -618,7 +618,7 @@ class Gym(ContinuousMdpEnvironment):
                 )
             ]
 
-        # action space is continuous and we lack a discretization resolution:  initialize a single, multi-dimensional
+        # action space is continuous, and we lack a discretization resolution:  initialize a single, multidimensional
         # action including the min and max values of the dimensions. a policy gradient approach will be required.
         elif isinstance(action_space, Box) and self.continuous_action_discretization_resolution is None:
             self.actions = [
@@ -758,7 +758,7 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
 
         :param states: States.
         :param actions: Actions.
-        :param refit_scaler: Whether or not to refit the feature scaler before scaling the extracted features. This is
+        :param refit_scaler: Whether to refit the feature scaler before scaling the extracted features. This is
         only appropriate in settings where nonstationarity is desired (e.g., during training). During evaluation, the
         scaler should remain fixed, which means this should be False.
         :return: State-feature numpy.ndarray.
@@ -904,7 +904,7 @@ class ContinuousFeatureExtractor(StateFeatureExtractor):
         Extract state features.
 
         :param state: State.
-        :param refit_scaler: Whether or not to refit the feature scaler before scaling the extracted features. This is
+        :param refit_scaler: Whether to refit the feature scaler before scaling the extracted features. This is
         only appropriate in settings where nonstationarity is desired (e.g., during training). During evaluation, the
         scaler should remain fixed, which means this should be False.
         :return: Scaled (standardized) state-feature vector.
@@ -943,8 +943,8 @@ class SignedCodingFeatureExtractor(ContinuousFeatureExtractor):
         Extract state features.
 
         :param state: State.
-        :param refit_scaler: Whether or not to refit the feature scaler before scaling the extracted features. This is
-        only appropriate in settings where nonstationarity is desired (e.g., during training). During evaluation, the
+        :param refit_scaler: Whether to refit the feature scaler before scaling the extracted features. This is only
+        appropriate in settings where nonstationarity is desired (e.g., during training). During evaluation, the
         scaler should remain fixed, which means this should be False.
         :return: State-feature vector.
         """
@@ -995,7 +995,7 @@ class ContinuousLunarLanderFeatureExtractor(ContinuousFeatureExtractor):
         Extract state features.
 
         :param state: State.
-        :param refit_scaler: Whether or not to refit the feature scaler before scaling the extracted features. This is
+        :param refit_scaler: Whether to refit the feature scaler before scaling the extracted features. This is
         only appropriate in settings where nonstationarity is desired (e.g., during training). During evaluation, the
         scaler should remain fixed, which means this should be False.
         :return: State-feature vector.
@@ -1070,7 +1070,7 @@ class ContinuousMountainCarFeatureExtractor(ContinuousFeatureExtractor):
         Extract state features.
 
         :param state: State.
-        :param refit_scaler: Whether or not to refit the feature scaler before scaling the extracted features. This is
+        :param refit_scaler: Whether to refit the feature scaler before scaling the extracted features. This is
         only appropriate in settings where nonstationarity is desired (e.g., during training). During evaluation, the
         scaler should remain fixed, which means this should be False.
         :return: State-feature vector.

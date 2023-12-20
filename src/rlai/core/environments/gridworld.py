@@ -261,7 +261,7 @@ class GridworldFeatureExtractor(StateActionInteractionFeatureExtractor):
 
         :param states: States.
         :param actions: Actions.
-        :param refit_scaler: Whether or not to refit the feature scaler before scaling the extracted features. This is
+        :param refit_scaler: Whether to refit the feature scaler before scaling the extracted features. This is
         only appropriate in settings where nonstationarity is desired (e.g., during training). During evaluation, the
         scaler should remain fixed, which means this should be False.
         :return: State-feature numpy.ndarray.

@@ -10,7 +10,7 @@ Perform iterative policy evaluation of an agent's policy within an environment, 
     or `num_iterations` (or both) can be specified, but passing neither will raise an exception.
     :param num_iterations: Number of evaluation iterations to execute.  Either `theta` or `num_iterations` (or both)
     can be specified, but passing neither will raise an exception.
-    :param update_in_place: Whether or not to update value estimates in place.
+    :param update_in_place: Whether to update value estimates in place.
     :param initial_v_S: Initial guess at state-value, or None for no guess.
     :return: 2-tuple of (1) dictionary of MDP states and their estimated values under the agent's policy, and (2) final
     value of delta.
@@ -25,7 +25,7 @@ Perform iterative policy evaluation of an agent's policy within an environment, 
     or `num_iterations` (or both) can be specified, but passing neither will raise an exception.
     :param num_iterations: Number of evaluation iterations to execute.  Either `theta` or `num_iterations` (or both)
     can be specified, but passing neither will raise an exception.
-    :param update_in_place: Whether or not to update value estimates in place.
+    :param update_in_place: Whether to update value estimates in place.
     :param initial_q_S_A: Initial guess at state-action value, or None for no guess.
     :return: 2-tuple of (1) dictionary of MDP states, actions, and their estimated values under the agent's policy, and
     (2) final value of delta.

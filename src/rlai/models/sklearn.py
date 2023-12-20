@@ -243,7 +243,7 @@ class SKLearnSGD(FunctionApproximationModel):
         updated. This supports a pattern in which a background thread generates new plot data, and a UI thread (e.g., in
         a Jupyter notebook) periodically calls `update_plot` to redraw the plot with the latest data.
 
-        :param render: Whether or not to render the plot data. If False, then plot data will be updated but nothing will
+        :param render: Whether to render the plot data. If False, then plot data will be updated but nothing will
         be shown.
         :param pdf: PDF for plots.
         :return: Matplotlib figure, if one was generated and not plotting to PDF.

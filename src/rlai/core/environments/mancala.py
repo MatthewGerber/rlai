@@ -338,7 +338,7 @@ class Mancala(MdpEnvironment):
         """
         Get actions that are feasible for a player to take given the current state of the board.
 
-        :param player_1: Whether or not to check actions for player 1.
+        :param player_1: Whether to check actions for player 1.
         :return: List of feasible actions.
         """
 

@@ -187,7 +187,7 @@ class DiscretizedAction(Action):
 @rl_text(chapter=13, page=335)
 class ContinuousMultiDimensionalAction(Action):
     """
-    Continuous-valued multi-dimensional action.
+    Continuous-valued multidimensional action.
     """
 
     def __init__(
@@ -752,7 +752,7 @@ class EpsilonGreedyQValueAgent(QValueAgent):
         """
 
         if self.random_state.random_sample() < self.epsilon:
-            a = self.random_state.choice(self.most_recent_state.AA)
+            a = self.random_state.choice(self.most_recent_state.AA)  # type: ignore
             self.epsilon *= (1 - self.epsilon_reduction_rate)
         else:
             a = self.greedy_action
@@ -1095,7 +1095,7 @@ class PreferenceGradientAgent(Agent):
         :param name: Name of the agent.
         :param random_state: Random State.
         :param step_size_alpha: Step-size parameter used to update action preferences.
-        :param use_reward_baseline: Whether or not to use a reward baseline when updating action preferences.
+        :param use_reward_baseline: Whether to use a reward baseline when updating action preferences.
         :param reward_average_alpha: Step-size parameter for incremental reward averaging. See `IncrementalSampleAverager` for details.
         """
 

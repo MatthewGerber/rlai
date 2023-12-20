@@ -132,7 +132,7 @@ def evaluate_q_pi(
     :param agent: Agent containing target policy to be optimized.
     :param environment: Environment.
     :param num_episodes: Number of episodes to execute.
-    :param exploring_starts: Whether or not to use exploring starts, forcing a random action in the first time step.
+    :param exploring_starts: Whether to use exploring starts, forcing a random action in the first time step.
     This maintains exploration in the first state; however, unless each state has some nonzero probability of being
     selected as the first state, there is no assurance that all state-action pairs will be sampled. If the initial state
     is deterministic, consider passing False here and shifting the burden of exploration to the improvement step with

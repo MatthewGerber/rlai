@@ -22,7 +22,7 @@ def iterate_policy_v_pi(
     `rlai.core.ModelBasedMdpState`.
     :param environment: Model-based MDP environment to evaluate.
     :param theta: Minimum tolerated change in state-value estimates, below which evaluation terminates.
-    :param update_in_place: Whether or not to update value estimates in place.
+    :param update_in_place: Whether to update value estimates in place.
     :return: Final state-value estimates.
     """
 
@@ -71,7 +71,7 @@ def iterate_policy_q_pi(
     `rlai.core.ModelBasedMdpState`.
     :param environment: Model-based MDP environment to evaluate.
     :param theta: Minimum tolerated change in state-value estimates, below which evaluation terminates.
-    :param update_in_place: Whether or not to update value estimates in place.
+    :param update_in_place: Whether to update value estimates in place.
     :return: Final state-action value estimates.
     """
 

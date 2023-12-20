@@ -100,7 +100,7 @@ optional arguments:
   --alpha ALPHA         Step size.
   --epsilon EPSILON     Total probability mass to allocate across all policy actions.
   --make-final-policy-greedy {True,False}
-                        Whether or not to make the final policy greedy after training is complete.
+                        Whether to make the final policy greedy after training is complete.
   --num-improvements-per-plot NUM_IMPROVEMENTS_PER_PLOT
                         Number of improvements per plot.
   --num-improvements-per-checkpoint NUM_IMPROVEMENTS_PER_CHECKPOINT

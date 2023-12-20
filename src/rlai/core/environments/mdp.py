@@ -33,7 +33,7 @@ class MdpEnvironment(Environment, ABC):
         super().reset_for_new_run(agent)
 
         if len(self.nonterminal_states) > 0:
-            self.state = self.random_state.choice(self.nonterminal_states)
+            self.state = self.random_state.choice(self.nonterminal_states)  # type: ignore
         else:
             self.state = None
 

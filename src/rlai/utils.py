@@ -365,7 +365,7 @@ class StdStreamTee:
 
         :param stream: Standard stream.
         :param max_buffer_len: Maximum buffer length.
-        :param print_to_stream: Whether or not to print back to stream.
+        :param print_to_stream: Whether to print back to stream.
         """
 
         self.stream = stream

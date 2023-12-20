@@ -23,7 +23,7 @@ from rlai.utils import parse_arguments, load_class, is_positive_definite, Scatte
 @rl_text(chapter=13, page=335)
 class ContinuousActionPolicy(ParameterizedPolicy, ABC):
     """
-    Parameterized policy that produces continuous, multi-dimensional actions.
+    Parameterized policy that produces continuous, multidimensional actions.
     """
 
     @classmethod
@@ -62,7 +62,7 @@ class ContinuousActionPolicy(ParameterizedPolicy, ABC):
             state: MdpState
     ):
         """
-        Set the single, continuous, multi-dimensional action for this policy based on a state. This function can be
+        Set the single, continuous, multidimensional action for this policy based on a state. This function can be
         called repeatedly; however, it will only have an effect upon the first call. It assumes that the state contains
         a single action and will raise an exception if it does not.
 
@@ -121,7 +121,7 @@ class ContinuousActionPolicy(ParameterizedPolicy, ABC):
 
         :param environment: Environment.
         :param feature_extractor: Feature extractor.
-        :param plot_policy: Whether or not to plot policy values (e.g., action).
+        :param plot_policy: Whether to plot policy values (e.g., action).
         """
 
         super().__init__()
@@ -175,7 +175,7 @@ class ContinuousActionPolicy(ParameterizedPolicy, ABC):
 @rl_text(chapter=13, page=335)
 class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
     """
-    Parameterized policy that produces continuous, multi-dimensional actions by modeling the multidimensional mean and
+    Parameterized policy that produces continuous, multidimensional actions by modeling the multidimensional mean and
     covariance matrix of the multivariate normal distribution in terms of state features. This is appropriate for action
     spaces that are unbounded in (-infinity, infinity). The state features must be extracted by an extractor derived
     from `rlai.state_value.function_approximation.models.feature_extraction.StateFeatureExtractor`.
@@ -322,7 +322,7 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
         :param theta_mean: Policy parameters for mean.
         :param theta_cov: Policy parameters for covariance matrix.
         :param state_features: A vector of state features.
-        :param action_vector: Multi-dimensional action vector.
+        :param action_vector: Multidimensional action vector.
         :return: Value of the PDF.
         """
 
@@ -338,7 +338,7 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
             else jnp.dot(theta_cov_row, state_features)
 
             # iterate over each row of coefficients
-            for i, theta_cov_row in enumerate(theta_cov)
+            for (i, theta_cov_row) in enumerate(theta_cov)
 
         ]).reshape(action_space_dimensionality, action_space_dimensionality)
 
@@ -355,7 +355,7 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
 
         :param environment: Environment.
         :param feature_extractor: Feature extractor.
-        :param plot_policy: Whether or not to plot policy values (e.g., action).
+        :param plot_policy: Whether to plot policy values (e.g., action).
         """
 
         super().__init__(
@@ -483,7 +483,7 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
 @rl_text(chapter=13, page=335)
 class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
     """
-    Parameterized policy that produces continuous, multi-dimensional actions by modeling multiple independent beta
+    Parameterized policy that produces continuous, multidimensional actions by modeling multiple independent beta
     distributions in terms of state features. This is appropriate for action spaces that are bounded in [min, max],
     where the values of min and max can be different along each action dimension. The state features must be extracted
     by an extractor derived from
@@ -720,7 +720,7 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
 
         :param environment: Environment.
         :param feature_extractor: Feature extractor.
-        :param plot_policy: Whether or not to plot policy values (e.g., action).
+        :param plot_policy: Whether to plot policy values (e.g., action).
         """
 
         super().__init__(

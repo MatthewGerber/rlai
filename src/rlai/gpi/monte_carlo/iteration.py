@@ -44,7 +44,7 @@ def iterate_value_q_pi(
     improvement. Passing `1` will result in the Monte Carlo ES (Exploring Starts) algorithm.
     :param update_upon_every_visit: See `rlai.gpi.monte_carlo.evaluation.evaluate_q_pi`.
     :param planning_environment: Not support. Will raise exception if passed.
-    :param make_final_policy_greedy: Whether or not to make the agent's final policy greedy with respect to the q-values
+    :param make_final_policy_greedy: Whether to make the agent's final policy greedy with respect to the q-values
     that have been learned, regardless of the value of epsilon used to estimate the q-values.
     :param thread_manager: Thread manager. The current function (and the thread running it) will wait on this manager
     before starting each iteration. This provides a mechanism for pausing, resuming, and aborting training. Omit for no

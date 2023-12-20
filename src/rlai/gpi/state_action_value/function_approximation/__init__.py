@@ -53,7 +53,7 @@ class ApproximateValueEstimator(ValueEstimator):
         :return: Value.
         """
 
-        return self.estimator.evaluate(self.state, [self.action])[0]
+        return float(self.estimator.evaluate(self.state, [self.action])[0])
 
     def __init__(
             self,
@@ -405,7 +405,7 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
 
         :param states: States.
         :param actions: Actions.
-        :param refit_scaler: Whether or not to refit the feature scaler before scaling the extracted features. This is
+        :param refit_scaler: Whether to refit the feature scaler before scaling the extracted features. This is
         only appropriate in settings where nonstationarity is desired (e.g., during training). During evaluation, the
         scaler should remain fixed, which means this should be False.
         :return: State-feature numpy.ndarray.
@@ -443,7 +443,7 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         generates new plot data, and a UI thread (e.g., in a Jupyter notebook) periodically calls `update_plot` to
         redraw the plot with the latest data.
 
-        :param final: Whether or not this is the final time plot will be called.
+        :param final: Whether this is the final time plot will be called.
         :param pdf: PDF for plots, or None for no PDF.
         :return: Matplotlib Figure, if one was generated and not plotting to PDF.
         """
@@ -514,8 +514,8 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         they are also inefficiently processed in the online fashion described above. Patsy introduces significant
         overhead with each call to the formula parser. A faster alternative is to avoid formula specification (pass
         None here) and return the feature matrix directly from the feature extractor as a numpy.ndarray.
-        :param plot_model: Whether or not to plot the model.
-        :param plot_model_per_improvements: Number of policy improvements between between plots of the model. Only used
+        :param plot_model: Whether to plot the model.
+        :param plot_model_per_improvements: Number of policy improvements between plots of the model. Only used
         if `plot_model` is True. Pass None to only plot the model at the end.
         :param plot_model_bins: Number of plotting bins. Only used if `plot_model` is True. Pass None for no binning.
         """
@@ -613,7 +613,7 @@ class FunctionApproximationPolicy(Policy):
     """
     Policy for use with function approximation methods. This is effectively an interface to the underlying function
     approximation estimator and its reward model, which are accessed by indexing the policy with a state (e.g., a call
-    like agent.pi[state]), which returns an action-probability dictionary.
+    like `agent.pi[state]`), which returns an action-probability dictionary.
     """
 
     def reset_for_new_run(

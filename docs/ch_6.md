@@ -39,7 +39,7 @@ Run temporal-difference value iteration on an agent using state-action value est
     :param mode: Evaluation mode (see `rlai.gpi.temporal_difference.evaluation.Mode`).
     :param n_steps: Number of steps (see `rlai.gpi.temporal_difference.evaluation.evaluate_q_pi`).
     :param planning_environment: Planning environment to learn and use.
-    :param make_final_policy_greedy: Whether or not to make the agent's final policy greedy with respect to the q-values
+    :param make_final_policy_greedy: Whether to make the agent's final policy greedy with respect to the q-values
     that have been learned, regardless of the value of epsilon used to estimate the q-values.
     :param thread_manager: Thread manager. The current function (and the thread running it) will wait on this manager
     before starting each iteration. This provides a mechanism for pausing, resuming, and aborting training. Omit for no

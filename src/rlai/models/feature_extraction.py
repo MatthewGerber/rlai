@@ -90,7 +90,7 @@ class FeatureScaler(ABC):
         Scale features.
 
         :param feature_matrix: Feature matrix.
-        :param refit_before_scaling: Whether or not to refit the scaler using `feature_matrix` before scaling.
+        :param refit_before_scaling: Whether to refit the scaler using `feature_matrix` before scaling.
         :return: Scaled feature matrix.
         """
 
@@ -131,7 +131,7 @@ class StationaryFeatureScaler(FeatureScaler):
         Scale features.
 
         :param feature_matrix: Feature matrix.
-        :param refit_before_scaling: Whether or not to refit the scaler using `feature_matrix` before scaling.
+        :param refit_before_scaling: Whether to refit the scaler using `feature_matrix` before scaling.
         :return: Scaled feature matrix.
         """
 
@@ -194,7 +194,7 @@ class NonstationaryFeatureScaler(FeatureScaler):
         Scale features.
 
         :param feature_matrix: Feature matrix.
-        :param refit_before_scaling: Whether or not to refit the scaler using `feature_matrix` before scaling.
+        :param refit_before_scaling: Whether to refit the scaler using `feature_matrix` before scaling.
         :return: Scaled feature matrix.
         """
 

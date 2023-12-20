@@ -88,7 +88,7 @@ class SKLearnSGD(StateActionFunctionApproximationModel):
         :param feature_extractor: Feature extractor used to build the model.
         :param policy_improvement_count: Number of policy improvements that have been made.
         :param num_improvement_bins: Number of bins to plot.
-        :param render: Whether or not to render the plot data. If False, then plot data will be updated but nothing will
+        :param render: Whether to render the plot data. If False, then plot data will be updated but nothing will
         be shown.
         :param pdf: PDF for plots.
         :return: Matplotlib figure, if one was generated and not plotting to PDF.

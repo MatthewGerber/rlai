@@ -289,7 +289,7 @@ def get_argument_parser_for_train_function(
         '--update-upon-every-visit',
         type=str,
         choices=['True', 'False'],
-        help='Whether or not to update values upon each visit to a state or state-action pair.'
+        help='Whether to update values upon each visit to a state or state-action pair.'
     )
 
     add_argument(
@@ -302,7 +302,7 @@ def get_argument_parser_for_train_function(
         '--make-final-policy-greedy',
         type=str,
         choices=['True', 'False'],
-        help='Whether or not to make the final policy greedy after training is complete.'
+        help='Whether to make the final policy greedy after training is complete.'
     )
 
     add_argument(
@@ -351,7 +351,7 @@ def get_argument_parser_for_train_function(
         '--plot-state-value',
         type=str,
         choices=['True', 'False'],
-        help='Whether or not to plot the state value.'
+        help='Whether to plot the state value.'
     )
 
     add_argument(

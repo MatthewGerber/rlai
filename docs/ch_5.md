@@ -22,7 +22,7 @@ Perform Monte Carlo evaluation of an agent's policy within an environment, retur
     :param agent: Agent containing target policy to be optimized.
     :param environment: Environment.
     :param num_episodes: Number of episodes to execute.
-    :param exploring_starts: Whether or not to use exploring starts, forcing a random action in the first time step.
+    :param exploring_starts: Whether to use exploring starts, forcing a random action in the first time step.
     This maintains exploration in the first state; however, unless each state has some nonzero probability of being
     selected as the first state, there is no assurance that all state-action pairs will be sampled. If the initial state
     is deterministic, consider passing False here and shifting the burden of exploration to the improvement step with
@@ -48,7 +48,7 @@ Run Monte Carlo value iteration on an agent using state-action value estimates. 
     improvement. Passing `1` will result in the Monte Carlo ES (Exploring Starts) algorithm.
     :param update_upon_every_visit: See `rlai.gpi.monte_carlo.evaluation.evaluate_q_pi`.
     :param planning_environment: Not support. Will raise exception if passed.
-    :param make_final_policy_greedy: Whether or not to make the agent's final policy greedy with respect to the q-values
+    :param make_final_policy_greedy: Whether to make the agent's final policy greedy with respect to the q-values
     that have been learned, regardless of the value of epsilon used to estimate the q-values.
     :param thread_manager: Thread manager. The current function (and the thread running it) will wait on this manager
     before starting each iteration. This provides a mechanism for pausing, resuming, and aborting training. Omit for no
