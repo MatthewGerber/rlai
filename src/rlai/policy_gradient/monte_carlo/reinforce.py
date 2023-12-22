@@ -243,7 +243,7 @@ class TrainingPool:
             training_pool_iterate_episodes: Optional[int] = None,
             training_pool_evaluate_episodes: Optional[int] = None,
             training_pool_max_iterations_without_improvement: Optional[int] = None
-    ) -> 'TrainingPool':
+    ) -> Optional['TrainingPool']:
         """
         Initialize the training pool.
 
@@ -410,7 +410,7 @@ class TrainingPool:
         # select policy from current iteration of all runners
         (
             best_policy,
-            best_v_S,
+            best_state_value_estimator,
             best_average_return
         ) = self.select_best()
 
@@ -420,7 +420,7 @@ class TrainingPool:
             best_average_return > self.training_pool_best_overall_average_return
         ):
             self.training_pool_best_overall_policy = best_policy
-            self.training_pool_best_overall_v_S = best_v_S
+            self.training_pool_best_overall_v_S = best_state_value_estimator
             self.training_pool_best_overall_average_return = best_average_return
             self.training_pool_best_overall_iteration = self.training_pool_iteration
             self.training_pool_iterations_without_improvement = 0
@@ -466,7 +466,7 @@ class TrainingPool:
         # the objects come directly from a pickle.load call.
         else:
             self.agent.pi = best_policy
-            self.agent.v_S = best_v_S
+            self.agent.v_S = best_state_value_estimator
 
         # set the environment reference in continuous-action policies, as we don't pickle it or deepcopy it.
         if isinstance(self.agent.pi, ContinuousActionPolicy):
@@ -486,11 +486,11 @@ class TrainingPool:
         """
 
         # wait for all pickles to appear for the current iteration
-        training_pool_policy_v_S_returns = []
-        while len(training_pool_policy_v_S_returns) != self.training_pool_count:
+        training_pool_policy_state_value_returns = []
+        while len(training_pool_policy_state_value_returns) != self.training_pool_count:
             logging.info(f'Waiting for pickles to appear for training pool iteration {self.training_pool_iteration}.')
             time.sleep(1.0)
-            training_pool_policy_v_S_returns.clear()
+            training_pool_policy_state_value_returns.clear()
             for training_pool_filename in filter(
                 lambda s: s.endswith(f'_{self.training_pool_iteration}'),
                 os.listdir(self.training_pool_directory)
@@ -498,22 +498,22 @@ class TrainingPool:
                 # noinspection PyBroadException
                 try:
                     with open(join(self.training_pool_directory, training_pool_filename), 'rb') as f:
-                        training_pool_policy_v_S_returns.append(pickle.load(f))
+                        training_pool_policy_state_value_returns.append(pickle.load(f))
                 except Exception:
                     pass
 
-            logging.info(f'Read {len(training_pool_policy_v_S_returns)} pickle(s).')
+            logging.info(f'Read {len(training_pool_policy_state_value_returns)} pickle(s).')
 
         # select best policy
         best_policy = None
-        best_v_S = None
+        best_state_value_estimator = None
         best_average_return = None
-        for policy, v_S, average_return in training_pool_policy_v_S_returns:
+        for policy, state_value_estimator, average_return in training_pool_policy_state_value_returns:
 
             if best_average_return is None or average_return > best_average_return:
 
                 best_policy = policy
-                best_v_S = v_S
+                best_state_value_estimator = state_value_estimator
                 best_average_return = average_return
 
         # delete pickles from the previous iteration. we can't delete them from the current iteration because other
@@ -533,7 +533,7 @@ class TrainingPool:
             f'{best_average_return:.2f}.'
         )
 
-        return best_policy, best_v_S, best_average_return
+        return best_policy, best_state_value_estimator, best_average_return
 
     def __init__(
             self,

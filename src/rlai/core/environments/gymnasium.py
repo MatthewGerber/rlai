@@ -212,9 +212,11 @@ class Gym(ContinuousMdpEnvironment):
         # map discretized actions back to continuous space
         if isinstance(a, DiscretizedAction):
             gym_action = a.continuous_value
+
         # use continuous action values (which are vectors) directly
         elif isinstance(a, ContinuousMultiDimensionalAction):
             gym_action = a.value
+
         # use discretized action indices
         else:
             gym_action = a.i
@@ -298,7 +300,7 @@ class Gym(ContinuousMdpEnvironment):
                 -(
                     np.abs([
                         observation[0],
-                        observation[2] * 7.5,
+                        observation[2] * 7.5,  # equalize the angle's scale with the position's scale
                     ]).sum()
                 )
             )
@@ -605,6 +607,7 @@ class Gym(ContinuousMdpEnvironment):
                     name=name
                 )
                 for i, name in zip(
+
                     range(action_space.n),
 
                     # cartpole action names
@@ -629,7 +632,7 @@ class Gym(ContinuousMdpEnvironment):
                 )
             ]
 
-        # action space is continuous and we have a discretization resolution:  discretize it. this is generally not a
+        # action space is continuous, and we have a discretization resolution:  discretize it. this is generally not a
         # great approach, as it results in high-dimensional action spaces. but here goes.
         elif isinstance(action_space, Box) and self.continuous_action_discretization_resolution is not None:
 
@@ -1097,12 +1100,12 @@ class ContinuousMountainCarFeatureExtractor(ContinuousFeatureExtractor):
         # interact features with relevant state categories
         self.state_category_interacter = OneHotStateSegmentFeatureInteracter({
 
-            # shift the x-location midpoint to the trough
+            # shift the x-location midpoint to the bottom of the trough
             0: [Gym.MCC_V0_TROUGH_X_POS],
 
             # velocity switches at zero
             1: [0.0],
 
             # fuel bottoms out at zero
-            2: [0.0]
+            2: [0.0000001]
         })

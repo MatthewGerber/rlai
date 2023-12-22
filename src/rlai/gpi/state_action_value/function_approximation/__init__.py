@@ -537,7 +537,6 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         self.experience_values: List[float] = []
         self.weights: Optional[np.ndarray] = None
         self.experience_pending: bool = False
-
         self.value_scaler = StationaryFeatureScaler()
 
     def __getitem__(

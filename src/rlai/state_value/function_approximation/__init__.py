@@ -8,6 +8,7 @@ from rlai.core import MdpState
 from rlai.core.environments.mdp import MdpEnvironment
 from rlai.meta import rl_text
 from rlai.models import FunctionApproximationModel
+from rlai.models.feature_extraction import StationaryFeatureScaler
 from rlai.state_value import StateValueEstimator, ValueEstimator
 from rlai.state_value.function_approximation.models.feature_extraction import StateFeatureExtractor
 from rlai.utils import parse_arguments, load_class
@@ -184,11 +185,19 @@ class ApproximateStateValueEstimator(StateValueEstimator):
         # if we have pending experience, then fit the model and reset the data.
         if self.experience_pending:
 
-            feature_matrix = self.extract_features(self.experience_states, True)
+            state_feature_matrix = self.extract_features(self.experience_states, True)
 
-            # feature extractors may return a matrix with no columns if extraction was not possible
-            if feature_matrix.shape[1] > 0:
-                self.model.fit(feature_matrix, self.experience_values, self.weights)
+            # feature extractors may return a matrix with no columns if extraction was not possible. standardize the
+            # outcome values.
+            if state_feature_matrix.shape[1] > 0:
+                self.model.fit(
+                    feature_matrix=state_feature_matrix,
+                    outcomes=self.value_scaler.scale_features(
+                        np.array(self.experience_values).reshape(-1, 1),
+                        True
+                    ).flatten(),
+                    weights=self.weights
+                )
 
             self.experience_states.clear()
             self.experience_values.clear()
@@ -216,13 +225,18 @@ class ApproximateStateValueEstimator(StateValueEstimator):
         """
 
         # extract feature matrix
-        feature_matrix = self.extract_features([state], False)
+        state_feature_matrix = self.extract_features([state], False)
 
         # feature extractors may return a matrix with no columns if extraction was not possible
-        if feature_matrix.shape[1] == 0:  # pragma no cover
+        if state_feature_matrix.shape[1] == 0:  # pragma no cover
             return 0.0
 
-        return float(self.model.evaluate(feature_matrix)[0])
+        # invert the state value back to the original space
+        state_values = float(self.value_scaler.invert_scaled_features(
+            self.model.evaluate(state_feature_matrix).reshape((-1, 1))
+        ).flatten())
+
+        return state_values
 
     def extract_features(
             self,
@@ -265,6 +279,7 @@ class ApproximateStateValueEstimator(StateValueEstimator):
         self.experience_values: List[float] = []
         self.weights: Optional[np.ndarray] = None
         self.experience_pending: bool = False
+        self.value_scaler = StationaryFeatureScaler()
 
     def __getitem__(
             self,

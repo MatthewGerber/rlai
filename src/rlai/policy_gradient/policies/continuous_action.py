@@ -764,12 +764,17 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
 
         intercept_state_features = np.append([1.0], self.feature_extractor.extract(state, True))
 
-        # initialize coefficients for shape parameters a and b
+        # initialize coefficients for each action's a-shape parameter
         if self.action_theta_a is None:
-            self.action_theta_a = np.zeros(shape=(self.environment.get_action_space_dimensionality(), intercept_state_features.shape[0]))
+            self.action_theta_a = np.zeros(
+                shape=(self.environment.get_action_space_dimensionality(), intercept_state_features.shape[0])
+            )
 
+        # initialize coefficients for each action's b-shape parameter
         if self.action_theta_b is None:
-            self.action_theta_b = np.zeros(shape=(self.environment.get_action_space_dimensionality(), intercept_state_features.shape[0]))
+            self.action_theta_b = np.zeros(
+                shape=(self.environment.get_action_space_dimensionality(), intercept_state_features.shape[0])
+            )
 
         # calculate the modeled shape parameters of each action dimension
         action_a = np.exp(self.action_theta_a.dot(intercept_state_features))
@@ -795,7 +800,7 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
                         for a, b in zip(np.ones_like(action_a), np.ones_like(action_b))
                     ])
                 )
-                logging.error(f'Caught {e} Setting action to {action_value}.')
+                logging.error(f'Caught {e} while setting action to {action_value}.')
             else:
                 raise e
 
