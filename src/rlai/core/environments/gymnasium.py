@@ -220,13 +220,13 @@ class Gym(ContinuousMdpEnvironment):
         self.gym_native = self.init_gym_native()
 
         if self.gym_id == Gym.LLC_V2:
-            self.modifier = ContinuousLunarLanderModifier(self.gym_native)
+            self.gym_extender = ContinuousLunarLander(self.gym_native)
         elif self.gym_id == Gym.MCC_V0:
-            self.modifier = ContinuousMountainCarModifier(self.gym_native)
+            self.gym_extender = ContinuousMountainCar(self.gym_native)
         elif self.gym_id == Gym.CARTPOLE_V1:
-            self.modifier = CartpoleModifier(self.gym_native)
+            self.gym_extender = Cartpole(self.gym_native)
         else:
-            self.modifier: Optional[GymModifier] = None
+            self.gym_extender: Optional[GymExtender] = None
 
         self.plot_environment = plot_environment
         self.state_reward_scatter_plot = None
@@ -254,8 +254,8 @@ class Gym(ContinuousMdpEnvironment):
                 )
                 for i, name in zip(
                     range(action_space.n),
-                    [None] * action_space.n if self.modifier is None
-                    else self.modifier.get_action_names
+                    [None] * action_space.n if self.gym_extender is None
+                    else self.gym_extender.get_action_names
                 )
             ]
 
@@ -355,14 +355,14 @@ class Gym(ContinuousMdpEnvironment):
         else:
             gym_action = a.i
 
-        if self.modifier is not None:
-            gym_action = self.modifier.get_action_to_step(gym_action)
+        if self.gym_extender is not None:
+            gym_action = self.gym_extender.get_action_to_step(gym_action)
 
         observation, reward, terminated, truncated, _ = self.gym_native.step(action=gym_action)
 
-        if self.modifier is not None:
-            observation = self.modifier.get_post_step_observation(observation)
-            reward = self.modifier.get_reward(float(reward), observation, terminated, truncated)
+        if self.gym_extender is not None:
+            observation = self.gym_extender.get_post_step_observation(observation)
+            reward = self.gym_extender.get_reward(float(reward), observation, terminated, truncated)
 
         # call render if rendering manually
         if self.check_render_current_episode(True):
@@ -409,8 +409,8 @@ class Gym(ContinuousMdpEnvironment):
 
         observation, _ = self.gym_native.reset()
 
-        if self.modifier is not None:
-            observation = self.modifier.get_reset_observation(observation)
+        if self.gym_extender is not None:
+            observation = self.gym_extender.get_reset_observation(observation)
 
         # call render if rendering manually
         if self.check_render_current_episode(True):
@@ -519,10 +519,10 @@ class Gym(ContinuousMdpEnvironment):
         :return: Number of dimensions.
         """
 
-        if self.modifier is None:
+        if self.gym_extender is None:
             dimensionality = self.gym_native.observation_space.shape[0]
         else:
-            dimensionality = len(self.modifier.get_state_dimension_names())
+            dimensionality = len(self.gym_extender.get_state_dimension_names())
 
         return dimensionality
 
@@ -535,11 +535,11 @@ class Gym(ContinuousMdpEnvironment):
         :return: List of names.
         """
 
-        if self.modifier is None:
+        if self.gym_extender is None:
             warnings.warn(f'The state dimension names for {self.gym_id} are unknown. Defaulting to numbers.')
             names = [str(x) for x in range(0, self.get_state_space_dimensionality())]
         else:
-            names = self.modifier.get_state_dimension_names()
+            names = self.gym_extender.get_state_dimension_names()
 
         return names
 
@@ -563,20 +563,20 @@ class Gym(ContinuousMdpEnvironment):
         :return: List of names.
         """
 
-        assert isinstance(self.modifier, ContinuousActionGymModifier)
+        assert isinstance(self.gym_extender, ContinuousActionGym)
 
-        if self.modifier is None:
+        if self.gym_extender is None:
             warnings.warn(f'The action dimension names for {self.gym_id} are unknown. Defaulting to numbers.')
             names = [str(x) for x in range(0, self.get_action_space_dimensionality())]
         else:
-            names = self.modifier.get_action_dimension_names()
+            names = self.gym_extender.get_action_dimension_names()
 
         return names
 
 
-class GymModifier(ABC):
+class GymExtender(ABC):
     """
-    Abstract modifier for standard Gym environments. This provides a standard interface for customizing the behavior of
+    Abstract class for standard Gym environments. This provides a standard interface for customizing the behavior of
     environments.
     """
 
@@ -651,9 +651,9 @@ class GymModifier(ABC):
         """
 
 
-class DiscreteActionGymModifier(GymModifier, ABC):
+class DiscreteActionGym(GymExtender, ABC):
     """
-    Modifier for discrete-action Gym environments.
+    Discrete-action Gym environment.
     """
 
     @abstractmethod
@@ -667,9 +667,9 @@ class DiscreteActionGymModifier(GymModifier, ABC):
         """
 
 
-class ContinuousActionGymModifier(GymModifier, ABC):
+class ContinuousActionGym(GymExtender, ABC):
     """
-    Modifier for continuous-action Gym environments.
+    Continuous-action Gym environment.
     """
 
     @abstractmethod
@@ -683,7 +683,142 @@ class ContinuousActionGymModifier(GymModifier, ABC):
         """
 
 
-class CartpoleModifier(DiscreteActionGymModifier):
+@rl_text(chapter='Feature Extractors', page=1)
+class ContinuousFeatureExtractor(StateFeatureExtractor):
+    """
+    A feature extractor for continuous Gym environments. Extracts a scaled (standardized) version of the Gym state
+    observation.
+    """
+
+    @classmethod
+    def get_argument_parser(
+            cls
+    ) -> ArgumentParser:
+        """
+        Get argument parser.
+
+        :return: Argument parser.
+        """
+
+        parser = ArgumentParser(
+            prog=f'{cls.__module__}.{cls.__name__}',
+            parents=[super().get_argument_parser()],
+            allow_abbrev=False,
+            add_help=False
+        )
+
+        return parser
+
+    @classmethod
+    def init_from_arguments(
+            cls,
+            args: List[str],
+            environment: Gym
+    ) -> Tuple[FeatureExtractor, List[str]]:
+        """
+        Initialize a feature extractor from arguments.
+
+        :param args: Arguments.
+        :param environment: Environment.
+        :return: 2-tuple of a feature extractor and a list of unparsed arguments.
+        """
+
+        parsed_args, unparsed_args = parse_arguments(cls, args)
+
+        # there shouldn't be anything left
+        if len(vars(parsed_args)) > 0:  # pragma no cover
+            raise ValueError('Parsed args remain. Need to pass to constructor.')
+
+        fex = cls()
+
+        return fex, unparsed_args
+
+    def extract(
+            self,
+            state: GymState,
+            refit_scaler: bool
+    ) -> np.ndarray:
+        """
+        Extract state features.
+
+        :param state: State.
+        :param refit_scaler: Whether to refit the feature scaler before scaling the extracted features. This is
+        only appropriate in settings where nonstationarity is desired (e.g., during training). During evaluation, the
+        scaler should remain fixed, which means this should be False.
+        :return: Scaled (standardized) state-feature vector.
+        """
+
+        return self.feature_scaler.scale_features(
+            np.array([state.observation]),
+            refit_before_scaling=refit_scaler
+        )[0]
+
+    def __init__(
+            self
+    ):
+        """
+        Initialize the feature extractor.
+        """
+
+        super().__init__()
+
+        self.feature_scaler = StationaryFeatureScaler()
+
+
+@rl_text(chapter='Feature Extractors', page=1)
+class SignedCodingFeatureExtractor(ContinuousFeatureExtractor):
+    """
+    Signed-coding feature extractor. Forms a category from the conjunction of all state-feature signs and then places
+    the continuous feature vector into its associated category. Works for all continuous-valued state spaces in Gym.
+    """
+
+    def extract(
+            self,
+            state: GymState,
+            refit_scaler: bool
+    ) -> np.ndarray:
+        """
+        Extract state features.
+
+        :param state: State.
+        :param refit_scaler: Whether to refit the feature scaler before scaling the extracted features. This is only
+        appropriate in settings where nonstationarity is desired (e.g., during training). During evaluation, the
+        scaler should remain fixed, which means this should be False.
+        :return: State-feature vector.
+        """
+
+        state_matrix = np.array([state.observation])
+
+        if self.state_category_interacter is None:
+            self.state_category_interacter = OneHotStateSegmentFeatureInteracter({
+                dimension: [0.0]
+                for dimension in range(state_matrix.shape[1])
+            })
+
+        # extract and encode feature values
+        scaled_feature_vector = super().extract(state, refit_scaler)
+        interacted_feature_vector = self.state_category_interacter.interact(
+            state_matrix,
+            np.array([scaled_feature_vector])
+        )[0]
+
+        return interacted_feature_vector
+
+    def __init__(
+            self
+    ):
+        """
+        Initialize the feature extractor.
+        """
+
+        super().__init__()
+
+        # this is a generic feature extractor for all gym environments. as such, we don't know the dimensionality of the
+        # state space until the first call to extract. do lazy-init here.
+        self.state_category_interacter = None
+
+
+class Cartpole(DiscreteActionGym):
 
     def get_action_names(self) -> List[Optional[str]]:
 
@@ -716,209 +851,6 @@ class CartpoleModifier(DiscreteActionGymModifier):
                 ]).sum()
             )
         )
-
-
-class ContinuousLunarLanderModifier(ContinuousActionGymModifier):
-    """
-    Modifier for the continuous lunar lander environments.
-    """
-
-    MAIN_MAX_FUEL_USE_PER_STEP = 1.0 / 300.0
-    SIDE_MAX_FUEL_USE_PER_STEP = 1.0 / 600.0
-
-    def __init__(
-            self,
-            gym_native: Union[TimeLimit, RecordVideo]
-    ):
-        super().__init__(
-            gym_native
-        )
-
-        self.fuel_level = 1.0
-
-    def get_action_dimension_names(self) -> List[str]:
-
-        return [
-            'main',
-            'side'
-        ]
-
-    def get_state_dimension_names(self) -> List[str]:
-
-        return [
-            'posX',
-            'posY',
-            'velX',
-            'velY',
-            'ang',
-            'angV',
-            'leg1Con',
-            'leg2Con',
-            'fuel_level'
-        ]
-
-    def get_reset_observation(self, observation: np.ndarray) -> np.ndarray:
-
-        self.fuel_level = 1.0
-        observation = np.append(observation, self.fuel_level)
-
-        return observation
-
-    def get_action_to_step(
-            self,
-            action: np.ndarray
-    ) -> np.ndarray:
-
-        main_throttle, side_throttle = action[:]
-        if main_throttle >= 0.0:
-            required_main_fuel = self.MAIN_MAX_FUEL_USE_PER_STEP * (0.5 + 0.5 * main_throttle)
-        else:
-            required_main_fuel = 0.0
-
-        if abs(side_throttle) >= 0.5:
-            required_side_fuel = self.SIDE_MAX_FUEL_USE_PER_STEP * abs(side_throttle)
-        else:
-            required_side_fuel = 0.0
-
-        action_to_step = action.copy()
-        required_total_fuel = required_main_fuel + required_side_fuel
-        if required_total_fuel > self.fuel_level:
-            action_to_step[:] *= self.fuel_level / required_total_fuel
-            self.fuel_level = 0.0
-        else:
-            self.fuel_level -= required_total_fuel
-
-        return action_to_step
-
-    def get_post_step_observation(
-            self,
-            observation: np.ndarray
-    ) -> np.ndarray:
-
-        return np.append(observation, self.fuel_level)
-
-    def get_reward(
-            self,
-            reward: float,
-            observation: np.ndarray,
-            terminated: bool,
-            truncated: bool
-    ) -> float:
-
-        reward = 0.0
-
-        if terminated:
-
-            # the ideal state is zeros across position/movement
-            state_reward = -np.abs(observation[0:6]).sum()
-
-            # reward for remaining fuel, but only if the state is good. rewarding for remaining fuel unconditionally
-            # can cause the agent to veer out of bounds immediately and thus sacrifice state reward for fuel reward.
-            # the terminating state is considered good if the lander is within the goal posts (which are at
-            # x = +/-0.2) and the other orientation variables (y position, x and y velocity, angle and angular
-            # velocity) are near zero. permit a small amount of lenience in the latter, since it's common for a
-            # couple of the variables to be slightly positive even when the lander is sitting stationary on a flat
-            # surface.
-            fuel_reward = 0.0
-            if abs(observation[0]) <= 0.2 and np.abs(observation[1:6]).sum() < 0.01:  # pragma no cover
-                fuel_reward = self.fuel_level
-
-            reward = state_reward + fuel_reward
-
-        return reward
-
-
-class ContinuousMountainCarModifier(ContinuousActionGymModifier):
-    """
-    Modifier for the continuous lunar lander environments.
-    """
-
-    TROUGH_X_POS = -0.5
-    GOAL_X_POS = 0.45
-    MAX_FUEL_USE_PER_STEP = 1.0 / 300.0
-
-    def __init__(
-            self,
-            gym_native: Union[TimeLimit, RecordVideo]
-    ):
-        super().__init__(
-            gym_native
-        )
-
-        self.fuel_level = 1.0
-        self.mcc_curr_goal_x_pos = self.TROUGH_X_POS + 0.1
-
-    def get_action_dimension_names(self) -> List[str]:
-
-        return [
-            'throttle'
-        ]
-
-    def get_state_dimension_names(self) -> List[str]:
-
-        return [
-            'position',
-            'velocity',
-            'fuel_level'
-        ]
-
-    def get_reset_observation(self, observation: np.ndarray) -> np.ndarray:
-
-        self.fuel_level = 1.0
-        observation = np.append(observation, self.fuel_level)
-
-        return observation
-
-    def get_action_to_step(
-            self,
-            action: np.ndarray
-    ) -> np.ndarray:
-
-        throttle = action[0]
-        required_fuel = self.MAX_FUEL_USE_PER_STEP * abs(throttle)
-        action_to_step = action.copy()
-        if required_fuel > self.fuel_level:
-            action_to_step[:] *= self.fuel_level / required_fuel
-            self.fuel_level = 0.0
-        else:
-            self.fuel_level -= required_fuel
-
-        return action_to_step
-
-    def get_post_step_observation(
-            self,
-            observation: np.ndarray
-    ) -> np.ndarray:
-
-        return np.append(observation, self.fuel_level)
-
-    def get_reward(
-            self,
-            reward: float,
-            observation: np.ndarray,
-            terminated: bool,
-            truncated: bool
-    ) -> float:
-
-        reward = 0.0
-
-        # calculate fraction to goal state
-        curr_distance = observation[0] - self.TROUGH_X_POS
-        goal_distance = self.mcc_curr_goal_x_pos - self.TROUGH_X_POS
-        fraction_to_goal = curr_distance / goal_distance
-        if fraction_to_goal >= 1.0:
-
-            # increment goal up to the final goal
-            self.mcc_curr_goal_x_pos = min(self.GOAL_X_POS, self.mcc_curr_goal_x_pos + 0.05)
-
-            # mark state and stats recorder as done. must manually mark stats recorder to allow premature reset.
-            terminated = True
-            if hasattr(self.gym_native, 'stats_recorder'):
-                self.gym_native.stats_recorder.done = terminated
-
-            reward = curr_distance + self.fuel_level
-
-        return reward
 
 
 @rl_text(chapter='Feature Extractors', page=1)
@@ -1075,55 +1007,104 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
         self.feature_scaler = StationaryFeatureScaler()
 
 
-@rl_text(chapter='Feature Extractors', page=1)
-class ContinuousFeatureExtractor(StateFeatureExtractor):
+class ContinuousMountainCar(ContinuousActionGym):
     """
-    A feature extractor for continuous Gym environments. Extracts a scaled (standardized) version of the Gym state
-    observation.
+    Continuous mountain car.
     """
 
-    @classmethod
-    def get_argument_parser(
-            cls
-    ) -> ArgumentParser:
-        """
-        Get argument parser.
+    TROUGH_X_POS = -0.5
+    GOAL_X_POS = 0.45
+    MAX_FUEL_USE_PER_STEP = 1.0 / 300.0
 
-        :return: Argument parser.
-        """
-
-        parser = ArgumentParser(
-            prog=f'{cls.__module__}.{cls.__name__}',
-            parents=[super().get_argument_parser()],
-            allow_abbrev=False,
-            add_help=False
+    def __init__(
+            self,
+            gym_native: Union[TimeLimit, RecordVideo]
+    ):
+        super().__init__(
+            gym_native
         )
 
-        return parser
+        self.fuel_level = 1.0
+        self.mcc_curr_goal_x_pos = self.TROUGH_X_POS + 0.1
 
-    @classmethod
-    def init_from_arguments(
-            cls,
-            args: List[str],
-            environment: Gym
-    ) -> Tuple[FeatureExtractor, List[str]]:
-        """
-        Initialize a feature extractor from arguments.
+    def get_action_dimension_names(self) -> List[str]:
 
-        :param args: Arguments.
-        :param environment: Environment.
-        :return: 2-tuple of a feature extractor and a list of unparsed arguments.
-        """
+        return [
+            'throttle'
+        ]
 
-        parsed_args, unparsed_args = parse_arguments(cls, args)
+    def get_state_dimension_names(self) -> List[str]:
 
-        # there shouldn't be anything left
-        if len(vars(parsed_args)) > 0:  # pragma no cover
-            raise ValueError('Parsed args remain. Need to pass to constructor.')
+        return [
+            'position',
+            'velocity',
+            'fuel_level'
+        ]
 
-        fex = cls()
+    def get_reset_observation(self, observation: np.ndarray) -> np.ndarray:
 
-        return fex, unparsed_args
+        self.fuel_level = 1.0
+        observation = np.append(observation, self.fuel_level)
+
+        return observation
+
+    def get_action_to_step(
+            self,
+            action: np.ndarray
+    ) -> np.ndarray:
+
+        throttle = action[0]
+        required_fuel = self.MAX_FUEL_USE_PER_STEP * abs(throttle)
+        action_to_step = action.copy()
+        if required_fuel > self.fuel_level:
+            action_to_step[:] *= self.fuel_level / required_fuel
+            self.fuel_level = 0.0
+        else:
+            self.fuel_level -= required_fuel
+
+        return action_to_step
+
+    def get_post_step_observation(
+            self,
+            observation: np.ndarray
+    ) -> np.ndarray:
+
+        return np.append(observation, self.fuel_level)
+
+    def get_reward(
+            self,
+            reward: float,
+            observation: np.ndarray,
+            terminated: bool,
+            truncated: bool
+    ) -> float:
+
+        reward = 0.0
+
+        # calculate fraction to goal state
+        curr_distance = observation[0] - self.TROUGH_X_POS
+        goal_distance = self.mcc_curr_goal_x_pos - self.TROUGH_X_POS
+        fraction_to_goal = curr_distance / goal_distance
+        if fraction_to_goal >= 1.0:
+
+            # increment goal up to the final goal
+            self.mcc_curr_goal_x_pos = min(self.GOAL_X_POS, self.mcc_curr_goal_x_pos + 0.05)
+
+            # mark state and stats recorder as done. must manually mark stats recorder to allow premature reset.
+            terminated = True
+            if hasattr(self.gym_native, 'stats_recorder'):
+                self.gym_native.stats_recorder.done = terminated
+
+            reward = curr_distance + self.fuel_level
+
+        return reward
+
+
+@rl_text(chapter='Feature Extractors', page=1)
+class ContinuousMountainCarFeatureExtractor(ContinuousFeatureExtractor):
+    """
+    Feature extractor for the continuous mountain car environment.
+    """
 
     def extract(
             self,
@@ -1137,61 +1118,14 @@ class ContinuousFeatureExtractor(StateFeatureExtractor):
         :param refit_scaler: Whether to refit the feature scaler before scaling the extracted features. This is
         only appropriate in settings where nonstationarity is desired (e.g., during training). During evaluation, the
         scaler should remain fixed, which means this should be False.
-        :return: Scaled (standardized) state-feature vector.
-        """
-
-        return self.feature_scaler.scale_features(
-            np.array([state.observation]),
-            refit_before_scaling=refit_scaler
-        )[0]
-
-    def __init__(
-            self
-    ):
-        """
-        Initialize the feature extractor.
-        """
-
-        super().__init__()
-
-        self.feature_scaler = StationaryFeatureScaler()
-
-
-@rl_text(chapter='Feature Extractors', page=1)
-class SignedCodingFeatureExtractor(ContinuousFeatureExtractor):
-    """
-    Signed-coding feature extractor. Forms a category from the conjunction of all state-feature signs and then places
-    the continuous feature vector into its associated category. Works for all continuous-valued state spaces in Gym.
-    """
-
-    def extract(
-            self,
-            state: GymState,
-            refit_scaler: bool
-    ) -> np.ndarray:
-        """
-        Extract state features.
-
-        :param state: State.
-        :param refit_scaler: Whether to refit the feature scaler before scaling the extracted features. This is only
-        appropriate in settings where nonstationarity is desired (e.g., during training). During evaluation, the
-        scaler should remain fixed, which means this should be False.
         :return: State-feature vector.
         """
 
-        state_matrix = np.array([state.observation])
-
-        if self.state_category_interacter is None:
-            self.state_category_interacter = OneHotStateSegmentFeatureInteracter({
-                dimension: [0.0]
-                for dimension in range(state_matrix.shape[1])
-            })
-
-        # extract and encode feature values
-        scaled_feature_vector = super().extract(state, refit_scaler)
+        # extract raw feature values
+        scaled_feature_matrix = super().extract(state, refit_scaler)
         interacted_feature_vector = self.state_category_interacter.interact(
-            state_matrix,
-            np.array([scaled_feature_vector])
+            np.array([state.observation]),
+            np.array([scaled_feature_matrix])
         )[0]
 
         return interacted_feature_vector
@@ -1205,9 +1139,128 @@ class SignedCodingFeatureExtractor(ContinuousFeatureExtractor):
 
         super().__init__()
 
-        # this is a generic feature extractor for all gym environments. as such, we don't know the dimensionality of the
-        # state space until the first call to extract. do lazy-init here.
-        self.state_category_interacter = None
+        # interact features with relevant state categories
+        self.state_category_interacter = OneHotStateSegmentFeatureInteracter({
+
+            # shift the x-location midpoint to the bottom of the trough
+            0: [ContinuousMountainCar.TROUGH_X_POS],
+
+            # velocity switches at zero
+            1: [0.0],
+
+            # fuel bottoms out at zero
+            2: [0.0000001]
+        })
+
+
+class ContinuousLunarLander(ContinuousActionGym):
+    """
+    Continuous lunar lander.
+    """
+
+    MAIN_MAX_FUEL_USE_PER_STEP = 1.0 / 300.0
+    SIDE_MAX_FUEL_USE_PER_STEP = 1.0 / 600.0
+
+    def __init__(
+            self,
+            gym_native: Union[TimeLimit, RecordVideo]
+    ):
+        super().__init__(
+            gym_native
+        )
+
+        self.fuel_level = 1.0
+
+    def get_action_dimension_names(self) -> List[str]:
+
+        return [
+            'main',
+            'side'
+        ]
+
+    def get_state_dimension_names(self) -> List[str]:
+
+        return [
+            'posX',
+            'posY',
+            'velX',
+            'velY',
+            'ang',
+            'angV',
+            'leg1Con',
+            'leg2Con',
+            'fuel_level'
+        ]
+
+    def get_reset_observation(self, observation: np.ndarray) -> np.ndarray:
+
+        self.fuel_level = 1.0
+        observation = np.append(observation, self.fuel_level)
+
+        return observation
+
+    def get_action_to_step(
+            self,
+            action: np.ndarray
+    ) -> np.ndarray:
+
+        main_throttle, side_throttle = action[:]
+        if main_throttle >= 0.0:
+            required_main_fuel = self.MAIN_MAX_FUEL_USE_PER_STEP * (0.5 + 0.5 * main_throttle)
+        else:
+            required_main_fuel = 0.0
+
+        if abs(side_throttle) >= 0.5:
+            required_side_fuel = self.SIDE_MAX_FUEL_USE_PER_STEP * abs(side_throttle)
+        else:
+            required_side_fuel = 0.0
+
+        action_to_step = action.copy()
+        required_total_fuel = required_main_fuel + required_side_fuel
+        if required_total_fuel > self.fuel_level:
+            action_to_step[:] *= self.fuel_level / required_total_fuel
+            self.fuel_level = 0.0
+        else:
+            self.fuel_level -= required_total_fuel
+
+        return action_to_step
+
+    def get_post_step_observation(
+            self,
+            observation: np.ndarray
+    ) -> np.ndarray:
+
+        return np.append(observation, self.fuel_level)
+
+    def get_reward(
+            self,
+            reward: float,
+            observation: np.ndarray,
+            terminated: bool,
+            truncated: bool
+    ) -> float:
+
+        reward = 0.0
+
+        if terminated:
+
+            # the ideal state is zeros across position/movement
+            state_reward = -np.abs(observation[0:6]).sum()
+
+            # reward for remaining fuel, but only if the state is good. rewarding for remaining fuel unconditionally
+            # can cause the agent to veer out of bounds immediately and thus sacrifice state reward for fuel reward.
+            # the terminating state is considered good if the lander is within the goal posts (which are at
+            # x = +/-0.2) and the other orientation variables (y position, x and y velocity, angle and angular
+            # velocity) are near zero. permit a small amount of lenience in the latter, since it's common for a
+            # couple of the variables to be slightly positive even when the lander is sitting stationary on a flat
+            # surface.
+            fuel_reward = 0.0
+            if abs(observation[0]) <= 0.2 and np.abs(observation[1:6]).sum() < 0.01:  # pragma no cover
+                fuel_reward = self.fuel_level
+
+            reward = state_reward + fuel_reward
+
+        return reward
 
 
 @rl_text(chapter='Feature Extractors', page=1)
@@ -1283,56 +1336,3 @@ class ContinuousLunarLanderFeatureExtractor(ContinuousFeatureExtractor):
             OneHotCategory(*category_args)
             for category_args in product(*([[True, False]] * 5))
         ])
-
-
-@rl_text(chapter='Feature Extractors', page=1)
-class ContinuousMountainCarFeatureExtractor(ContinuousFeatureExtractor):
-    """
-    Feature extractor for the continuous mountain car environment.
-    """
-
-    def extract(
-            self,
-            state: GymState,
-            refit_scaler: bool
-    ) -> np.ndarray:
-        """
-        Extract state features.
-
-        :param state: State.
-        :param refit_scaler: Whether to refit the feature scaler before scaling the extracted features. This is
-        only appropriate in settings where nonstationarity is desired (e.g., during training). During evaluation, the
-        scaler should remain fixed, which means this should be False.
-        :return: State-feature vector.
-        """
-
-        # extract raw feature values
-        scaled_feature_matrix = super().extract(state, refit_scaler)
-        interacted_feature_vector = self.state_category_interacter.interact(
-            np.array([state.observation]),
-            np.array([scaled_feature_matrix])
-        )[0]
-
-        return interacted_feature_vector
-
-    def __init__(
-            self
-    ):
-        """
-        Initialize the feature extractor.
-        """
-
-        super().__init__()
-
-        # interact features with relevant state categories
-        self.state_category_interacter = OneHotStateSegmentFeatureInteracter({
-
-            # shift the x-location midpoint to the bottom of the trough
-            0: [ContinuousMountainCarModifier.TROUGH_X_POS],
-
-            # velocity switches at zero
-            1: [0.0],
-
-            # fuel bottoms out at zero
-            2: [0.0000001]
-        })
