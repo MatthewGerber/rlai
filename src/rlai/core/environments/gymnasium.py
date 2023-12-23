@@ -1,7 +1,7 @@
 import math
 import os
 import warnings
-from abc import ABC, abstractmethod
+from abc import ABC
 from argparse import ArgumentParser
 from itertools import product
 from time import sleep
@@ -226,7 +226,7 @@ class Gym(ContinuousMdpEnvironment):
         elif self.gym_id == Gym.CARTPOLE_V1:
             self.gym_extender = Cartpole(self.gym_native)
         else:
-            self.gym_extender: Optional[GymExtender] = None
+            self.gym_extender = GymExtension(self.gym_native)
 
         self.plot_environment = plot_environment
         self.state_reward_scatter_plot = None
@@ -252,11 +252,7 @@ class Gym(ContinuousMdpEnvironment):
                     i=i,
                     name=name
                 )
-                for i, name in zip(
-                    range(action_space.n),
-                    [None] * action_space.n if self.gym_extender is None
-                    else self.gym_extender.get_action_names
-                )
+                for i, name in zip(range(action_space.n), self.gym_extender.get_action_names())
             ]
 
         # action space is continuous, and we lack a discretization resolution:  initialize a single, multidimensional
@@ -355,14 +351,10 @@ class Gym(ContinuousMdpEnvironment):
         else:
             gym_action = a.i
 
-        if self.gym_extender is not None:
-            gym_action = self.gym_extender.get_action_to_step(gym_action)
-
+        gym_action = self.gym_extender.get_action_to_step(gym_action)
         observation, reward, terminated, truncated, _ = self.gym_native.step(action=gym_action)
-
-        if self.gym_extender is not None:
-            observation = self.gym_extender.get_post_step_observation(observation)
-            reward = self.gym_extender.get_reward(float(reward), observation, terminated, truncated)
+        observation = self.gym_extender.get_post_step_observation(observation)
+        reward = self.gym_extender.get_reward(float(reward), observation, terminated, truncated)
 
         # call render if rendering manually
         if self.check_render_current_episode(True):
@@ -408,9 +400,7 @@ class Gym(ContinuousMdpEnvironment):
             self.state_reward_scatter_plot.reset_y_range()
 
         observation, _ = self.gym_native.reset()
-
-        if self.gym_extender is not None:
-            observation = self.gym_extender.get_reset_observation(observation)
+        observation = self.gym_extender.get_reset_observation(observation)
 
         # call render if rendering manually
         if self.check_render_current_episode(True):
@@ -519,12 +509,7 @@ class Gym(ContinuousMdpEnvironment):
         :return: Number of dimensions.
         """
 
-        if self.gym_extender is None:
-            dimensionality = self.gym_native.observation_space.shape[0]
-        else:
-            dimensionality = len(self.gym_extender.get_state_dimension_names())
-
-        return dimensionality
+        return len(self.gym_extender.get_state_dimension_names())
 
     def get_state_dimension_names(
             self
@@ -535,13 +520,7 @@ class Gym(ContinuousMdpEnvironment):
         :return: List of names.
         """
 
-        if self.gym_extender is None:
-            warnings.warn(f'The state dimension names for {self.gym_id} are unknown. Defaulting to numbers.')
-            names = [str(x) for x in range(0, self.get_state_space_dimensionality())]
-        else:
-            names = self.gym_extender.get_state_dimension_names()
-
-        return names
+        return self.gym_extender.get_state_dimension_names()
 
     def get_action_space_dimensionality(
             self
@@ -565,28 +544,27 @@ class Gym(ContinuousMdpEnvironment):
 
         assert isinstance(self.gym_extender, ContinuousActionGym)
 
-        if self.gym_extender is None:
-            warnings.warn(f'The action dimension names for {self.gym_id} are unknown. Defaulting to numbers.')
-            names = [str(x) for x in range(0, self.get_action_space_dimensionality())]
-        else:
-            names = self.gym_extender.get_action_dimension_names()
-
-        return names
+        return self.gym_extender.get_action_dimension_names()
 
 
-class GymExtender(ABC):
+class GymExtension(ABC):
     """
-    Abstract class for standard Gym environments. This provides a standard interface for customizing the behavior of
-    environments.
+    Abstract extension class for standard Gym environments. This provides a standard interface for customizing the
+    behavior of environments.
     """
 
     def __init__(
             self,
-            gym_native: Union[TimeLimit, RecordVideo]
+            gym: Union[TimeLimit, RecordVideo]
     ):
-        self.gym_native = gym_native
+        """
+        Native gym environment.
 
-    @abstractmethod
+        :param gym: Environment.
+        """
+
+        self.gym = gym
+
     def get_state_dimension_names(
             self
     ) -> List[str]:
@@ -596,19 +574,26 @@ class GymExtender(ABC):
         :return: List of names.
         """
 
-    @abstractmethod
+        warnings.warn('The state dimension names for are unknown. Defaulting to numbers.')
+
+        return [
+            str(x)
+            for x in range(0, self.gym.observation_space.shape[0])
+        ]
+
     def get_reset_observation(
             self,
             observation: np.ndarray
     ) -> np.ndarray:
         """
-        Get observation for reset.
+        Get observation for episode reset.
 
-        :param observation: Observation.
+        :param observation: Observation from native environment.
         :return: Observation.
         """
 
-    @abstractmethod
+        return observation
+
     def get_action_to_step(
             self,
             action: np.ndarray
@@ -616,11 +601,12 @@ class GymExtender(ABC):
         """
         Get action to step.
 
-        :param action: Gym action.
+        :param action: Native Gym action.
         :return: Action to step.
         """
 
-    @abstractmethod
+        return action
+
     def get_post_step_observation(
             self,
             observation: np.ndarray
@@ -628,11 +614,12 @@ class GymExtender(ABC):
         """
         Get observation resulting from a step.
 
-        :param observation: Observation.
+        :param observation: Native Gym observation.
         :return: Observation resulting from a step.
         """
 
-    @abstractmethod
+        return observation
+
     def get_reward(
             self,
             reward: float,
@@ -650,29 +637,36 @@ class GymExtender(ABC):
         :return: Reward.
         """
 
+        return reward
 
-class DiscreteActionGym(GymExtender, ABC):
+
+class DiscreteActionGym(GymExtension, ABC):
     """
     Discrete-action Gym environment.
     """
 
-    @abstractmethod
     def get_action_names(
             self
-    ) -> List[Optional[str]]:
+    ) -> List[str]:
         """
-        Get action-dimension names.
+        Get discrete-action names.
 
         :return: List of names.
         """
 
+        warnings.warn('The action names for are unknown.')
 
-class ContinuousActionGym(GymExtender, ABC):
+        action_space = self.gym.action_space
+        assert isinstance(action_space, Discrete)
+
+        return ['None'] * action_space.n
+
+
+class ContinuousActionGym(GymExtension, ABC):
     """
     Continuous-action Gym environment.
     """
 
-    @abstractmethod
     def get_action_dimension_names(
             self
     ) -> List[str]:
@@ -681,6 +675,13 @@ class ContinuousActionGym(GymExtender, ABC):
 
         :return: List of names.
         """
+
+        warnings.warn(f'The action dimension names are unknown. Defaulting to numbers.')
+
+        return [
+            str(x) for
+            x in range(0, self.gym.action_space.shape[0])
+        ]
 
 
 @rl_text(chapter='Feature Extractors', page=1)
@@ -819,12 +820,30 @@ class SignedCodingFeatureExtractor(ContinuousFeatureExtractor):
 
 
 class Cartpole(DiscreteActionGym):
+    """
+    Cartpole.
+    """
 
-    def get_action_names(self) -> List[Optional[str]]:
+    def get_action_names(
+            self
+    ) -> List[str]:
+        """
+        Get discrete-action names.
+
+        :return: List of names.
+        """
 
         return ['push-left', 'push-right']
 
-    def get_state_dimension_names(self) -> List[str]:
+    def get_state_dimension_names(
+            self
+    ) -> List[str]:
+        """
+        Get state-dimension names.
+
+        :return: List of names.
+        """
+
         return [
             'pos',
             'vel',
@@ -832,16 +851,22 @@ class Cartpole(DiscreteActionGym):
             'angV'
         ]
 
-    def get_reset_observation(self, observation: np.ndarray) -> np.ndarray:
-        pass
+    def get_reward(
+            self,
+            reward: float,
+            observation: np.ndarray,
+            terminated: bool,
+            truncated: bool
+    ) -> float:
+        """
+        Get reward.
 
-    def get_action_to_step(self, action: np.ndarray) -> np.ndarray:
-        pass
-
-    def get_post_step_observation(self, observation: np.ndarray) -> np.ndarray:
-        pass
-
-    def get_reward(self, reward: float, observation: np.ndarray, terminated: bool, truncated: bool) -> float:
+        :param reward: Reward specified by the native Gym environment.
+        :param observation: Observation.
+        :param terminated: Terminated.
+        :param truncated: Truncated.
+        :return: Reward.
+        """
 
         return np.exp(
             -(
@@ -1018,22 +1043,38 @@ class ContinuousMountainCar(ContinuousActionGym):
 
     def __init__(
             self,
-            gym_native: Union[TimeLimit, RecordVideo]
+            gym: Union[TimeLimit, RecordVideo]
     ):
-        super().__init__(
-            gym_native
-        )
+        """
+        Native gym environment.
+
+        :param gym: Environment.
+        """
+
+        super().__init__(gym)
 
         self.fuel_level = 1.0
         self.mcc_curr_goal_x_pos = self.TROUGH_X_POS + 0.1
 
-    def get_action_dimension_names(self) -> List[str]:
+    def get_action_dimension_names(
+            self
+    ) -> List[str]:
+        """
+        Get action-dimension names.
 
-        return [
-            'throttle'
-        ]
+        :return: List of names.
+        """
 
-    def get_state_dimension_names(self) -> List[str]:
+        return ['throttle']
+
+    def get_state_dimension_names(
+            self
+    ) -> List[str]:
+        """
+        Get state-dimension names.
+
+        :return: List of names.
+        """
 
         return [
             'position',
@@ -1041,7 +1082,16 @@ class ContinuousMountainCar(ContinuousActionGym):
             'fuel_level'
         ]
 
-    def get_reset_observation(self, observation: np.ndarray) -> np.ndarray:
+    def get_reset_observation(
+            self,
+            observation: np.ndarray
+    ) -> np.ndarray:
+        """
+        Get observation for episode reset.
+
+        :param observation: Observation from native environment.
+        :return: Observation.
+        """
 
         self.fuel_level = 1.0
         observation = np.append(observation, self.fuel_level)
@@ -1052,10 +1102,17 @@ class ContinuousMountainCar(ContinuousActionGym):
             self,
             action: np.ndarray
     ) -> np.ndarray:
+        """
+        Get action to step.
+
+        :param action: Native Gym action.
+        :return: Action to step.
+        """
+
+        action_to_step = action.copy()
 
         throttle = action[0]
         required_fuel = self.MAX_FUEL_USE_PER_STEP * abs(throttle)
-        action_to_step = action.copy()
         if required_fuel > self.fuel_level:
             action_to_step[:] *= self.fuel_level / required_fuel
             self.fuel_level = 0.0
@@ -1068,6 +1125,12 @@ class ContinuousMountainCar(ContinuousActionGym):
             self,
             observation: np.ndarray
     ) -> np.ndarray:
+        """
+        Get observation resulting from a step.
+
+        :param observation: Native Gym observation.
+        :return: Observation resulting from a step.
+        """
 
         return np.append(observation, self.fuel_level)
 
@@ -1078,6 +1141,15 @@ class ContinuousMountainCar(ContinuousActionGym):
             terminated: bool,
             truncated: bool
     ) -> float:
+        """
+        Get reward.
+
+        :param reward: Reward specified by the native Gym environment.
+        :param observation: Observation.
+        :param terminated: Terminated.
+        :param truncated: Truncated.
+        :return: Reward.
+        """
 
         reward = 0.0
 
@@ -1092,8 +1164,8 @@ class ContinuousMountainCar(ContinuousActionGym):
 
             # mark state and stats recorder as done. must manually mark stats recorder to allow premature reset.
             terminated = True
-            if hasattr(self.gym_native, 'stats_recorder'):
-                self.gym_native.stats_recorder.done = terminated
+            if hasattr(self.gym, 'stats_recorder'):
+                self.gym.stats_recorder.done = terminated
 
             reward = curr_distance + self.fuel_level
 
@@ -1163,22 +1235,40 @@ class ContinuousLunarLander(ContinuousActionGym):
 
     def __init__(
             self,
-            gym_native: Union[TimeLimit, RecordVideo]
+            gym: Union[TimeLimit, RecordVideo]
     ):
-        super().__init__(
-            gym_native
-        )
+        """
+        Native gym environment.
+
+        :param gym: Environment.
+        """
+
+        super().__init__(gym)
 
         self.fuel_level = 1.0
 
-    def get_action_dimension_names(self) -> List[str]:
+    def get_action_dimension_names(
+            self
+    ) -> List[str]:
+        """
+        Get action-dimension names.
+
+        :return: List of names.
+        """
 
         return [
             'main',
             'side'
         ]
 
-    def get_state_dimension_names(self) -> List[str]:
+    def get_state_dimension_names(
+            self
+    ) -> List[str]:
+        """
+        Get state-dimension names.
+
+        :return: List of names.
+        """
 
         return [
             'posX',
@@ -1192,7 +1282,16 @@ class ContinuousLunarLander(ContinuousActionGym):
             'fuel_level'
         ]
 
-    def get_reset_observation(self, observation: np.ndarray) -> np.ndarray:
+    def get_reset_observation(
+            self,
+            observation: np.ndarray
+    ) -> np.ndarray:
+        """
+        Get observation for episode reset.
+
+        :param observation: Observation from native environment.
+        :return: Observation.
+        """
 
         self.fuel_level = 1.0
         observation = np.append(observation, self.fuel_level)
@@ -1203,8 +1302,17 @@ class ContinuousLunarLander(ContinuousActionGym):
             self,
             action: np.ndarray
     ) -> np.ndarray:
+        """
+        Get action to step.
+
+        :param action: Native Gym action.
+        :return: Action to step.
+        """
+
+        action_to_step = action.copy()
 
         main_throttle, side_throttle = action[:]
+
         if main_throttle >= 0.0:
             required_main_fuel = self.MAIN_MAX_FUEL_USE_PER_STEP * (0.5 + 0.5 * main_throttle)
         else:
@@ -1215,7 +1323,6 @@ class ContinuousLunarLander(ContinuousActionGym):
         else:
             required_side_fuel = 0.0
 
-        action_to_step = action.copy()
         required_total_fuel = required_main_fuel + required_side_fuel
         if required_total_fuel > self.fuel_level:
             action_to_step[:] *= self.fuel_level / required_total_fuel
@@ -1229,6 +1336,12 @@ class ContinuousLunarLander(ContinuousActionGym):
             self,
             observation: np.ndarray
     ) -> np.ndarray:
+        """
+        Get observation resulting from a step.
+
+        :param observation: Native Gym observation.
+        :return: Observation resulting from a step.
+        """
 
         return np.append(observation, self.fuel_level)
 
@@ -1239,6 +1352,15 @@ class ContinuousLunarLander(ContinuousActionGym):
             terminated: bool,
             truncated: bool
     ) -> float:
+        """
+        Get reward.
+
+        :param reward: Reward specified by the native Gym environment.
+        :param observation: Observation.
+        :param terminated: Terminated.
+        :param truncated: Truncated.
+        :return: Reward.
+        """
 
         reward = 0.0
 
