@@ -1,6 +1,7 @@
 import math
 import os
 import warnings
+from abc import ABC, abstractmethod
 from argparse import ArgumentParser
 from itertools import product
 from time import sleep
@@ -94,16 +95,8 @@ class Gym(ContinuousMdpEnvironment):
     """
 
     LLC_V2 = 'LunarLanderContinuous-v2'
-    LLC_V2_FUEL_CONSUMPTION_FULL_THROTTLE_MAIN = 1 / 300.0
-    LLC_V2_FUEL_CONSUMPTION_FULL_THROTTLE_SIDE = 1 / 600.0
-
     MCC_V0 = 'MountainCarContinuous-v0'
-    MCC_V0_TROUGH_X_POS = -0.5
-    MCC_V0_GOAL_X_POS = 0.45
-    MCC_V0_FUEL_CONSUMPTION_FULL_THROTTLE = 1.0 / 300.0
-
     SWIMMER_V2 = 'Swimmer-v2'
-
     CARTPOLE_V1 = 'CartPole-v1'
 
     @classmethod
@@ -159,12 +152,6 @@ class Gym(ContinuousMdpEnvironment):
             help='Pass this flag to plot environment values (e.g., state).'
         )
 
-        parser.add_argument(
-            '--progressive-reward',
-            action='store_true',
-            help=f'Pass this flag to use progressive rewards (only valid for {Gym.MCC_V0}).'
-        )
-
         return parser
 
     @classmethod
@@ -189,6 +176,153 @@ class Gym(ContinuousMdpEnvironment):
         )
 
         return gym_env, unparsed_args
+
+    def __init__(
+            self,
+            random_state: RandomState,
+            T: Optional[int],
+            gym_id: str,
+            continuous_action_discretization_resolution: Optional[float] = None,
+            render_every_nth_episode: Optional[int] = None,
+            video_directory: Optional[str] = None,
+            steps_per_second: Optional[int] = None,
+            plot_environment: bool = False
+    ):
+        """
+        Initialize the environment.
+
+        :param random_state: Random state.
+        :param T: Maximum number of steps to run, or None for no limit.
+        :param gym_id: Gym identifier. See https://gymnasium.farama.org for a list.
+        :param continuous_action_discretization_resolution: A discretization resolution for continuous-action
+        environments. Providing this value allows the environment to be used with discrete-action methods via
+        discretization of the continuous-action dimensions.
+        :param render_every_nth_episode: If passed, the environment will render an episode video per this value.
+        :param video_directory: Directory in which to store rendered videos.
+        :param steps_per_second: Number of steps per second when displaying videos.
+        :param plot_environment: Whether to plot the environment.
+        """
+
+        super().__init__(
+            name=f'gym ({gym_id})',
+            random_state=random_state,
+            T=T
+        )
+
+        self.gym_id = gym_id
+        self.continuous_action_discretization_resolution = continuous_action_discretization_resolution
+        self.render_every_nth_episode = render_every_nth_episode
+        if self.render_every_nth_episode is not None and self.render_every_nth_episode <= 0:
+            raise ValueError('render_every_nth_episode must be > 0 if provided.')
+
+        self.video_directory = video_directory
+        self.steps_per_second = steps_per_second
+        self.gym_native = self.init_gym_native()
+
+        if self.gym_id == Gym.LLC_V2:
+            self.modifier = ContinuousLunarLanderModifier(self.gym_native)
+        elif self.gym_id == Gym.MCC_V0:
+            self.modifier = ContinuousMountainCarModifier(self.gym_native)
+        elif self.gym_id == Gym.CARTPOLE_V1:
+            self.modifier = CartpoleModifier(self.gym_native)
+        else:
+            self.modifier: Optional[GymModifier] = None
+
+        self.plot_environment = plot_environment
+        self.state_reward_scatter_plot = None
+        if self.plot_environment:
+            self.state_reward_scatter_plot = ScatterPlot(
+                f'{self.gym_id}:  State and Reward',
+                self.get_state_dimension_names() + ['reward'],
+                None
+            )
+
+        if (
+            self.continuous_action_discretization_resolution is not None and
+            not isinstance(self.gym_native.action_space, Box)
+        ):
+            raise ValueError('Continuous-action discretization is only valid for Box action-space environments.')
+
+        action_space = self.gym_native.action_space
+
+        # action space is already discrete:  initialize n actions from it.
+        if isinstance(action_space, Discrete):
+            self.actions = [
+                Action(
+                    i=i,
+                    name=name
+                )
+                for i, name in zip(
+                    range(action_space.n),
+                    [None] * action_space.n if self.modifier is None
+                    else self.modifier.get_action_names
+                )
+            ]
+
+        # action space is continuous, and we lack a discretization resolution:  initialize a single, multidimensional
+        # action including the min and max values of the dimensions. a policy gradient approach will be required.
+        elif isinstance(action_space, Box) and self.continuous_action_discretization_resolution is None:
+            self.actions = [
+                ContinuousMultiDimensionalAction(
+                    value=None,
+                    min_values=action_space.low,
+                    max_values=action_space.high
+                )
+            ]
+
+        # action space is continuous, and we have a discretization resolution:  discretize it. this is generally not a
+        # great approach, as it results in high-dimensional action spaces. but here goes.
+        elif isinstance(action_space, Box) and self.continuous_action_discretization_resolution is not None:
+
+            # continuous n-dimensional action space with identical bounds on each dimension
+            if len(action_space.shape) == 1:
+                action_discretizations = [
+                    np.linspace(low, high, math.ceil((high - low) / self.continuous_action_discretization_resolution))
+                    for low, high in zip(action_space.low, action_space.high)
+                ]
+            else:  # pragma no cover
+                raise ValueError(f'Unknown format of continuous action space:  {action_space}')
+
+            self.actions = [
+                DiscretizedAction(
+                    i=i,
+                    continuous_value=np.array(n_dim_action)
+                )
+                for i, n_dim_action in enumerate(product(*action_discretizations))
+            ]
+
+        else:  # pragma no cover
+            raise ValueError(f'Unknown Gym action space type:  {type(self.gym_native.action_space)}')
+
+    def __getstate__(
+            self
+    ) -> Dict:
+        """
+        Get state dictionary for pickling.
+
+        :return: State dictionary.
+        """
+
+        state = dict(self.__dict__)
+
+        # the native gym environment cannot be pickled. blank it out.
+        state['gym_native'] = None
+
+        return state
+
+    def __setstate__(
+            self,
+            state: Dict
+    ):
+        """
+        Set the state dictionary.
+
+        :param state: State dictionary.
+        """
+
+        self.__dict__ = state
+
+        self.gym_native = self.init_gym_native()
 
     def advance(
             self,
@@ -221,89 +355,14 @@ class Gym(ContinuousMdpEnvironment):
         else:
             gym_action = a.i
 
-        # fuel-based modification for continuous environments. cap energy expenditure at remaining fuel levels.
-        fuel_used = None
-        if self.gym_id == Gym.LLC_V2:
-            main_throttle, side_throttle = gym_action[:]
-            required_main_fuel = Gym.LLC_V2_FUEL_CONSUMPTION_FULL_THROTTLE_MAIN * (0.5 + 0.5 * main_throttle if main_throttle >= 0.0 else 0.0)
-            required_side_fuel = Gym.LLC_V2_FUEL_CONSUMPTION_FULL_THROTTLE_SIDE * abs(side_throttle) if abs(side_throttle) >= 0.5 else 0.0
-            required_total_fuel = required_main_fuel + required_side_fuel
-            fuel_level = state.observation[-1]
-            if required_total_fuel > fuel_level:  # pragma no cover
-                gym_action[:] *= fuel_level / required_total_fuel
-                fuel_used = fuel_level
-            else:
-                fuel_used = required_total_fuel
-
-        elif self.gym_id == Gym.MCC_V0:
-            throttle = gym_action[0]
-            required_fuel = Gym.MCC_V0_FUEL_CONSUMPTION_FULL_THROTTLE * abs(throttle)
-            fuel_level = state.observation[-1]
-            if required_fuel > fuel_level:  # pragma no cover
-                gym_action[:] *= fuel_level / required_fuel
-                fuel_used = fuel_level
-            else:
-                fuel_used = required_fuel
+        if self.modifier is not None:
+            gym_action = self.modifier.get_action_to_step(gym_action)
 
         observation, reward, terminated, truncated, _ = self.gym_native.step(action=gym_action)
 
-        # update fuel remaining if needed
-        fuel_remaining = None
-        if fuel_used is not None:
-            fuel_remaining = max(0.0, float(state.observation[-1] - fuel_used))
-            observation = np.append(observation, fuel_remaining)
-
-        if self.gym_id == Gym.LLC_V2:
-
-            reward = 0.0
-
-            if terminated:
-
-                # the ideal state is zeros across position/movement
-                state_reward = -np.abs(observation[0:6]).sum()
-
-                # reward for remaining fuel, but only if the state is good. rewarding for remaining fuel unconditionally
-                # can cause the agent to veer out of bounds immediately and thus sacrifice state reward for fuel reward.
-                # the terminating state is considered good if the lander is within the goal posts (which are at
-                # x = +/-0.2) and the other orientation variables (y position, x and y velocity, angle and angular
-                # velocity) are near zero. permit a small amount of lenience in the latter, since it's common for a
-                # couple of the variables to be slightly positive even when the lander is sitting stationary on a flat
-                # surface.
-                fuel_reward = 0.0
-                if abs(observation[0]) <= 0.2 and np.abs(observation[1:6]).sum() < 0.01:  # pragma no cover
-                    fuel_reward = state.observation[-1]
-
-                reward = state_reward + fuel_reward
-
-        elif self.gym_id == Gym.MCC_V0:
-
-            reward = 0.0
-
-            # calculate fraction to goal state
-            curr_distance = observation[0] - Gym.MCC_V0_TROUGH_X_POS
-            goal_distance = self.mcc_curr_goal_x_pos - Gym.MCC_V0_TROUGH_X_POS
-            fraction_to_goal = curr_distance / goal_distance
-            if fraction_to_goal >= 1.0:
-
-                # increment goal up to the final goal
-                self.mcc_curr_goal_x_pos = min(Gym.MCC_V0_GOAL_X_POS, self.mcc_curr_goal_x_pos + 0.05)
-
-                # mark state and stats recorder as done. must manually mark stats recorder to allow premature reset.
-                terminated = True
-                if hasattr(self.gym_native, 'stats_recorder'):
-                    self.gym_native.stats_recorder.done = terminated
-
-                reward = curr_distance + fuel_remaining
-
-        elif self.gym_id == Gym.CARTPOLE_V1:
-            reward = np.exp(
-                -(
-                    np.abs([
-                        observation[0],
-                        observation[2] * 7.5,  # equalize the angle's scale with the position's scale
-                    ]).sum()
-                )
-            )
+        if self.modifier is not None:
+            observation = self.modifier.get_post_step_observation(observation)
+            reward = self.modifier.get_reward(float(reward), observation, terminated, truncated)
 
         # call render if rendering manually
         if self.check_render_current_episode(True):
@@ -330,8 +389,6 @@ class Gym(ContinuousMdpEnvironment):
             truncated=truncated
         )
 
-        self.previous_observation = observation
-
         return self.state, Reward(i=None, r=reward)
 
     def reset_for_new_run(
@@ -352,9 +409,8 @@ class Gym(ContinuousMdpEnvironment):
 
         observation, _ = self.gym_native.reset()
 
-        # append fuel level to state of certain continuous environments
-        if self.gym_id in [Gym.MCC_V0, Gym.LLC_V2]:
-            observation = np.append(observation, 1.0)
+        if self.modifier is not None:
+            observation = self.modifier.get_reset_observation(observation)
 
         # call render if rendering manually
         if self.check_render_current_episode(True):
@@ -463,7 +519,12 @@ class Gym(ContinuousMdpEnvironment):
         :return: Number of dimensions.
         """
 
-        return self.gym_native.observation_space.shape[0]
+        if self.modifier is None:
+            dimensionality = self.gym_native.observation_space.shape[0]
+        else:
+            dimensionality = len(self.modifier.get_state_dimension_names())
+
+        return dimensionality
 
     def get_state_dimension_names(
             self
@@ -474,34 +535,11 @@ class Gym(ContinuousMdpEnvironment):
         :return: List of names.
         """
 
-        if self.gym_id == Gym.CARTPOLE_V1:
-            names = [
-                'pos',
-                'vel',
-                'ang',
-                'angV'
-            ]
-        elif self.gym_id == Gym.LLC_V2:
-            names = [
-                'posX',
-                'posY',
-                'velX',
-                'velY',
-                'ang',
-                'angV',
-                'leg1Con',
-                'leg2Con',
-                'fuel_level'
-            ]
-        elif self.gym_id == Gym.MCC_V0:
-            names = [
-                'position',
-                'velocity',
-                'fuel_level'
-            ]
-        else:  # pragma no cover
+        if self.modifier is None:
             warnings.warn(f'The state dimension names for {self.gym_id} are unknown. Defaulting to numbers.')
             names = [str(x) for x in range(0, self.get_state_space_dimensionality())]
+        else:
+            names = self.modifier.get_state_dimension_names()
 
         return names
 
@@ -525,173 +563,362 @@ class Gym(ContinuousMdpEnvironment):
         :return: List of names.
         """
 
-        if self.gym_id == Gym.LLC_V2:
-            names = [
-                'main',
-                'side'
-            ]
-        elif self.gym_id == Gym.MCC_V0:
-            names = [
-                'throttle'
-            ]
-        else:  # pragma no cover
+        assert isinstance(self.modifier, ContinuousActionGymModifier)
+
+        if self.modifier is None:
             warnings.warn(f'The action dimension names for {self.gym_id} are unknown. Defaulting to numbers.')
             names = [str(x) for x in range(0, self.get_action_space_dimensionality())]
+        else:
+            names = self.modifier.get_action_dimension_names()
 
         return names
 
+
+class GymModifier(ABC):
+    """
+    Abstract modifier for standard Gym environments. This provides a standard interface for customizing the behavior of
+    environments.
+    """
+
     def __init__(
             self,
-            random_state: RandomState,
-            T: Optional[int],
-            gym_id: str,
-            continuous_action_discretization_resolution: Optional[float] = None,
-            render_every_nth_episode: Optional[int] = None,
-            video_directory: Optional[str] = None,
-            steps_per_second: Optional[int] = None,
-            plot_environment: bool = False,
-            progressive_reward: bool = False
+            gym_native: Union[TimeLimit, RecordVideo]
     ):
-        """
-        Initialize the environment.
+        self.gym_native = gym_native
 
-        :param random_state: Random state.
-        :param T: Maximum number of steps to run, or None for no limit.
-        :param gym_id: Gym identifier. See https://gymnasium.farama.org for a list.
-        :param continuous_action_discretization_resolution: A discretization resolution for continuous-action
-        environments. Providing this value allows the environment to be used with discrete-action methods via
-        discretization of the continuous-action dimensions.
-        :param render_every_nth_episode: If passed, the environment will render an episode video per this value.
-        :param video_directory: Directory in which to store rendered videos.
-        :param steps_per_second: Number of steps per second when displaying videos.
-        :param plot_environment: Whether to plot the environment.
-        :param progressive_reward: Use progressive reward.
+    @abstractmethod
+    def get_state_dimension_names(
+            self
+    ) -> List[str]:
+        """
+        Get state-dimension names.
+
+        :return: List of names.
         """
 
-        super().__init__(
-            name=f'gym ({gym_id})',
-            random_state=random_state,
-            T=T
+    @abstractmethod
+    def get_reset_observation(
+            self,
+            observation: np.ndarray
+    ) -> np.ndarray:
+        """
+        Get observation for reset.
+
+        :param observation: Observation.
+        :return: Observation.
+        """
+
+    @abstractmethod
+    def get_action_to_step(
+            self,
+            action: np.ndarray
+    ) -> np.ndarray:
+        """
+        Get action to step.
+
+        :param action: Gym action.
+        :return: Action to step.
+        """
+
+    @abstractmethod
+    def get_post_step_observation(
+            self,
+            observation: np.ndarray
+    ) -> np.ndarray:
+        """
+        Get observation resulting from a step.
+
+        :param observation: Observation.
+        :return: Observation resulting from a step.
+        """
+
+    @abstractmethod
+    def get_reward(
+            self,
+            reward: float,
+            observation: np.ndarray,
+            terminated: bool,
+            truncated: bool
+    ) -> float:
+        """
+        Get reward.
+
+        :param reward: Reward specified by the native Gym environment.
+        :param observation: Observation.
+        :param terminated: Terminated.
+        :param truncated: Truncated.
+        :return: Reward.
+        """
+
+
+class DiscreteActionGymModifier(GymModifier, ABC):
+    """
+    Modifier for discrete-action Gym environments.
+    """
+
+    @abstractmethod
+    def get_action_names(
+            self
+    ) -> List[Optional[str]]:
+        """
+        Get action-dimension names.
+
+        :return: List of names.
+        """
+
+
+class ContinuousActionGymModifier(GymModifier, ABC):
+    """
+    Modifier for continuous-action Gym environments.
+    """
+
+    @abstractmethod
+    def get_action_dimension_names(
+            self
+    ) -> List[str]:
+        """
+        Get action-dimension names.
+
+        :return: List of names.
+        """
+
+
+class CartpoleModifier(DiscreteActionGymModifier):
+
+    def get_action_names(self) -> List[Optional[str]]:
+
+        return ['push-left', 'push-right']
+
+    def get_state_dimension_names(self) -> List[str]:
+        return [
+            'pos',
+            'vel',
+            'ang',
+            'angV'
+        ]
+
+    def get_reset_observation(self, observation: np.ndarray) -> np.ndarray:
+        pass
+
+    def get_action_to_step(self, action: np.ndarray) -> np.ndarray:
+        pass
+
+    def get_post_step_observation(self, observation: np.ndarray) -> np.ndarray:
+        pass
+
+    def get_reward(self, reward: float, observation: np.ndarray, terminated: bool, truncated: bool) -> float:
+
+        return np.exp(
+            -(
+                np.abs([
+                    observation[0],
+                    observation[2] * 7.5,  # equalize the angle's scale with the position's scale
+                ]).sum()
+            )
         )
 
-        self.gym_id = gym_id
-        self.progressive_reward = progressive_reward
-        self.continuous_action_discretization_resolution = continuous_action_discretization_resolution
-        self.render_every_nth_episode = render_every_nth_episode
-        if self.render_every_nth_episode is not None and self.render_every_nth_episode <= 0:
-            raise ValueError('render_every_nth_episode must be > 0 if provided.')
 
-        self.video_directory = video_directory
-        self.steps_per_second = steps_per_second
-        self.gym_native = self.init_gym_native()
-        self.previous_observation = None
-        self.plot_environment = plot_environment
-        self.state_reward_scatter_plot = None
-        if self.plot_environment:
-            self.state_reward_scatter_plot = ScatterPlot(
-                f'{self.gym_id}:  State and Reward',
-                self.get_state_dimension_names() + ['reward'],
-                None
-            )
+class ContinuousLunarLanderModifier(ContinuousActionGymModifier):
+    """
+    Modifier for the continuous lunar lander environments.
+    """
 
-        if self.continuous_action_discretization_resolution is not None and not isinstance(self.gym_native.action_space, Box):
-            raise ValueError('Continuous-action discretization is only valid for Box action-space environments.')
+    MAIN_MAX_FUEL_USE_PER_STEP = 1.0 / 300.0
+    SIDE_MAX_FUEL_USE_PER_STEP = 1.0 / 600.0
 
-        action_space = self.gym_native.action_space
-
-        # action space is already discrete:  initialize n actions from it.
-        if isinstance(action_space, Discrete):
-            self.actions = [
-                Action(
-                    i=i,
-                    name=name
-                )
-                for i, name in zip(
-
-                    range(action_space.n),
-
-                    # cartpole action names
-                    [
-                        'push-left',
-                        'push-right'
-                    ] if self.gym_id == Gym.CARTPOLE_V1
-
-                    # fallback action names:  all none
-                    else [None] * action_space.n
-                )
-            ]
-
-        # action space is continuous, and we lack a discretization resolution:  initialize a single, multidimensional
-        # action including the min and max values of the dimensions. a policy gradient approach will be required.
-        elif isinstance(action_space, Box) and self.continuous_action_discretization_resolution is None:
-            self.actions = [
-                ContinuousMultiDimensionalAction(
-                    value=None,
-                    min_values=action_space.low,
-                    max_values=action_space.high
-                )
-            ]
-
-        # action space is continuous, and we have a discretization resolution:  discretize it. this is generally not a
-        # great approach, as it results in high-dimensional action spaces. but here goes.
-        elif isinstance(action_space, Box) and self.continuous_action_discretization_resolution is not None:
-
-            # continuous n-dimensional action space with identical bounds on each dimension
-            if len(action_space.shape) == 1:
-                action_discretizations = [
-                    np.linspace(low, high, math.ceil((high - low) / self.continuous_action_discretization_resolution))
-                    for low, high in zip(action_space.low, action_space.high)
-                ]
-            else:  # pragma no cover
-                raise ValueError(f'Unknown format of continuous action space:  {action_space}')
-
-            self.actions = [
-                DiscretizedAction(
-                    i=i,
-                    continuous_value=np.array(n_dim_action)
-                )
-                for i, n_dim_action in enumerate(product(*action_discretizations))
-            ]
-
-        else:  # pragma no cover
-            raise ValueError(f'Unknown Gym action space type:  {type(self.gym_native.action_space)}')
-
-        # set progressive goal for certain environments
-        if self.gym_id == Gym.MCC_V0:
-            if self.progressive_reward:
-                self.mcc_curr_goal_x_pos = Gym.MCC_V0_TROUGH_X_POS + 0.1
-            else:
-                self.mcc_curr_goal_x_pos = Gym.MCC_V0_GOAL_X_POS
-
-    def __getstate__(
-            self
-    ) -> Dict:
-        """
-        Get state dictionary for pickling.
-
-        :return: State dictionary.
-        """
-
-        state = dict(self.__dict__)
-
-        # the native gym environment cannot be pickled. blank it out.
-        state['gym_native'] = None
-
-        return state
-
-    def __setstate__(
+    def __init__(
             self,
-            state: Dict
+            gym_native: Union[TimeLimit, RecordVideo]
     ):
-        """
-        Set the state dictionary.
+        super().__init__(
+            gym_native
+        )
 
-        :param state: State dictionary.
-        """
+        self.fuel_level = 1.0
 
-        self.__dict__ = state
+    def get_action_dimension_names(self) -> List[str]:
 
-        self.gym_native = self.init_gym_native()
+        return [
+            'main',
+            'side'
+        ]
+
+    def get_state_dimension_names(self) -> List[str]:
+
+        return [
+            'posX',
+            'posY',
+            'velX',
+            'velY',
+            'ang',
+            'angV',
+            'leg1Con',
+            'leg2Con',
+            'fuel_level'
+        ]
+
+    def get_reset_observation(self, observation: np.ndarray) -> np.ndarray:
+
+        self.fuel_level = 1.0
+        observation = np.append(observation, self.fuel_level)
+
+        return observation
+
+    def get_action_to_step(
+            self,
+            action: np.ndarray
+    ) -> np.ndarray:
+
+        main_throttle, side_throttle = action[:]
+        if main_throttle >= 0.0:
+            required_main_fuel = self.MAIN_MAX_FUEL_USE_PER_STEP * (0.5 + 0.5 * main_throttle)
+        else:
+            required_main_fuel = 0.0
+
+        if abs(side_throttle) >= 0.5:
+            required_side_fuel = self.SIDE_MAX_FUEL_USE_PER_STEP * abs(side_throttle)
+        else:
+            required_side_fuel = 0.0
+
+        action_to_step = action.copy()
+        required_total_fuel = required_main_fuel + required_side_fuel
+        if required_total_fuel > self.fuel_level:
+            action_to_step[:] *= self.fuel_level / required_total_fuel
+            self.fuel_level = 0.0
+        else:
+            self.fuel_level -= required_total_fuel
+
+        return action_to_step
+
+    def get_post_step_observation(
+            self,
+            observation: np.ndarray
+    ) -> np.ndarray:
+
+        return np.append(observation, self.fuel_level)
+
+    def get_reward(
+            self,
+            reward: float,
+            observation: np.ndarray,
+            terminated: bool,
+            truncated: bool
+    ) -> float:
+
+        reward = 0.0
+
+        if terminated:
+
+            # the ideal state is zeros across position/movement
+            state_reward = -np.abs(observation[0:6]).sum()
+
+            # reward for remaining fuel, but only if the state is good. rewarding for remaining fuel unconditionally
+            # can cause the agent to veer out of bounds immediately and thus sacrifice state reward for fuel reward.
+            # the terminating state is considered good if the lander is within the goal posts (which are at
+            # x = +/-0.2) and the other orientation variables (y position, x and y velocity, angle and angular
+            # velocity) are near zero. permit a small amount of lenience in the latter, since it's common for a
+            # couple of the variables to be slightly positive even when the lander is sitting stationary on a flat
+            # surface.
+            fuel_reward = 0.0
+            if abs(observation[0]) <= 0.2 and np.abs(observation[1:6]).sum() < 0.01:  # pragma no cover
+                fuel_reward = self.fuel_level
+
+            reward = state_reward + fuel_reward
+
+        return reward
+
+
+class ContinuousMountainCarModifier(ContinuousActionGymModifier):
+    """
+    Modifier for the continuous lunar lander environments.
+    """
+
+    TROUGH_X_POS = -0.5
+    GOAL_X_POS = 0.45
+    MAX_FUEL_USE_PER_STEP = 1.0 / 300.0
+
+    def __init__(
+            self,
+            gym_native: Union[TimeLimit, RecordVideo]
+    ):
+        super().__init__(
+            gym_native
+        )
+
+        self.fuel_level = 1.0
+        self.mcc_curr_goal_x_pos = self.TROUGH_X_POS + 0.1
+
+    def get_action_dimension_names(self) -> List[str]:
+
+        return [
+            'throttle'
+        ]
+
+    def get_state_dimension_names(self) -> List[str]:
+
+        return [
+            'position',
+            'velocity',
+            'fuel_level'
+        ]
+
+    def get_reset_observation(self, observation: np.ndarray) -> np.ndarray:
+
+        self.fuel_level = 1.0
+        observation = np.append(observation, self.fuel_level)
+
+        return observation
+
+    def get_action_to_step(
+            self,
+            action: np.ndarray
+    ) -> np.ndarray:
+
+        throttle = action[0]
+        required_fuel = self.MAX_FUEL_USE_PER_STEP * abs(throttle)
+        action_to_step = action.copy()
+        if required_fuel > self.fuel_level:
+            action_to_step[:] *= self.fuel_level / required_fuel
+            self.fuel_level = 0.0
+        else:
+            self.fuel_level -= required_fuel
+
+        return action_to_step
+
+    def get_post_step_observation(
+            self,
+            observation: np.ndarray
+    ) -> np.ndarray:
+
+        return np.append(observation, self.fuel_level)
+
+    def get_reward(
+            self,
+            reward: float,
+            observation: np.ndarray,
+            terminated: bool,
+            truncated: bool
+    ) -> float:
+
+        reward = 0.0
+
+        # calculate fraction to goal state
+        curr_distance = observation[0] - self.TROUGH_X_POS
+        goal_distance = self.mcc_curr_goal_x_pos - self.TROUGH_X_POS
+        fraction_to_goal = curr_distance / goal_distance
+        if fraction_to_goal >= 1.0:
+
+            # increment goal up to the final goal
+            self.mcc_curr_goal_x_pos = min(self.GOAL_X_POS, self.mcc_curr_goal_x_pos + 0.05)
+
+            # mark state and stats recorder as done. must manually mark stats recorder to allow premature reset.
+            terminated = True
+            if hasattr(self.gym_native, 'stats_recorder'):
+                self.gym_native.stats_recorder.done = terminated
+
+            reward = curr_distance + self.fuel_level
+
+        return reward
 
 
 @rl_text(chapter='Feature Extractors', page=1)
@@ -1101,7 +1328,7 @@ class ContinuousMountainCarFeatureExtractor(ContinuousFeatureExtractor):
         self.state_category_interacter = OneHotStateSegmentFeatureInteracter({
 
             # shift the x-location midpoint to the bottom of the trough
-            0: [Gym.MCC_V0_TROUGH_X_POS],
+            0: [ContinuousMountainCarModifier.TROUGH_X_POS],
 
             # velocity switches at zero
             1: [0.0],
