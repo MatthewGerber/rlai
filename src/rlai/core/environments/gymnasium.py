@@ -220,13 +220,13 @@ class Gym(ContinuousMdpEnvironment):
         self.gym_native = self.init_gym_native()
 
         if self.gym_id == Gym.LLC_V2:
-            self.gym_extender = ContinuousLunarLander(self.gym_native)
+            self.gym_extender = ContinuousLunarLanderCustomizer(self.gym_native)
         elif self.gym_id == Gym.MCC_V0:
-            self.gym_extender = ContinuousMountainCar(self.gym_native)
+            self.gym_extender = ContinuousMountainCarCustomizer(self.gym_native)
         elif self.gym_id == Gym.CARTPOLE_V1:
-            self.gym_extender = Cartpole(self.gym_native)
+            self.gym_extender = CartpoleCustomizer(self.gym_native)
         else:
-            self.gym_extender = GymExtension(self.gym_native)
+            self.gym_extender = GymCustomizer(self.gym_native)
 
         self.plot_environment = plot_environment
         self.state_reward_scatter_plot = None
@@ -354,7 +354,7 @@ class Gym(ContinuousMdpEnvironment):
         gym_action = self.gym_extender.get_action_to_step(gym_action)
         observation, reward, terminated, truncated, _ = self.gym_native.step(action=gym_action)
         observation = self.gym_extender.get_post_step_observation(observation)
-        reward = self.gym_extender.get_reward(float(reward), observation, terminated, truncated)
+        reward, terminated = self.gym_extender.get_reward(float(reward), observation, terminated, truncated)
 
         # call render if rendering manually
         if self.check_render_current_episode(True):
@@ -400,6 +400,7 @@ class Gym(ContinuousMdpEnvironment):
             self.state_reward_scatter_plot.reset_y_range()
 
         observation, _ = self.gym_native.reset()
+
         observation = self.gym_extender.get_reset_observation(observation)
 
         # call render if rendering manually
@@ -531,7 +532,9 @@ class Gym(ContinuousMdpEnvironment):
         :return: Number of dimensions.
         """
 
-        return self.gym_native.action_space.shape[0]
+        assert isinstance(self.gym_extender, ContinuousActionGymCustomizer)
+
+        return len(self.get_action_dimension_names())
 
     def get_action_dimension_names(
             self
@@ -542,15 +545,14 @@ class Gym(ContinuousMdpEnvironment):
         :return: List of names.
         """
 
-        assert isinstance(self.gym_extender, ContinuousActionGym)
+        assert isinstance(self.gym_extender, ContinuousActionGymCustomizer)
 
         return self.gym_extender.get_action_dimension_names()
 
 
-class GymExtension(ABC):
+class GymCustomizer(ABC):
     """
-    Abstract extension class for standard Gym environments. This provides a standard interface for customizing the
-    behavior of environments.
+    A standard interface for customizing the behavior of Gym environments.
     """
 
     def __init__(
@@ -574,11 +576,13 @@ class GymExtension(ABC):
         :return: List of names.
         """
 
-        warnings.warn('The state dimension names for are unknown. Defaulting to numbers.')
+        warnings.warn(
+            'No Gym customizer is available, so the state-dimension names for are unknown. Defaulting to numbers.'
+        )
 
         return [
             str(x)
-            for x in range(0, self.gym.observation_space.shape[0])
+            for x in range(self.gym.observation_space.shape[0])
         ]
 
     def get_reset_observation(
@@ -626,43 +630,44 @@ class GymExtension(ABC):
             observation: np.ndarray,
             terminated: bool,
             truncated: bool
-    ) -> float:
+    ) -> Tuple[float, bool]:
         """
         Get reward.
 
         :param reward: Reward specified by the native Gym environment.
-        :param observation: Observation.
-        :param terminated: Terminated.
-        :param truncated: Truncated.
-        :return: Reward.
+        :param observation: Observation, either native or custom.
+        :param terminated: Terminated specified by the native Gym environment.
+        :param truncated: Truncated specified by the native Gym environment.
+        :return: 2-tuple of reward and termination indicator.
         """
 
-        return reward
+        return reward, terminated
 
 
-class DiscreteActionGym(GymExtension, ABC):
+class DiscreteActionGymCustomizer(GymCustomizer, ABC):
     """
-    Discrete-action Gym environment.
+    Discrete-action Gym customizer.
     """
 
     def get_action_names(
             self
-    ) -> List[str]:
+    ) -> List[Optional[str]]:
         """
         Get discrete-action names.
 
         :return: List of names.
         """
 
-        warnings.warn('The action names for are unknown.')
+        warnings.warn(
+            'No Gym customizer is available, so the action names for are unknown.'
+        )
 
         action_space = self.gym.action_space
         assert isinstance(action_space, Discrete)
+        return [None] * action_space.n
 
-        return ['None'] * action_space.n
 
-
-class ContinuousActionGym(GymExtension, ABC):
+class ContinuousActionGymCustomizer(GymCustomizer, ABC):
     """
     Continuous-action Gym environment.
     """
@@ -676,7 +681,9 @@ class ContinuousActionGym(GymExtension, ABC):
         :return: List of names.
         """
 
-        warnings.warn(f'The action dimension names are unknown. Defaulting to numbers.')
+        warnings.warn(
+            'No Gym customizer is available, so the action-dimension names for are unknown. Defaulting to numbers.'
+        )
 
         return [
             str(x) for
@@ -819,14 +826,14 @@ class SignedCodingFeatureExtractor(ContinuousFeatureExtractor):
         self.state_category_interacter = None
 
 
-class Cartpole(DiscreteActionGym):
+class CartpoleCustomizer(DiscreteActionGymCustomizer):
     """
-    Cartpole.
+    Cartpole customizer.
     """
 
     def get_action_names(
             self
-    ) -> List[str]:
+    ) -> List[Optional[str]]:
         """
         Get discrete-action names.
 
@@ -857,24 +864,27 @@ class Cartpole(DiscreteActionGym):
             observation: np.ndarray,
             terminated: bool,
             truncated: bool
-    ) -> float:
+    ) -> Tuple[float, bool]:
         """
         Get reward.
 
         :param reward: Reward specified by the native Gym environment.
-        :param observation: Observation.
-        :param terminated: Terminated.
-        :param truncated: Truncated.
-        :return: Reward.
+        :param observation: Observation, either native or custom.
+        :param terminated: Terminated specified by the native Gym environment.
+        :param truncated: Truncated specified by the native Gym environment.
+        :return: 2-tuple of reward and termination indicator.
         """
 
-        return np.exp(
-            -(
-                np.abs([
-                    observation[0],
-                    observation[2] * 7.5,  # equalize the angle's scale with the position's scale
-                ]).sum()
-            )
+        return (
+            np.exp(
+                -(
+                    np.abs([
+                        observation[0],
+                        observation[2] * 7.5,  # equalize the angle's scale with the position's scale
+                    ]).sum()
+                )
+            ),
+            terminated
         )
 
 
@@ -1032,9 +1042,9 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
         self.feature_scaler = StationaryFeatureScaler()
 
 
-class ContinuousMountainCar(ContinuousActionGym):
+class ContinuousMountainCarCustomizer(ContinuousActionGymCustomizer):
     """
-    Continuous mountain car.
+    Continuous mountain car customizer.
     """
 
     TROUGH_X_POS = -0.5
@@ -1094,9 +1104,10 @@ class ContinuousMountainCar(ContinuousActionGym):
         """
 
         self.fuel_level = 1.0
-        observation = np.append(observation, self.fuel_level)
 
-        return observation
+        custom_observation = np.append(observation, self.fuel_level)
+
+        return custom_observation
 
     def get_action_to_step(
             self,
@@ -1109,17 +1120,16 @@ class ContinuousMountainCar(ContinuousActionGym):
         :return: Action to step.
         """
 
-        action_to_step = action.copy()
-
-        throttle = action[0]
+        custom_action = action.copy()
+        throttle = custom_action[0]
         required_fuel = self.MAX_FUEL_USE_PER_STEP * abs(throttle)
         if required_fuel > self.fuel_level:
-            action_to_step[:] *= self.fuel_level / required_fuel
+            custom_action[:] *= self.fuel_level / required_fuel
             self.fuel_level = 0.0
         else:
             self.fuel_level -= required_fuel
 
-        return action_to_step
+        return custom_action
 
     def get_post_step_observation(
             self,
@@ -1140,18 +1150,19 @@ class ContinuousMountainCar(ContinuousActionGym):
             observation: np.ndarray,
             terminated: bool,
             truncated: bool
-    ) -> float:
+    ) -> Tuple[float, bool]:
         """
         Get reward.
 
         :param reward: Reward specified by the native Gym environment.
-        :param observation: Observation.
-        :param terminated: Terminated.
-        :param truncated: Truncated.
-        :return: Reward.
+        :param observation: Observation, either native or custom.
+        :param terminated: Terminated specified by the native Gym environment.
+        :param truncated: Truncated specified by the native Gym environment.
+        :return: 2-tuple of reward and termination indicator.
         """
 
-        reward = 0.0
+        custom_reward = reward
+        custom_terminated = terminated
 
         # calculate fraction to goal state
         curr_distance = observation[0] - self.TROUGH_X_POS
@@ -1163,13 +1174,13 @@ class ContinuousMountainCar(ContinuousActionGym):
             self.mcc_curr_goal_x_pos = min(self.GOAL_X_POS, self.mcc_curr_goal_x_pos + 0.05)
 
             # mark state and stats recorder as done. must manually mark stats recorder to allow premature reset.
-            terminated = True
+            custom_terminated = True
             if hasattr(self.gym, 'stats_recorder'):
-                self.gym.stats_recorder.done = terminated
+                self.gym.stats_recorder.done = custom_terminated
 
-            reward = curr_distance + self.fuel_level
+            custom_reward = curr_distance + self.fuel_level
 
-        return reward
+        return custom_reward, custom_terminated
 
 
 @rl_text(chapter='Feature Extractors', page=1)
@@ -1215,7 +1226,7 @@ class ContinuousMountainCarFeatureExtractor(ContinuousFeatureExtractor):
         self.state_category_interacter = OneHotStateSegmentFeatureInteracter({
 
             # shift the x-location midpoint to the bottom of the trough
-            0: [ContinuousMountainCar.TROUGH_X_POS],
+            0: [ContinuousMountainCarCustomizer.TROUGH_X_POS],
 
             # velocity switches at zero
             1: [0.0],
@@ -1225,9 +1236,9 @@ class ContinuousMountainCarFeatureExtractor(ContinuousFeatureExtractor):
         })
 
 
-class ContinuousLunarLander(ContinuousActionGym):
+class ContinuousLunarLanderCustomizer(ContinuousActionGymCustomizer):
     """
-    Continuous lunar lander.
+    Continuous lunar lander customizer.
     """
 
     MAIN_MAX_FUEL_USE_PER_STEP = 1.0 / 300.0
@@ -1256,10 +1267,7 @@ class ContinuousLunarLander(ContinuousActionGym):
         :return: List of names.
         """
 
-        return [
-            'main',
-            'side'
-        ]
+        return ['main', 'side']
 
     def get_state_dimension_names(
             self
@@ -1294,9 +1302,10 @@ class ContinuousLunarLander(ContinuousActionGym):
         """
 
         self.fuel_level = 1.0
-        observation = np.append(observation, self.fuel_level)
 
-        return observation
+        custom_observation = np.append(observation, self.fuel_level)
+
+        return custom_observation
 
     def get_action_to_step(
             self,
@@ -1309,9 +1318,9 @@ class ContinuousLunarLander(ContinuousActionGym):
         :return: Action to step.
         """
 
-        action_to_step = action.copy()
+        custom_action = action.copy()
 
-        main_throttle, side_throttle = action[:]
+        main_throttle, side_throttle = custom_action[:]
 
         if main_throttle >= 0.0:
             required_main_fuel = self.MAIN_MAX_FUEL_USE_PER_STEP * (0.5 + 0.5 * main_throttle)
@@ -1325,12 +1334,12 @@ class ContinuousLunarLander(ContinuousActionGym):
 
         required_total_fuel = required_main_fuel + required_side_fuel
         if required_total_fuel > self.fuel_level:
-            action_to_step[:] *= self.fuel_level / required_total_fuel
+            custom_action[:] *= self.fuel_level / required_total_fuel
             self.fuel_level = 0.0
         else:
             self.fuel_level -= required_total_fuel
 
-        return action_to_step
+        return custom_action
 
     def get_post_step_observation(
             self,
@@ -1351,18 +1360,18 @@ class ContinuousLunarLander(ContinuousActionGym):
             observation: np.ndarray,
             terminated: bool,
             truncated: bool
-    ) -> float:
+    ) -> Tuple[float, bool]:
         """
         Get reward.
 
         :param reward: Reward specified by the native Gym environment.
-        :param observation: Observation.
-        :param terminated: Terminated.
-        :param truncated: Truncated.
-        :return: Reward.
+        :param observation: Observation, either native or custom.
+        :param terminated: Terminated specified by the native Gym environment.
+        :param truncated: Truncated specified by the native Gym environment.
+        :return: 2-tuple of reward and termination indicator.
         """
 
-        reward = 0.0
+        custom_reward = 0.0
 
         if terminated:
 
@@ -1380,9 +1389,9 @@ class ContinuousLunarLander(ContinuousActionGym):
             if abs(observation[0]) <= 0.2 and np.abs(observation[1:6]).sum() < 0.01:  # pragma no cover
                 fuel_reward = self.fuel_level
 
-            reward = state_reward + fuel_reward
+            custom_reward = state_reward + fuel_reward
 
-        return reward
+        return custom_reward, terminated
 
 
 @rl_text(chapter='Feature Extractors', page=1)
