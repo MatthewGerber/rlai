@@ -537,8 +537,10 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
         ])
 
         # prepend an intercept column
-        intercept_state_feature_matrix = np.ones(shape=np.add(state_feature_matrix.shape, (0, 1)))
-        intercept_state_feature_matrix[:, 1:] = state_feature_matrix
+        if self.fit_itercept:
+            intercept_state_feature_matrix = np.ones(shape=np.add(state_feature_matrix.shape, (0, 1)))
+            intercept_state_feature_matrix[:, 1:] = state_feature_matrix
+            state_feature_matrix = intercept_state_feature_matrix
 
         # invert action values back to [0.0, 1.0] (the domain of the beta distribution), creating one row per action
         # taken and one column per action dimension.
@@ -563,7 +565,7 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
             ) = self.get_action_density_gradients_vmap(
                 action_i_theta_a,
                 action_i_theta_b,
-                intercept_state_feature_matrix,
+                state_feature_matrix,
                 action_i_values
             )
 
@@ -762,23 +764,26 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
 
         self.set_action(state)
 
-        intercept_state_features = np.append([1.0], self.feature_extractor.extract(state, True))
+        state_feature_vector = self.feature_extractor.extract(state, True)
+
+        if self.fit_intercept:
+            state_feature_vector = np.append([1.0], state_feature_vector)
 
         # initialize coefficients for each action's a-shape parameter
         if self.action_theta_a is None:
             self.action_theta_a = np.zeros(
-                shape=(self.environment.get_action_space_dimensionality(), intercept_state_features.shape[0])
+                shape=(self.environment.get_action_space_dimensionality(), state_feature_vector.shape[0])
             )
 
         # initialize coefficients for each action's b-shape parameter
         if self.action_theta_b is None:
             self.action_theta_b = np.zeros(
-                shape=(self.environment.get_action_space_dimensionality(), intercept_state_features.shape[0])
+                shape=(self.environment.get_action_space_dimensionality(), state_feature_vector.shape[0])
             )
 
         # calculate the modeled shape parameters of each action dimension
-        action_a = np.exp(self.action_theta_a.dot(intercept_state_features))
-        action_b = np.exp(self.action_theta_b.dot(intercept_state_features))
+        action_a = np.exp(self.action_theta_a.dot(state_feature_vector))
+        action_b = np.exp(self.action_theta_b.dot(state_feature_vector))
 
         try:
 

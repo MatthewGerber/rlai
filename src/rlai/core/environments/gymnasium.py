@@ -1206,10 +1206,10 @@ class ContinuousMountainCarFeatureExtractor(ContinuousFeatureExtractor):
         """
 
         # extract raw feature values
-        scaled_feature_matrix = super().extract(state, refit_scaler)
+        scaled_feature_vector = np.append(super().extract(state, refit_scaler), 1.0)
         interacted_feature_vector = self.state_category_interacter.interact(
             np.array([state.observation]),
-            np.array([scaled_feature_matrix])
+            np.array([scaled_feature_vector])
         )[0]
 
         return interacted_feature_vector
