@@ -1049,7 +1049,8 @@ class ContinuousMountainCarCustomizer(ContinuousActionGymCustomizer):
 
     TROUGH_X_POS = -0.5
     GOAL_X_POS = 0.45
-    MAX_FUEL_USE_PER_STEP = 1.0 / 300.0
+    NUM_REWARD_INCREMENTS = 20
+    MAX_FUEL_USE_PER_STEP = 2.0 / 300.0
 
     def __init__(
             self,
@@ -1063,8 +1064,8 @@ class ContinuousMountainCarCustomizer(ContinuousActionGymCustomizer):
 
         super().__init__(gym)
 
-        self.fuel_level = 1.0
-        self.mcc_curr_goal_x_pos = self.TROUGH_X_POS + 0.1
+        self.fuel_level: Optional[float] = None
+        self.reward_increments: Optional[Dict] = None
 
     def get_action_dimension_names(
             self
@@ -1104,6 +1105,12 @@ class ContinuousMountainCarCustomizer(ContinuousActionGymCustomizer):
         """
 
         self.fuel_level = 1.0
+
+        self.reward_increments = np.linspace(
+            start=self.TROUGH_X_POS,
+            stop=self.GOAL_X_POS,
+            num=self.NUM_REWARD_INCREMENTS
+        ).tolist()
 
         custom_observation = np.append(observation, self.fuel_level)
 
@@ -1161,24 +1168,18 @@ class ContinuousMountainCarCustomizer(ContinuousActionGymCustomizer):
         :return: 2-tuple of reward and termination indicator.
         """
 
-        custom_reward = reward
         custom_terminated = terminated
+        position, velocity = observation[0:2]
 
-        # calculate fraction to goal state
-        curr_distance = observation[0] - self.TROUGH_X_POS
-        goal_distance = self.mcc_curr_goal_x_pos - self.TROUGH_X_POS
-        fraction_to_goal = curr_distance / goal_distance
-        if fraction_to_goal >= 1.0:
+        if len(self.reward_increments) > 0 and position >= self.reward_increments[0]:
+            custom_reward = (self.reward_increments[0] - self.TROUGH_X_POS) * self.fuel_level
+            self.reward_increments = self.reward_increments[1:]
+        else:
+            custom_reward = 0.0
 
-            # increment goal up to the final goal
-            self.mcc_curr_goal_x_pos = min(self.GOAL_X_POS, self.mcc_curr_goal_x_pos + 0.05)
-
-            # mark state and stats recorder as done. must manually mark stats recorder to allow premature reset.
-            custom_terminated = True
-            if hasattr(self.gym, 'stats_recorder'):
-                self.gym.stats_recorder.done = custom_terminated
-
-            custom_reward = curr_distance + self.fuel_level
+        # mark state and stats recorder as done. must manually mark stats recorder to allow premature reset.
+        if custom_terminated and hasattr(self.gym, 'stats_recorder'):
+            self.gym.stats_recorder.done = custom_terminated
 
         return custom_reward, custom_terminated
 
