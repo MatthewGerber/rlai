@@ -197,6 +197,17 @@ class StateActionIdentityFeatureExtractor(StateActionFeatureExtractor):
 
         return fex, unparsed_args
 
+    def extracts_intercept(
+            self
+    ) -> bool:
+        """
+        Whether the feature extractor extracts an intercept (constant) term.
+
+        :return: True if an intercept (constant) term is extracted and False otherwise.
+        """
+
+        return False
+
     def extract(
             self,
             states: List[MdpState],

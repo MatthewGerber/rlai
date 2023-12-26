@@ -32,13 +32,15 @@ class FunctionApproximationModel(ABC):
     def init_from_arguments(
             cls,
             args: List[str],
-            random_state: RandomState
+            random_state: RandomState,
+            fit_intercept: bool
     ) -> Tuple['FunctionApproximationModel', List[str]]:
         """
         Initialize a model from arguments.
 
         :param args: Arguments.
         :param random_state: Random state.
+        :param fit_intercept: Whether to fit an intercept term.
         :return: 2-tuple of a model and a list of unparsed arguments.
         """
 

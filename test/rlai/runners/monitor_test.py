@@ -15,9 +15,9 @@ def test_monitor():
 
     rng = RandomState(12345)
 
-    actions = rng.randint(0, 2, T)
-    optimal_actions = rng.randint(0, 2, T)
-    rewards = rng.random(T)
+    actions = rng.randint(0, 2, T).tolist()
+    optimal_actions = rng.randint(0, 2, T).tolist()
+    rewards = rng.random(T).tolist()
 
     for t in range(T):
 

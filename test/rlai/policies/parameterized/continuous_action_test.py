@@ -1,7 +1,7 @@
 import numpy as np
 from numpy.random import RandomState
 
-from rlai.core.environments.gymnasium import ContinuousFeatureExtractor, Gym
+from rlai.core.environments.gymnasium import Gym, ContinuousLunarLanderFeatureExtractor
 from rlai.policy_gradient import ParameterizedMdpAgent
 from rlai.policy_gradient.policies.continuous_action import ContinuousActionBetaDistributionPolicy
 
@@ -19,7 +19,7 @@ def test_rescale():
         gym_id='LunarLanderContinuous-v2'
     )
 
-    fex = ContinuousFeatureExtractor()
+    fex = ContinuousLunarLanderFeatureExtractor()
     policy = ContinuousActionBetaDistributionPolicy(gym, fex, False)
     # noinspection PyTypeChecker
     agent = ParameterizedMdpAgent('test', random_state, policy, 0.9, None)

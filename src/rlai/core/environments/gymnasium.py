@@ -220,13 +220,13 @@ class Gym(ContinuousMdpEnvironment):
         self.gym_native = self.init_gym_native()
 
         if self.gym_id == Gym.LLC_V2:
-            self.gym_extender = ContinuousLunarLanderCustomizer(self.gym_native)
+            self.gym_extender = ContinuousLunarLanderCustomizer()
         elif self.gym_id == Gym.MCC_V0:
-            self.gym_extender = ContinuousMountainCarCustomizer(self.gym_native)
+            self.gym_extender = ContinuousMountainCarCustomizer()
         elif self.gym_id == Gym.CARTPOLE_V1:
-            self.gym_extender = CartpoleCustomizer(self.gym_native)
+            self.gym_extender = CartpoleCustomizer()
         else:
-            self.gym_extender = GymCustomizer(self.gym_native)
+            self.gym_extender = GymCustomizer()
 
         self.plot_environment = plot_environment
         self.state_reward_scatter_plot = None
@@ -252,7 +252,7 @@ class Gym(ContinuousMdpEnvironment):
                     i=i,
                     name=name
                 )
-                for i, name in zip(range(action_space.n), self.gym_extender.get_action_names())
+                for i, name in zip(range(action_space.n), self.gym_extender.get_action_names(self.gym_native))
             ]
 
         # action space is continuous, and we lack a discretization resolution:  initialize a single, multidimensional
@@ -354,7 +354,7 @@ class Gym(ContinuousMdpEnvironment):
         gym_action = self.gym_extender.get_action_to_step(gym_action)
         observation, reward, terminated, truncated, _ = self.gym_native.step(action=gym_action)
         observation = self.gym_extender.get_post_step_observation(observation)
-        reward, terminated = self.gym_extender.get_reward(float(reward), observation, terminated, truncated)
+        reward, terminated = self.gym_extender.get_reward(self.gym_native, float(reward), observation, terminated, truncated)
 
         # call render if rendering manually
         if self.check_render_current_episode(True):
@@ -510,7 +510,7 @@ class Gym(ContinuousMdpEnvironment):
         :return: Number of dimensions.
         """
 
-        return len(self.gym_extender.get_state_dimension_names())
+        return len(self.gym_extender.get_state_dimension_names(self.gym_native))
 
     def get_state_dimension_names(
             self
@@ -521,7 +521,7 @@ class Gym(ContinuousMdpEnvironment):
         :return: List of names.
         """
 
-        return self.gym_extender.get_state_dimension_names()
+        return self.gym_extender.get_state_dimension_names(self.gym_native)
 
     def get_action_space_dimensionality(
             self
@@ -547,7 +547,7 @@ class Gym(ContinuousMdpEnvironment):
 
         assert isinstance(self.gym_extender, ContinuousActionGymCustomizer)
 
-        return self.gym_extender.get_action_dimension_names()
+        return self.gym_extender.get_action_dimension_names(self.gym_native)
 
 
 class GymCustomizer(ABC):
@@ -556,19 +556,15 @@ class GymCustomizer(ABC):
     """
 
     def __init__(
-            self,
-            gym: Union[TimeLimit, RecordVideo]
+            self
     ):
         """
-        Native gym environment.
-
-        :param gym: Environment.
+        Initialize the customizer.
         """
 
-        self.gym = gym
-
     def get_state_dimension_names(
-            self
+            self,
+            gym: Union[TimeLimit, RecordVideo]
     ) -> List[str]:
         """
         Get state-dimension names.
@@ -582,7 +578,7 @@ class GymCustomizer(ABC):
 
         return [
             str(x)
-            for x in range(self.gym.observation_space.shape[0])
+            for x in range(gym.observation_space.shape[0])
         ]
 
     def get_reset_observation(
@@ -626,6 +622,7 @@ class GymCustomizer(ABC):
 
     def get_reward(
             self,
+            gym: Union[TimeLimit, RecordVideo],
             reward: float,
             observation: np.ndarray,
             terminated: bool,
@@ -634,6 +631,7 @@ class GymCustomizer(ABC):
         """
         Get reward.
 
+        :param gym: Native gym environment.
         :param reward: Reward specified by the native Gym environment.
         :param observation: Observation, either native or custom.
         :param terminated: Terminated specified by the native Gym environment.
@@ -650,11 +648,13 @@ class DiscreteActionGymCustomizer(GymCustomizer, ABC):
     """
 
     def get_action_names(
-            self
+            self,
+            gym: Union[TimeLimit, RecordVideo]
     ) -> List[Optional[str]]:
         """
         Get discrete-action names.
 
+        :param gym: Native gym environment.
         :return: List of names.
         """
 
@@ -662,7 +662,7 @@ class DiscreteActionGymCustomizer(GymCustomizer, ABC):
             'No Gym customizer is available, so the action names for are unknown.'
         )
 
-        action_space = self.gym.action_space
+        action_space = gym.action_space
         assert isinstance(action_space, Discrete)
         return [None] * action_space.n
 
@@ -673,11 +673,13 @@ class ContinuousActionGymCustomizer(GymCustomizer, ABC):
     """
 
     def get_action_dimension_names(
-            self
+            self,
+            gym: Union[TimeLimit, RecordVideo]
     ) -> List[str]:
         """
         Get action-dimension names.
 
+       :param gym: Native gym environment.
         :return: List of names.
         """
 
@@ -687,12 +689,12 @@ class ContinuousActionGymCustomizer(GymCustomizer, ABC):
 
         return [
             str(x) for
-            x in range(0, self.gym.action_space.shape[0])
+            x in range(0, gym.action_space.shape[0])
         ]
 
 
 @rl_text(chapter='Feature Extractors', page=1)
-class ContinuousFeatureExtractor(StateFeatureExtractor):
+class ScaledFeatureExtractor(StateFeatureExtractor, ABC):
     """
     A feature extractor for continuous Gym environments. Extracts a scaled (standardized) version of the Gym state
     observation.
@@ -774,11 +776,22 @@ class ContinuousFeatureExtractor(StateFeatureExtractor):
 
 
 @rl_text(chapter='Feature Extractors', page=1)
-class SignedCodingFeatureExtractor(ContinuousFeatureExtractor):
+class SignedCodingFeatureExtractor(ScaledFeatureExtractor):
     """
     Signed-coding feature extractor. Forms a category from the conjunction of all state-feature signs and then places
     the continuous feature vector into its associated category. Works for all continuous-valued state spaces in Gym.
     """
+
+    def extracts_intercept(
+            self
+    ) -> bool:
+        """
+        Whether the feature extractor extracts an intercept (constant) term.
+
+        :return: True if an intercept (constant) term is extracted and False otherwise.
+        """
+
+        return True
 
     def extract(
             self,
@@ -804,13 +817,13 @@ class SignedCodingFeatureExtractor(ContinuousFeatureExtractor):
             })
 
         # extract and encode feature values
-        scaled_feature_vector = super().extract(state, refit_scaler)
-        interacted_feature_vector = self.state_category_interacter.interact(
+        state_feature_vector = np.append([1.0], super().extract(state, refit_scaler))
+        state_category_feature_vector = self.state_category_interacter.interact(
             state_matrix,
-            np.array([scaled_feature_vector])
+            np.array([state_feature_vector])
         )[0]
 
-        return interacted_feature_vector
+        return state_category_feature_vector
 
     def __init__(
             self
@@ -832,22 +845,26 @@ class CartpoleCustomizer(DiscreteActionGymCustomizer):
     """
 
     def get_action_names(
-            self
+            self,
+            gym: Union[TimeLimit, RecordVideo]
     ) -> List[Optional[str]]:
         """
         Get discrete-action names.
 
+        :param gym: Native gym environment.
         :return: List of names.
         """
 
         return ['push-left', 'push-right']
 
     def get_state_dimension_names(
-            self
+            self,
+            gym: Union[TimeLimit, RecordVideo]
     ) -> List[str]:
         """
         Get state-dimension names.
 
+        :param gym: Native gym environment.
         :return: List of names.
         """
 
@@ -860,6 +877,7 @@ class CartpoleCustomizer(DiscreteActionGymCustomizer):
 
     def get_reward(
             self,
+            gym: Union[TimeLimit, RecordVideo],
             reward: float,
             observation: np.ndarray,
             terminated: bool,
@@ -868,6 +886,7 @@ class CartpoleCustomizer(DiscreteActionGymCustomizer):
         """
         Get reward.
 
+        :param gym: Native gym environment.
         :param reward: Reward specified by the native Gym environment.
         :param observation: Observation, either native or custom.
         :param terminated: Terminated specified by the native Gym environment.
@@ -944,6 +963,17 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
 
         return fex, unparsed_args
 
+    def extracts_intercept(
+            self
+    ) -> bool:
+        """
+        Whether the feature extractor extracts an intercept (constant) term.
+
+        :return: True if an intercept (constant) term is extracted and False otherwise.
+        """
+
+        return True
+
     def extract(
             self,
             states: List[MdpState],
@@ -972,16 +1002,15 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
         ])
 
         # extract and scale features for each state vector
-        state_feature_matrix = np.array([
-            np.append(state_vector, [1.0])
-            for state_vector in state_matrix
-        ])
-        state_scaled_feature_matrix = self.feature_scaler.scale_features(state_feature_matrix, refit_scaler)
+        state_feature_matrix = self.feature_scaler.scale_features(state_matrix, refit_scaler)
+        intercept_state_feature_matrix = np.ones(shape=np.add(state_feature_matrix.shape, (0, 1)))
+        intercept_state_feature_matrix[:, 1:] = state_feature_matrix
+        state_feature_matrix = intercept_state_feature_matrix
 
         # interact the feature matrix with its state-segment indicators
         state_category_feature_matrix = self.state_segment_interacter.interact(
-            state_matrix,
-            state_scaled_feature_matrix
+            state_matrix=state_matrix,
+            state_feature_matrix=state_feature_matrix
         )
 
         # interact features per action
@@ -1053,37 +1082,38 @@ class ContinuousMountainCarCustomizer(ContinuousActionGymCustomizer):
     MAX_FUEL_USE_PER_STEP = 2.0 / 300.0
 
     def __init__(
-            self,
-            gym: Union[TimeLimit, RecordVideo]
+            self
     ):
         """
-        Native gym environment.
-
-        :param gym: Environment.
+        Initialize the customizer.
         """
 
-        super().__init__(gym)
+        super().__init__()
 
         self.fuel_level: Optional[float] = None
         self.reward_increments: Optional[Dict] = None
 
     def get_action_dimension_names(
-            self
+            self,
+            gym: Union[TimeLimit, RecordVideo]
     ) -> List[str]:
         """
         Get action-dimension names.
 
+        :param gym: Native gym environment.
         :return: List of names.
         """
 
         return ['throttle']
 
     def get_state_dimension_names(
-            self
+            self,
+            gym: Union[TimeLimit, RecordVideo]
     ) -> List[str]:
         """
         Get state-dimension names.
 
+        :param gym: Native gym environment.
         :return: List of names.
         """
 
@@ -1153,6 +1183,7 @@ class ContinuousMountainCarCustomizer(ContinuousActionGymCustomizer):
 
     def get_reward(
             self,
+            gym: Union[TimeLimit, RecordVideo],
             reward: float,
             observation: np.ndarray,
             terminated: bool,
@@ -1161,6 +1192,7 @@ class ContinuousMountainCarCustomizer(ContinuousActionGymCustomizer):
         """
         Get reward.
 
+        :param gym: Native gym environment.
         :param reward: Reward specified by the native Gym environment.
         :param observation: Observation, either native or custom.
         :param terminated: Terminated specified by the native Gym environment.
@@ -1178,17 +1210,28 @@ class ContinuousMountainCarCustomizer(ContinuousActionGymCustomizer):
             custom_reward = 0.0
 
         # mark state and stats recorder as done. must manually mark stats recorder to allow premature reset.
-        if custom_terminated and hasattr(self.gym, 'stats_recorder'):
-            self.gym.stats_recorder.done = custom_terminated
+        if custom_terminated and hasattr(gym, 'stats_recorder'):
+            gym.stats_recorder.done = custom_terminated
 
         return custom_reward, custom_terminated
 
 
 @rl_text(chapter='Feature Extractors', page=1)
-class ContinuousMountainCarFeatureExtractor(ContinuousFeatureExtractor):
+class ContinuousMountainCarFeatureExtractor(ScaledFeatureExtractor):
     """
     Feature extractor for the continuous mountain car environment.
     """
+
+    def extracts_intercept(
+            self
+    ) -> bool:
+        """
+        Whether the feature extractor extracts an intercept (constant) term.
+
+        :return: True if an intercept (constant) term is extracted and False otherwise.
+        """
+
+        return True
 
     def extract(
             self,
@@ -1205,14 +1248,13 @@ class ContinuousMountainCarFeatureExtractor(ContinuousFeatureExtractor):
         :return: State-feature vector.
         """
 
-        # extract raw feature values
-        scaled_feature_vector = np.append(super().extract(state, refit_scaler), 1.0)
-        interacted_feature_vector = self.state_category_interacter.interact(
+        state_feature_vector = np.append([1.0], super().extract(state, refit_scaler))
+        state_category_feature_vector = self.state_category_interacter.interact(
             np.array([state.observation]),
-            np.array([scaled_feature_vector])
+            np.array([state_feature_vector])
         )[0]
 
-        return interacted_feature_vector
+        return state_category_feature_vector
 
     def __init__(
             self
@@ -1246,36 +1288,37 @@ class ContinuousLunarLanderCustomizer(ContinuousActionGymCustomizer):
     SIDE_MAX_FUEL_USE_PER_STEP = 1.0 / 600.0
 
     def __init__(
-            self,
-            gym: Union[TimeLimit, RecordVideo]
+            self
     ):
         """
-        Native gym environment.
-
-        :param gym: Environment.
+        Initialize the customizer.
         """
 
-        super().__init__(gym)
+        super().__init__()
 
         self.fuel_level = 1.0
 
     def get_action_dimension_names(
-            self
+            self,
+            gym: Union[TimeLimit, RecordVideo]
     ) -> List[str]:
         """
         Get action-dimension names.
 
+        :param gym: Native Gym environment.
         :return: List of names.
         """
 
         return ['main', 'side']
 
     def get_state_dimension_names(
-            self
+            self,
+            gym: Union[TimeLimit, RecordVideo]
     ) -> List[str]:
         """
         Get state-dimension names.
 
+        :param gym: Native Gym environment.
         :return: List of names.
         """
 
@@ -1357,6 +1400,7 @@ class ContinuousLunarLanderCustomizer(ContinuousActionGymCustomizer):
 
     def get_reward(
             self,
+            gym: Union[TimeLimit, RecordVideo],
             reward: float,
             observation: np.ndarray,
             terminated: bool,
@@ -1365,6 +1409,7 @@ class ContinuousLunarLanderCustomizer(ContinuousActionGymCustomizer):
         """
         Get reward.
 
+        :param gym: Native gym environment.
         :param reward: Reward specified by the native Gym environment.
         :param observation: Observation, either native or custom.
         :param terminated: Terminated specified by the native Gym environment.
@@ -1396,10 +1441,21 @@ class ContinuousLunarLanderCustomizer(ContinuousActionGymCustomizer):
 
 
 @rl_text(chapter='Feature Extractors', page=1)
-class ContinuousLunarLanderFeatureExtractor(ContinuousFeatureExtractor):
+class ContinuousLunarLanderFeatureExtractor(ScaledFeatureExtractor):
     """
     Feature extractor for the continuous lunar lander environment.
     """
+
+    def extracts_intercept(
+            self
+    ) -> bool:
+        """
+        Whether the feature extractor extracts an intercept (constant) term.
+
+        :return: True if an intercept (constant) term is extracted and False otherwise.
+        """
+
+        return True
 
     def extract(
             self,
@@ -1451,6 +1507,7 @@ class ContinuousLunarLanderFeatureExtractor(ContinuousFeatureExtractor):
 
         # combine encoded and unencoded feature values
         final_feature_values = np.append(encoded_feature_values, unencoded_feature_values)
+        final_feature_values = np.append([1.0], final_feature_values)
 
         return final_feature_values
 

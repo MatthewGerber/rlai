@@ -228,9 +228,11 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
             for s in self.update_batch_s
         ])
 
-        # add intercept
-        intercept_state_feature_matrix = np.ones(shape=np.add(state_feature_matrix.shape, (0, 1)))
-        intercept_state_feature_matrix[:, 1:] = state_feature_matrix
+        # add intercept if the extractor doesn't extract one
+        if not self.feature_extractor.extracts_intercept():
+            intercept_state_feature_matrix = np.ones(shape=np.add(state_feature_matrix.shape, (0, 1)))
+            intercept_state_feature_matrix[:, 1:] = state_feature_matrix
+            state_feature_matrix = intercept_state_feature_matrix
 
         action_matrix = np.array([
             a.value
@@ -244,13 +246,13 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
         ) = self.get_action_density_gradients_vmap(
             self.theta_mean,
             self.theta_cov,
-            intercept_state_feature_matrix,
+            state_feature_matrix,
             action_matrix
         )
 
         # assemble updates
         updates = zip(
-            intercept_state_feature_matrix,
+            state_feature_matrix,
             self.update_batch_alpha,
             self.update_batch_target,
             action_density_gradients_wrt_theta_mean,
@@ -385,20 +387,28 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
 
         self.set_action(state)
 
-        intercept_state_features = np.append([1.0], self.feature_extractor.extract(state, True))
+        state_feature_vector = self.feature_extractor.extract(state, True)
+
+        # add intercept if the extractor doesn't extract one
+        if not self.feature_extractor.extracts_intercept():
+            state_feature_vector = np.append([1.0], state_feature_vector)
 
         # initialize coefficients for mean and covariance
         if self.theta_mean is None:
-            self.theta_mean = np.zeros(shape=(self.environment.get_action_space_dimensionality(), intercept_state_features.shape[0]))
+            self.theta_mean = np.zeros(
+                shape=(self.environment.get_action_space_dimensionality(), state_feature_vector.shape[0])
+            )
 
         if self.theta_cov is None:
-            self.theta_cov = np.zeros(shape=(self.environment.get_action_space_dimensionality() ** 2, intercept_state_features.shape[0]))
+            self.theta_cov = np.zeros(
+                shape=(self.environment.get_action_space_dimensionality() ** 2, state_feature_vector.shape[0])
+            )
 
         # calculate the modeled mean and covariance of the n-dimensional action
-        mean = self.theta_mean.dot(intercept_state_features)
+        mean = self.theta_mean.dot(state_feature_vector)
         cov = self.get_covariance_matrix(
             self.theta_cov,
-            intercept_state_features
+            state_feature_vector
         )
 
         # sample the n-dimensional action
@@ -536,8 +546,8 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
             for s in self.update_batch_s
         ])
 
-        # prepend an intercept column
-        if self.fit_itercept:
+        # add intercept if the extractor doesn't extract one
+        if not self.feature_extractor.extracts_intercept():
             intercept_state_feature_matrix = np.ones(shape=np.add(state_feature_matrix.shape, (0, 1)))
             intercept_state_feature_matrix[:, 1:] = state_feature_matrix
             state_feature_matrix = intercept_state_feature_matrix
@@ -766,7 +776,8 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
 
         state_feature_vector = self.feature_extractor.extract(state, True)
 
-        if self.fit_intercept:
+        # add intercept if the extractor doesn't extract one
+        if not self.feature_extractor.extracts_intercept():
             state_feature_vector = np.append([1.0], state_feature_vector)
 
         # initialize coefficients for each action's a-shape parameter

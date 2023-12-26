@@ -104,12 +104,6 @@ class SKLearnSGD(FunctionApproximationModel):
             help='The exponent for inverse scaling learning rate.'
         )
 
-        parser.add_argument(
-            '--no-intercept',
-            action='store_true',
-            help='Pass this flag to not fit an intercept term.'
-        )
-
         # other stuff
         parser.add_argument(
             '--verbose',
@@ -124,13 +118,15 @@ class SKLearnSGD(FunctionApproximationModel):
     def init_from_arguments(
             cls,
             args: List[str],
-            random_state: RandomState
+            random_state: RandomState,
+            fit_intercept: bool
     ) -> Tuple[FunctionApproximationModel, List[str]]:
         """
         Initialize a model from arguments.
 
         :param args: Arguments.
         :param random_state: Random state.
+        :param fit_intercept: Whether to fit an intercept term.
         :return: 2-tuple of a model and a list of unparsed arguments.
         """
 
@@ -145,6 +141,7 @@ class SKLearnSGD(FunctionApproximationModel):
         # instantiate model
         model = cls(
             random_state=random_state,
+            fit_intercept=fit_intercept,
             **vars(parsed_args)
         )
 
@@ -395,13 +392,6 @@ class SKLearnSGD(FunctionApproximationModel):
 
         # verbose is required in order to capture standard output for plotting.
         kwargs['verbose'] = 1
-
-        # check whether an intercept should be fitted
-        if 'no_intercept' in kwargs:
-            kwargs['fit_intercept'] = not kwargs['no_intercept']
-            del kwargs['no_intercept']
-        else:
-            kwargs['fit_intercept'] = True
 
         self.model_kwargs = kwargs
         self.model = SGDRegressor(**self.model_kwargs)

@@ -700,6 +700,17 @@ class RobocodeFeatureExtractor(StateFeatureExtractor):
 
         return fex, unparsed_args
 
+    def extracts_intercept(
+            self
+    ) -> bool:
+        """
+        Whether the feature extractor extracts an intercept (constant) term.
+
+        :return: True if an intercept (constant) term is extracted and False otherwise.
+        """
+
+        return False
+
     def extract(
             self,
             state: MdpState,
@@ -718,10 +729,10 @@ class RobocodeFeatureExtractor(StateFeatureExtractor):
         if not isinstance(state, RobocodeState):
             raise ValueError(f'Expected a {RobocodeState}')
 
-        X = np.array(self.get_feature_values(state))
+        x = np.array(self.get_feature_values(state))
 
         return self.feature_scaler.scale_features(
-            np.array([X]),
+            np.array([x]),
             refit_before_scaling=refit_scaler
         )[0]
 

@@ -175,7 +175,7 @@ def sample_list_item(
 
     cdf_y_rand = random_state.random_sample()
 
-    cum_probs = probs.cumsum()
+    cum_probs = probs.cumsum().tolist()
     final_cum_prob = cum_probs[-1]
 
     if abs(1.0 - final_cum_prob) > 0.00001:

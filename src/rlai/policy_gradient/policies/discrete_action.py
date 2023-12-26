@@ -358,7 +358,7 @@ class SoftMaxInActionPreferencesJaxPolicy(ParameterizedPolicy):
         soft_max_denominator_addends = jnp.exp(jnp.dot(theta, state_action_features))
         soft_max_denominator = soft_max_denominator_addends.sum()
 
-        return float(soft_max_denominator_addends[action_i] / soft_max_denominator)
+        return soft_max_denominator_addends[action_i] / soft_max_denominator  # type: ignore
 
     def __commit_updates__(
             self

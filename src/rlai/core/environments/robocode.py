@@ -646,6 +646,17 @@ class RobocodeFeatureExtractor(StateActionFeatureExtractor):
 
         return fex, unparsed_args
 
+    def extracts_intercept(
+            self
+    ) -> bool:
+        """
+        Whether the feature extractor extracts an intercept (constant) term.
+
+        :return: True if an intercept (constant) term is extracted and False otherwise.
+        """
+
+        return True
+
     def extract(
             self,
             states: List[RobocodeState],
@@ -665,7 +676,7 @@ class RobocodeFeatureExtractor(StateActionFeatureExtractor):
 
         self.check_state_and_action_lists(states, actions)
 
-        X = np.array([
+        x = np.array([
 
             [
                 feature_value
@@ -683,7 +694,7 @@ class RobocodeFeatureExtractor(StateActionFeatureExtractor):
             for state, action in zip(states, actions)
         ])
 
-        return X
+        return x
 
     def get_action_feature_names(
             self

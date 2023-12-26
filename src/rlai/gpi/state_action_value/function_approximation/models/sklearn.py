@@ -12,7 +12,7 @@ from rlai.gpi.state_action_value.function_approximation.models import (
 )
 from rlai.meta import rl_text
 from rlai.models import FunctionApproximationModel
-from rlai.models.sklearn import SKLearnSGD as BaseSKLearnSGD
+from rlai.models.sklearn import SKLearnSGD as SKLearnSGDRegressor
 
 
 @rl_text(chapter=9, page=200)
@@ -25,19 +25,25 @@ class SKLearnSGD(StateActionFunctionApproximationModel):
     def init_from_arguments(
             cls,
             args: List[str],
-            random_state: RandomState
+            random_state: RandomState,
+            fit_intercept: bool
     ) -> Tuple[FunctionApproximationModel, List[str]]:
         """
         Initialize a model from arguments.
 
         :param args: Arguments.
         :param random_state: Random state.
+        :param fit_intercept: Whether to fit an intercept term.
         :return: 2-tuple of a model and a list of unparsed arguments.
         """
 
-        sklearn_sgd, unparsed_args = BaseSKLearnSGD.init_from_arguments(args, random_state)
+        sklearn_sgd, unparsed_args = SKLearnSGDRegressor.init_from_arguments(
+            args=args,
+            random_state=random_state,
+            fit_intercept=fit_intercept
+        )
 
-        assert isinstance(sklearn_sgd, BaseSKLearnSGD)
+        assert isinstance(sklearn_sgd, SKLearnSGDRegressor)
 
         state_action_sklearn_sgd = cls(
             sklearn_sgd=sklearn_sgd
@@ -137,8 +143,11 @@ class SKLearnSGD(StateActionFunctionApproximationModel):
             for feature in action_feature_names[action]
         ]
 
-        if 'intercept' in all_feature_names:  # pragma no cover
-            raise ValueError('Feature extractors may not extract a feature named "intercept".')
+        if 'intercept' in all_feature_names and self.sklearn_sgd.model.fit_intercept:  # pragma no cover
+            raise ValueError(
+                'Feature extractors may not extract a feature named "intercept" if the SKLearnSGD model fits an '
+                'intercept. The names clash.'
+            )
 
         # check feature extractor names against model dimensions
         num_feature_names = len(all_feature_names)
@@ -181,7 +190,7 @@ class SKLearnSGD(StateActionFunctionApproximationModel):
 
     def __init__(
             self,
-            sklearn_sgd: BaseSKLearnSGD
+            sklearn_sgd: SKLearnSGDRegressor
     ):
         """
         Initialize the model.
