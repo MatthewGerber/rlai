@@ -898,8 +898,8 @@ class CartpoleCustomizer(DiscreteActionGymCustomizer):
             np.exp(
                 -(
                     np.abs([
-                        observation[0],
-                        observation[2] * 7.5,  # equalize the angle's scale with the position's scale
+                        observation[0],  # position
+                        observation[2] * 5.0,  # angle:  equalize with the position's scale
                     ]).sum()
                 )
             ),
