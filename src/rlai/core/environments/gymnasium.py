@@ -220,13 +220,13 @@ class Gym(ContinuousMdpEnvironment):
         self.gym_native = self.init_gym_native()
 
         if self.gym_id == Gym.LLC_V2:
-            self.gym_extender = ContinuousLunarLanderCustomizer()
+            self.gym_customizer = ContinuousLunarLanderCustomizer()
         elif self.gym_id == Gym.MCC_V0:
-            self.gym_extender = ContinuousMountainCarCustomizer()
+            self.gym_customizer = ContinuousMountainCarCustomizer()
         elif self.gym_id == Gym.CARTPOLE_V1:
-            self.gym_extender = CartpoleCustomizer()
+            self.gym_customizer = CartpoleCustomizer()
         else:
-            self.gym_extender = GymCustomizer()
+            self.gym_customizer = GymCustomizer()
 
         self.plot_environment = plot_environment
         self.state_reward_scatter_plot = None
@@ -252,7 +252,7 @@ class Gym(ContinuousMdpEnvironment):
                     i=i,
                     name=name
                 )
-                for i, name in zip(range(action_space.n), self.gym_extender.get_action_names(self.gym_native))
+                for i, name in zip(range(action_space.n), self.gym_customizer.get_action_names(self.gym_native))
             ]
 
         # action space is continuous, and we lack a discretization resolution:  initialize a single, multidimensional
@@ -351,10 +351,10 @@ class Gym(ContinuousMdpEnvironment):
         else:
             gym_action = a.i
 
-        gym_action = self.gym_extender.get_action_to_step(gym_action)
+        gym_action = self.gym_customizer.get_action_to_step(gym_action)
         observation, reward, terminated, truncated, _ = self.gym_native.step(action=gym_action)
-        observation = self.gym_extender.get_post_step_observation(observation)
-        reward, terminated = self.gym_extender.get_reward(self.gym_native, float(reward), observation, terminated, truncated)
+        observation = self.gym_customizer.get_post_step_observation(observation)
+        reward, terminated = self.gym_customizer.get_reward(self.gym_native, float(reward), observation, terminated, truncated)
 
         # call render if rendering manually
         if self.check_render_current_episode(True):
@@ -401,7 +401,7 @@ class Gym(ContinuousMdpEnvironment):
 
         observation, _ = self.gym_native.reset()
 
-        observation = self.gym_extender.get_reset_observation(observation)
+        observation = self.gym_customizer.get_reset_observation(observation)
 
         # call render if rendering manually
         if self.check_render_current_episode(True):
@@ -510,7 +510,7 @@ class Gym(ContinuousMdpEnvironment):
         :return: Number of dimensions.
         """
 
-        return len(self.gym_extender.get_state_dimension_names(self.gym_native))
+        return len(self.gym_customizer.get_state_dimension_names(self.gym_native))
 
     def get_state_dimension_names(
             self
@@ -521,7 +521,7 @@ class Gym(ContinuousMdpEnvironment):
         :return: List of names.
         """
 
-        return self.gym_extender.get_state_dimension_names(self.gym_native)
+        return self.gym_customizer.get_state_dimension_names(self.gym_native)
 
     def get_action_space_dimensionality(
             self
@@ -532,7 +532,7 @@ class Gym(ContinuousMdpEnvironment):
         :return: Number of dimensions.
         """
 
-        assert isinstance(self.gym_extender, ContinuousActionGymCustomizer)
+        assert isinstance(self.gym_customizer, ContinuousActionGymCustomizer)
 
         return len(self.get_action_dimension_names())
 
@@ -545,9 +545,9 @@ class Gym(ContinuousMdpEnvironment):
         :return: List of names.
         """
 
-        assert isinstance(self.gym_extender, ContinuousActionGymCustomizer)
+        assert isinstance(self.gym_customizer, ContinuousActionGymCustomizer)
 
-        return self.gym_extender.get_action_dimension_names(self.gym_native)
+        return self.gym_customizer.get_action_dimension_names(self.gym_native)
 
 
 class GymCustomizer(ABC):

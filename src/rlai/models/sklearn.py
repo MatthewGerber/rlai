@@ -277,15 +277,33 @@ class SKLearnSGD(FunctionApproximationModel):
                 # plot average return and loss per iteration
                 self.iteration_ax = axs[0]
                 iterations = list(range(1, len(self.y_averages) + 1))
-                self.iteration_return_line, = self.iteration_ax.plot(iterations, self.y_averages, linewidth=0.75, color='darkgreen', label='Obtained (avg./iter.)')
-                self.iteration_loss_line, = self.iteration_ax.plot(iterations, self.loss_averages, linewidth=0.75, color='red', label='Loss (avg./iter.)')
+                self.iteration_return_line, = self.iteration_ax.plot(
+                    iterations,
+                    self.y_averages,
+                    linewidth=0.75,
+                    color='darkgreen',
+                    label='Obtained (avg./iter.)'
+                )
+                self.iteration_loss_line, = self.iteration_ax.plot(
+                    iterations,
+                    self.loss_averages,
+                    linewidth=0.75,
+                    color='red',
+                    label='Loss (avg./iter.)'
+                )
                 self.iteration_ax.set_xlabel('Policy improvement iteration')
                 self.iteration_ax.set_ylabel('Return (G)')
                 self.iteration_ax.legend(loc='upper left')
 
                 # plot twin-x for average step size per iteration
                 self.iteration_eta0_ax = self.iteration_ax.twinx()
-                self.iteration_eta0_line, = self.iteration_eta0_ax.plot(iterations, self.eta0_averages, linewidth=0.75, color='blue', label='Step size (eta0, avg./iter.)')
+                self.iteration_eta0_line, = self.iteration_eta0_ax.plot(
+                    iterations,
+                    self.eta0_averages,
+                    linewidth=0.75,
+                    color='blue',
+                    label='Step size (eta0, avg./iter.)'
+                )
                 self.iteration_eta0_ax.set_yscale('log')
                 self.iteration_eta0_ax.legend(loc='upper right')
 
@@ -294,15 +312,33 @@ class SKLearnSGD(FunctionApproximationModel):
                 self.time_step_ax = axs[1]
                 y_values = self.iteration_y_values.get(self.plot_iteration, [])
                 time_steps = list(range(1, len(y_values) + 1))
-                self.time_step_return_line, = self.time_step_ax.plot(time_steps, y_values, linewidth=0.75, color='darkgreen', label='Obtained')
-                self.time_step_loss_line, = self.time_step_ax.plot(time_steps, self.iteration_loss_values.get(self.plot_iteration, []), linewidth=0.75, color='red', label='Loss')
+                self.time_step_return_line, = self.time_step_ax.plot(
+                    time_steps,
+                    y_values,
+                    linewidth=0.75,
+                    color='darkgreen',
+                    label='Obtained'
+                )
+                self.time_step_loss_line, = self.time_step_ax.plot(
+                    time_steps,
+                    self.iteration_loss_values.get(self.plot_iteration, []),
+                    linewidth=0.75,
+                    color='red',
+                    label='Loss'
+                )
                 self.time_step_ax.set_xlabel(f'Time step (iteration {self.plot_iteration})')
                 self.iteration_ax.set_ylabel('Return (G)')
                 self.time_step_ax.legend(loc='upper left')
 
                 # plot twin-x for step size per time step of the most recent plot iteration.
                 self.time_step_eta0_ax = self.time_step_ax.twinx()
-                self.time_step_eta0_line, = self.time_step_eta0_ax.plot(time_steps, self.iteration_eta0_values.get(self.plot_iteration, []), linewidth=0.75, color='blue', label='Step size (eta0)')
+                self.time_step_eta0_line, = self.time_step_eta0_ax.plot(
+                    time_steps,
+                    self.iteration_eta0_values.get(self.plot_iteration, []),
+                    linewidth=0.75,
+                    color='blue',
+                    label='Step size (eta0)'
+                )
                 self.time_step_eta0_ax.set_yscale('log')
                 self.time_step_eta0_ax.legend(loc='upper right')
 
