@@ -127,8 +127,20 @@ def plot_policy_iteration(
 
     # twin-x states per iteration
     _state_space_ax = _iteration_ax.twinx()
-    _iteration_total_states_line, = _state_space_ax.plot(iterations, iteration_total_states, '--', color='orange', label='total')
-    _iteration_num_states_improved_line, = _state_space_ax.plot(iterations, iteration_num_states_improved, '-', color='orange', label='improved')
+    _iteration_total_states_line, = _state_space_ax.plot(
+        iterations,
+        iteration_total_states,
+        '--',
+        color='orange',
+        label='total'
+    )
+    _iteration_num_states_improved_line, = _state_space_ax.plot(
+        iterations,
+        iteration_num_states_improved,
+        '-',
+        color='orange',
+        label='improved'
+    )
     _state_space_ax.set_yscale('log')
     _state_space_ax.set_ylabel('# states')
     _state_space_ax.legend(loc='center right')

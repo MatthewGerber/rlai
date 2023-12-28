@@ -86,24 +86,26 @@ class SoftMaxInActionPreferencesPolicy(ParameterizedPolicy):
     def gradient(
             self,
             a: Action,
-            s: MdpState
+            s: MdpState,
+            refit_scaler: bool
     ) -> np.ndarray:
         """
         Calculate the gradient of the policy for an action in a state, with respect to the policy's parameter vector.
 
         :param a: Action.
         :param s: State.
+        :param refit_scaler: Whether to refit the scaler.
         :return: Vector of partial gradients, one per parameter.
         """
 
-        # numerator and its gradient
-        x_s_a = self.feature_extractor.extract([s], [a], True)[0, :]
+        # numerator and its gradient. update scaler while extracting features.
+        x_s_a = self.feature_extractor.extract([s], [a], refit_scaler)[0, :]
         soft_max_numerator = np.exp(self.theta.dot(x_s_a))
         gradient_soft_max_numerator = soft_max_numerator * x_s_a
 
-        # denominator's state-action feature vectors
+        # denominator's state-action feature vectors. update scaler while extracting features.
         x_s_aa_list = [
-            self.feature_extractor.extract([s], [aa], True)[0, :]
+            self.feature_extractor.extract([s], [aa], refit_scaler)[0, :]
             for aa in s.AA
         ]
 
@@ -126,7 +128,9 @@ class SoftMaxInActionPreferencesPolicy(ParameterizedPolicy):
         )
 
         # quotient rule for policy gradient
-        gradient = (soft_max_denominator * gradient_soft_max_numerator - soft_max_numerator * gradient_soft_max_denominator) / (soft_max_denominator ** 2.0)
+        gradient = (
+            soft_max_denominator * gradient_soft_max_numerator - soft_max_numerator * gradient_soft_max_denominator
+        ) / (soft_max_denominator ** 2.0)
 
         return gradient
 
@@ -146,7 +150,7 @@ class SoftMaxInActionPreferencesPolicy(ParameterizedPolicy):
         )
 
         for a, s, alpha, target in updates:
-            gradient_a_s = self.gradient(a, s)
+            gradient_a_s = self.gradient(a, s, True)
             p_a_s = self[s][a]
             self.theta += alpha * target * (gradient_a_s / p_a_s)
 
@@ -193,6 +197,7 @@ class SoftMaxInActionPreferencesPolicy(ParameterizedPolicy):
         :return: Dictionary of action-probability items.
         """
 
+        # do not update the scaler while extracting features, since we're only evaluating the policy.
         soft_max_denominator_addends = np.array([
             np.exp(self.theta.dot(self.feature_extractor.extract([state], [a], False)[0, :]))
             for a in state.AA
@@ -309,34 +314,38 @@ class SoftMaxInActionPreferencesJaxPolicy(ParameterizedPolicy):
     def gradient(
             self,
             a: Action,
-            s: MdpState
+            s: MdpState,
+            refit_scaler: bool
     ) -> np.ndarray:
         """
         Calculate the gradient of the policy for an action in a state, with respect to the policy's parameter vector.
 
         :param a: Action.
         :param s: State.
+        :param refit_scaler: Whether to refit scaler while extracting features.
         :return: Vector of partial gradients, one per parameter.
         """
 
-        state_action_features = self.get_state_action_features(s)
+        state_action_features = self.get_state_action_features(s, refit_scaler)
         gradient = self.get_action_prob_gradient(self.theta, state_action_features, a.i)
 
         return gradient
 
     def get_state_action_features(
             self,
-            state: MdpState
+            state: MdpState,
+            refit_scaler: bool
     ) -> np.ndarray:
         """
         Get a matrix containing a feature vector for each action in a state.
 
         :param state: State.
+        :param refit_scaler: Whether to refit scaler while extracting features.
         :return: An (#features, #actions) matrix.
         """
 
         return np.array([
-            self.feature_extractor.extract([state], [a], False)[0, :]
+            self.feature_extractor.extract([state], [a], refit_scaler)[0, :]
             for a in state.AA
         ]).transpose()
 
@@ -358,7 +367,7 @@ class SoftMaxInActionPreferencesJaxPolicy(ParameterizedPolicy):
         soft_max_denominator_addends = jnp.exp(jnp.dot(theta, state_action_features))
         soft_max_denominator = soft_max_denominator_addends.sum()
 
-        return float(soft_max_denominator_addends[action_i] / soft_max_denominator)
+        return soft_max_denominator_addends[action_i] / soft_max_denominator  # type: ignore
 
     def __commit_updates__(
             self
@@ -376,7 +385,7 @@ class SoftMaxInActionPreferencesJaxPolicy(ParameterizedPolicy):
         )
 
         for a, s, alpha, target in updates:
-            gradient_a_s = self.gradient(a, s)
+            gradient_a_s = self.gradient(a, s, True)
             p_a_s = self[s][a]
             self.theta += alpha * target * (gradient_a_s / p_a_s)
 
@@ -424,7 +433,8 @@ class SoftMaxInActionPreferencesJaxPolicy(ParameterizedPolicy):
         :return: Dictionary of action-probability items.
         """
 
-        state_action_features = self.get_state_action_features(state)
+        # extract features but do not update the scaler. we're only evaluating the policy.
+        state_action_features = self.get_state_action_features(state, False)
 
         action_prob = {
             a: self.get_action_prob(self.theta, state_action_features, i)

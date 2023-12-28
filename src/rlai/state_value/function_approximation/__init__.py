@@ -117,14 +117,6 @@ class ApproximateStateValueEstimator(StateValueEstimator):
 
         parsed_args, unparsed_args = parse_arguments(cls, args)
 
-        # load model
-        model_class = load_class(parsed_args.function_approximation_model)
-        model, unparsed_args = model_class.init_from_arguments(
-            args=unparsed_args,
-            random_state=random_state
-        )
-        del parsed_args.function_approximation_model
-
         # load feature extractor
         feature_extractor_class = load_class(parsed_args.feature_extractor)
         fex, unparsed_args = feature_extractor_class.init_from_arguments(
@@ -132,6 +124,15 @@ class ApproximateStateValueEstimator(StateValueEstimator):
             environment=environment
         )
         del parsed_args.feature_extractor
+
+        # load model
+        model_class = load_class(parsed_args.function_approximation_model)
+        model, unparsed_args = model_class.init_from_arguments(
+            args=unparsed_args,
+            random_state=random_state,
+            fit_intercept=not fex.extracts_intercept()
+        )
+        del parsed_args.function_approximation_model
 
         # there shouldn't be anything left
         if len(vars(parsed_args)) > 0:  # pragma no cover

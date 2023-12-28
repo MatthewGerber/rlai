@@ -20,16 +20,6 @@ class FeatureExtractor(ABC):
     deferred to inheriting classes that are closer to their conceptual extraction targets.
     """
 
-    def reset_for_new_run(
-            self,
-            state: MdpState
-    ):
-        """
-        Reset the feature extractor for a new run.
-
-        :param state: Initial state.
-        """
-
     @classmethod
     def get_argument_parser(
             cls
@@ -64,6 +54,26 @@ class FeatureExtractor(ABC):
         Get names of features.
 
         :return: List of feature names.
+        """
+
+    def reset_for_new_run(
+            self,
+            state: MdpState
+    ):
+        """
+        Reset the feature extractor for a new run.
+
+        :param state: Initial state.
+        """
+
+    @abstractmethod
+    def extracts_intercept(
+            self
+    ) -> bool:
+        """
+        Whether the feature extractor extracts an intercept (constant) term.
+
+        :return: True if an intercept (constant) term is extracted and False otherwise.
         """
 
     def __init__(

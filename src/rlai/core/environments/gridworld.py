@@ -250,6 +250,17 @@ class GridworldFeatureExtractor(StateActionInteractionFeatureExtractor):
 
         return fex, unparsed_args
 
+    def extracts_intercept(
+            self
+    ) -> bool:
+        """
+        Whether the feature extractor extracts an intercept (constant) term.
+
+        :return: True if an intercept (constant) term is extracted and False otherwise.
+        """
+
+        return True
+
     def extract(
             self,
             states: List[MdpState],
@@ -274,6 +285,7 @@ class GridworldFeatureExtractor(StateActionInteractionFeatureExtractor):
 
         state_features = np.array([
             [
+                1.0,  # intercept
                 row,  # from top
                 self.num_rows - row - 1,  # from bottom
                 col,  # from left
@@ -297,7 +309,7 @@ class GridworldFeatureExtractor(StateActionInteractionFeatureExtractor):
         """
 
         return {
-            a.name: ['from-top', 'from-bottom', 'from-left', 'from-right']
+            a.name: ['intercept', 'from-top', 'from-bottom', 'from-left', 'from-right']
             for a in self.actions
         }
 
@@ -376,6 +388,17 @@ class GridworldStateFeatureExtractor(StateFeatureExtractor):
         )
 
         return fex, unparsed_args
+
+    def extracts_intercept(
+            self
+    ) -> bool:
+        """
+        Whether the feature extractor extracts an intercept (constant) term.
+
+        :return: True if an intercept (constant) term is extracted and False otherwise.
+        """
+
+        return False
 
     def extract(
             self,

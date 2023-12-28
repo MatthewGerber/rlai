@@ -230,14 +230,6 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
 
         parsed_args, unparsed_args = parse_arguments(cls, args)
 
-        # load model
-        model_class = load_class(parsed_args.function_approximation_model)
-        model, unparsed_args = model_class.init_from_arguments(
-            args=unparsed_args,
-            random_state=random_state
-        )
-        del parsed_args.function_approximation_model
-
         # load feature extractor
         feature_extractor_class = load_class(parsed_args.feature_extractor)
         fex, unparsed_args = feature_extractor_class.init_from_arguments(
@@ -245,6 +237,15 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
             environment=environment
         )
         del parsed_args.feature_extractor
+
+        # load model
+        model_class = load_class(parsed_args.function_approximation_model)
+        model, unparsed_args = model_class.init_from_arguments(
+            args=unparsed_args,
+            random_state=random_state,
+            fit_intercept=not fex.extracts_intercept()
+        )
+        del parsed_args.function_approximation_model
 
         # initialize estimator
         estimator = cls(
@@ -334,6 +335,7 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         # if we have pending experience, then fit the model and reset the data.
         if self.experience_pending:
 
+            # extract features and fit the scaler while doing so
             state_action_feature_matrix = self.extract_features(
                 self.experience_states,
                 self.experience_actions,
@@ -405,9 +407,9 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
 
         :param states: States.
         :param actions: Actions.
-        :param refit_scaler: Whether to refit the feature scaler before scaling the extracted features. This is
-        only appropriate in settings where nonstationarity is desired (e.g., during training). During evaluation, the
-        scaler should remain fixed, which means this should be False.
+        :param refit_scaler: Whether to refit the feature scaler before scaling the extracted features. This is only
+        appropriate in settings where nonstationarity is desired (e.g., during training). During evaluation, the scaler
+        should remain fixed, which means this should be False.
         :return: State-feature numpy.ndarray.
         """
 
@@ -504,7 +506,7 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         "x + y + z" for this argument. See the Patsy documentation for full details of the formula language. Statistical
         learning models used in reinforcement learning generally need to operate "online", learning the reward function
         incrementally at each step. An example of such a model would be
-        `rlai.gpi.state_action_value.function_approximation.statistical_learning.sklearn.SKLearnSGD`. Online learning
+        `rlai.gpi.state_action_value.function_approximation.models.sklearn.SKLearnSGD`. Online learning
         has implications for the use and coding of categorical variables in the model formula. In particular, the full
         ranges of state and action levels must be specified up front. See
         `test.rlai.gpi.temporal_difference.iteration_test.test_q_learning_iterate_value_q_pi_function_approximation` for
