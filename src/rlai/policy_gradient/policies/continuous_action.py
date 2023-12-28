@@ -224,7 +224,7 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
 
         # extract state-feature matrix
         state_feature_matrix = np.array([
-            self.feature_extractor.extract(s, False)
+            self.feature_extractor.extract(s, True)
             for s in self.update_batch_s
         ])
 
@@ -387,7 +387,7 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
 
         self.set_action(state)
 
-        state_feature_vector = self.feature_extractor.extract(state, True)
+        state_feature_vector = self.feature_extractor.extract(state, False)
 
         # add intercept if the extractor doesn't extract one
         if not self.feature_extractor.extracts_intercept():
@@ -542,7 +542,7 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
 
         # extract state-feature matrix:  one row per update and one column per state dimension.
         state_feature_matrix = np.array([
-            self.feature_extractor.extract(s, False)
+            self.feature_extractor.extract(s, True)
             for s in self.update_batch_s
         ])
 
@@ -774,7 +774,7 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
 
         self.set_action(state)
 
-        state_feature_vector = self.feature_extractor.extract(state, True)
+        state_feature_vector = self.feature_extractor.extract(state, False)
 
         # add intercept if the extractor doesn't extract one
         if not self.feature_extractor.extracts_intercept():

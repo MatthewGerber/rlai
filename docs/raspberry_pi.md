@@ -2,59 +2,25 @@
 * Content
 {:toc}
 
-## Introduction
-The Raspberry Pi is an appealing platform for mobile computation in general and for RLAI in particular. The latest model
-as of October 2021 has a 64-bit quad-core CPU with 8 GB of RAM. Add-on hardware provides a wide range of sensing and 
-actuation capabilities, and the entire ecosystem is quite affordable.
+# Operating System
+The Raspberry Pi is an appealing platform for mobile computation in general and for RLAI in particular. Add-on hardware
+provides a wide range of sensing and actuation capabilities, and the entire ecosystem is quite affordable.
 
-## Operating System
-At present, the official Raspberry Pi OS is a 32-bit version of Debian running on the 64-bit ARM CPU. Thus, the OS 
-presents a 32-bit CPU to all software in the OS. It is possible to install most RLAI dependencies, either directly from 
-the package repositories of by building them from source. A specific few, particularly JAX, are neither available in the 
-repositories nor straightforward to build from source for the ARM CPU. There is an open issue for this 
-[here](https://github.com/google/jax/issues/1161), and it indicates that support for 32-bit Raspberry Pi is not likely 
-to appear soon. I experimented with Ubuntu Desktop 21.04 64-bit, which installs and runs without issues on the Raspberry 
-Pi 4 Model B; however, the desktop interface is sluggish, and since this is not an LTS version it is not possible to use 
-the Deadsnakes repository to install Python 3.7 and 3.8 (the Ubuntu default is Python 3.9). The Raspberry Pi Imager does 
-not provide any other Ubuntu Desktop versions. Ultimately, I settled on Ubuntu Server 20.04 64-bit, which is a much 
-slimmer OS that also installs and runs without issues. It defaults to Python 3.8 and works fine with lighter desktop 
-environments like XFCE. The installation is more complicated than for Ubuntu Desktop, but it is entirely feasible. 
-Detailed instructions are provided below.
+1. Install and start the [Raspberry Pi Imager](https://www.raspberrypi.com/software/).
+2. Install the default 64-bit Raspberry Pi OS.
+3. `sudo apt update`
+4. `sudo apt upgrade`
+5. Reboot the system.
 
-### Image the Raspberry Pi SD Card
-1. Install and start the Raspberry Pi Imager.
-2. Select Ubuntu Server 20.04 64-bit within the Raspberry Pi Imager, then write the OS to the SD card.
-3. Insert the SD card into the Raspberry Pi and boot.
+# Install Required Packages and XFCE Desktop Environment
+1. `sudo apt install gfortran python3-dev libblas-dev liblapack-dev build-essential swig python-pygame git virtualenv xvfb ffmpeg`
+2. `sudo systemctl reboot`
 
-### Configure Wireless Internet
-1. `sudo nano /etc/wpa_supplicant.conf` (edit as follows, replacing values as indicated):
-   ```
-   country=US
-   ctrl_interface=DIR=/var/run/wpa_supplicant
-   update_config=1
-   network={
-     ssid="Your Wi-Fi SSID"
-     scan_ssid=1
-     psk="Your Wi-Fi Password"
-     key_mgmt=WPA-PSK
-   }
-   ```
-2. Enable wireless interface:  `sudo wpa_supplicant -Dnl80211 -B iwlan0 -c/etc/wpa_supplicant.conf`
-3. Obtain wireless address:  `sudo dhclient -v`
+# Python Integrated Development Environment (IDE)
+There are several alternative IDEs. PyCharm is a very good one and is free for personal use.
 
-The above should be sufficient to get your Raspberry Pi connected to Wi-Fi. Note that subsequent installation of the 
-XFCE Desktop Environment (below) will cause the wireless networking settings to be managed by NetworkManager, which 
-stores connection information in `/etc/NetworkManager/system-connections`.
-
-### Upgrade OS
-1. `sudo apt update`
-2. `sudo apt upgrade`
-3. `sudo systemctl reboot`
-
-### Install Required Packages and XFCE Desktop Environment
-1. `sudo apt install gfortran python3-dev libblas-dev liblapack-dev build-essential swig python-pygame git virtualenv qt5-default xvfb ffmpeg`
-2. `sudo apt install xubuntu-desktop`
-3. `sudo systemctl reboot`
+1. Download [here](https://www.jetbrains.com/pycharm/download).
+2. Extract and install:
 
 ## Install RLAI
 

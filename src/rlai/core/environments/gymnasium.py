@@ -899,7 +899,7 @@ class CartpoleCustomizer(DiscreteActionGymCustomizer):
                 -(
                     np.abs([
                         observation[0],  # position
-                        observation[2] * 5.0,  # angle:  equalize with the position's scale
+                        observation[2] * 7.5,  # angle:  equalize with the position's scale
                     ]).sum()
                 )
             ),
@@ -1003,7 +1003,7 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
 
         # extract and scale features for each state vector
         state_feature_matrix = self.feature_scaler.scale_features(state_matrix, refit_scaler)
-        intercept_state_feature_matrix = np.ones(shape=np.add(state_feature_matrix.shape, (0, 1)))
+        intercept_state_feature_matrix = 0.01 * np.ones(shape=np.add(state_feature_matrix.shape, (0, 1)))
         intercept_state_feature_matrix[:, 1:] = state_feature_matrix
         state_feature_matrix = intercept_state_feature_matrix
 
@@ -1076,9 +1076,16 @@ class ContinuousMountainCarCustomizer(ContinuousActionGymCustomizer):
     Continuous mountain car customizer.
     """
 
+    # x-position of the lowest point (trough)
     TROUGH_X_POS = -0.5
+
+    # x-position of the goal
     GOAL_X_POS = 0.45
+
+    # number of reward increments to provide on the upward slope when moving forward
     NUM_REWARD_INCREMENTS = 20
+
+    # maximum fuel use per simulation step (unitless)
     MAX_FUEL_USE_PER_STEP = 2.0 / 300.0
 
     def __init__(
@@ -1091,7 +1098,7 @@ class ContinuousMountainCarCustomizer(ContinuousActionGymCustomizer):
         super().__init__()
 
         self.fuel_level: Optional[float] = None
-        self.reward_increments: Optional[Dict] = None
+        self.reward_x_positions: Optional[List[float]] = None
 
     def get_action_dimension_names(
             self,
@@ -1136,7 +1143,7 @@ class ContinuousMountainCarCustomizer(ContinuousActionGymCustomizer):
 
         self.fuel_level = 1.0
 
-        self.reward_increments = np.linspace(
+        self.reward_x_positions = np.linspace(
             start=self.TROUGH_X_POS,
             stop=self.GOAL_X_POS,
             num=self.NUM_REWARD_INCREMENTS
@@ -1203,9 +1210,10 @@ class ContinuousMountainCarCustomizer(ContinuousActionGymCustomizer):
         custom_terminated = terminated
         position, velocity = observation[0:2]
 
-        if len(self.reward_increments) > 0 and position >= self.reward_increments[0]:
-            custom_reward = (self.reward_increments[0] - self.TROUGH_X_POS) * self.fuel_level
-            self.reward_increments = self.reward_increments[1:]
+        # provide the next incremental reward if any exist, then remove from availability.
+        if len(self.reward_x_positions) > 0 and position >= self.reward_x_positions[0]:
+            custom_reward = (self.reward_x_positions[0] - self.TROUGH_X_POS) * self.fuel_level
+            self.reward_x_positions = self.reward_x_positions[1:]
         else:
             custom_reward = 0.0
 
@@ -1248,7 +1256,7 @@ class ContinuousMountainCarFeatureExtractor(ScaledFeatureExtractor):
         :return: State-feature vector.
         """
 
-        state_feature_vector = np.append([1.0], super().extract(state, refit_scaler))
+        state_feature_vector = np.append([0.01], super().extract(state, refit_scaler))
         state_category_feature_vector = self.state_category_interacter.interact(
             np.array([state.observation]),
             np.array([state_feature_vector])

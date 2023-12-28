@@ -335,6 +335,7 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         # if we have pending experience, then fit the model and reset the data.
         if self.experience_pending:
 
+            # extract features and fit the scaler while doing so
             state_action_feature_matrix = self.extract_features(
                 self.experience_states,
                 self.experience_actions,
@@ -406,9 +407,9 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
 
         :param states: States.
         :param actions: Actions.
-        :param refit_scaler: Whether to refit the feature scaler before scaling the extracted features. This is
-        only appropriate in settings where nonstationarity is desired (e.g., during training). During evaluation, the
-        scaler should remain fixed, which means this should be False.
+        :param refit_scaler: Whether to refit the feature scaler before scaling the extracted features. This is only
+        appropriate in settings where nonstationarity is desired (e.g., during training). During evaluation, the scaler
+        should remain fixed, which means this should be False.
         :return: State-feature numpy.ndarray.
         """
 
