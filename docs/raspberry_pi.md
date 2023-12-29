@@ -2,27 +2,8 @@
 * Content
 {:toc}
 
-# Operating System
-The Raspberry Pi is an appealing platform for mobile computation in general and for RLAI in particular. Add-on hardware
-provides a wide range of sensing and actuation capabilities, and the entire ecosystem is quite affordable.
-
-1. Install and start the [Raspberry Pi Imager](https://www.raspberrypi.com/software/).
-2. Install the default 64-bit Raspberry Pi OS.
-3. `sudo apt update`
-4. `sudo apt upgrade`
-5. Reboot the system.
-6. `ssh-keygen` and then upload the key to GitHub.
-
-# Python Integrated Development Environment (IDE)
-There are several alternative IDEs. PyCharm is a very good one and is free for personal use.
-
-1. Download [here](https://www.jetbrains.com/pycharm/download).
-2. Extract the archive and move the PyCharm directory to `/usr/local/`
-3. Add the PyCharm `bin` directory to your `PATH` in `.bashrc`.
-
-# Install Required Packages and XFCE Desktop Environment
-1. `sudo apt install gfortran python3-dev libblas-dev liblapack-dev build-essential swig python-pygame git virtualenv xvfb ffmpeg`
-2. `sudo systemctl reboot`
+See [here](https://matthewgerber.github.io/raspberry-py/#ubuntu-operating-system) for instructions on configuring 
+Ubuntu on Raspberry Pi.
 
 # Install RLAI
 
@@ -64,9 +45,9 @@ There are several alternative IDEs. PyCharm is a very good one and is free for p
 Using the above configuration, I found the following VNC setup works best, providing automatic screen scaling and 
 reliable operation.
 1. Install VNC server:  `sudo apt install tigervnc-standalone-server`
-2. Start VNC server:  `LD_PRELOAD=/lib/aarch64-linux-gnu/libgcc_s.so.1 vncserver :1 -localhost no`
-3. Start SSH tunnel from client, where `XXXX` is the user name and `YYYY` is the IP address:  `ssh -L 59000:localhost:5901 -C -l XXXX YYYY`
-4. Use the TigerVNC client to connect to `localhost:59000`.
+2. Start VNC server:  `vncserver :1 -localhost yes`
+3. Start SSH tunnel from client, where `XXXX` is the username and `YYYY` is the IP address:  `ssh -L 59000:localhost:5901 -C -l XXXX YYYY`
+4. Use the [RealVNC Viewer][https://www.realvnc.com/en/connect/download/viewer/macos] to connect to `localhost:59000`.
 
 ## References
 1. https://linuxhint.com/install-ubuntu-desktop-20-04-lts-on-raspberry-pi-4
