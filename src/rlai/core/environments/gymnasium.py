@@ -96,7 +96,7 @@ class Gym(ContinuousMdpEnvironment):
 
     LLC_V2 = 'LunarLanderContinuous-v2'
     MCC_V0 = 'MountainCarContinuous-v0'
-    SWIMMER_V2 = 'Swimmer-v2'
+    SWIMMER_V4 = 'Swimmer-v4'
     CARTPOLE_V1 = 'CartPole-v1'
 
     @classmethod
@@ -370,7 +370,7 @@ class Gym(ContinuousMdpEnvironment):
                 self.state_reward_scatter_plot.update(np.append(observation, reward))
 
             # swimmer is a non-qt environment, so we need to process qt events manually.
-            if self.gym_id == Gym.SWIMMER_V2:
+            if self.gym_id == Gym.SWIMMER_V4:
                 QApplication.processEvents()
 
         self.state = GymState(
