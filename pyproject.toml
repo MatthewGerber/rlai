@@ -13,7 +13,7 @@ authors = [
     {name = 'Matthew Gerber', email = 'gerber.matthew@gmail.com'}
 ]
 readme = 'README.md'
-requires-python = '~=3.12'
+requires-python = '>=3.11'
 dependencies = [
     'scipy~=1.11',
     'matplotlib~=3.8',
@@ -28,19 +28,16 @@ dependencies = [
     'pandas~=2.1',
     'patsy~=0.5',
     'pyqtgraph~=0.13',
-    'PyQt6~=6.6',
     'tabulate~=0.9',
     'jupyterlab~=4.0',
     'ipython~=8.17',
-
-    # we compile jaxlib from source on aarch64 (e.g., for raspberry pi), so don't specify jax[cpu] here.
-    'jax~=0.4; sys_platform=="linux-aarch64"',
-
-    # otherwise, try to install cpu-only support.
-    'jax[cpu]~=0.4; sys_platform!="linux-aarch64"'
+    'jax[cpu]~=0.4'
 ]
 
 [project.optional-dependencies]
+qt = [
+    'PyQt6~=6.6'
+]
 dev = [
     'pytest~=7.4',
     'pytest-cov~=4.1',
