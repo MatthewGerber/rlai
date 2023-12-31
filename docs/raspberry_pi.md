@@ -2,7 +2,7 @@
 * Content
 {:toc}
 
-# Introduction
+# Using RLAI with Raspberry Pi
 Most of the RLAI functionality can run on a Raspberry Pi. This opens possibilities for building physical systems with 
 the Pi's GPIO ports and then learning control policies for these systems with RLAI. See 
 [here](https://matthewgerber.github.io/raspberry-py/#ubuntu-operating-system) for instructions on configuring a basic 
