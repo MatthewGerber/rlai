@@ -25,10 +25,10 @@ dependencies = [
 
     # the preceding mujoco dependency will install a recent mujoco version just fine. however, the gym/mujoco
     # integration is broken for Swimmer-v4 and perhaps other environments. this is unfortunate, since the preceding
-    # installation for mujoco is much more convenient than the previous approach. if you want to use Swimmer-v4, then
-    # downgrade mujoco by uncommenting the following dependency:
+    # installation for mujoco is much more convenient than the previous approach. if you want to use Swimmer-v4 instead,
+    # then downgrade mujoco with the following dependency:
 
-    # 'mujoco<3',
+    'mujoco<3',
 
     # if you do this, then you will also need to do the following before installing:
     #   1. download mujoco 2.3.7:  https://github.com/google-deepmind/mujoco/releases/tag/2.3.7
