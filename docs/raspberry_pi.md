@@ -2,47 +2,39 @@
 * Content
 {:toc}
 
-See [here](https://matthewgerber.github.io/raspberry-py/#ubuntu-operating-system) for instructions on configuring 
-Ubuntu on Raspberry Pi.
+# Introduction
+Most of the RLAI functionality can run on a Raspberry Pi. This opens possibilities for building physical systems with 
+the Pi's GPIO ports and then learning control policies for these systems with RLAI. See 
+[here](https://matthewgerber.github.io/raspberry-py/#ubuntu-operating-system) for instructions on configuring a basic 
+Ubuntu operating system on a Raspberry Pi. This page provides details on installing RLAI on the Pi for use within a 
+Python project running the physicial system (e.g., the cart-pole system described 
+[here](https://matthewgerber.github.io/cart-pole)).
 
 # Prerequisites
+The steps below assume that Python 3.11 is already installed and available on the Ubuntu operating system running on the
+Pi.
 
-## Configure Virtual Environment
-1. `git clone https://github.com/MatthewGerber/rlai.git`
-2. `cd rlai`
-3. `python3.11 -m venv venv'
-4. `. venv/bin/activate`
-5. `pip install -U pip`
+# Installing RLAI 
+1. Log in to the Pi via the desktop or SSH connection.
+2. Install dependencies:
+   ```shell
+   sudo apt install build-essential swig python3-dev python3-venv
+   ```
+3. Configure a virtual environment within the project:
+   ```shell
+   cd /path/to/rpi/project
+   python3.11 -m venv venv
+   . venv/bin/activate
+   pip install -U pip
+   ```
+4. Clone RLAI and install it within the project's virtual environment:
+   ```shell
+   cd ~
+   git clone https://github.com/MatthewGerber/rlai.git
+   pip install rlai
+   ```
+   This step will take quite a while, since pip will need to compile several of the RLAI dependencies from source.
 
-## PyQt6
-
-1. `sudo apt install build-essential libgles2 libdrm-dev`
-2. `wget https://download.qt.io/official_releases/qt/6.6/6.6.1/single/qt-everywhere-src-6.6.1.tar.xz`
-
-1. `sudo apt install qt6-base-dev qtchooser`
-2. `qtchooser -install qt6 $(which qmake6)`
-3. `export QT_SELECT=qt6`
-
-OLD
-
-1. `pip install PyQt-builder`
-2. `wget https://files.pythonhosted.org/packages/8e/a4/d5e4bf99dd50134c88b95e926d7b81aad2473b47fde5e3e4eac2c69a8942/PyQt5-5.15.4.tar.gz`
-3. `tar -xvzf PyQt5-5.15.4.tar.gz`
-4. `cd PyQt5-5.15.4`
-5. `sip-install`
-
-## Install and Test RLAI
-1. `pip install -e .[dev]`
-2. `pytest ./test` (or, if running without a display:  `HEADLESS=True pytest ./test`)
-
-## VNC (Remote Desktop)
-Using the above configuration, I found the following VNC setup works best, providing automatic screen scaling and 
-reliable operation.
-1. Install VNC server:  `sudo apt install tigervnc-standalone-server`
-2. Start VNC server:  `vncserver :1 -localhost yes`
-3. Start SSH tunnel from client, where `XXXX` is the username and `YYYY` is the IP address:  `ssh -L 59000:localhost:5901 -C -l XXXX YYYY`
-4. Use the [RealVNC Viewer][https://www.realvnc.com/en/connect/download/viewer/macos] to connect to `localhost:59000`.
-
-## References
-1. https://linuxhint.com/install-ubuntu-desktop-20-04-lts-on-raspberry-pi-4
-2. https://jax.readthedocs.io/en/latest/developer.html
+# Limitiations
+1. RLAI depends on Qt6 for graphical rendering of certain simulations and plots. These renderings will not be possible
+   on the Pi.
