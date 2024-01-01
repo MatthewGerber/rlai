@@ -24,7 +24,7 @@ class MdpEnvironment(Environment, ABC):
             agent: Any
     ) -> MdpState:
         """
-        Reset the the environment to a random nonterminal state, if any are specified, or to None.
+        Reset the environment to a random nonterminal state, if any are specified, or to None.
 
         :param agent: Agent used to generate on-the-fly state identifiers.
         :return: Initial state.
