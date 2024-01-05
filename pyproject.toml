@@ -50,7 +50,7 @@ dependencies = [
     'jax[cpu]~=0.4',
 
     # can't get Qt6 to compile on raspberry pi. exclude this architecture.
-    'PyQt6~=6.6; sys_platform!="linux-aarch64"'
+    'PyQt6~=6.6; platform_machine!="aarch64"'
 ]
 
 [project.optional-dependencies]
