@@ -22,7 +22,6 @@ from rlai.state_value import StateValueEstimator
 from rlai.utils import (
     IncrementalSampleAverager,
     RunThreadManager,
-    ScatterPlot,
     insert_index_into_path
 )
 
@@ -90,6 +89,8 @@ def improve(
 
     state_value_plot = None
     if plot_state_value and agent.v_S is not None:
+        # local-import so that we don't crash on raspberry pi os, where we can't install qt6
+        from rlai.plot_utils import ScatterPlot
         state_value_plot = ScatterPlot('REINFORCE:  State Value', ['Estimate'], None)
 
     logging.info(f'Running Monte Carlo-based REINFORCE improvement for {num_episodes} episode(s).')

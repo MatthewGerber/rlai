@@ -17,7 +17,7 @@ from rlai.core.environments.mdp import ContinuousMdpEnvironment
 from rlai.meta import rl_text
 from rlai.policy_gradient.policies import ParameterizedPolicy
 from rlai.state_value.function_approximation.models.feature_extraction import StateFeatureExtractor
-from rlai.utils import parse_arguments, load_class, is_positive_definite, ScatterPlot
+from rlai.utils import parse_arguments, load_class, is_positive_definite
 
 
 @rl_text(chapter=13, page=335)
@@ -132,6 +132,8 @@ class ContinuousActionPolicy(ParameterizedPolicy, ABC):
 
         self.action_scatter_plot = None
         if self.plot_policy:
+            # local-import so that we don't crash on raspberry pi os, where we can't install qt6
+            from rlai.plot_utils import ScatterPlot
             self.action_scatter_plot = ScatterPlot('Actions', self.environment.get_action_dimension_names(), None)
 
         self.action = None  # we'll fill this in upon the first call to __getitem__, where we have access to a state and its actions.
@@ -754,6 +756,8 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
 
         self.beta_shape_scatter_plot = None
         if self.plot_policy:
+            # local-import so that we don't crash on raspberry pi os, where we can't install qt6
+            from rlai.plot_utils import ScatterPlot
             self.beta_shape_scatter_plot_x_tick_labels = [
                 label
                 for action_name in self.environment.get_action_dimension_names()
