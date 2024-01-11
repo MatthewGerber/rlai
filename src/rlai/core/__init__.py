@@ -1423,7 +1423,7 @@ class Environment(ABC):
             agent: Any
     ) -> Optional[State]:
         """
-        Reset the the environment.
+        Reset the environment.
 
         :param agent: Agent used to generate on-the-fly state identifiers.
         :return: New state.
