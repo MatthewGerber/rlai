@@ -117,6 +117,8 @@ def run(
                     f'{percent_done:.0f}% complete (finished {num_runs_finished} of {parsed_args.n_runs} runs).'
                 )
 
+        environment.close()
+
         if parsed_args.plot:
 
             reward_ax.plot([
