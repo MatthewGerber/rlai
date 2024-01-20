@@ -1259,6 +1259,7 @@ class ContinuousMountainCarFeatureExtractor(ScaledFeatureExtractor):
         :return: State-feature vector.
         """
 
+
         state_feature_vector = np.append([0.01], super().extract(state, refit_scaler))
         state_category_feature_vector = self.state_category_interacter.interact(
             np.array([state.observation]),
