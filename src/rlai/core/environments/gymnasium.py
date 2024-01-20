@@ -1059,7 +1059,7 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
         self.state_segment_interacter = OneHotStateSegmentFeatureInteracter({
 
             # cart position is [-2.4, 2.4]
-            0: [-1.2, 0, 1.2],
+            0: [-1.2, 0.0, 1.2],
 
             # cart velocity is (-inf, inf) but typical values are in [-2.0, 2.0]
             1: [-1.5, 0.0, 1.5],
@@ -1258,7 +1258,6 @@ class ContinuousMountainCarFeatureExtractor(ScaledFeatureExtractor):
         scaler should remain fixed, which means this should be False.
         :return: State-feature vector.
         """
-
 
         state_feature_vector = np.append([0.01], super().extract(state, refit_scaler))
         state_category_feature_vector = self.state_category_interacter.interact(
