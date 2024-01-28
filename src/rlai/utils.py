@@ -128,29 +128,99 @@ class IncrementalSampleAverager:
             other: object
     ) -> bool:
         """
-        Check equality with another averager.
+        Check equality.
 
-        :param other: Averager.
+        :param other: Other value.
         :return: True if average values match and False otherwise.
         """
 
-        if not isinstance(other, IncrementalSampleAverager):
-            raise ValueError(f'Expected {IncrementalSampleAverager}')
+        if isinstance(other, IncrementalSampleAverager):
+            result = self.get_value() == other.get_value()
+        elif isinstance(other, float):
+            result = self.get_value() == other
+        else:
+            raise ValueError(f'Expected a {IncrementalSampleAverager} or {float}')
 
-        return self.get_value() == other.get_value()
+        return result
 
     def __ne__(
             self,
             other: object
     ) -> bool:
         """
-        Check inequality with another averager.
+        Check inequality.
 
-        :param other: Averager.
+        :param other: Other value.
         :return: True if average values do not match and False otherwise.
         """
 
         return not (self == other)
+
+    def __gt__(
+            self,
+            other: object
+    ):
+        """
+        Check greater than.
+
+        :param other: Other value.
+        :return: True if the current value is greater.
+        """
+
+        if isinstance(other, IncrementalSampleAverager):
+            result = self.get_value() > other.get_value()
+        elif isinstance(other, float):
+            result = self.get_value() > other
+        else:
+            raise ValueError(f'Expected a {IncrementalSampleAverager} or {float}')
+
+        return result
+
+    def __ge__(
+            self,
+            other: object
+    ):
+        """
+        Check greater than or equal.
+
+        :param other: Other value.
+        :return: True if the current value is greater than or equal.
+        """
+
+        return (self > other) or (self == other)
+
+    def __lt__(
+            self,
+            other: object
+    ):
+        """
+        Check less than.
+
+        :param other: Other value.
+        :return: True if the current value is less than.
+        """
+
+        if isinstance(other, IncrementalSampleAverager):
+            result = self.get_value() < other.get_value()
+        elif isinstance(other, float):
+            result = self.get_value() < other
+        else:
+            raise ValueError(f'Expected a {IncrementalSampleAverager} or {float}')
+
+        return result
+
+    def __le__(
+            self,
+            other: object
+    ):
+        """
+        Check less than or equal.
+
+        :param other: Other value.
+        :return: True if the current value is less than or equal.
+        """
+
+        return (self < other) or (self == other)
 
 
 def sample_list_item(
