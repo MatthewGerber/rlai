@@ -222,6 +222,20 @@ class IncrementalSampleAverager:
 
         return (self < other) or (self == other)
 
+    def __format__(
+            self,
+            format_spec: str
+    ) -> str:
+        """
+        Format the current value.
+
+        :param format_spec: Format specification.
+        :return: String.
+        """
+
+        # noinspection PyStringFormat
+        return f'{{:{format_spec}}}'.format(self.get_value())
+
 
 def sample_list_item(
         x: List[Any],
