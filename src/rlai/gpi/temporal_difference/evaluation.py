@@ -221,9 +221,10 @@ def evaluate_q_pi(
                 if np.allclose(shaped_reward_values, np.zeros_like(shaped_reward_values)):
                     logging.info(
                         f'Shaped rewards converged to zero after {curr_t - truncation_time_step} post-truncation '
-                        f'step(s). Forcing episode termination.'
+                        f'step(s). Force-exiting episode.'
                     )
                     next_state_q_s_a = 0.0
+                    environment.force_exiting_episode_after_truncation()
                     break
 
         # flush out the remaining n-step updates

@@ -81,8 +81,9 @@ def evaluate_v_pi(
                 if np.isclose(discounted_reward, 0.0):
                     logging.info(
                         f'Discounted reward converged to zero after {steps_past_truncation} post-truncation step(s). '
-                        'Forcing episode termination.'
+                        'Force-exiting episode.'
                     )
+                    environment.force_exiting_episode_after_truncation()
                     break
 
         # work backwards through the trace to calculate discounted returns. need to work backward in order for the value
@@ -204,8 +205,9 @@ def evaluate_q_pi(
                 if np.isclose(discounted_reward, 0.0):
                     logging.info(
                         f'Discounted reward converged to zero after {steps_past_truncation} post-truncation step(s). '
-                        'Forcing episode termination.'
+                        'Force-exiting episode.'
                     )
+                    environment.force_exiting_episode_after_truncation()
                     break
 
         # work backwards through the trace to calculate discounted returns. need to work backward in order for the value
