@@ -141,9 +141,9 @@ def improve(
                 if np.isclose(discounted_reward, 0.0):
                     logging.info(
                         f'Discounted reward converged to zero after {steps_past_truncation} post-truncation step(s). '
-                        'Force-exiting episode.'
+                        'Exiting episode without termination.'
                     )
-                    environment.force_exiting_episode_after_truncation()
+                    environment.exiting_episode_without_termination()
                     break
 
         # work backwards through the trace to calculate discounted returns. need to work backward in order for the value
@@ -393,10 +393,10 @@ class TrainingPool:
                     discounted_reward = next_reward.r * (self.agent.gamma ** steps_past_truncation)
                     if np.isclose(discounted_reward, 0.0):
                         logging.info(
-                            f'Discounted reward converged to zero after {steps_past_truncation} post-truncation step(s). '
-                            'Force-exiting episode.'
+                            f'Discounted reward converged to zero after {steps_past_truncation} post-truncation '
+                            f'step(s). Exiting episode without termination.'
                         )
-                        self.environment.force_exiting_episode_after_truncation()
+                        self.environment.exiting_episode_without_termination()
                         break
 
             evaluation_averager.update(total_reward)

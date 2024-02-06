@@ -1467,16 +1467,17 @@ class Environment(ABC):
         :return: True if a terminal state was entered and the run should terminate, and False otherwise.
         """
 
-    def force_exiting_episode_after_truncation(
+    def exiting_episode_without_termination(
             self
     ):
         """
-        Called when a learning procedure is force-exiting the episode after truncation. The episode will not reach a
-        natural termination state. Instead, the episode loop will exit. This function is called to provide the
-        environment an opportunity to clean up resources. This is not usually needed with simulation-based environments
-        since breaking the episode loop prevents any further episode advancement. However, in physicial environments the
-        system might continue to advance in the absence of further calls to the advance function. This function allows
-        the environment to perform any adjustments that are normally required upon termination.
+        Called when a learning procedure is exiting the episode without natural termination (e.g., after truncation).
+        The episode will not reach a natural termination state. Instead, the episode loop will exit. This function is
+        called to provide the environment an opportunity to clean up resources. This is not usually needed with
+        simulation-based environments since breaking the episode loop prevents any further episode advancement. However,
+        in physicial environments the system might continue to advance in the absence of further calls to the advance
+        function. This function allows the environment to perform any adjustments that are normally required upon
+        termination.
         """
 
     def close(
