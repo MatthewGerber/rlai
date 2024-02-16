@@ -112,39 +112,43 @@ def improve(
         t_state_action_reward = []
         truncation_time_step = None
         while not state.terminal:
+            try:
+                if state.truncated and truncation_time_step is None:
+                    truncation_time_step = t
+                    logging.info(f'Episode was truncated after {t} step(s).')
 
-            if state.truncated and truncation_time_step is None:
-                truncation_time_step = t
-                logging.info(f'Episode was truncated after {t} step(s).')
+                a = agent.act(t)
+                state_a = (state, a)
 
-            a = agent.act(t)
-            state_a = (state, a)
+                if state_value_plot is not None:
+                    state_value_plot.update(np.array([agent.v_S[state].get_value()]))
 
-            if state_value_plot is not None:
-                state_value_plot.update(np.array([agent.v_S[state].get_value()]))
+                # mark time step of first visit, if we're doing first-visit evaluation.
+                if state_action_first_t is not None and state_a not in state_action_first_t:
+                    state_action_first_t[state_a] = t
 
-            # mark time step of first visit, if we're doing first-visit evaluation.
-            if state_action_first_t is not None and state_a not in state_action_first_t:
-                state_action_first_t[state_a] = t
+                next_state, next_reward = environment.advance(state, t, a, agent)
+                t_state_action_reward.append((t, state_a, next_reward))
+                state = next_state
+                t += 1
+                agent.sense(state, t)
 
-            next_state, next_reward = environment.advance(state, t, a, agent)
-            t_state_action_reward.append((t, state_a, next_reward))
-            state = next_state
-            t += 1
-            agent.sense(state, t)
+                # if we've truncated and the discounted reward has converged to zero, then there's no point in running
+                # longer.
+                if truncation_time_step is not None:
+                    steps_past_truncation = (t - truncation_time_step)
+                    discounted_reward = next_reward.r * (agent.gamma ** steps_past_truncation)
+                    if np.isclose(discounted_reward, 0.0):
+                        raise ValueError(
+                            f'Discounted reward converged to zero after {steps_past_truncation} post-truncation '
+                            f'step(s).'
+                        )
 
-            # if we've truncated and the discounted reward has converged to zero, then there's no point in running
-            # longer.
-            if truncation_time_step is not None:
-                steps_past_truncation = (t - truncation_time_step)
-                discounted_reward = next_reward.r * (agent.gamma ** steps_past_truncation)
-                if np.isclose(discounted_reward, 0.0):
-                    logging.info(
-                        f'Discounted reward converged to zero after {steps_past_truncation} post-truncation step(s). '
-                        'Exiting episode without termination.'
-                    )
-                    environment.exiting_episode_without_termination()
-                    break
+            # if anything blows up, then let the environment know that we are exiting the episode.
+            except ValueError as e:
+                logging.info(f'{e}. Exiting episode without termination.')
+                environment.exiting_episode_without_termination()
+                break
 
         # work backwards through the trace to calculate discounted returns. need to work backward in order for the value
         # of g at each time step t to be properly discounted.
