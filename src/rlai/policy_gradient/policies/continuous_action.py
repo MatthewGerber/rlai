@@ -554,23 +554,35 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
             intercept_state_feature_matrix[:, 1:] = state_feature_matrix
             state_feature_matrix = intercept_state_feature_matrix
 
-        # invert action values back to [0.0, 1.0] (the domain of the beta distribution), creating one row per action
-        # taken and one column per action dimension.
+        # invert action updates back to [0.0, 1.0] (the domain of the beta distribution), creating one row per action
+        # update and one column per action dimension.
         action_matrix = np.array([
             self.invert_rescale(a.value)
             for a in self.update_batch_a
         ])
 
-        # perform updates per action, since we model the distribution of each action independently of the other actions.
-        # we use the transpose of the action matrix so that each iteration of the for-loop contains all experienced
-        # values of the action (in action_i_values).
-        for action_i, (action_i_theta_a, action_i_theta_b, action_i_values) in enumerate(zip(self.action_theta_a, self.action_theta_b, action_matrix.T)):
-
-            # calculate per-update gradients for the current action with respect to the action's policy parameters. the
-            # following call is vectorized over the rows of the state-feature matrix and the action_i_values. each of
-            # the return values (action_density_gradients_wrt_theta_a and action_density_gradients_wrt_theta_b) will
-            # have one row per update, and each such row will be a vector of partial gradients for the associated
-            # state features and action.
+        # perform updates per action dimension, since we model the distribution of each action independently of the
+        # other actions. we use the transpose of the action matrix so that each iteration of the for-loop contains all
+        # updates of the action (in action_i_values).
+        for (
+            action_i,  # action dimension
+            (
+                action_i_theta_a,  # coefficients (theta) applied to state values to obtain shape parameter a
+                action_i_theta_b,  # coefficients (theta) applied to state values to obtain shape parameter b
+                action_i_values  # action update values
+            )
+        ) in enumerate(
+            zip(
+                self.action_theta_a,
+                self.action_theta_b,
+                action_matrix.T
+            )
+        ):
+            # calculate per-update gradients for the current action dimension with respect to the action's policy
+            # parameters. the following call is vectorized over the rows of the state-feature matrix and the
+            # action_i_values. each of the return values (action_density_gradients_wrt_theta_a and
+            # action_density_gradients_wrt_theta_b) will have one row per update, and each such row will be a vector of
+            # partial gradients for the associated state features and action.
             (
                 action_density_gradients_wrt_theta_a,
                 action_density_gradients_wrt_theta_b
@@ -581,19 +593,25 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
                 action_i_values
             )
 
-            # assemble updates
-            updates = zip(
+            # update the theta-a and theta-b coefficients for the current action dimension
+            for (
+                alpha,
+                target,
+                action_density_gradient_wrt_theta_a,
+                action_density_gradient_wrt_theta_b
+            ) in zip(
                 self.update_batch_alpha,
                 self.update_batch_target,
                 action_density_gradients_wrt_theta_a,
                 action_density_gradients_wrt_theta_b
-            )
+            ):
 
-            for alpha, target, action_density_gradient_wrt_theta_a, action_density_gradient_wrt_theta_b in updates:
-
-                # use tanh to squash gradients into [-1.0, 1.0] to handle scaling issues when actions are chosen at the
-                # tails of the beta distribution where the gradients are very large. this also addresses cases of
-                # positive/negative infinite gradients.
+                # step the theta-a and theta-b coefficient vectors in the direction of the target according to the
+                # action-density gradients. a positive target will result in more density around the updated action, and
+                # a negative target will result in less density around the updated action. use tanh to squash gradients
+                # into [-1.0, 1.0] to handle scaling issues when actions are chosen at the tails of the beta
+                # distribution where the gradients are very large. this also addresses cases of positive/negative
+                # infinite gradients.
 
                 action_density_gradient_wrt_theta_a = np.nan_to_num(action_density_gradient_wrt_theta_a)
                 self.action_theta_a[action_i, :] += alpha * target * np.tanh(action_density_gradient_wrt_theta_a)
@@ -650,10 +668,10 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
             action_value: float
     ) -> Array:
         """
-        Get the value of the probability density function at an action.
+        Get the value of the probability density function at an action value.
 
-        :param theta_a: Policy parameters for shape parameter a.
-        :param theta_b: Policy parameters for shape parameter b.
+        :param theta_a: Policy parameters for beta-distribution shape parameter `a`.
+        :param theta_b: Policy parameters for beta-distribution shape parameter `b`.
         :param state_features: A vector of state features.
         :param action_value: Action value.
         :return: Value of the PDF.
@@ -744,15 +762,21 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
         )
 
         # coefficients for shape parameters a and b. each array has one row per action and one column per state
-        # dimension (plus an intercept). these will be initialized upon the first call to the feature extractor within
+        # dimension. these will be initialized upon the first call to the feature extractor within
         # __getitem__.
         self.action_theta_a = None
         self.action_theta_b = None
 
-        # get jax function for gradients with respect to theta_a and theta_b. vectorize the gradient calculation over
-        # rows in the input arrays for state and action values.
-        self.get_action_density_gradients = jit(grad(self.get_action_density, argnums=(0, 1)))
-        self.get_action_density_gradients_vmap = jit(vmap(self.get_action_density_gradients, in_axes=(None, None, 0, 0)))
+        # get jax function for gradients with respect to theta_a and theta_b
+        self.get_action_density_gradients = jit(grad(fun=self.get_action_density, argnums=(0, 1)))
+
+        # vectorize the gradient calculation over rows (input axis 0) of the input arrays for state and action values.
+        # we do not map over the first two positional arguments, which are the theta-a and theta-b coefficient vectors
+        # at which we want the gradients.
+        self.get_action_density_gradients_vmap = jit(vmap(
+            fun=self.get_action_density_gradients,
+            in_axes=(None, None, 0, 0)
+        ))
 
         self.beta_shape_scatter_plot = None
         if self.plot_policy:
@@ -763,7 +787,11 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
                 for action_name in self.environment.get_action_dimension_names()
                 for label in [f'{action_name} a', f'{action_name} b']
             ]
-            self.beta_shape_scatter_plot = ScatterPlot('Beta Distribution Shape', self.beta_shape_scatter_plot_x_tick_labels, None)
+            self.beta_shape_scatter_plot = ScatterPlot(
+                'Beta Distribution Shape',
+                self.beta_shape_scatter_plot_x_tick_labels,
+                None
+            )
 
     def __getitem__(
             self,
