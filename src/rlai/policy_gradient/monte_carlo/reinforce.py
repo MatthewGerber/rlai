@@ -530,8 +530,8 @@ class TrainingPool:
         # delete pickles from the previous iteration. we can't delete them from the current iteration because other
         # runners might still be scanning them.
         for training_pool_filename in filter(
-                lambda s: s.endswith(f'_{self.training_pool_iteration - 1}'),
-                os.listdir(self.training_pool_directory)
+            lambda s: s.endswith(f'_{self.training_pool_iteration - 1}'),
+            os.listdir(self.training_pool_directory)
         ):
             # noinspection PyBroadException
             try:
