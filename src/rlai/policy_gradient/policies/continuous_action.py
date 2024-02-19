@@ -608,22 +608,30 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
 
                 # step the theta-a and theta-b coefficient vectors in the direction of the target according to the
                 # action-density gradients. a positive target will result in more density around the updated action, and
-                # a negative target will result in less density around the updated action. normalize the action-density
-                # gradients to be unit length to avoid wild derivatives at the tails of the beta distribution. use nan-
-                # to-num to avoid the use of infinite gradients. any infinite value in the gradient will cause the
-                # entire gradient norm to be zero, resulting in no update.
+                # a negative target will result in less density around the updated action. a few details:
+                #
+                #   * normalize the action-density gradients to be unit length to avoid wild derivatives at the tails
+                #     of the beta distribution.
+                #   * check for any near-zero elements in the gradient norm, and do not update if they exist (must not
+                #     divide by zero).
+                #   * use nan-to-num to avoid the use of infinite gradients. any infinite value in the gradient will
+                #     cause the entire gradient norm to be zero, resulting in no update.
 
-                self.action_theta_a[action_i, :] += (
-                    alpha * target * np.nan_to_num(
-                        action_density_gradient_wrt_theta_a / np.linalg.norm(action_density_gradient_wrt_theta_a)
-                    )
-                )
+                target_step = alpha * target
 
-                self.action_theta_b[action_i, :] += (
-                    alpha * target * np.nan_to_num(
-                        action_density_gradient_wrt_theta_b / np.linalg.norm(action_density_gradient_wrt_theta_b)
+                action_density_gradient_wrt_theta_a_norm = np.linalg.norm(action_density_gradient_wrt_theta_a)
+                if not any(np.isclose(action_density_gradient_wrt_theta_a_norm, 0.0)):
+                    action_density_gradient_wrt_theta_a_unit_length = np.nan_to_num(
+                        action_density_gradient_wrt_theta_a / action_density_gradient_wrt_theta_a_norm
                     )
-                )
+                    self.action_theta_a[action_i, :] += target_step * action_density_gradient_wrt_theta_a_unit_length
+
+                action_density_gradient_wrt_theta_b_norm = np.linalg.norm(action_density_gradient_wrt_theta_b)
+                if not any(np.isclose(action_density_gradient_wrt_theta_b_norm, 0.0)):
+                    action_density_gradient_wrt_theta_b_unit_length = np.nan_to_num(
+                        action_density_gradient_wrt_theta_b / action_density_gradient_wrt_theta_b_norm
+                    )
+                    self.action_theta_b[action_i, :] += target_step * action_density_gradient_wrt_theta_b_unit_length
 
         self.reset_action_scatter_plot_y_range()
 
