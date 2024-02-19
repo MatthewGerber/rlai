@@ -379,29 +379,33 @@ class TrainingPool:
             t = 0
             truncation_time_step = None
             while not state.terminal:
+                try:
+                    if state.truncated and truncation_time_step is None:
+                        truncation_time_step = t
 
-                if state.truncated and truncation_time_step is None:
-                    truncation_time_step = t
+                    a = self.agent.act(t)
+                    next_state, next_reward = self.environment.advance(state, t, a, self.agent)
+                    total_reward += next_reward.r
+                    state = next_state
+                    t += 1
+                    self.agent.sense(state, t)
 
-                a = self.agent.act(t)
-                next_state, next_reward = self.environment.advance(state, t, a, self.agent)
-                total_reward += next_reward.r
-                state = next_state
-                t += 1
-                self.agent.sense(state, t)
+                    # if we've truncated and the discounted reward has converged to zero, then there's no point in running
+                    # longer.
+                    if truncation_time_step is not None:
+                        steps_past_truncation = (t - truncation_time_step)
+                        discounted_reward = next_reward.r * (self.agent.gamma ** steps_past_truncation)
+                        if np.isclose(discounted_reward, 0.0):
+                            raise ValueError(
+                                f'Discounted reward converged to zero after {steps_past_truncation} post-truncation '
+                                f'step(s).'
+                            )
 
-                # if we've truncated and the discounted reward has converged to zero, then there's no point in running
-                # longer.
-                if truncation_time_step is not None:
-                    steps_past_truncation = (t - truncation_time_step)
-                    discounted_reward = next_reward.r * (self.agent.gamma ** steps_past_truncation)
-                    if np.isclose(discounted_reward, 0.0):
-                        logging.info(
-                            f'Discounted reward converged to zero after {steps_past_truncation} post-truncation '
-                            f'step(s). Exiting episode without termination.'
-                        )
-                        self.environment.exiting_episode_without_termination()
-                        break
+                # if anything blows up, then let the environment know that we are exiting the episode.
+                except ValueError as e:
+                    logging.info(f'{e}. Exiting episode without termination.')
+                    self.environment.exiting_episode_without_termination()
+                    break
 
             evaluation_averager.update(total_reward)
 
