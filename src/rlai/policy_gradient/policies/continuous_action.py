@@ -620,14 +620,14 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
                 target_step = alpha * target
 
                 action_density_gradient_wrt_theta_a_norm = np.linalg.norm(action_density_gradient_wrt_theta_a)
-                if not any(np.isclose(action_density_gradient_wrt_theta_a_norm, 0.0)):
+                if not np.isclose(action_density_gradient_wrt_theta_a_norm, 0.0):
                     action_density_gradient_wrt_theta_a_unit_length = np.nan_to_num(
                         action_density_gradient_wrt_theta_a / action_density_gradient_wrt_theta_a_norm
                     )
                     self.action_theta_a[action_i, :] += target_step * action_density_gradient_wrt_theta_a_unit_length
 
                 action_density_gradient_wrt_theta_b_norm = np.linalg.norm(action_density_gradient_wrt_theta_b)
-                if not any(np.isclose(action_density_gradient_wrt_theta_b_norm, 0.0)):
+                if np.isclose(action_density_gradient_wrt_theta_b_norm, 0.0):
                     action_density_gradient_wrt_theta_b_unit_length = np.nan_to_num(
                         action_density_gradient_wrt_theta_b / action_density_gradient_wrt_theta_b_norm
                     )
