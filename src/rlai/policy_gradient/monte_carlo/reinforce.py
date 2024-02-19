@@ -89,7 +89,7 @@ def improve(
 
     state_value_plot = None
     if plot_state_value and agent.v_S is not None:
-        # local-import so that we don't crash on raspberry pi os, where we can't install qt6
+        # local-import so that we don't crash on raspberry pi os, where we can't install qt6.
         from rlai.plot_utils import ScatterPlot
         state_value_plot = ScatterPlot('REINFORCE:  State Value', ['Estimate'], None)
 
@@ -171,13 +171,13 @@ def improve(
                 if agent.v_S is None:
                     target = g
 
-                # otherwise, update the baseline state-value estimator and set the target to be the difference between
-                # observed return and the baseline. actions that produce an above-baseline return will be reinforced.
+                # otherwise, set the target to be the difference between observed return and the baseline estimate of
+                # the return from the state. actions that produce an above-baseline return will be reinforced. then
+                # update the baseline state-value estimator.
                 else:
+                    target = g - agent.v_S[state].get_value()
                     agent.v_S[state].update(g)
                     agent.v_S.improve()
-                    estimate = agent.v_S[state].get_value()
-                    target = g - estimate
 
                 agent.pi.append_update(a, state, alpha, target)
 

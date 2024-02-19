@@ -132,7 +132,7 @@ class ContinuousActionPolicy(ParameterizedPolicy, ABC):
 
         self.action_scatter_plot = None
         if self.plot_policy:
-            # local-import so that we don't crash on raspberry pi os, where we can't install qt6
+            # local-import so that we don't crash on raspberry pi os, where we can't install qt6.
             from rlai.plot_utils import ScatterPlot
             self.action_scatter_plot = ScatterPlot('Actions', self.environment.get_action_dimension_names(), None)
 
@@ -608,16 +608,22 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
 
                 # step the theta-a and theta-b coefficient vectors in the direction of the target according to the
                 # action-density gradients. a positive target will result in more density around the updated action, and
-                # a negative target will result in less density around the updated action. use tanh to squash gradients
-                # into [-1.0, 1.0] to handle scaling issues when actions are chosen at the tails of the beta
-                # distribution where the gradients are very large. this also addresses cases of positive/negative
-                # infinite gradients.
+                # a negative target will result in less density around the updated action. normalize the action-density
+                # gradients to be unit length to avoid wild derivatives at the tails of the beta distribution. use nan-
+                # to-num to avoid the use of infinite gradients. any infinite value in the gradient will cause the
+                # entire gradient norm to be zero, resulting in no update.
 
-                action_density_gradient_wrt_theta_a = np.nan_to_num(action_density_gradient_wrt_theta_a)
-                self.action_theta_a[action_i, :] += alpha * target * np.tanh(action_density_gradient_wrt_theta_a)
+                self.action_theta_a[action_i, :] += (
+                    alpha * target * np.nan_to_num(
+                        action_density_gradient_wrt_theta_a / np.linalg.norm(action_density_gradient_wrt_theta_a)
+                    )
+                )
 
-                action_density_gradient_wrt_theta_b = np.nan_to_num(action_density_gradient_wrt_theta_b)
-                self.action_theta_b[action_i, :] += alpha * target * np.tanh(action_density_gradient_wrt_theta_b)
+                self.action_theta_b[action_i, :] += (
+                    alpha * target * np.nan_to_num(
+                        action_density_gradient_wrt_theta_b / np.linalg.norm(action_density_gradient_wrt_theta_b)
+                    )
+                )
 
         self.reset_action_scatter_plot_y_range()
 
@@ -780,7 +786,7 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
 
         self.beta_shape_scatter_plot = None
         if self.plot_policy:
-            # local-import so that we don't crash on raspberry pi os, where we can't install qt6
+            # local-import so that we don't crash on raspberry pi os, where we can't install qt6.
             from rlai.plot_utils import ScatterPlot
             self.beta_shape_scatter_plot_x_tick_labels = [
                 label
