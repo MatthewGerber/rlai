@@ -86,7 +86,7 @@ def evaluate_v_pi(
 
             # if anything blows up, then let the environment know that we are exiting the episode.
             except ValueError as e:
-                logging.info(f'{e}. Exiting episode without termination.')
+                logging.info(f'{e} Exiting episode without termination.')
                 environment.exiting_episode_without_termination()
                 break
 
@@ -214,7 +214,7 @@ def evaluate_q_pi(
 
             # if anything blows up, then let the environment know that we are exiting the episode.
             except ValueError as e:
-                logging.info(f'{e}. Exiting episode without termination.')
+                logging.info(f'{e} Exiting episode without termination.')
                 environment.exiting_episode_without_termination()
                 break
 
