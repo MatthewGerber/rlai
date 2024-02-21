@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from itertools import product
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Callable, Any
 
 import numpy as np
 
@@ -32,17 +32,82 @@ class StateFeatureExtractor(FeatureExtractor, ABC):
         """
 
 
-class StateDimensionSegment:
+class StateDimensionIndicator(ABC):
+    """
+    Abstract state-dimension indicator.
+    """
+
+    @staticmethod
+    @abstractmethod
+    def get_range() -> List[Any]:
+        """
+        Get the range (possible values) of the current indicator.
+
+        :return: Range of values.
+        """
+
+    def __init__(
+            self,
+            dimension: int
+    ):
+        """
+        Initialize the indicator.
+
+        :param dimension: Dimension.
+        """
+
+        self.dimension = dimension
+
+
+    @abstractmethod
+    def __str__(
+            self
+    ) -> str:
+        """
+        Get string.
+
+        :return: String.
+        """
+
+    @abstractmethod
+    def get_value(
+            self,
+            state: np.ndarray
+    ) -> Any:
+        """
+        Get the value of the current indicator for a state.
+
+        :param state: State vector.
+        :return: Value.
+        """
+
+class StateDimensionSegment(StateDimensionIndicator):
     """
     Segment of a state dimension.
     """
 
     @staticmethod
-    def get_indicator_range() -> List[bool]:
+    def get_segments(
+            dimension_breakpoints: Dict[int, List[float]]
+    ):
         """
-        Get list of indicators.
+        Get segments for a dictionary of breakpoints
 
-        :return: Indicators.
+        :param dimension_breakpoints: Breakpoints keyed on dimensions with breakpoints as values.
+        """
+
+        return [
+            StateDimensionSegment(dimension, low, high)
+            for dimension, breakpoints in dimension_breakpoints.items()
+            for low, high in zip([None] + breakpoints[:-1], breakpoints)
+        ]
+
+    @staticmethod
+    def get_range() -> List[Any]:
+        """
+        Get the range (possible values) of the current indicator.
+
+        :return: Range of values.
         """
 
         return [True, False]
@@ -61,7 +126,8 @@ class StateDimensionSegment:
         :param high: High value (exclusive) of the segment.
         """
 
-        self.dimension = dimension
+        super().__init__(dimension)
+
         self.low = low
         self.high = high
 
@@ -76,27 +142,85 @@ class StateDimensionSegment:
 
         return f'd{self.dimension}:  {"(" if self.low is None else "["}{self.low}, {self.high})'
 
-    def get_indicator(
+    def get_value(
             self,
             state: np.ndarray
-    ) -> bool:
+    ) -> Any:
         """
-        Get indicator for a state value.
+        Get the value of the current indicator for a state.
 
         :param state: State vector.
-        :return: Indicator.
+        :return: Value.
         """
 
-        dimension_value = state[self.dimension]
+        dimension_value = float(state[self.dimension])
         above_low = self.low is None or dimension_value >= self.low
         below_high = self.high is None or dimension_value < self.high
 
         return above_low and below_high
 
 
-class OneHotStateSegmentFeatureInteracter:
+class StateDimensionLambda(StateDimensionIndicator):
     """
-    One-hot state segment feature interacter.
+    Lambda applied to a state dimension.
+    """
+
+    @staticmethod
+    def get_range() -> List[Any]:
+        """
+        Get the range (possible values) of the current indicator.
+
+        :return: Range of values.
+        """
+
+        return [True, False]
+
+    def __init__(
+            self,
+            dimension: int,
+            function: Callable[[float], bool],
+    ):
+        """
+        Initialize the segment.
+
+        :param dimension: Dimension index.
+        :param function: Function to apply to values in the given dimension.
+        """
+
+        super().__init__(dimension)
+
+        self.function = function
+
+    def __str__(
+            self
+    ) -> str:
+        """
+        Get string.
+
+        :return: String.
+        """
+
+        return f'd{self.dimension}:  <function>'
+
+    def get_value(
+            self,
+            state: np.ndarray
+    ) -> Any:
+        """
+        Get the value of the current indicator for a state.
+
+        :param state: State vector.
+        :return: Value.
+        """
+
+        dimension_value = float(state[self.dimension])
+
+        return self.function(dimension_value)
+
+
+class OneHotStateIndicatorFeatureInteracter:
+    """
+    One-hot state indicator feature interacter.
     """
 
     def interact(
@@ -112,12 +236,11 @@ class OneHotStateSegmentFeatureInteracter:
         :return: Interacted state-feature matrix (#obs, #features * #state_segments).
         """
 
-        # interact feature vectors per state category, where the category indicates the joint indicator of the state
-        # dimension segments.
+        # interact feature vectors per state category, where the category indicates the joint indicator of the state.
         state_categories = [
             OneHotCategory(*[
-                state_dimension_segment.get_indicator(state_vector)
-                for state_dimension_segment in self.state_dimension_segments
+                indicator.get_value(state_vector)
+                for indicator in self.indicators
             ])
             for state_vector in state_matrix
         ]
@@ -131,24 +254,20 @@ class OneHotStateSegmentFeatureInteracter:
 
     def __init__(
             self,
-            dimension_breakpoints: Dict[int, List[float]]
+            indicators: List[StateDimensionIndicator]
     ):
         """
         Initialize the interacter.
 
-        :param dimension_breakpoints:
+        :param indicators: State-dimension indicators.
         """
 
-        self.state_dimension_segments = [
-            StateDimensionSegment(dimension, low, high)
-            for dimension, breakpoints in dimension_breakpoints.items()
-            for low, high in zip([None] + breakpoints[:-1], breakpoints)
-        ]
+        self.indicators = indicators
 
         self.interacter = OneHotCategoricalFeatureInteracter([
             OneHotCategory(*args)
             for args in product(*[
-                state_dimension_segment.get_indicator_range()
-                for state_dimension_segment in self.state_dimension_segments
+                indicator.get_range()
+                for indicator in self.indicators
             ])
         ])

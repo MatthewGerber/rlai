@@ -35,7 +35,8 @@ from rlai.models.feature_extraction import (
 )
 from rlai.state_value.function_approximation.models.feature_extraction import (
     StateFeatureExtractor,
-    OneHotStateSegmentFeatureInteracter
+    OneHotStateIndicatorFeatureInteracter,
+    StateDimensionSegment
 )
 from rlai.utils import parse_arguments
 
@@ -814,10 +815,10 @@ class SignedCodingFeatureExtractor(ScaledFeatureExtractor):
         state_matrix = np.array([state.observation])
 
         if self.state_category_interacter is None:
-            self.state_category_interacter = OneHotStateSegmentFeatureInteracter({
+            self.state_category_interacter = OneHotStateIndicatorFeatureInteracter(StateDimensionSegment.get_segments({
                 dimension: [0.0]
                 for dimension in range(state_matrix.shape[1])
-            })
+            }))
 
         # extract and encode feature values
         state_feature_vector = np.append([1.0], super().extract(state, refit_scaler))
@@ -1056,7 +1057,7 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
             ]
         )
 
-        self.state_segment_interacter = OneHotStateSegmentFeatureInteracter({
+        self.state_segment_interacter = OneHotStateIndicatorFeatureInteracter(StateDimensionSegment.get_segments({
 
             # cart position is [-2.4, 2.4]
             0: [-1.2, 0.0, 1.2],
@@ -1069,7 +1070,7 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
 
             # pole angle velocity is (-inf, inf) but typical values are in [-2.0, 2.0]
             3: [-1.5, 0.0, 1.5]
-        })
+        }))
 
         self.feature_scaler = StationaryFeatureScaler()
 
@@ -1277,7 +1278,7 @@ class ContinuousMountainCarFeatureExtractor(ScaledFeatureExtractor):
         super().__init__()
 
         # interact features with relevant state categories
-        self.state_category_interacter = OneHotStateSegmentFeatureInteracter({
+        self.state_category_interacter = OneHotStateIndicatorFeatureInteracter(StateDimensionSegment.get_segments({
 
             # shift the x-location midpoint to the bottom of the trough
             0: [ContinuousMountainCarCustomizer.TROUGH_X_POS],
@@ -1287,7 +1288,7 @@ class ContinuousMountainCarFeatureExtractor(ScaledFeatureExtractor):
 
             # fuel bottoms out at zero
             2: [0.0000001]
-        })
+        }))
 
 
 class ContinuousLunarLanderCustomizer(ContinuousActionGymCustomizer):
