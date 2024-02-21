@@ -37,15 +37,6 @@ class StateDimensionIndicator(ABC):
     Abstract state-dimension indicator.
     """
 
-    @staticmethod
-    @abstractmethod
-    def get_range() -> List[Any]:
-        """
-        Get the range (possible values) of the current indicator.
-
-        :return: Range of values.
-        """
-
     def __init__(
             self,
             dimension: int
@@ -58,7 +49,6 @@ class StateDimensionIndicator(ABC):
 
         self.dimension = dimension
 
-
     @abstractmethod
     def __str__(
             self
@@ -67,6 +57,16 @@ class StateDimensionIndicator(ABC):
         Get string.
 
         :return: String.
+        """
+
+    @abstractmethod
+    def get_range(
+            self
+    ) -> List[Any]:
+        """
+        Get the range (possible values) of the current indicator.
+
+        :return: Range of values.
         """
 
     @abstractmethod
@@ -102,16 +102,6 @@ class StateDimensionSegment(StateDimensionIndicator):
             for low, high in zip([None] + breakpoints[:-1], breakpoints)
         ]
 
-    @staticmethod
-    def get_range() -> List[Any]:
-        """
-        Get the range (possible values) of the current indicator.
-
-        :return: Range of values.
-        """
-
-        return [True, False]
-
     def __init__(
             self,
             dimension: int,
@@ -142,6 +132,17 @@ class StateDimensionSegment(StateDimensionIndicator):
 
         return f'd{self.dimension}:  {"(" if self.low is None else "["}{self.low}, {self.high})'
 
+    def get_range(
+            self
+    ) -> List[Any]:
+        """
+        Get the range (possible values) of the current indicator.
+
+        :return: Range of values.
+        """
+
+        return [True, False]
+
     def get_value(
             self,
             state: np.ndarray
@@ -165,31 +166,24 @@ class StateDimensionLambda(StateDimensionIndicator):
     Lambda applied to a state dimension.
     """
 
-    @staticmethod
-    def get_range() -> List[Any]:
-        """
-        Get the range (possible values) of the current indicator.
-
-        :return: Range of values.
-        """
-
-        return [True, False]
-
     def __init__(
             self,
             dimension: int,
-            function: Callable[[float], bool],
+            function: Callable[[float], Any],
+            function_range: List[Any]
     ):
         """
         Initialize the segment.
 
         :param dimension: Dimension index.
         :param function: Function to apply to values in the given dimension.
+        :param function_range: Range of function.
         """
 
         super().__init__(dimension)
 
         self.function = function
+        self.function_range = function_range
 
     def __str__(
             self
@@ -201,6 +195,15 @@ class StateDimensionLambda(StateDimensionIndicator):
         """
 
         return f'd{self.dimension}:  <function>'
+
+    def get_range(self) -> List[Any]:
+        """
+        Get the range (possible values) of the current indicator.
+
+        :return: Range of values.
+        """
+
+        return self.function_range
 
     def get_value(
             self,
@@ -229,11 +232,11 @@ class OneHotStateIndicatorFeatureInteracter:
             state_feature_matrix: np.ndarray
     ) -> np.ndarray:
         """
-        Interact a state-feature matrix with its one-hot state segment encoding.
+        Interact a state-feature matrix with its one-hot state-indicator encoding.
 
-        :param state_matrix: State matrix (#obs, #state_dimensionality).
+        :param state_matrix: State matrix (#obs, #state_dimensionality), from which to derive indicators.
         :param state_feature_matrix: State-feature matrix (#obs, #features).
-        :return: Interacted state-feature matrix (#obs, #features * #state_segments).
+        :return: Interacted state-feature matrix (#obs, #features * #joint_indicators).
         """
 
         # interact feature vectors per state category, where the category indicates the joint indicator of the state.
