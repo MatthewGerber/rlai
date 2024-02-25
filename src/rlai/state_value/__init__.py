@@ -93,11 +93,11 @@ class StateValueEstimator(ABC):
         Improve the estimator.
         """
 
-    def reset(
+    def plot(
             self
     ):
         """
-        Reset the estimator.
+        Plot the current estimator.
         """
 
     def __init__(

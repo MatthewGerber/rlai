@@ -7,9 +7,9 @@ from numpy.random import RandomState
 from rlai.core import MdpState
 from rlai.core.environments.mdp import MdpEnvironment
 from rlai.meta import rl_text
-from rlai.models import FunctionApproximationModel
 from rlai.models.feature_extraction import StationaryFeatureScaler
 from rlai.state_value import StateValueEstimator, ValueEstimator
+from rlai.state_value.function_approximation.models import StateFunctionApproximationModel
 from rlai.state_value.function_approximation.models.feature_extraction import StateFeatureExtractor
 from rlai.utils import parse_arguments, load_class
 
@@ -205,15 +205,6 @@ class ApproximateStateValueEstimator(StateValueEstimator):
             self.weights = None
             self.experience_pending = False
 
-    def reset(
-            self
-    ):
-        """
-        Reset the estimator.
-        """
-
-        self.model.reset()
-
     def evaluate(
             self,
             state: MdpState
@@ -259,9 +250,18 @@ class ApproximateStateValueEstimator(StateValueEstimator):
             for state in states
         ])
 
+    def plot(
+            self
+    ):
+        """
+        Plot the current estimator.
+        """
+
+        self.model.plot(True, None)
+
     def __init__(
             self,
-            model: FunctionApproximationModel,
+            model: StateFunctionApproximationModel,
             feature_extractor: StateFeatureExtractor
     ):
         """

@@ -35,6 +35,7 @@ def improve(
         alpha: float,
         thread_manager: RunThreadManager,
         plot_state_value: bool,
+        num_episodes_per_baseline_plot: Optional[int] = None,
         num_episodes_per_checkpoint: Optional[int] = None,
         checkpoint_path: Optional[str] = None,
         training_pool_directory: Optional[str] = None,
@@ -58,6 +59,7 @@ def improve(
     before starting each iteration. This provides a mechanism for pausing, resuming, and aborting training. Omit for no
     waiting.
     :param plot_state_value: Whether to plot the state-value.
+    :param num_episodes_per_baseline_plot: Number of episodes per baseline plot.
     :param num_episodes_per_checkpoint: Number of episodes per checkpoint save.
     :param checkpoint_path: Checkpoint path. Must be provided if `num_episodes_per_checkpoint` is provided.
     :param training_pool_directory: Path to directory in which to store pooled training runs.
@@ -183,6 +185,13 @@ def improve(
 
         agent.pi.commit_updates()
         episodes_finished += 1
+
+        if (
+            agent.v_S is not None and
+            num_episodes_per_baseline_plot is not None and
+            episodes_finished % num_episodes_per_baseline_plot == 0
+        ):
+            agent.v_S.plot()
 
         num_fallback_iterations = 0
         if training_pool is not None and episodes_finished % training_pool_iterate_episodes == 0:
