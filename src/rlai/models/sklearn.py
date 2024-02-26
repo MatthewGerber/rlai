@@ -248,6 +248,8 @@ class SKLearnSGD(FunctionApproximationModel):
 
         with self.plot_data_lock:
 
+            fig = None
+
             # collect average values for the current policy improvement iteration and reset the averagers. the
             # individual y, loss, and eta0 values have already been collected during the calls to fit.
             if self.y_averager.n > 0:
@@ -349,12 +351,13 @@ class SKLearnSGD(FunctionApproximationModel):
 
                 if pdf is None:
                     plt.show(block=False)
-                    return fig
                 else:
                     pdf.savefig()
 
             # move to next plot iteration
             self.plot_iteration += 1
+
+            return fig
 
     def update_plot(
             self,

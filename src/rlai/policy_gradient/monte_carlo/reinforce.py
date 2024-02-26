@@ -206,6 +206,7 @@ def improve(
                 'update_upon_every_visit': update_upon_every_visit,
                 'alpha': alpha,
                 'plot_state_value': plot_state_value,
+                'num_episodes_per_baseline_plot': num_episodes_per_baseline_plot,
                 'num_episodes_per_checkpoint': num_episodes_per_checkpoint,
                 'checkpoint_path': checkpoint_path,
                 'training_pool_directory': training_pool_directory,
