@@ -35,6 +35,7 @@ def improve(
         alpha: float,
         thread_manager: RunThreadManager,
         plot_state_value: bool,
+        num_warmup_episodes: Optional[int] = None,
         num_episodes_per_baseline_plot: Optional[int] = None,
         num_episodes_per_checkpoint: Optional[int] = None,
         checkpoint_path: Optional[str] = None,
@@ -59,6 +60,9 @@ def improve(
     before starting each iteration. This provides a mechanism for pausing, resuming, and aborting training. Omit for no
     waiting.
     :param plot_state_value: Whether to plot the state-value.
+    :param num_warmup_episodes: Number of warmup episodes to run before updating the policy. Warmup episodes allow
+    estimates (e.g., means and variances of feature scalers, baseline state-value estimators, etc.) to settle before
+    updating the policy.
     :param num_episodes_per_baseline_plot: Number of episodes per baseline plot.
     :param num_episodes_per_checkpoint: Number of episodes per checkpoint save.
     :param checkpoint_path: Checkpoint path. Must be provided if `num_episodes_per_checkpoint` is provided.
@@ -155,6 +159,7 @@ def improve(
         # work backwards through the trace to calculate discounted returns. need to work backward in order for the value
         # of g at each time step t to be properly discounted.
         g = 0.0
+        t_target = {}
         for i, (t, state_a, reward) in enumerate(reversed(t_state_action_reward)):
 
             g = agent.gamma * g + reward.r
@@ -181,9 +186,14 @@ def improve(
                     agent.v_S[state].update(g)
                     agent.v_S.improve()
 
-                agent.pi.append_update(a, state, alpha, target)
+                if num_warmup_episodes is None or episodes_finished > num_warmup_episodes:
+                    agent.pi.append_update(a, state, alpha, target)
 
-        agent.pi.commit_updates()
+                t_target[t] = target
+
+        if num_warmup_episodes is None or episodes_finished > num_warmup_episodes:
+            agent.pi.commit_updates()
+
         episodes_finished += 1
 
         if (
@@ -192,6 +202,18 @@ def improve(
             episodes_finished % num_episodes_per_baseline_plot == 0
         ):
             agent.v_S.plot()
+
+            plt.plot(
+                list(t_target.keys()),
+                list(t_target.values()),
+                label='Target'
+            )
+            plt.xlabel('Time step')
+            plt.ylabel('Policy update target (g - v_S(s_t).')
+            plt.legend()
+            plt.tight_layout()
+            plt.show()
+            plt.close()
 
         num_fallback_iterations = 0
         if training_pool is not None and episodes_finished % training_pool_iterate_episodes == 0:

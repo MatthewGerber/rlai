@@ -318,6 +318,12 @@ def get_argument_parser_for_train_function(
     )
 
     add_argument(
+        '--num-warmup-episodes',
+        type=int,
+        help='Number of warmup episodes.'
+    )
+
+    add_argument(
         '--num-improvements-per-checkpoint',
         type=int,
         help='Number of improvements per checkpoint.'
