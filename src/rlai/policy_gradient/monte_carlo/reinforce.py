@@ -209,7 +209,7 @@ def improve(
                 label='Target'
             )
             plt.xlabel('Time step')
-            plt.ylabel('Policy update target (g - v_S(s_t).')
+            plt.ylabel('Policy update target (g_t - v_S(s_t).')
             plt.legend()
             plt.tight_layout()
             plt.show()
