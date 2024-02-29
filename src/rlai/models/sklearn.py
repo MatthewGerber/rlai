@@ -112,6 +112,15 @@ class SKLearnSGD(FunctionApproximationModel):
             help='Verbosity level.'
         )
 
+        parser.add_argument(
+            '--reverse-time-steps',
+            action='store_true',
+            help=(
+                'Whether the model is fed training data in reverse time-step order. This only affects plotting, where '
+                'the flag is used to reverse the order of stored values so that plots show values in the correct order.'
+            )
+        )
+
         return parser
 
     @classmethod
@@ -191,11 +200,18 @@ class SKLearnSGD(FunctionApproximationModel):
                 self.iteration_eta0_values[self.plot_iteration] = []
 
             for outcome in outcomes:
-                self.iteration_y_values[self.plot_iteration].append(outcome)
+
+                if self.reverse_time_steps:
+                    self.iteration_y_values[self.plot_iteration].insert(0, outcome)
+                    self.iteration_loss_values[self.plot_iteration].insert(0, avg_loss)
+                    self.iteration_eta0_values[self.plot_iteration].insert(0, self.model.eta0)
+                else:
+                    self.iteration_y_values[self.plot_iteration].append(outcome)
+                    self.iteration_loss_values[self.plot_iteration].append(avg_loss)
+                    self.iteration_eta0_values[self.plot_iteration].append(self.model.eta0)
+
                 self.y_averager.update(outcome)
-                self.iteration_loss_values[self.plot_iteration].append(avg_loss)
                 self.loss_averager.update(avg_loss)
-                self.iteration_eta0_values[self.plot_iteration].append(self.model.eta0)
                 self.eta0_averager.update(self.model.eta0)
 
     def evaluate(
@@ -250,8 +266,8 @@ class SKLearnSGD(FunctionApproximationModel):
 
             fig = None
 
-            # collect average values for the current policy improvement iteration and reset the averagers. the
-            # individual y, loss, and eta0 values have already been collected during the calls to fit.
+            # collect average values for the current iteration and reset the averagers. the individual y, loss, and eta0
+            # values have already been collected during the calls to fit.
             if self.y_averager.n > 0:
                 self.y_averages.append(self.y_averager.get_value())
                 self.y_averager.reset()
@@ -293,7 +309,7 @@ class SKLearnSGD(FunctionApproximationModel):
                     color='red',
                     label='Loss (avg./iter.)'
                 )
-                self.iteration_ax.set_xlabel('Policy improvement iteration')
+                self.iteration_ax.set_xlabel('Iteration')
                 self.iteration_ax.set_ylabel('Return (G)')
                 self.iteration_ax.legend(loc='upper left')
 
@@ -446,8 +462,9 @@ class SKLearnSGD(FunctionApproximationModel):
         self.iteration_eta0_values: Dict[int, List[float]] = dict()
         self.eta0_averager = IncrementalSampleAverager()
         self.eta0_averages: List[float] = []
-        self.plot_iteration = 0  # number of policy improvement iterations that have been plotted
+        self.plot_iteration = 0  # number of iterations that have been plotted
         self.plot_data_lock = threading.Lock()  # plotting data is read/written from multiple threads
+        self.reverse_time_steps = kwargs['reverse_time_steps']
 
         # plotting objects
         self.iteration_ax = None

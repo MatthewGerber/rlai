@@ -97,6 +97,12 @@ class ApproximateStateValueEstimator(StateValueEstimator):
             help='Fully-qualified type name of feature extractor.'
         )
 
+        parser.add_argument(
+            '--scale-outcomes',
+            action='store_true',
+            help='Whether to scale (standardize) outcomes before fitting the function approximation model.'
+        )
+
         return parser
 
     @classmethod
@@ -134,14 +140,11 @@ class ApproximateStateValueEstimator(StateValueEstimator):
         )
         del parsed_args.function_approximation_model
 
-        # there shouldn't be anything left
-        if len(vars(parsed_args)) > 0:  # pragma no cover
-            raise ValueError('Parsed args remain. Need to pass to constructor.')
-
         # initialize estimator
         estimator = cls(
             model=model,
-            feature_extractor=fex
+            feature_extractor=fex,
+            **vars(parsed_args)
         )
 
         return estimator, unparsed_args
@@ -188,15 +191,15 @@ class ApproximateStateValueEstimator(StateValueEstimator):
 
             state_feature_matrix = self.extract_features(self.experience_states, True)
 
-            # feature extractors may return a matrix with no columns if extraction was not possible. standardize the
-            # outcome values.
+            outcomes = np.array(self.experience_values)
+            if self.scale_outcomes:
+                outcomes = self.value_scaler.scale_features(outcomes.reshape(-1, 1), True).flatten()
+
+            # feature extractors may return a matrix with no columns if extraction was not possible
             if state_feature_matrix.shape[1] > 0:
                 self.model.fit(
                     feature_matrix=state_feature_matrix,
-                    outcomes=self.value_scaler.scale_features(
-                        np.array(self.experience_values).reshape(-1, 1),
-                        True
-                    ).flatten(),
+                    outcomes=outcomes,
                     weights=self.weights
                 )
 
@@ -223,12 +226,13 @@ class ApproximateStateValueEstimator(StateValueEstimator):
         if state_feature_matrix.shape[1] == 0:  # pragma no cover
             return 0.0
 
-        # invert the state value back to the original space
-        state_values = float(self.value_scaler.invert_scaled_features(
-            self.model.evaluate(state_feature_matrix).reshape((-1, 1))
-        ).flatten())
+        state_values = self.model.evaluate(state_feature_matrix)
 
-        return state_values
+        # invert the state value back to the original space if we're scaling
+        if self.scale_outcomes:
+            state_values = self.value_scaler.invert_scaled_features(state_values.reshape((-1, 1)).flatten())
+
+        return float(state_values)
 
     def extract_features(
             self,
@@ -262,19 +266,22 @@ class ApproximateStateValueEstimator(StateValueEstimator):
     def __init__(
             self,
             model: StateFunctionApproximationModel,
-            feature_extractor: StateFeatureExtractor
+            feature_extractor: StateFeatureExtractor,
+            scale_outcomes: bool
     ):
         """
         Initialize the estimator.
 
         :param model: Model.
         :param feature_extractor: Feature extractor.
+        :param scale_outcomes: Whether to scale state-value outcomes before fitting the estimator model.
         """
 
         super().__init__()
 
         self.model = model
         self.feature_extractor = feature_extractor
+        self.scale_outcomes = scale_outcomes
 
         self.experience_states: List[MdpState] = []
         self.experience_values: List[float] = []
