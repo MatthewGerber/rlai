@@ -441,6 +441,9 @@ class SKLearnSGD(FunctionApproximationModel):
 
         super().__init__()
 
+        self.reverse_time_steps = kwargs['reverse_time_steps']
+        del kwargs['reverse_time_steps']
+
         # if a verbosity level is not passed or passed as 0, then set flag indicating that we should not print captured
         # output back to stdout; otherwise, print captured output back to stdout as the caller expects.
         self.print_output = kwargs.get('verbose', 0) != 0
@@ -464,7 +467,6 @@ class SKLearnSGD(FunctionApproximationModel):
         self.eta0_averages: List[float] = []
         self.plot_iteration = 0  # number of iterations that have been plotted
         self.plot_data_lock = threading.Lock()  # plotting data is read/written from multiple threads
-        self.reverse_time_steps = kwargs['reverse_time_steps']
 
         # plotting objects
         self.iteration_ax = None
