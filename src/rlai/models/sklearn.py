@@ -112,15 +112,6 @@ class SKLearnSGD(FunctionApproximationModel):
             help='Verbosity level.'
         )
 
-        parser.add_argument(
-            '--reverse-time-steps',
-            action='store_true',
-            help=(
-                'Whether the model is fed training data in reverse time-step order. This only affects plotting, where '
-                'the flag is used to reverse the order of stored values so that plots show values in the correct order.'
-            )
-        )
-
         return parser
 
     @classmethod
@@ -441,8 +432,7 @@ class SKLearnSGD(FunctionApproximationModel):
 
         super().__init__()
 
-        self.reverse_time_steps = kwargs['reverse_time_steps']
-        del kwargs['reverse_time_steps']
+        self.reverse_time_steps = False
 
         # if a verbosity level is not passed or passed as 0, then set flag indicating that we should not print captured
         # output back to stdout; otherwise, print captured output back to stdout as the caller expects.

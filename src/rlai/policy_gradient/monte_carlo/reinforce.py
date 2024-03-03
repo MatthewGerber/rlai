@@ -15,10 +15,12 @@ import numpy as np
 
 from rlai.core.environments.mdp import MdpEnvironment
 from rlai.meta import rl_text
+from rlai.models.sklearn import SKLearnSGD
 from rlai.policy_gradient import ParameterizedMdpAgent
 from rlai.policy_gradient.policies import ParameterizedPolicy
 from rlai.policy_gradient.policies.continuous_action import ContinuousActionPolicy
 from rlai.state_value import StateValueEstimator
+from rlai.state_value.function_approximation import ApproximateStateValueEstimator
 from rlai.utils import (
     IncrementalSampleAverager,
     RunThreadManager,
@@ -80,6 +82,11 @@ def improve(
 
     if checkpoint_path is not None:
         checkpoint_path = os.path.expanduser(checkpoint_path)
+
+    # we work backward through the episode when updating the baseline model. if we have a baseline model, then indicate
+    # this so that plotting is ordered correctly.
+    if isinstance(agent.v_S, ApproximateStateValueEstimator) and isinstance(agent.v_S.model, SKLearnSGD):
+        agent.v_S.model.reverse_time_steps = True
 
     assert isinstance(agent.pi, ParameterizedPolicy)
 
@@ -159,7 +166,7 @@ def improve(
         # work backwards through the trace to calculate discounted returns. need to work backward in order for the value
         # of g at each time step t to be properly discounted.
         g = 0.0
-        t_target = {}
+        time_step_reward_g_baseline_return_target = {}
         for i, (t, state_a, reward) in enumerate(reversed(t_state_action_reward)):
 
             g = agent.gamma * g + reward.r
@@ -174,42 +181,66 @@ def improve(
 
                 state, a = state_a
 
-                # if we don't have a baseline, then the target is the return.
+                # if we don't have a baseline, then the baseline return is zero and the target is the return.
                 if agent.v_S is None:
-                    target = g
+                    baseline_return = 0.0
 
-                # otherwise, set the target to be the difference between observed return and the baseline estimate of
-                # the return from the state. actions that produce an above-baseline return will be reinforced. then
-                # update the baseline state-value estimator.
+                # otherwise, the baseline return is the current estimate of the return from the state. actions that
+                # produce an above-baseline return will be reinforced. then update the baseline estimator.
                 else:
-                    target = g - agent.v_S[state].get_value()
+                    baseline_return = agent.v_S[state].get_value()
                     agent.v_S[state].update(g)
                     agent.v_S.improve()
+
+                # form the target as difference between observed return and baseline
+                target = g - baseline_return
 
                 if num_warmup_episodes is None or episodes_finished > num_warmup_episodes:
                     agent.pi.append_update(a, state, alpha, target)
 
-                t_target[t] = target
+                # track values for plotting
+                time_step_reward_g_baseline_return_target[t] = (reward.r, g, baseline_return, target)
 
         if num_warmup_episodes is None or episodes_finished > num_warmup_episodes:
             agent.pi.commit_updates()
 
         episodes_finished += 1
 
+        # plot policy update baseline
         if (
             agent.v_S is not None and
             num_episodes_per_baseline_plot is not None and
             episodes_finished % num_episodes_per_baseline_plot == 0
         ):
             agent.v_S.plot()
-
+            time_steps = list(time_step_reward_g_baseline_return_target.keys())
             plt.plot(
-                list(t_target.keys()),
-                list(t_target.values()),
-                label='Target'
+                time_steps,
+                [r_t for r_t, _, _, _ in time_step_reward_g_baseline_return_target.values()],
+                color='red',
+                label='r(t)'
+            )
+            plt.plot(
+                time_steps,
+                [g_t for _, g_t, _, _ in time_step_reward_g_baseline_return_target.values()],
+                color='green',
+                label='g(t)'
+            )
+            plt.plot(
+                time_steps,
+                [v_t for _, _, v_t, _ in time_step_reward_g_baseline_return_target.values()],
+                color='violet',
+                label='v(t)',
+            )
+            plt.plot(
+                time_steps,
+                [target for _, _, _, target in time_step_reward_g_baseline_return_target.values()],
+                color='orange',
+                label='g(t) - v(t)'
             )
             plt.xlabel('Time step')
-            plt.ylabel('Policy update target (g_t - v_S(s_t).')
+            plt.ylabel('Policy update')
+            plt.grid()
             plt.legend()
             plt.tight_layout()
             plt.show()
