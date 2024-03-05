@@ -110,6 +110,16 @@ class ContinuousActionPolicy(ParameterizedPolicy, ABC):
         if self.action_scatter_plot is not None:
             self.action_scatter_plot.close()
 
+    def reset_for_new_run(
+            self,
+            state: MdpState
+    ):
+        """
+        Reset for new run.
+        """
+
+        self.feature_extractor.reset_for_new_run(state)
+
     def __init__(
             self,
             environment: ContinuousMdpEnvironment,

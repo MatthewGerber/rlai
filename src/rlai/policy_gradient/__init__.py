@@ -3,7 +3,7 @@ from typing import List, Tuple, Optional
 
 from numpy.random import RandomState
 
-from rlai.core import Agent, StochasticMdpAgent, Environment
+from rlai.core import Agent, StochasticMdpAgent, Environment, MdpState
 from rlai.meta import rl_text
 from rlai.policy_gradient.policies import ParameterizedPolicy
 from rlai.state_value import StateValueEstimator
@@ -95,6 +95,19 @@ class ParameterizedMdpAgent(StochasticMdpAgent):
         )
 
         return [agent], unparsed_args
+
+    def reset_for_new_run(
+            self,
+            state: MdpState
+    ):
+        """
+        Reset for new run.
+        """
+
+        super().reset_for_new_run(state)
+
+        if self.v_S is not None:
+            self.v_S.reset_for_new_run(state)
 
     def __init__(
             self,

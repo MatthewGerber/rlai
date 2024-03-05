@@ -100,6 +100,14 @@ class StateValueEstimator(ABC):
         Plot the current estimator.
         """
 
+    def reset_for_new_run(
+            self,
+            state: MdpState
+    ):
+        """
+        Reset for new run.
+        """
+
     def __init__(
             self
     ):

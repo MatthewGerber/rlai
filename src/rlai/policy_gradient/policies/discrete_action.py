@@ -154,6 +154,16 @@ class SoftMaxInActionPreferencesPolicy(ParameterizedPolicy):
             p_a_s = self[s][a]
             self.theta += alpha * target * (gradient_a_s / p_a_s)
 
+    def reset_for_new_run(
+            self,
+            state: MdpState
+    ):
+        """
+        Reset for new run.
+        """
+
+        self.feature_extractor.reset_for_new_run(state)
+
     def __init__(
             self,
             feature_extractor: StateActionFeatureExtractor
@@ -388,6 +398,16 @@ class SoftMaxInActionPreferencesJaxPolicy(ParameterizedPolicy):
             gradient_a_s = self.gradient(a, s, True)
             p_a_s = self[s][a]
             self.theta += alpha * target * (gradient_a_s / p_a_s)
+
+    def reset_for_new_run(
+            self,
+            state: MdpState
+    ):
+        """
+        Reset for new run.
+        """
+
+        self.feature_extractor.reset_for_new_run(state)
 
     def __init__(
             self,

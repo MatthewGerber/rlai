@@ -263,6 +263,16 @@ class ApproximateStateValueEstimator(StateValueEstimator):
 
         self.model.plot(True, None)
 
+    def reset_for_new_run(
+            self,
+            state: MdpState
+    ):
+        """
+        Reset for new run.
+        """
+
+        self.feature_extractor.reset_for_new_run(state)
+
     def __init__(
             self,
             model: StateFunctionApproximationModel,

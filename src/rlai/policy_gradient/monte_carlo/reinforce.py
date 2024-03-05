@@ -185,22 +185,28 @@ def improve(
                 if agent.v_S is None:
                     baseline_return = 0.0
 
-                # otherwise, the baseline return is the current estimate of the return from the state. actions that
-                # produce an above-baseline return will be reinforced. then update the baseline estimator.
+                # otherwise, the baseline return is the current estimate of the return from the state. update the
+                # state-value estimator with the obtained return. this only adds state-return example to the estimator.
+                # it does not improve the estimator.
                 else:
                     baseline_return = agent.v_S[state].get_value()
                     agent.v_S[state].update(g)
-                    agent.v_S.improve()
 
-                # form the target as difference between observed return and baseline
+                # form the target as difference between observed return and baseline. actions that produce an
+                # above-baseline return will be reinforced.
                 target = g - baseline_return
 
+                # append the update to the policy. this does not commit the updates.
                 if num_warmup_episodes is None or episodes_finished > num_warmup_episodes:
                     agent.pi.append_update(a, state, alpha, target)
 
                 # track values for plotting
                 time_step_reward_g_baseline_return_target[t] = (reward.r, g, baseline_return, target)
 
+        # improve the state-value estimator with the updates that were provided
+        agent.v_S.improve()
+
+        # commit the updates to the policy
         if num_warmup_episodes is None or episodes_finished > num_warmup_episodes:
             agent.pi.commit_updates()
 
@@ -214,29 +220,30 @@ def improve(
         ):
             agent.v_S.plot()
             time_steps = list(time_step_reward_g_baseline_return_target.keys())
+            plt.figure(figsize=(10, 10))
             plt.plot(
                 time_steps,
                 [r_t for r_t, _, _, _ in time_step_reward_g_baseline_return_target.values()],
                 color='red',
-                label='r(t)'
+                label='Reward:  r(t)'
             )
             plt.plot(
                 time_steps,
                 [g_t for _, g_t, _, _ in time_step_reward_g_baseline_return_target.values()],
                 color='green',
-                label='g(t)'
+                label='Return:  g(t)'
             )
             plt.plot(
                 time_steps,
                 [v_t for _, _, v_t, _ in time_step_reward_g_baseline_return_target.values()],
                 color='violet',
-                label='v(t)',
+                label='Value:  v(t)',
             )
             plt.plot(
                 time_steps,
                 [target for _, _, _, target in time_step_reward_g_baseline_return_target.values()],
                 color='orange',
-                label='g(t) - v(t)'
+                label='Target:  g(t) - v(t)'
             )
             plt.xlabel('Time step')
             plt.ylabel('Policy update')
