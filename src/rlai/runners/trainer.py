@@ -312,9 +312,9 @@ def get_argument_parser_for_train_function(
     )
 
     add_argument(
-        '--num-episodes-per-baseline-plot',
+        '--num-episodes-per-policy-update-plot',
         type=int,
-        help='Number of episodes per baseline plot.'
+        help='Number of episodes per policy-update plot.'
     )
 
     add_argument(

@@ -38,7 +38,7 @@ def improve(
         thread_manager: RunThreadManager,
         plot_state_value: bool,
         num_warmup_episodes: Optional[int] = None,
-        num_episodes_per_baseline_plot: Optional[int] = None,
+        num_episodes_per_policy_update_plot: Optional[int] = None,
         num_episodes_per_checkpoint: Optional[int] = None,
         checkpoint_path: Optional[str] = None,
         training_pool_directory: Optional[str] = None,
@@ -65,7 +65,7 @@ def improve(
     :param num_warmup_episodes: Number of warmup episodes to run before updating the policy. Warmup episodes allow
     estimates (e.g., means and variances of feature scalers, baseline state-value estimators, etc.) to settle before
     updating the policy.
-    :param num_episodes_per_baseline_plot: Number of episodes per baseline plot.
+    :param num_episodes_per_policy_update_plot: Number of episodes per baseline plot.
     :param num_episodes_per_checkpoint: Number of episodes per checkpoint save.
     :param checkpoint_path: Checkpoint path. Must be provided if `num_episodes_per_checkpoint` is provided.
     :param training_pool_directory: Path to directory in which to store pooled training runs.
@@ -204,7 +204,8 @@ def improve(
                 time_step_reward_g_baseline_return_target[t] = (reward.r, g, baseline_return, target)
 
         # improve the state-value estimator with the updates that were provided
-        agent.v_S.improve()
+        if agent.v_S is not None:
+            agent.v_S.improve()
 
         # commit the updates to the policy
         if num_warmup_episodes is None or episodes_finished > num_warmup_episodes:
@@ -212,13 +213,14 @@ def improve(
 
         episodes_finished += 1
 
-        # plot policy update baseline
+        # plot policy update
         if (
-            agent.v_S is not None and
-            num_episodes_per_baseline_plot is not None and
-            episodes_finished % num_episodes_per_baseline_plot == 0
+            num_episodes_per_policy_update_plot is not None and
+            episodes_finished % num_episodes_per_policy_update_plot == 0
         ):
-            agent.v_S.plot()
+            if agent.v_S is not None:
+                agent.v_S.plot()
+
             time_steps = list(time_step_reward_g_baseline_return_target.keys())
             plt.figure(figsize=(10, 10))
             plt.plot(
@@ -266,7 +268,7 @@ def improve(
                 'update_upon_every_visit': update_upon_every_visit,
                 'alpha': alpha,
                 'plot_state_value': plot_state_value,
-                'num_episodes_per_baseline_plot': num_episodes_per_baseline_plot,
+                'num_episodes_per_policy_update_plot': num_episodes_per_policy_update_plot,
                 'num_episodes_per_checkpoint': num_episodes_per_checkpoint,
                 'checkpoint_path': checkpoint_path,
                 'training_pool_directory': training_pool_directory,
