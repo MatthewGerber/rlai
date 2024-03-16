@@ -229,29 +229,32 @@ def improve(
                 color='red',
                 label='Reward:  r(t)'
             )
-            plt.plot(
+            plt.ylabel('Reward')
+            update_ax = plt.twinx()
+            update_ax.plot(
                 time_steps,
                 [g_t for _, g_t, _, _ in time_step_reward_g_baseline_return_target.values()],
                 color='green',
                 label='Return:  g(t)'
             )
-            plt.plot(
+            update_ax.plot(
                 time_steps,
                 [v_t for _, _, v_t, _ in time_step_reward_g_baseline_return_target.values()],
                 color='violet',
                 label='Value:  v(t)',
             )
-            plt.plot(
+            update_ax.plot(
                 time_steps,
                 [target for _, _, _, target in time_step_reward_g_baseline_return_target.values()],
                 color='orange',
                 label='Target:  g(t) - v(t)'
             )
+            update_ax.set_ylabel('Returns and Updates')
+            plt.tight_layout()
             plt.xlabel('Time step')
-            plt.ylabel('Policy update')
             plt.grid()
             plt.legend()
-            plt.tight_layout()
+
             plt.show()
             plt.close()
 
