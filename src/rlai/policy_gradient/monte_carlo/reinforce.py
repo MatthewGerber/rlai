@@ -229,6 +229,8 @@ def improve(
                 color='red',
                 label='Reward:  r(t)'
             )
+            for step, label in environment.time_step_axv_lines.items():
+                plt.axvline(step, color='violet', alpha=0.1)
             plt.ylabel('Reward')
             update_ax = plt.twinx()
             update_ax.plot(

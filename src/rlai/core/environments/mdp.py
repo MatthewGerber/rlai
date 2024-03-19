@@ -37,6 +37,8 @@ class MdpEnvironment(Environment, ABC):
         else:
             self.state = None
 
+        self.time_step_axv_lines.clear()
+
         return self.state
 
     @abstractmethod
@@ -128,6 +130,7 @@ class MdpEnvironment(Environment, ABC):
         self.terminal_states = [s for s in self.SS if s.terminal]
         self.nonterminal_states = [s for s in self.SS if not s.terminal]
         self.state: Optional[MdpState] = None
+        self.time_step_axv_lines: Dict[int, str] = {}
 
 
 @rl_text(chapter=3, page=48)
