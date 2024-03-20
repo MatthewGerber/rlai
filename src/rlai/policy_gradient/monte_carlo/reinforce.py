@@ -230,7 +230,7 @@ def improve(
                 label='Reward:  r(t)'
             )
             for step, label in environment.time_step_axv_lines.items():
-                plt.axvline(step, color='violet', alpha=0.1)
+                plt.axvline(step, color='violet', alpha=0.25)
             plt.ylabel('Reward')
             update_ax = plt.twinx()
             update_ax.plot(
@@ -254,6 +254,7 @@ def improve(
             update_ax.set_ylabel('Returns and Updates')
             plt.tight_layout()
             plt.xlabel('Time step')
+            plt.title(f'Episode {episodes_finished}')
             plt.grid()
             plt.legend()
 
