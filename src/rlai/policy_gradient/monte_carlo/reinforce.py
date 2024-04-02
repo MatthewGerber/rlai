@@ -231,7 +231,13 @@ def improve(
             )
             for step, label in environment.time_step_axv_lines.items():
                 plt.axvline(step, color='violet', alpha=0.25)
-            plt.ylabel('Reward')
+
+            reward_ax = plt.gca()
+            reward_ax.set_xlabel('Time step')
+            reward_ax.set_ylabel('Reward')
+            reward_ax.set_title(f'Episode {episodes_finished}')
+            reward_ax.legend()
+
             update_ax = plt.twinx()
             update_ax.plot(
                 time_steps,
@@ -252,12 +258,18 @@ def improve(
                 label='Target:  g(t) - v(t)'
             )
             update_ax.set_ylabel('Returns and Updates')
-            plt.tight_layout()
-            plt.xlabel('Time step')
-            plt.title(f'Episode {episodes_finished}')
-            plt.grid()
-            plt.legend()
 
+            # make y limits the same
+            reward_ylim = reward_ax.get_ylim()
+            update_ylim = update_ax.get_ylim()
+            y_limits = (
+                min(reward_ylim[0], update_ylim[0]),
+                max(reward_ylim[1], update_ylim[1])
+            )
+            reward_ax.set_ylim(y_limits)
+            update_ax.set_ylim(y_limits)
+
+            plt.tight_layout()
             plt.show()
             plt.close()
 
