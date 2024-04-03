@@ -258,6 +258,7 @@ def improve(
                 label='Target:  g(t) - v(t)'
             )
             update_ax.set_ylabel('Returns and Updates')
+            update_ax.legend()
 
             # make y limits the same
             reward_ylim = reward_ax.get_ylim()

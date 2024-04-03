@@ -81,6 +81,7 @@ class StateDimensionIndicator(ABC):
         :return: Value.
         """
 
+
 class StateDimensionSegment(StateDimensionIndicator):
     """
     Segment of a state dimension.
