@@ -232,6 +232,15 @@ def improve(
             for step, label in environment.time_step_axv_lines.items():
                 plt.axvline(step, color='violet', alpha=0.25)
 
+            for aux_plot_label in environment.aux_plot_label_data_kwargs:
+                aux_plot_data = environment.aux_plot_label_data_kwargs[aux_plot_label][0]
+                plt.plot(
+                    list(aux_plot_data.keys()),
+                    list(aux_plot_data.values()),
+                    label=aux_plot_label,
+                    **environment.aux_plot_label_data_kwargs[aux_plot_label][1]
+                )
+
             reward_ax = plt.gca()
             reward_ax.set_xlabel('Time step')
             reward_ax.set_ylabel('Reward')
