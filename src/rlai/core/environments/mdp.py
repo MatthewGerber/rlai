@@ -38,7 +38,7 @@ class MdpEnvironment(Environment, ABC):
             self.state = None
 
         self.time_step_axv_lines.clear()
-        self.aux_plot_label_data_kwargs.clear()
+        self.plot_label_data_kwargs.clear()
 
         return self.state
 
@@ -132,7 +132,7 @@ class MdpEnvironment(Environment, ABC):
         self.nonterminal_states = [s for s in self.SS if not s.terminal]
         self.state: Optional[MdpState] = None
         self.time_step_axv_lines: Dict[int, Tuple[str, str]] = {}
-        self.aux_plot_label_data_kwargs: Dict[str, Tuple[Dict[int, float], Dict]] = {}
+        self.plot_label_data_kwargs: Dict[str, Tuple[Dict[int, float], Dict]] = {}
 
 
 @rl_text(chapter=3, page=48)

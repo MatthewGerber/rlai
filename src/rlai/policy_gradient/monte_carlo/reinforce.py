@@ -232,15 +232,6 @@ def improve(
             for step, label in environment.time_step_axv_lines.items():
                 plt.axvline(step, color='violet', alpha=0.25)
 
-            for aux_plot_label in environment.aux_plot_label_data_kwargs:
-                aux_plot_data = environment.aux_plot_label_data_kwargs[aux_plot_label][0]
-                plt.plot(
-                    list(aux_plot_data.keys()),
-                    list(aux_plot_data.values()),
-                    label=aux_plot_label,
-                    **environment.aux_plot_label_data_kwargs[aux_plot_label][1]
-                )
-
             reward_ax = plt.gca()
             reward_ax.set_xlabel('Time step')
             reward_ax.set_ylabel('Reward')
@@ -282,6 +273,19 @@ def improve(
             plt.tight_layout()
             plt.show()
             plt.close()
+
+            if len(environment.plot_label_data_kwargs) > 0:
+                for plot_label in environment.plot_label_data_kwargs:
+                    plot_data = environment.plot_label_data_kwargs[plot_label][0]
+                    plt.plot(
+                        list(plot_data.keys()),
+                        list(plot_data.values()),
+                        label=plot_label,
+                        **environment.plot_label_data_kwargs[plot_label][1]
+                    )
+                plt.tight_layout()
+                plt.show()
+                plt.close()
 
         num_fallback_iterations = 0
         if training_pool is not None and episodes_finished % training_pool_iterate_episodes == 0:
