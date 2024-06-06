@@ -122,7 +122,7 @@ def improve(
         # as the times of their first visits (only if we're doing first-visit evaluation).
         t = 0
         state_action_first_t = None if update_upon_every_visit else {}
-        t_state_action_reward = []
+        t_state_action_reward_gamma = []
         truncation_time_step = None
         while not state.terminal:
             try:
@@ -141,7 +141,8 @@ def improve(
                     state_action_first_t[state_a] = t
 
                 next_state, next_reward = environment.advance(state, t, a, agent)
-                t_state_action_reward.append((t, state_a, next_reward))
+                gamma = agent.gamma
+                t_state_action_reward_gamma.append((t, state_a, next_reward, gamma))
                 state = next_state
                 t += 1
                 agent.sense(state, t)
@@ -150,7 +151,7 @@ def improve(
                 # longer.
                 if truncation_time_step is not None:
                     steps_past_truncation = (t - truncation_time_step)
-                    discounted_reward = next_reward.r * (agent.gamma ** steps_past_truncation)
+                    discounted_reward = next_reward.r * (gamma ** steps_past_truncation)
                     if np.isclose(discounted_reward, 0.0):
                         raise ValueError(
                             f'Discounted reward converged to zero after {steps_past_truncation} post-truncation '
@@ -167,9 +168,9 @@ def improve(
         # of g at each time step t to be properly discounted.
         g = 0.0
         time_step_reward_g_baseline_return_target = {}
-        for i, (t, state_a, reward) in enumerate(reversed(t_state_action_reward)):
+        for i, (t, state_a, reward, gamma) in enumerate(reversed(t_state_action_reward_gamma)):
 
-            g = agent.gamma * g + reward.r
+            g = gamma * g + reward.r
 
             # only update value estimates before the truncation time step if we have one
             if truncation_time_step is not None and t >= truncation_time_step:
