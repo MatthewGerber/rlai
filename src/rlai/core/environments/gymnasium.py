@@ -683,7 +683,7 @@ class ContinuousActionGymCustomizer(GymCustomizer, ABC):
         """
         Get action-dimension names.
 
-       :param gym: Native gym environment.
+        :param gym: Native gym environment.
         :return: List of names.
         """
 

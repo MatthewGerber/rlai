@@ -1475,7 +1475,7 @@ class Environment(ABC):
         The episode will not reach a natural termination state. Instead, the episode loop will exit. This function is
         called to provide the environment an opportunity to clean up resources. This is not usually needed with
         simulation-based environments since breaking the episode loop prevents any further episode advancement. However,
-        in physicial environments the system might continue to advance in the absence of further calls to the advance
+        in physical environments the system might continue to advance in the absence of further calls to the advance
         function. This function allows the environment to perform any adjustments that are normally required upon
         termination.
         """
