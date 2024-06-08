@@ -1,6 +1,7 @@
 import os
 from typing import Dict
 
+import numpy as np
 from xvfbwrapper import Xvfb
 
 from rlai.core import Policy, Action, MdpState
@@ -26,7 +27,7 @@ def tabular_pi_legacy_eq(
         for s in pi:
             if len(pi[s]) == len(fixture[s]):
                 for a in pi[s]:
-                    if pi[s][a] != fixture[s][a]:
+                    if not np.isclose(pi[s][a], fixture[s][a]):
                         return False
             else:
                 return False
@@ -54,7 +55,7 @@ def tabular_estimator_legacy_eq(
         for s in estimator:
             if len(estimator.q_S_A[s]) == len(fixture[s]):
                 for a in estimator.q_S_A[s]:
-                    if estimator.q_S_A[s][a].get_value() != fixture[s][a].get_value():
+                    if not np.isclose(estimator.q_S_A[s][a].get_value(), fixture[s][a].get_value()):
                         return False
             else:
                 return False

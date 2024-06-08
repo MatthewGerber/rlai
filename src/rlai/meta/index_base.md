@@ -24,6 +24,10 @@ placed on each notebook, so don't expect the Binder interface to support heavy w
 alternatives.
 
 # Installation, Use, and Development
+
+RLAI requires `swig` and `ffmpeg` to be installed on the system. These can be installed using a package manager on your
+OS (e.g., Homebrew for MacOS, `apt` for Ubuntu, etc.).
+
 The RLAI code is distributed via [PyPI](https://pypi.org/project/rlai/) and can be installed with `pip install rlai`. 
 There are several ways to use the package.
 
