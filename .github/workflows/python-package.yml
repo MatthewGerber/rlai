@@ -31,8 +31,7 @@ jobs:
 
     - name: Check source with flake8
       run: |
-        poetry shell
-        flake8 ./src ./test
+        poetry run flake8 ./src ./test
 
     - name: Test with pytest
       env:
@@ -46,7 +45,7 @@ jobs:
         # export QT_DEBUG_PLUGINS=1
 
         # run tests
-        coverage run --source=src --omit=src/rlai/meta/* -m pytest ./test
+        poetry run coverage run --source=src --omit=src/rlai/meta/* -m pytest ./test
 
         # upload results to coveralls using github token above
-        coveralls --service=github
+        poetry run coveralls --service=github
