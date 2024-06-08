@@ -31,6 +31,7 @@ jobs:
 
     - name: Check source with flake8
       run: |
+        poetry shell
         flake8 ./src ./test
 
     - name: Test with pytest
