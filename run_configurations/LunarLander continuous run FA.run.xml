@@ -13,7 +13,7 @@
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
     <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/rlai/runners/agent_in_environment.py" />
-    <option name="PARAMETERS" value="--random-seed 12347 --agent ../../../trained_agents/lunarlander/continuous_lunarlander_agent.pickle --environment rlai.core.environments.gymnasium.Gym --gym-id LunarLanderContinuous-v2 --render-every-nth-episode 1 --n-runs 10 --T 500 --plot --plot-environment" />
+    <option name="PARAMETERS" value="--random-seed 12347 --agent ../../../trained_agents/lunarlander/continuous_lunarlander_agent.pickle --environment rlai.core.environments.gymnasium.Gym --gym-id LunarLanderContinuous-v3 --render-every-nth-episode 1 --n-runs 10 --T 500 --plot --plot-environment" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />

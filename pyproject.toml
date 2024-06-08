@@ -20,23 +20,7 @@ python = '>=3.10'
 scipy = '~=1.11'
 matplotlib = '~=3.8'
 numpy = '~=1.26'
-gymnasium = { version = '~=0.29', extras = ['classic-control', 'box2d', 'mujoco'] }
-
-# the preceding mujoco dependency will install a recent mujoco version just fine. however, the gym/mujoco
-# integration is broken for Swimmer-v4 and perhaps other environments. this is unfortunate, since the preceding
-# installation for mujoco is much more convenient than the previous approach. if you want to use Swimmer-v4 instead,
-# then downgrade mujoco with the following dependency:
-mujoco = '<3'
-
-# if you do this, then you will also need to do the following before installing:
-#   1. download mujoco 2.3.7:  https://github.com/google-deepmind/mujoco/releases/tag/2.3.7
-#   2. move the MuJoCo app to local disk.
-#   2. set the following environment variables prior to installing the present package:
-#        export MUJOCO_PATH="/path/to/MuJoCo.app"
-#        export MUJOCO_PLUGIN_PATH="/path/to/MuJoCo.app/Contents/MacOS/mujoco_plugin"
-#
-# see the following page for details:  https://github.com/Farama-Foundation/Gymnasium/issues/749
-
+gymnasium = { version = '==1.0.0a2', extras = ['classic-control', 'box2d', 'mujoco'] }
 moviepy = '~=1.0'
 scikit-learn = '~=1.3'
 pandas = '~=2.1'

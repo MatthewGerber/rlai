@@ -94,7 +94,7 @@ class Gym(ContinuousMdpEnvironment):
     Generalized Gym environment. Any Gym environment can be executed by supplying the appropriate identifier.
     """
 
-    LLC_V2 = 'LunarLanderContinuous-v2'
+    LLC_V2 = 'LunarLanderContinuous-v3'
     MCC_V0 = 'MountainCarContinuous-v0'
     SWIMMER_V4 = 'Swimmer-v4'
     CARTPOLE_V1 = 'CartPole-v1'

@@ -43,7 +43,7 @@ The following command trains an agent for the continuous lunar lander environmen
 with a baseline state-value estimator:
 
 ```
-rlai train --random-seed 12345 --agent rlai.policy_gradient.ParameterizedMdpAgent --gamma 1.0 --environment rlai.core.environments.gymnasium.Gym --gym-id LunarLanderContinuous-v2 --render-every-nth-episode 100 --video-directory ~/Desktop/lunarlander_continuous_videos --plot-environment --T 500 --train-function rlai.policy_gradient.monte_carlo.reinforce.improve --num-episodes 50000 --plot-state-value True --v-S rlai.state_value.function_approximation.ApproximateStateValueEstimator --feature-extractor rlai.core.environments.gymnasium.ContinuousLunarLanderFeatureExtractor --function-approximation-model rlai.models.sklearn.SKLearnSGD --loss squared_error --sgd-alpha 0.0 --learning-rate constant --eta0 0.0001 --policy rlai.policy_gradient.policies.continuous_action.ContinuousActionBetaDistributionPolicy --policy-feature-extractor rlai.core.environments.gymnasium.ContinuousLunarLanderFeatureExtractor --plot-policy --alpha 0.0001 --update-upon-every-visit True --save-agent-path ~/Desktop/continuous_lunarlander_agent.pickle
+rlai train --random-seed 12345 --agent rlai.policy_gradient.ParameterizedMdpAgent --gamma 1.0 --environment rlai.core.environments.gymnasium.Gym --gym-id LunarLanderContinuous-v3 --render-every-nth-episode 100 --video-directory ~/Desktop/lunarlander_continuous_videos --plot-environment --T 500 --train-function rlai.policy_gradient.monte_carlo.reinforce.improve --num-episodes 50000 --plot-state-value True --v-S rlai.state_value.function_approximation.ApproximateStateValueEstimator --feature-extractor rlai.core.environments.gymnasium.ContinuousLunarLanderFeatureExtractor --function-approximation-model rlai.models.sklearn.SKLearnSGD --loss squared_error --sgd-alpha 0.0 --learning-rate constant --eta0 0.0001 --policy rlai.policy_gradient.policies.continuous_action.ContinuousActionBetaDistributionPolicy --policy-feature-extractor rlai.core.environments.gymnasium.ContinuousLunarLanderFeatureExtractor --plot-policy --alpha 0.0001 --update-upon-every-visit True --save-agent-path ~/Desktop/continuous_lunarlander_agent.pickle
 ```
 
 The arguments are explained below.
@@ -58,7 +58,7 @@ The arguments are explained below.
 
 ### Environment
 * `--environment rlai.core.environments.gymnasium.Gym`:  Environment class.
-* `--gym-id LunarLanderContinuous-v2`:  Gym environment identifier.
+* `--gym-id LunarLanderContinuous-v3`:  Gym environment identifier.
 * `--render-every-nth-episode 100`:  Render a video every 100 episodes.
 * `--video-directory ~/Desktop/lunarlander_continuous_videos`:  Where to store rendered videos.
 * `--plot-environment`:  Show a real-time plot of state and reward values.

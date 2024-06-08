@@ -16,7 +16,7 @@ def test_rescale():
     gym = Gym(
         random_state=random_state,
         T=None,
-        gym_id='LunarLanderContinuous-v2'
+        gym_id='LunarLanderContinuous-v3'
     )
 
     fex = ContinuousLunarLanderFeatureExtractor()
