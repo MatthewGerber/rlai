@@ -27,7 +27,7 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y ffmpeg xvfb freeglut3-dev libxcb-xinerama0 libxcb-icccm4 libxcb-image0 libxcb-render-util0 libxcb-xinerama0 libxkbcommon-x11-0 libxcb-keysyms1 libxcb-randr0
         curl -sSL https://install.python-poetry.org | python3.11 -
-        poetry install
+        poetry install --with 'dev'
 
     - name: Check source with flake8
       run: |
