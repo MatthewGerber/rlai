@@ -42,7 +42,7 @@ jobs:
         export HEADLESS=True
 
         # uncomment below and add -s after pytest to show all debug output
-        # export QT_DEBUG_PLUGINS=1
+        export QT_DEBUG_PLUGINS=1
 
         # run tests
         poetry run coverage run --source=src --omit=src/rlai/meta/* -m pytest -m 'not will_fail_gh' ./test
