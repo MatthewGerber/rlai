@@ -92,8 +92,8 @@ increasing complexity:
 
 ## MuJoCo
 RLAI works with [MuJoCo](https://mujoco.org/) either via Gymnasium described above or directly via the 
-MuJoCo-provided Python bindings. See [here](https://github.com/google-deepmind/mujoco#installation) for installation 
-instructions.
+MuJoCo-provided Python bindings. On macOS, see [here](https://stackoverflow.com/questions/63475461/unable-to-import-opengl-gl-in-python-on-macos)
+for how to fix OpenGL errors.
 
 ## Robocode
 [Robocode](https://github.com/robo-code/robocode) is a simulation-based robotic combat programming game with a 

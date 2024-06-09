@@ -96,7 +96,7 @@ class Gym(ContinuousMdpEnvironment):
 
     LLC_V3 = 'LunarLanderContinuous-v3'
     MCC_V0 = 'MountainCarContinuous-v0'
-    SWIMMER_V4 = 'Swimmer-v4'
+    SWIMMER_V5 = 'Swimmer-v5'
     CARTPOLE_V1 = 'CartPole-v1'
 
     @classmethod
@@ -225,6 +225,8 @@ class Gym(ContinuousMdpEnvironment):
             self.gym_customizer = ContinuousMountainCarCustomizer()
         elif self.gym_id == Gym.CARTPOLE_V1:
             self.gym_customizer = CartpoleCustomizer()
+        elif self.gym_id == Gym.SWIMMER_V5:
+            self.gym_customizer = ContinuousActionGymCustomizer()
         else:
             self.gym_customizer = GymCustomizer()
 
@@ -372,7 +374,7 @@ class Gym(ContinuousMdpEnvironment):
                 self.state_reward_scatter_plot.update(np.append(observation, reward))
 
             # swimmer is a non-qt environment, so we need to process qt events manually.
-            if self.gym_id == Gym.SWIMMER_V4:
+            if self.gym_id == Gym.SWIMMER_V5:
                 # local-import so that we don't crash on raspberry pi os, where we can't install qt6.
                 from PyQt6.QtWidgets import QApplication  # type: ignore
                 QApplication.processEvents()
@@ -671,7 +673,7 @@ class DiscreteActionGymCustomizer(GymCustomizer, ABC):
         return [None] * action_space.n
 
 
-class ContinuousActionGymCustomizer(GymCustomizer, ABC):
+class ContinuousActionGymCustomizer(GymCustomizer):
     """
     Continuous-action Gym environment.
     """
