@@ -23,7 +23,7 @@ Note that Binder notebooks are hosted for free by sponsors who donate computatio
 placed on each notebook, so don't expect the Binder interface to support heavy workloads. See the following section for
 alternatives.
 
-# Installation, Use, and Development
+# Installation and Use
 
 RLAI requires `swig` and `ffmpeg` to be installed on the system. These can be installed using a package manager on your
 OS (e.g., Homebrew for macOS, `apt` for Ubuntu, etc.).
@@ -41,6 +41,8 @@ There are several ways to use the package.
   and is also explored in the [CLI guide](cli_guide.md).
 
 * See [here](raspberry_pi.md) for how to use RLAI on a Raspberry Pi system. 
+
+# Development
 
 Looking for a place to dig in? Below are a few ideas organized by area of interest.
 
@@ -60,6 +62,28 @@ Looking for a place to dig in? Below are a few ideas organized by area of intere
 * Feel free to [ask questions](https://github.com/MatthewGerber/rlai/discussions), 
   [submit issues](https://github.com/MatthewGerber/rlai/issues), and 
   [submit pull requests](https://github.com/MatthewGerber/rlai/pulls).
+
+# Releasing
+
+1. Bump to release and tag:
+   ```bash
+   OLD_VERSION=$(poetry version --short)
+   poetry version prerelease --next-phase  # beta
+   poetry version prerelease --next-phase  # rc
+   poetry version prerelease --next-phase  # release
+   VERSION=$(poetry version --short)
+   git commit -a -m "Bump version:  ${OLD_VERSION} → ${VERSION}"
+   git tag -a -m "rlai v${VERSION}" v${VERSION}
+   git push --follow-tags
+   ```
+2. Increment the version to the next preminor.
+   ```bash
+   OLD_VERSION=$(poetry version --short)
+   poetry version preminor --next-phase
+   VERSION=$(poetry version --short)
+   git commit -a -m "Bump version: ${OLD_VERSION} → ${VERSION}"
+   git push
+   ```
   
 # Features
 * Diagnostic and interpretation tools:  Diagnostic and interpretation tools become critical as the environment and agent 
