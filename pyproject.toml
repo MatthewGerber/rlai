@@ -4,7 +4,7 @@ build-backend = 'poetry.core.masonry.api'
 
 [tool.poetry]
 name = 'rlai'
-version = "1.3.0"
+version = "1.4.0a0"
 description = 'Reinforcement Learning:  An Introduction'
 readme = 'README.md'
 authors = [
