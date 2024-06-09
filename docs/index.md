@@ -28,8 +28,7 @@ alternatives.
 RLAI requires `swig` and `ffmpeg` to be installed on the system. These can be installed using a package manager on your
 OS (e.g., Homebrew for macOS, `apt` for Ubuntu, etc.).
 
-The RLAI code is distributed via [PyPI](https://pypi.org/project/rlai/) and can be installed with `pip install rlai`. 
-There are several ways to use the package.
+The RLAI code is distributed via [PyPI](https://pypi.org/project/rlai/). There are several ways to use the package.
 
 * JupyterLab notebook:  Most of the RLAI functionality is exposed via the companion JupyterLab notebook. See the 
   [JupyterLab guide](jupyterlab_guide.md) for more information.  
@@ -62,28 +61,6 @@ Looking for a place to dig in? Below are a few ideas organized by area of intere
 * Feel free to [ask questions](https://github.com/MatthewGerber/rlai/discussions), 
   [submit issues](https://github.com/MatthewGerber/rlai/issues), and 
   [submit pull requests](https://github.com/MatthewGerber/rlai/pulls).
-
-# Releasing
-
-1. Bump to release and tag:
-   ```bash
-   OLD_VERSION=$(poetry version --short)
-   poetry version prerelease --next-phase  # beta
-   poetry version prerelease --next-phase  # rc
-   poetry version prerelease --next-phase  # release
-   VERSION=$(poetry version --short)
-   git commit -a -m "Bump version:  ${OLD_VERSION} → ${VERSION}"
-   git tag -a -m "rlai v${VERSION}" v${VERSION}
-   git push --follow-tags
-   ```
-2. Increment the version to the next preminor:
-   ```bash
-   OLD_VERSION=$(poetry version --short)
-   poetry version preminor
-   VERSION=$(poetry version --short)
-   git commit -a -m "Bump version:  ${OLD_VERSION} → ${VERSION}"
-   git push
-   ```
   
 # Features
 * Diagnostic and interpretation tools:  Diagnostic and interpretation tools become critical as the environment and agent 
@@ -122,31 +99,33 @@ instructions.
 [Robocode](https://github.com/robo-code/robocode) is a simulation-based robotic combat programming game with a 
 dynamically rich environment, multi-agent teaming, and a large user community. Read more 
 [here](case_studies/robocode.md).
-
+   
 # Figures from the Textbook
 A list of figures can be found [here](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/figures). Most of these 
 are reproductions of those shown in the Sutton and Barto text; however, even the reproductions typically provide detail 
 not shown in the text.
 
-# Links to Code by Topic
-### [Actions](ch_Actions.md)
-### [Agents](ch_Agents.md)
-### [Diagnostics](ch_Diagnostics.md)
-### [Environments](ch_Environments.md)
-### [Feature Extractors](ch_Feature_Extractors.md)
-### [Rewards](ch_Rewards.md)
-### [States](ch_States.md)
-### [Training and Running Agents](ch_Training_and_Running_Agents.md)
-### [Value Estimation](ch_Value_Estimation.md)
+# Links to Code
 
-# Links to Code by Book Chapter
-### [Chapter 1:  Introduction](ch_1.md)
-### [Chapter 2:  Multi-armed Bandits](ch_2.md)
-### [Chapter 3:  Finite Markov Decision Processes](ch_3.md)
-### [Chapter 4:  Dynamic Programming](ch_4.md)
-### [Chapter 5:  Monte Carlo Methods](ch_5.md)
-### [Chapter 6:  Temporal-Difference Learning](ch_6.md)
-### [Chapter 8:  Planning and Learning with Tabular Methods](ch_8.md)
-### [Chapter 9:  On-policy Prediction with Approximation](ch_9.md)
-### [Chapter 10:  On-policy Control with Approximation](ch_10.md)
-### [Chapter 13:  Policy Gradient Methods](ch_13.md)
+See [here](links_to_code.md).
+
+# Releasing
+1. Bump to release and tag:
+   ```bash
+   OLD_VERSION=$(poetry version --short)
+   poetry version prerelease --next-phase  # beta
+   poetry version prerelease --next-phase  # rc
+   poetry version prerelease --next-phase  # release
+   VERSION=$(poetry version --short)
+   git commit -a -m "Bump version:  ${OLD_VERSION} → ${VERSION}"
+   git tag -a -m "rlai v${VERSION}" v${VERSION}
+   git push --follow-tags
+   ```
+2. Increment the version to the next preminor:
+   ```bash
+   OLD_VERSION=$(poetry version --short)
+   poetry version preminor
+   VERSION=$(poetry version --short)
+   git commit -a -m "Bump version:  ${OLD_VERSION} → ${VERSION}"
+   git push
+   ```

@@ -125,7 +125,7 @@ def main():
     summarize(rlai, chapter_page_descriptions)
 
     docs_dir = f'{os.path.dirname(__file__)}/../../../docs/'
-    meta_md_path = f'{docs_dir}index.md'
+    meta_md_path = f'{docs_dir}links_to_code.md'
 
     ch_num_name = {
         1: 'Introduction',
@@ -147,14 +147,8 @@ def main():
         17: 'Frontiers'
     }
 
-    # read base index
-    with open('index_base.md', 'r') as base:
-        readme_base = base.read().strip()
-
     # write markdown file
     with open(meta_md_path, 'w') as meta_md:
-
-        meta_md.write(f'{readme_base}\n\n')
 
         # write sorted-string chapters
         meta_md.write('# Links to Code by Topic\n')
