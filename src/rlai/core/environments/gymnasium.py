@@ -94,7 +94,7 @@ class Gym(ContinuousMdpEnvironment):
     Generalized Gym environment. Any Gym environment can be executed by supplying the appropriate identifier.
     """
 
-    LLC_V2 = 'LunarLanderContinuous-v3'
+    LLC_V3 = 'LunarLanderContinuous-v3'
     MCC_V0 = 'MountainCarContinuous-v0'
     SWIMMER_V4 = 'Swimmer-v4'
     CARTPOLE_V1 = 'CartPole-v1'
@@ -219,7 +219,7 @@ class Gym(ContinuousMdpEnvironment):
         self.steps_per_second = steps_per_second
         self.gym_native = self.init_gym_native()
 
-        if self.gym_id == Gym.LLC_V2:
+        if self.gym_id == Gym.LLC_V3:
             self.gym_customizer = ContinuousLunarLanderCustomizer()
         elif self.gym_id == Gym.MCC_V0:
             self.gym_customizer = ContinuousMountainCarCustomizer()
