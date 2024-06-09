@@ -86,7 +86,7 @@ class ScatterPlot:
 
     def move_to_bottom_left(self):
         """
-        Move the scatter plot to the botttom-left corner of the screen.
+        Move the scatter plot to the bottom-left corner of the screen.
         """
 
         bottom_left_point = QApplication.primaryScreen().availableGeometry().bottomLeft()

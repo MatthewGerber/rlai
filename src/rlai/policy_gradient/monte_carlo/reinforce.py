@@ -262,11 +262,11 @@ def improve(
             update_ax.legend()
 
             # make y limits the same
-            reward_ylim = reward_ax.get_ylim()
-            update_ylim = update_ax.get_ylim()
+            reward_y_limit = reward_ax.get_ylim()
+            update_y_limit = update_ax.get_ylim()
             y_limits = (
-                min(reward_ylim[0], update_ylim[0]),
-                max(reward_ylim[1], update_ylim[1])
+                min(reward_y_limit[0], update_y_limit[0]),
+                max(reward_y_limit[1], update_y_limit[1])
             )
             reward_ax.set_ylim(y_limits)
             update_ax.set_ylim(y_limits)
