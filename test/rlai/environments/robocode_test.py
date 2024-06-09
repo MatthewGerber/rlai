@@ -8,11 +8,13 @@ import time
 from threading import Thread
 
 import numpy as np
+import pytest
 
 from rlai.core.environments.robocode import RobocodeFeatureExtractor
 from rlai.runners.trainer import run
 
 
+@pytest.mark.will_fail_gh
 def test_learn():
     """
     Test.

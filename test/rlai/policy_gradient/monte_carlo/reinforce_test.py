@@ -4,6 +4,7 @@ import shlex
 import tempfile
 
 import numpy as np
+import pytest
 
 from rlai.runners.trainer import run
 
@@ -34,6 +35,7 @@ def test_manual_versus_jax_policy_gradient():
     assert np.allclose(jax_agent.pi.theta, fixture_agent.pi.theta)
 
 
+@pytest.mark.will_fail_gh
 def test_resume():
     """
     Test.

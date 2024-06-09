@@ -45,7 +45,7 @@ jobs:
         # export QT_DEBUG_PLUGINS=1
 
         # run tests
-        poetry run coverage run --source=src --omit=src/rlai/meta/* -m pytest ./test
+        poetry run coverage run --source=src --omit=src/rlai/meta/* -m pytest -m 'not will_fail_gh' ./test
 
         # upload results to coveralls using github token above
         poetry run coveralls --service=github

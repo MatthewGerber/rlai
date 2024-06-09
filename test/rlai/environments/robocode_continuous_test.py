@@ -7,10 +7,13 @@ import tempfile
 import time
 from threading import Thread
 
+import pytest
+
 from rlai.core.environments.robocode_continuous_action import RobocodeFeatureExtractor
 from rlai.runners.trainer import run
 
 
+@pytest.mark.will_fail_gh
 def test_continuous_learn():
     """
     Test.

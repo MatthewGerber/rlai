@@ -47,5 +47,11 @@ xvfbwrapper = '~=0.2'
 coveralls = '~=4.0'
 bump2version = '~=1.0'
 
+[tool.pytest.ini_options]
+markers = [
+    'will_fail:  Marks tests that are expected to fail always.',
+    'will_fail_gh:  Marks tests that are expected to fail in the GitHub workflow cloud.'
+]
+
 [tool.poetry.scripts]
 rlai = 'rlai.runners.top_level:run'
