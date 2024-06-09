@@ -94,7 +94,7 @@ class IncrementalSampleAverager:
         the weight of previous values decreasing according to `alpha^i`, where `i` is the number of time steps prior to
         the current when a previous value was obtained. If `None` is passed, then the unweighted sample average will be
         used, and every value will have the same weight.
-        :param weighted: Whether or not per-value weights will be provided to calls to `update`. If this is True, then
+        :param weighted: Whether per-value weights will be provided to calls to `update`. If this is True, then
         every call to `update` must provide a non-None value for `weight`.
         """
 

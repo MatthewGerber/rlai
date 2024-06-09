@@ -42,7 +42,7 @@ def tabular_estimator_legacy_eq(
         fixture: Dict[MdpState, Dict[Action, IncrementalSampleAverager]]
 ) -> bool:
     """
-    Our older fixtures use a nested dictionary structure (see the type of "other above) to store state-action value
+    Our older fixtures use a nested dictionary structure (see the type of other above) to store state-action value
     estimates. The newer approach uses a class-based structure to support function approximation. This function bridges
     the two for the purposes of test assertions.
 

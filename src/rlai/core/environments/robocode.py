@@ -495,8 +495,8 @@ class RobocodeState(MdpState):
         """
         Initialize the state.
 
-        :param battle_field_height: Battle field height (pixels).
-        :param battle_field_width: Battle field width (pixels).
+        :param battle_field_height: Battlefield height (pixels).
+        :param battle_field_width: Battlefield width (pixels).
         :param energy: Robot energy.
         :param gun_cooling_rate: Gun cooling rate (units per turn).
         :param gun_heading: Gun heading (degrees).
@@ -827,7 +827,7 @@ class RobocodeFeatureExtractor(StateActionFeatureExtractor):
 
                     # the move will continue to take us farther from the most recent prior state whose location differs
                     # from the current location. we use this most recent prior state rather than the directly previous
-                    # state because non-movement actions can intervene between movement and we don't want them to
+                    # state because non-movement actions can intervene between movement, and we don't want them to
                     # interfere with the feature value (they'll have the same location as the current state).
                     1.0 if state.prior_state_different_location is not None and RobocodeFeatureExtractor.euclidean_distance(
                         state.prior_state_different_location.x,

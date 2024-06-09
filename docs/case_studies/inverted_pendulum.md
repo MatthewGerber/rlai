@@ -175,7 +175,7 @@ different implications for the value function depending on the context in which 
 of moving the cart to the left when the pole is tilted slightly to the left depends on the pole's angular velocity. If
 the pole is already swinging back to upright, then moving the cart left might be unnecessary or even harmful. If the 
 pole is swinging left, then moving the cart left is probably a good idea. More generally, the value of a particular
-action vis-a-vis a state variable depends on the context, that is, on the other state variables. The approach taken 
+action vis-à-vis a state variable depends on the context, that is, on the other state variables. The approach taken 
 here is to form statistical interactions of the state variables with a small set of 
 [contexts](https://github.com/MatthewGerber/rlai/blob/36b755098e75dd1222a802933075db2ab889b29c/src/rlai/environments/openai_gym.py#L519) 
 that differentiate the state-action values. When fitting the model, the state variables are 

@@ -225,7 +225,7 @@ class StateActionValueEstimator(ABC):
         generates new plot data, and a UI thread (e.g., in a Jupyter notebook) periodically calls `update_plot` to
         redraw the plot with the latest data.
 
-        :param final: Whether or not this is the final time plot will be called.
+        :param final: Whether this is the final time plot will be called.
         :param pdf: PDF for plots, or None for no PDF.
         :return: Matplotlib figure, if one was generated and not plotting to PDF.
         """

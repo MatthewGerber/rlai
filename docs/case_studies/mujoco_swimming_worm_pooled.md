@@ -58,7 +58,7 @@ with different learning rates) and achieve exploration gains.
 # Training
 See [here](https://github.com/MatthewGerber/rlai/blob/master/trained_agents/swimmer/pooled/swimmer_pool.sh) for the 
 complete shell script that invokes RLAI with process pooling. Key differences between the 
-[single-process](mujoco_swimming_worm.md) and the multi-process RLAI invocations used here are listed below.
+[single-process](mujoco_swimming_worm.md) and the multiprocess RLAI invocations used here are listed below.
 
 ### Shell Variables
 * `num_runners=10`:  Use 10 independent RLAI processes.

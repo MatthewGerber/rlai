@@ -283,7 +283,7 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
                 warnings.warn('Gradients contain np.inf or np.nan value(s). Skipping update.')
             else:
 
-                # check whether the covariance matrix resulting from the updated parameters will be be positive
+                # check whether the covariance matrix resulting from the updated parameters will be positive
                 # definite, as the multivariate normal distribution requires this. assign the update only if it is so.
                 new_theta_cov = self.theta_cov + alpha * target * action_density_gradient_wrt_theta_cov
                 new_cov = self.get_covariance_matrix(

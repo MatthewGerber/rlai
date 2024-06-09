@@ -65,7 +65,7 @@ def evaluate_v_pi(
             new_v = float(np.sum([
 
                 (
-                    # probability of taking action a in state s
+                    # probability of taking action `a` in state `s`
                     agent.pi[s][a] *
 
                     # probability of transitioning to the next state and obtaining the next reward

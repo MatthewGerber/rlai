@@ -549,8 +549,8 @@ class RobocodeState(MdpState):
         """
         Initialize the state.
 
-        :param battle_field_height: Battle field height (pixels).
-        :param battle_field_width: Battle field width (pixels).
+        :param battle_field_height: Battlefield height (pixels).
+        :param battle_field_width: Battlefield width (pixels).
         :param energy: Robot energy.
         :param gun_cooling_rate: Gun cooling rate (units per turn).
         :param gun_heading: Gun heading (degrees).

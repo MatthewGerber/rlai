@@ -200,7 +200,7 @@ class StateActionFunctionApproximationModel(FunctionApproximationModel, ABC):
         :return: State dictionary.
         """
 
-        # create a copy of the dictionary so we don't modify the current object
+        # create a copy of the dictionary, so we don't modify the current object.
         state = dict(self.__dict__)
 
         # don't pickle the history of feature action coefficients used for plotting, as they grow unbounded during

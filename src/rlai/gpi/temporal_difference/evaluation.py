@@ -45,7 +45,7 @@ def evaluate_q_pi(
 ) -> Tuple[Set[MdpState], float]:
     """
     Perform temporal-difference (TD) evaluation of an agent's policy within an environment, returning state-action
-    values. This evaluation function implements both on-policy TD learning (SARSA) as well as off-policy TD learning
+    values. This evaluation function implements both on-policy TD learning (SARSA) and off-policy TD learning
     (Q-learning and expected SARSA), and n-step updates are implemented for all learning modes.
 
     :param agent: Agent containing target policy to be optimized.
@@ -380,8 +380,8 @@ def update_state_action_value_estimator(
         value_estimator.update(td_target_g)
 
         # if we're using prioritized-sweep planning, then update the priority queue. note that the priority queue
-        # returns values with the lowest priority first. so negate the error to get the state-action pairs with highest
-        # error to come out of the queue first.
+        # returns values with the lowest priority first. so negate the error to get the state-action pairs with the
+        # highest errors to come out of the queue first.
         if prioritized_planning:
             assert isinstance(planning_environment, PrioritizedSweepingMdpPlanningEnvironment)
             planning_environment.add_state_action_priority(update_state, update_a, -abs(error))

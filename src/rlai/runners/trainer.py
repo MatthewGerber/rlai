@@ -63,7 +63,7 @@ def run(
     else:
         random_state = RandomState(parsed_args.random_seed)
 
-    # warn user, as training could take a long time and it'll be wasted effort if the agent is not saved.
+    # warn user, as training could take a long time, and it'll be wasted effort if the agent is not saved.
     if parsed_args.save_agent_path is None:
         warnings.warn('No --save-agent-path has been specified, so no agent will be saved after training.')
 

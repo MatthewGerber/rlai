@@ -479,7 +479,7 @@ class Gym(ContinuousMdpEnvironment):
                 # emit an rgb array for the step's frame if we're recording video
                 'rgb_array' if record_video
 
-                # emit human-scaled rendering if we're not recording a video but we need to render
+                # emit human-scaled rendering if we're not recording a video, but we need to render.
                 else 'human' if self.render_every_nth_episode
 
                 # otherwise, do not render.

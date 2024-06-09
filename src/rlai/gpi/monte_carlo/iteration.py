@@ -50,7 +50,7 @@ def iterate_value_q_pi(
     before starting each iteration. This provides a mechanism for pausing, resuming, and aborting training. Omit for no
     waiting.
     :param off_policy_agent: See `rlai.gpi.monte_carlo.evaluation.evaluate_q_pi`. The policy of this agent will not
-    updated by this function.
+    be updated by this function.
     :param num_improvements_per_plot: Number of improvements to make before plotting the per-improvement average. Pass
     None to turn off all plotting.
     :param num_improvements_per_checkpoint: Number of improvements per checkpoint save.

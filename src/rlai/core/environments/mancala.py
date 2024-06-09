@@ -96,9 +96,9 @@ class Pit:
         """
         Initialize the pit.
 
-        :param player_1: Whether or not the current pit is for player 1.
+        :param player_1: Whether the current pit is for player 1.
         :param count: Number of seeds.
-        :param store: Whether or not the current pit is a goal pit.
+        :param store: Whether the current pit is a goal pit.
         """
 
         self.player_1 = player_1
@@ -135,8 +135,8 @@ class Mancala(MdpEnvironment):
     * Game terminates when a player's pockets are clear.
     * Winner determined by store count.
 
-    A couple hours of Monte Carlo optimization explores more than 1 million states when playing against an equiprobable
-    random opponent.
+    A couple of hours of Monte Carlo optimization explores more than 1 million states when playing against an
+    equiprobable random opponent.
     """
 
     @staticmethod
@@ -462,7 +462,7 @@ class Mancala(MdpEnvironment):
 
             pit.i = i
 
-            # non-store pit (i.e., pockets) have actions associated with them. Action.i indexes the particular pit
+            # non-store pit (i.e., pockets) have actions associated with them. `Action.i` indexes the particular pit
             # within the board.
             if not pit.store:
                 pit.action = Action(pit.i)
