@@ -1,53 +1,53 @@
 [Home](index.md) > Value Estimation
-### [rlai.q_S_A.ActionValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/q_S_A/__init__.py#L61)
+### [rlai.gpi.state_action_value.ActionValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/state_action_value/__init__.py#L59)
 ```
 Action value estimator.
 ```
-### [rlai.q_S_A.StateActionValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/q_S_A/__init__.py#L112)
+### [rlai.gpi.state_action_value.StateActionValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/state_action_value/__init__.py#L110)
 ```
 State-action value estimator.
 ```
-### [rlai.q_S_A.ValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/q_S_A/__init__.py#L20)
+### [rlai.gpi.state_action_value.ValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/state_action_value/__init__.py#L18)
 ```
 Value estimator.
 ```
-### [rlai.q_S_A.tabular.TabularActionValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/q_S_A/tabular.py#L107)
+### [rlai.gpi.state_action_value.tabular.TabularActionValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/state_action_value/tabular.py#L104)
 ```
 Tabular action-value estimator.
 ```
-### [rlai.q_S_A.tabular.TabularStateActionValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/q_S_A/tabular.py#L219)
+### [rlai.gpi.state_action_value.tabular.TabularStateActionValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/state_action_value/tabular.py#L216)
 ```
 Tabular state-action value estimator.
 ```
-### [rlai.q_S_A.tabular.TabularValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/q_S_A/tabular.py#L20)
+### [rlai.gpi.state_action_value.tabular.TabularValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/state_action_value/tabular.py#L17)
 ```
 Tabular value estimator.
 ```
-### [rlai.v_S.StateValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/v_S/__init__.py#L55)
+### [rlai.state_value.StateValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/state_value/__init__.py#L54)
 ```
 State-value estimator.
 ```
-### [rlai.v_S.ValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/v_S/__init__.py#L14)
+### [rlai.state_value.ValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/state_value/__init__.py#L13)
 ```
 Value estimator.
 ```
-### [rlai.q_S_A.function_approximation.estimators.ApproximateActionValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/q_S_A/function_approximation/estimators.py#L77)
+### [rlai.gpi.state_action_value.function_approximation.ApproximateActionValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/state_action_value/function_approximation/__init__.py#L78)
 ```
 Approximate action-value estimator.
 ```
-### [rlai.q_S_A.function_approximation.estimators.ApproximateStateActionValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/q_S_A/function_approximation/estimators.py#L147)
+### [rlai.gpi.state_action_value.function_approximation.ApproximateStateActionValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/state_action_value/function_approximation/__init__.py#L148)
 ```
 Approximate state-action value estimator.
 ```
-### [rlai.q_S_A.function_approximation.estimators.ApproximateValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/q_S_A/function_approximation/estimators.py#L26)
+### [rlai.gpi.state_action_value.function_approximation.ApproximateValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/state_action_value/function_approximation/__init__.py#L27)
 ```
 Approximate value estimator.
 ```
-### [rlai.state_value.function_approximation.ApproximateStateValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/v_S/function_approximation/estimators.py#L65)
+### [rlai.state_value.function_approximation.ApproximateStateValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/state_value/function_approximation/__init__.py#L66)
 ```
 Approximate state-value estimator.
 ```
-### [rlai.state_value.function_approximation.estimators.ApproximateValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/v_S/function_approximation/estimators.py#L17)
+### [rlai.state_value.function_approximation.ApproximateValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/state_value/function_approximation/__init__.py#L18)
 ```
 Approximate value estimator.
 ```

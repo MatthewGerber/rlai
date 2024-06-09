@@ -23,7 +23,11 @@ Note that Binder notebooks are hosted for free by sponsors who donate computatio
 placed on each notebook, so don't expect the Binder interface to support heavy workloads. See the following section for
 alternatives.
 
-# Installation, Use, and Development
+# Installation and Use
+
+RLAI requires `swig` and `ffmpeg` to be installed on the system. These can be installed using a package manager on your
+OS (e.g., Homebrew for macOS, `apt` for Ubuntu, etc.).
+
 The RLAI code is distributed via [PyPI](https://pypi.org/project/rlai/) and can be installed with `pip install rlai`. 
 There are several ways to use the package.
 
@@ -37,6 +41,8 @@ There are several ways to use the package.
   and is also explored in the [CLI guide](cli_guide.md).
 
 * See [here](raspberry_pi.md) for how to use RLAI on a Raspberry Pi system. 
+
+# Development
 
 Looking for a place to dig in? Below are a few ideas organized by area of interest.
 
@@ -56,6 +62,28 @@ Looking for a place to dig in? Below are a few ideas organized by area of intere
 * Feel free to [ask questions](https://github.com/MatthewGerber/rlai/discussions), 
   [submit issues](https://github.com/MatthewGerber/rlai/issues), and 
   [submit pull requests](https://github.com/MatthewGerber/rlai/pulls).
+
+# Releasing
+
+1. Bump to release and tag:
+   ```bash
+   OLD_VERSION=$(poetry version --short)
+   poetry version prerelease --next-phase  # beta
+   poetry version prerelease --next-phase  # rc
+   poetry version prerelease --next-phase  # release
+   VERSION=$(poetry version --short)
+   git commit -a -m "Bump version:  ${OLD_VERSION} → ${VERSION}"
+   git tag -a -m "rlai v${VERSION}" v${VERSION}
+   git push --follow-tags
+   ```
+2. Increment the version to the next preminor:
+   ```bash
+   OLD_VERSION=$(poetry version --short)
+   poetry version preminor
+   VERSION=$(poetry version --short)
+   git commit -a -m "Bump version:  ${OLD_VERSION} → ${VERSION}"
+   git push
+   ```
   
 # Features
 * Diagnostic and interpretation tools:  Diagnostic and interpretation tools become critical as the environment and agent 
@@ -70,9 +98,9 @@ for these environments. Below is a list of environments that are not covered in 
 or are not covered at all (e.g., Robocode). They are more difficult to train agents for and are instructive for 
 understanding how agents are parameterized and rewarded.
 
-## OpenAI Gym
-[OpenAI Gym](https://gym.openai.com) is a collection of environments that range from traditional control to advanced 
-robotics. Case studies have been developed for the following OpenAI Gym environments, which are ordered roughly by 
+## Gymnasium
+[Gymnasium](https://gymnasium.farama.org) is a collection of environments that range from traditional control to 
+advanced robotics. Case studies have been developed for the following environments, which are ordered roughly by 
 increasing complexity:
 
 * [Inverted Pendulum](case_studies/inverted_pendulum.md)
@@ -80,9 +108,15 @@ increasing complexity:
 * [Mountain Car](case_studies/mountain_car.md)
 * [Mountain Car with Continuous Control](case_studies/mountain_car_continuous.md)
 * [Lunar Lander with Continuous Control](case_studies/lunar_lander_continuous.md)
-* [MuJoCo Swimming Worm with Continuous Control](case_studies/mujoco_swimming_worm.md)
+* [MuJoCo Swimming Worm with Continuous Control](case_studies/mujoco_swimming_worm.md) 
   * A follow-up using [process-level parallelization](case_studies/mujoco_swimming_worm_pooled.md) for faster, better 
     results.
+  * See the MuJoCo section below for tips on installing MuJoCo.
+
+## MuJoCo
+RLAI works with [MuJoCo](https://mujoco.org/) either via Gymnasium described above or directly via the 
+MuJoCo-provided Python bindings. See [here](https://github.com/google-deepmind/mujoco#installation) for installation 
+instructions.
 
 ## Robocode
 [Robocode](https://github.com/robo-code/robocode) is a simulation-based robotic combat programming game with a 

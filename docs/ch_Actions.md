@@ -1,17 +1,17 @@
 [Home](index.md) > Actions
-### [rlai.actions.Action](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/actions/__init__.py#L8)
+### [rlai.core.Action](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/core/__init__.py#L86)
 ```
 Base class for all actions.
 ```
-### [rlai.actions.DiscretizedAction](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/actions/__init__.py#L82)
+### [rlai.core.DiscretizedAction](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/core/__init__.py#L160)
 ```
 Action that is derived from discretizing an n-dimensional continuous action space.
 ```
-### [rlai.core.environments.robocode.RobocodeAction](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/robocode.py#L1462)
+### [rlai.core.environments.robocode.RobocodeAction](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/core/environments/robocode.py#L1479)
 ```
 Robocode action.
 ```
-### [rlai.core.environments.robocode_continuous_action.RobocodeAction](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/robocode_continuous_action.py#L1372)
+### [rlai.core.environments.robocode_continuous_action.RobocodeAction](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/core/environments/robocode_continuous_action.py#L1386)
 ```
 Robocode action.
 ```

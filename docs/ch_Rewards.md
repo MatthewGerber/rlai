@@ -1,13 +1,13 @@
 [Home](index.md) > Rewards
-### [rlai.core.environments.robocode.RobocodeReward](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/robocode.py#L22)
-```
-Robocode reward.
-```
-### [rlai.core.environments.robocode_continuous_action.RobocodeReward](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/environments/robocode_continuous_action.py#L26)
-```
-Robocode reward.
-```
-### [rlai.rewards.Reward](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/rewards/__init__.py#L6)
+### [rlai.core.Reward](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/core/__init__.py#L14)
 ```
 Reward.
+```
+### [rlai.core.environments.robocode.RobocodeReward](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/core/environments/robocode.py#L18)
+```
+Robocode reward.
+```
+### [rlai.core.environments.robocode_continuous_action.RobocodeReward](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/core/environments/robocode_continuous_action.py#L23)
+```
+Robocode reward.
 ```
