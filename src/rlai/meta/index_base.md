@@ -79,7 +79,7 @@ Looking for a place to dig in? Below are a few ideas organized by area of intere
 2. Increment the version to the next preminor.
    ```bash
    OLD_VERSION=$(poetry version --short)
-   poetry version preminor --next-phase
+   poetry version preminor
    VERSION=$(poetry version --short)
    git commit -a -m "Bump version: ${OLD_VERSION} → ${VERSION}"
    git push
