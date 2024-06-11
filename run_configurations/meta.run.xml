@@ -1,6 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="meta" type="PythonConfigurationType" factoryName="Python">
     <module name="rlai" />
+    <option name="ENV_FILES" value="" />
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />
     <envs>
@@ -8,7 +9,7 @@
       <env name="ANNOTATIONS_ON" value="True" />
     </envs>
     <option name="SDK_HOME" value="" />
-    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src/rlai/meta" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src/rlai/meta/" />
     <option name="IS_MODULE_SDK" value="true" />
     <option name="ADD_CONTENT_ROOTS" value="true" />
     <option name="ADD_SOURCE_ROOTS" value="true" />

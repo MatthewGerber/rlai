@@ -26,7 +26,11 @@ alternatives.
 # Installation and Use
 
 RLAI requires `swig` and `ffmpeg` to be installed on the system. These can be installed using a package manager on your
-OS (e.g., Homebrew for macOS, `apt` for Ubuntu, etc.).
+OS (e.g., Homebrew for macOS, `apt` for Ubuntu, etc.). If installing with Homebrew on macOS, then you might need to add 
+an environment variable pointing to ffmpeg as follows:
+```shell
+echo 'export IMAGEIO_FFMPEG_EXE="/opt/homebrew/bin/ffmpeg"' >> ~/.bash_profile
+```
 
 The RLAI code is distributed via [PyPI](https://pypi.org/project/rlai/). There are several ways to use the package.
 
