@@ -6,17 +6,17 @@
 A companion JupyterLab notebook is provided to ease the use of RLAI. The goal of the interface is to assist with the 
 composition, execution, and real-time inspection of RLAI commands. The primary composer interface is show below:
 
-![jupyterlab](jupyterlab-composer.png)
+![jupyterlab](images/jupyterlab-composer.png)
 
 The notebook provides controls for starting, pausing, and resuming the execution of RLAI commands. All plots are
 interactive and support zooming, panning, and axis rescaling. An example is shown below:
 
-![jupyterlab-running](jupyterlab-running.png)
+![jupyterlab-running](images/jupyterlab-running.png)
 
 Certain state-active value function estimators (e.g., the scikit-learn stochastic gradient descent model) support 
 diagnostic plots. An example is shown below:
 
-![jupyterlab-diag](jupyterlab-diag.png)
+![jupyterlab-diag](images/jupyterlab-diag.png)
 
 For single-click access to the notebook, please click below:
 

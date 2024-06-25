@@ -18,7 +18,7 @@ shown below (see [continuous mountain car](./case_studies/mountain_car_continuou
 * Top right:  Action values.
 * Bottom left:  State-value estimate, which is used as a baseline in the REINFORCE policy gradient algorithm.
 * Bottom right:  Shape parameters `a` and `b` for the beta PDF.
-* 
+
 # Model Coefficient Plots
 Consider the gridworld of Example 4.1 solved with temporal-difference q-learning and stochastic gradient descent based 
 on the four features extracted by 
@@ -30,7 +30,7 @@ rlai train --agent rlai.gpi.state_action_value.ActionValueMdpAgent --gamma 1 --e
 ```
 The above command should generate plots such as the following:
 
-![gridworld-sgd-plot](gridworld_sgd.png)
+![gridworld-sgd-plot](images/gridworld_sgd.png)
 
 As indicated by the title, this figure shows boxplots of model coefficients (y-values) over time (x-values) for each
 feature (row) and action (column). The coefficients quantify the relationships among the feature-action pairs and the
@@ -52,7 +52,7 @@ The [JupyterLab interface](jupyterlab_guide.md) provides detailed instrumentatio
 shown below. This information can be useful when diagnosing convergence and stability issues in state-action value
 function approximation.
 
-![sgd-instrumentation](jupyterlab-diag.png)
+![sgd-instrumentation](images/jupyterlab-diag.png)
 
 The left plot above shows per-iteration averages of return (green), model loss (red), and step size (blue). The right
 plot shows the same variables for a single iteration, so that each time step is visible. The JupyterLab interface allows

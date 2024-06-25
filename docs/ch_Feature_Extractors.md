@@ -10,7 +10,7 @@ A feature extractor for the gridworld. This extractor, being based on the `State
 A feature extractor for the gridworld. This extractor does not interact feature values with actions. Its primary use
     is in state-value estimation (e.g., for the baseline of policy gradient methods).
 ```
-### [rlai.core.environments.gymnasium.CartpoleFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/core/environments/gymnasium.py#L915)
+### [rlai.core.environments.gymnasium.CartpoleFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/core/environments/gymnasium.py#L917)
 ```
 A feature extractor for the Gym cartpole environment. This extractor, being based on the
     `StateActionInteractionFeatureExtractor`, directly extracts the fully interacted state-action feature matrix. It
@@ -19,20 +19,20 @@ A feature extractor for the Gym cartpole environment. This extractor, being base
     separate intercept term being present for each state segment and action combination. The function approximator
     should not add its own intercept term.
 ```
-### [rlai.core.environments.gymnasium.ContinuousLunarLanderFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/core/environments/gymnasium.py#L1456)
+### [rlai.core.environments.gymnasium.ContinuousLunarLanderFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/core/environments/gymnasium.py#L1458)
 ```
 Feature extractor for the continuous lunar lander environment.
 ```
-### [rlai.core.environments.gymnasium.ContinuousMountainCarFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/core/environments/gymnasium.py#L1232)
+### [rlai.core.environments.gymnasium.ContinuousMountainCarFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/core/environments/gymnasium.py#L1234)
 ```
 Feature extractor for the continuous mountain car environment.
 ```
-### [rlai.core.environments.gymnasium.ScaledFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/core/environments/gymnasium.py#L701)
+### [rlai.core.environments.gymnasium.ScaledFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/core/environments/gymnasium.py#L703)
 ```
 A feature extractor for continuous Gym environments. Extracts a scaled (standardized) version of the Gym state
     observation.
 ```
-### [rlai.core.environments.gymnasium.SignedCodingFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/core/environments/gymnasium.py#L783)
+### [rlai.core.environments.gymnasium.SignedCodingFeatureExtractor](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/core/environments/gymnasium.py#L785)
 ```
 Signed-coding feature extractor. Forms a category from the conjunction of all state-feature signs and then places
     the continuous feature vector into its associated category. Works for all continuous-valued state spaces in Gym.

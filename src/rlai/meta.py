@@ -124,7 +124,7 @@ def main():
     # noinspection PyTypeChecker
     summarize(rlai, chapter_page_descriptions)
 
-    docs_dir = f'{os.path.dirname(__file__)}/../../../docs/'
+    docs_dir = f'{os.path.dirname(__file__)}/../../docs/'
     meta_md_path = f'{docs_dir}links_to_code.md'
 
     ch_num_name = {
