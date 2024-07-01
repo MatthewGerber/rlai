@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 
 from rlai.gpi.state_action_value.tabular import TabularPolicy
+from rlai.gpi.state_action_value.tabular import TabularStateActionValueEstimator
 
 
 def test_invalid_get_state_i():
@@ -28,3 +29,13 @@ def test_policy_not_equal():
     policy_2 = TabularPolicy(None, None)
 
     assert not (policy_1 != policy_2)
+
+
+# noinspection PyTypeChecker
+def test_invalid_epsilon():
+    """
+    Test.
+    """
+
+    with pytest.raises(ValueError, match='epsilon must be >= 0'):
+        TabularStateActionValueEstimator(None, -1, None)
