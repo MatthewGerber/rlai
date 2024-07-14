@@ -93,11 +93,15 @@ def iterate_policy_q_pi(
             initial_q_S_A=q_pi
         )
 
+        assert q_pi is not None
+
         improving = agent.pi.improve_with_q_pi(q_pi) > 0
 
         i += 1
 
     logging.info(f'Policy iteration terminated after {i} iteration(s).')
+
+    assert q_pi is not None
 
     return q_pi
 
@@ -140,6 +144,8 @@ def iterate_value_v_pi(
             initial_v_S=v_pi
         )
 
+        assert v_pi is not None
+
         agent.pi.improve_with_v_pi(
             gamma=agent.gamma,
             environment=environment,
@@ -150,6 +156,8 @@ def iterate_value_v_pi(
 
         if delta < theta:
             break
+
+    assert v_pi is not None
 
     logging.info(f'Value iteration of v_pi terminated after {i} iteration(s).')
 
@@ -193,13 +201,15 @@ def iterate_value_q_pi(
             update_in_place=update_in_place,
             initial_q_S_A=q_pi
         )
-
+        assert q_pi is not None
         agent.pi.improve_with_q_pi(q_pi)
 
         i += 1
 
         if delta < theta:
             break
+
+    assert q_pi is not None
 
     logging.info(f'Value iteration of q_pi terminated after {i} iteration(s).')
 

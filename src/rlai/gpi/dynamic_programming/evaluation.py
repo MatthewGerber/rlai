@@ -112,7 +112,7 @@ def evaluate_q_pi(
         theta: Optional[float],
         num_iterations: Optional[int],
         update_in_place: bool,
-        initial_q_S_A: Dict[MdpState, Dict[Action, float]] = None
+        initial_q_S_A: Optional[Dict[MdpState, Dict[Action, float]]] = None
 ) -> Tuple[Dict[MdpState, Dict[Action, float]], float]:
     """
     Perform iterative policy evaluation of an agent's policy within an environment, returning state-action values.

@@ -9,7 +9,7 @@ from rlai.utils import parse_arguments, get_argument_parser
 
 @rl_text(chapter='Training and Running Agents', page=1)
 def run(
-        args: List[str] = None
+        args: Optional[List[str]] = None
 ) -> Union[None, Tuple[Optional[str], str]]:
     """
     Run RLAI.

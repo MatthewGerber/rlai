@@ -22,9 +22,9 @@ from rlai.utils import (
 
 @rl_text(chapter='Training and Running Agents', page=1)
 def run(
-        args: List[str] = None,
-        thread_manager: RunThreadManager = None,
-        train_function_args_callback: Callable[[Dict], None] = None
+        args: List[str],
+        thread_manager: Optional[RunThreadManager] = None,
+        train_function_args_callback: Optional[Callable[[Dict], None]] = None
 ) -> Tuple[Optional[str], Optional[str]]:
     """
     Train an agent in an environment.

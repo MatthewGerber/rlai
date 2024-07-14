@@ -30,9 +30,10 @@ tabulate = '~=0.9'
 jupyterlab = '~=4.2'
 ipython = '~=8.25'
 jax = { version = '~=0.4', extras = ['cpu'] }
-
 # can't get Qt6 to compile on raspberry pi. exclude this architecture.
 PyQt6 = { version = '~=6.7', markers = 'platform_machine != "aarch64"' }
+types-requests = "^2.32.0.20240712"
+types-tabulate = "^0.9.0.20240106"
 
 [tool.poetry.group.dev.dependencies]
 pytest = '~=8.2'

@@ -121,6 +121,10 @@ def run(
 
         if parsed_args.plot:
 
+            assert reward_ax is not None
+            assert cum_reward_ax is not None
+            assert optimal_action_ax is not None
+
             reward_ax.plot([
                 monitor.t_average_reward[t].get_value()
                 for t in sorted(monitor.t_average_reward)
@@ -138,6 +142,10 @@ def run(
 
     # finish plotting
     if parsed_args.plot:
+
+        assert reward_ax is not None
+        assert cum_reward_ax is not None
+        assert optimal_action_ax is not None
 
         if parsed_args.figure_name is not None:
             reward_ax.set_title(parsed_args.figure_name)

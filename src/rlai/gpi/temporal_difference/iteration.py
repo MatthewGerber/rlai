@@ -2,7 +2,7 @@ import logging
 import os
 import pickle
 from datetime import datetime
-from typing import Optional, Union
+from typing import Optional, Union, List, Dict
 
 from matplotlib.backends.backend_pdf import PdfPages
 
@@ -27,7 +27,7 @@ def iterate_value_q_pi(
         n_steps: Optional[int],
         planning_environment: Optional[MdpPlanningEnvironment],
         make_final_policy_greedy: bool,
-        thread_manager: RunThreadManager = None,
+        thread_manager: Optional[RunThreadManager] = None,
         num_improvements_per_plot: Optional[int] = None,
         num_improvements_per_checkpoint: Optional[int] = None,
         checkpoint_path: Optional[str] = None,
@@ -80,7 +80,7 @@ def iterate_value_q_pi(
     iteration_average_reward = []
     iteration_total_states = []
     iteration_num_states_improved = []
-    elapsed_seconds_average_rewards = {}
+    elapsed_seconds_average_rewards: Dict[int, List[float]] = {}
     start_datetime = datetime.now()
     final_checkpoint_path = None
     while i < num_improvements:
@@ -158,6 +158,9 @@ def iterate_value_q_pi(
             )
 
         if num_improvements_per_checkpoint is not None and i % num_improvements_per_checkpoint == 0:
+
+            if checkpoint_path is None:
+                raise ValueError('Checkpoint path is required if checkpointing.')
 
             resume_args = {
                 'agent': agent,

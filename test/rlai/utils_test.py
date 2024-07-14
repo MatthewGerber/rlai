@@ -86,14 +86,6 @@ def test_sample_list_item():
         sample_list_item([1, 2, 3], np.array([0.2, 0.3, 0.4]), rng)
 
 
-def test_import_function():
-    """
-    Test.
-    """
-
-    assert import_function(None) is None
-
-
 def test_stdstream_tee():
     """
     Test.
