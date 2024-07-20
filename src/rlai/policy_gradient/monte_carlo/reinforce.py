@@ -5,6 +5,7 @@ import re
 import tempfile
 import time
 import warnings
+
 from copy import deepcopy
 from datetime import datetime, timedelta
 from os.path import join, expanduser
@@ -14,6 +15,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.backends.backend_pdf import PdfPages
 
+from rlai.core import MdpState, Action, Reward
 from rlai.core.environments.mdp import MdpEnvironment
 from rlai.meta import rl_text
 from rlai.models.sklearn import SKLearnSGD
@@ -27,6 +29,54 @@ from rlai.utils import (
     RunThreadManager,
     insert_index_into_path
 )
+
+
+class StepValues:
+    """
+    Bookkeeping values for improvement steps.
+    """
+
+    def __init__(
+            self,
+            t: int,
+            state: MdpState,
+            action: Action,
+            reward: Reward,
+            gamma: float
+    ):
+        """
+        Initialize the step values.
+
+        :param t: Time step.
+        :param state:
+        :param action:
+        :param reward:
+        :param gamma:
+        """
+
+
+        self.t = t
+        self.state = state
+        self.action = action
+        self.reward = reward
+        self.gamma = gamma
+        self.return_values: Optional[ReturnValues] = None
+
+
+class ReturnValues:
+    """
+    Bookkeeping values for returns.
+    """
+
+    def __init__(
+            self,
+            return_value: float,
+            baseline_return_value: float,
+            target: float
+    ):
+        self.return_value = return_value
+        self.baseline_return_value = baseline_return_value
+        self.target = target
 
 
 @rl_text(chapter=13, page=326)
@@ -125,7 +175,7 @@ def improve(
         # as the times of their first visits (only if we're doing first-visit evaluation).
         t = 0
         state_action_first_t = None if update_upon_every_visit else {}
-        t_state_action_reward_gamma = []
+        step_values_list = []
         truncation_time_step = None
         while not state.terminal:
             try:
@@ -145,7 +195,7 @@ def improve(
 
                 next_state, next_reward = environment.advance(state, t, a, agent)
                 gamma = agent.gamma
-                t_state_action_reward_gamma.append((t, state_a, next_reward, gamma))
+                step_values_list.append(StepValues(t, state, a, next_reward, gamma))
                 state = next_state
                 t += 1
                 agent.sense(state, t)
@@ -170,20 +220,19 @@ def improve(
         # work backwards through the trace to calculate discounted returns. need to work backward in order for the value
         # of g at each time step t to be properly discounted.
         g = 0.0
-        time_step_reward_g_baseline_return_target = {}
-        for i, (t, state_a, reward, gamma) in enumerate(reversed(t_state_action_reward_gamma)):
+        for _, step_values in enumerate(reversed(step_values_list)):
 
-            g = gamma * g + reward.r
+            g = step_values.gamma * g + step_values.reward.r
 
             # only update value estimates before the truncation time step if we have one
-            if truncation_time_step is not None and t >= truncation_time_step:
+            if truncation_time_step is not None and step_values.t >= truncation_time_step:
                 continue
 
             # if we're doing every-visit, or if the current time step was the first visit to the state-action, then g is
             # the discounted sample value. use it to update the policy.
-            if state_action_first_t is None or state_action_first_t[state_a] == t:
-
-                state, a = state_a
+            if state_action_first_t is None or (
+                state_action_first_t[(step_values.state, step_values.action)] == step_values.t
+            ):
 
                 # if we don't have a baseline, then the baseline return is zero and the target is the return.
                 if agent.v_S is None:
@@ -193,8 +242,8 @@ def improve(
                 # state-value estimator with the obtained return. this only adds state-return example to the estimator.
                 # it does not improve the estimator.
                 else:
-                    baseline_return = agent.v_S[state].get_value()
-                    agent.v_S[state].update(g)
+                    baseline_return = agent.v_S[step_values.state].get_value()
+                    agent.v_S[step_values.state].update(g)
 
                 # form the target as difference between observed return and baseline. actions that produce an
                 # above-baseline return will be reinforced.
@@ -202,10 +251,13 @@ def improve(
 
                 # append the update to the policy. this does not commit the updates.
                 if num_warmup_episodes is None or episodes_finished > num_warmup_episodes:
-                    agent.pi.append_update(a, state, alpha, target)
+                    agent.pi.append_update(step_values.action, step_values.state, alpha, target)
 
-                # track values for plotting
-                time_step_reward_g_baseline_return_target[t] = (reward.r, g, baseline_return, target)
+                step_values.return_values = ReturnValues(
+                    return_value=g,
+                    baseline_return_value=baseline_return,
+                    target=target
+                )
 
         # improve the state-value estimator with the updates that were provided
         if agent.v_S is not None:
@@ -230,54 +282,53 @@ def improve(
             if agent.v_S is not None:
                 agent.v_S.plot(pdf)
 
-            time_steps = list(time_step_reward_g_baseline_return_target.keys())
             plt.figure(figsize=(10, 10))
+            time_steps = [step_values.t for step_values in step_values_list]
+
+            # plot rewards and returns
             plt.plot(
                 time_steps,
-                [r_t for r_t, _, _, _ in time_step_reward_g_baseline_return_target.values()],
+                [step_values.reward.r for step_values in step_values_list],
                 color='red',
                 label='Reward:  r(t)'
             )
-            for step, label in environment.time_step_axv_lines.items():
-                plt.axvline(step, color='violet', alpha=0.25)
-
-            reward_ax = plt.gca()
-            reward_ax.set_xlabel('Time step')
-            reward_ax.set_ylabel('Reward')
-            reward_ax.set_title(f'Episode {episodes_finished}')
-            reward_ax.legend()
-
-            update_ax = plt.twinx()
-            update_ax.plot(
+            plt.plot(
                 time_steps,
-                [g_t for _, g_t, _, _ in time_step_reward_g_baseline_return_target.values()],
+                [step_values.return_values.return_value for step_values in step_values_list],
                 color='green',
                 label='Return:  g(t)'
             )
-            update_ax.plot(
+            plt.plot(
                 time_steps,
-                [v_t for _, _, v_t, _ in time_step_reward_g_baseline_return_target.values()],
+                [step_values.return_values.baseline_return_value for step_values in step_values_list],
                 color='violet',
                 label='Value:  v(t)',
             )
-            update_ax.plot(
+            plt.plot(
                 time_steps,
-                [target for _, _, _, target in time_step_reward_g_baseline_return_target.values()],
+                [step_values.return_values.target for step_values in step_values_list],
                 color='orange',
                 label='Target:  g(t) - v(t)'
             )
-            update_ax.set_ylabel('Returns and Updates')
-            update_ax.legend()
+            plt.ylabel('Returns and Rewards')
 
-            # make y limits the same
-            reward_y_limit = reward_ax.get_ylim()
-            update_y_limit = update_ax.get_ylim()
-            y_limits = (
-                min(reward_y_limit[0], update_y_limit[0]),
-                max(reward_y_limit[1], update_y_limit[1])
+            for step, label in environment.time_step_axv_lines.items():
+                plt.axvline(step, color='violet', alpha=0.25)
+
+            plt.xlabel('Time step')
+            plt.title(f'Episode {episodes_finished}')
+            plt.legend(loc='upper left')
+
+            # plot gamma (discount) in a twin-x axes
+            gamma_axe = plt.twinx()
+            gamma_axe.plot(
+                time_steps,
+                [step_values.gamma for step_values in step_values_list],
+                color='magenta',
+                label='gamma(t)'
             )
-            reward_ax.set_ylim(y_limits)
-            update_ax.set_ylim(y_limits)
+            gamma_axe.set_ylabel('Gamma')
+            gamma_axe.legend(loc='upper right')
 
             plt.tight_layout()
 
@@ -288,6 +339,7 @@ def improve(
 
             plt.close()
 
+            # plot any data add by the environment
             if len(environment.plot_label_data_kwargs) > 0:
                 for plot_label in environment.plot_label_data_kwargs:
                     plot_data = environment.plot_label_data_kwargs[plot_label][0]
