@@ -25,6 +25,6 @@ class StateFunctionApproximationModel(FunctionApproximationModel, ABC):
 
         :param render: Whether to render the plot data. If False, then plot data will be updated but nothing will
         be shown.
-        :param pdf: PDF for plots.
+        :param pdf: PDF to plot to, or None to show directly.
         :return: Matplotlib figure, if one was generated and not plotting to PDF.
         """

@@ -12,6 +12,7 @@ from typing import Optional, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.backends.backend_pdf import PdfPages
 
 from rlai.core.environments.mdp import MdpEnvironment
 from rlai.meta import rl_text
@@ -82,6 +83,8 @@ def improve(
 
     if checkpoint_path is not None:
         checkpoint_path = os.path.expanduser(checkpoint_path)
+
+    plot_to_pdf = True
 
     # we work backward through the episode when updating the baseline model. if we have a baseline model, then indicate
     # this so that plotting is ordered correctly.
@@ -219,8 +222,13 @@ def improve(
             num_episodes_per_policy_update_plot is not None and
             episodes_finished % num_episodes_per_policy_update_plot == 0
         ):
+            if plot_to_pdf:
+                pdf = PdfPages(os.path.expanduser(f'~/Desktop/reinforce_{episodes_finished}.pdf'))
+            else:
+                pdf = None
+
             if agent.v_S is not None:
-                agent.v_S.plot()
+                agent.v_S.plot(pdf)
 
             time_steps = list(time_step_reward_g_baseline_return_target.keys())
             plt.figure(figsize=(10, 10))
@@ -272,7 +280,12 @@ def improve(
             update_ax.set_ylim(y_limits)
 
             plt.tight_layout()
-            plt.show()
+
+            if pdf is None:
+                plt.show()
+            else:
+                pdf.savefig()
+
             plt.close()
 
             if len(environment.plot_label_data_kwargs) > 0:
@@ -285,8 +298,16 @@ def improve(
                         **environment.plot_label_data_kwargs[plot_label][1]
                     )
                 plt.tight_layout()
-                plt.show()
+
+                if pdf is None:
+                    plt.show()
+                else:
+                    plt.savefig()
+
                 plt.close()
+
+            if pdf is not None:
+                pdf.close()
 
         num_fallback_iterations = 0
         if training_pool is not None and episodes_finished % training_pool_iterate_episodes == 0:

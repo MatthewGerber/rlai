@@ -2,6 +2,7 @@ from argparse import ArgumentParser
 from typing import List, Tuple, Optional
 
 import numpy as np
+from matplotlib.backends.backend_pdf import PdfPages
 from numpy.random import RandomState
 
 from rlai.core import MdpState
@@ -255,13 +256,16 @@ class ApproximateStateValueEstimator(StateValueEstimator):
         ])
 
     def plot(
-            self
+            self,
+            pdf: Optional[PdfPages]
     ):
         """
         Plot the current estimator.
+
+        :param pdf: PDF to plot to, or None to show directly.
         """
 
-        self.model.plot(True, None)
+        self.model.plot(True, pdf)
 
     def reset_for_new_run(
             self,

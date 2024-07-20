@@ -249,7 +249,7 @@ class SKLearnSGD(FunctionApproximationModel):
 
         :param render: Whether to render the plot data. If False, then plot data will be updated but nothing will
         be shown.
-        :param pdf: PDF for plots.
+        :param pdf: PDF to plot to, or None to show directly.
         :return: Matplotlib figure, if one was generated and not plotting to PDF.
         """
 
@@ -285,6 +285,7 @@ class SKLearnSGD(FunctionApproximationModel):
 
                 # plot average return and loss per iteration
                 self.iteration_ax = axs[0]
+                assert isinstance(self.iteration_ax, plt.Axes)
                 iterations = list(range(1, len(self.y_averages) + 1))
                 self.iteration_return_line, = self.iteration_ax.plot(
                     iterations,
@@ -319,6 +320,7 @@ class SKLearnSGD(FunctionApproximationModel):
                 # plot return and loss per time step of the most recent plot iteration. there might not yet be any data
                 # in the current iteration, so watch out.
                 self.time_step_ax = axs[1]
+                assert isinstance(self.time_step_ax, plt.Axes)
                 y_values = self.iteration_y_values.get(self.plot_iteration, [])
                 time_steps = list(range(1, len(y_values) + 1))
                 self.time_step_return_line, = self.time_step_ax.plot(

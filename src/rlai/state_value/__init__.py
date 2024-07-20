@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from argparse import ArgumentParser
 from typing import Optional, Tuple, List
 
+from matplotlib.backends.backend_pdf import PdfPages
 from numpy.random import RandomState
 
 from rlai.core import MdpState, Environment
@@ -94,10 +95,13 @@ class StateValueEstimator(ABC):
         """
 
     def plot(
-            self
+            self,
+            pdf: Optional[PdfPages]
     ):
         """
         Plot the current estimator.
+
+        :param pdf: PDF to plot to, or None to show directly.
         """
 
     def reset_for_new_run(
