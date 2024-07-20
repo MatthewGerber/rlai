@@ -302,7 +302,7 @@ def improve(
                 if pdf is None:
                     plt.show()
                 else:
-                    plt.savefig()
+                    pdf.savefig()
 
                 plt.close()
 
