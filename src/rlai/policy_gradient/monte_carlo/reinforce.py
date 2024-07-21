@@ -392,6 +392,7 @@ def improve(
                 'alpha': alpha,
                 'plot_state_value': plot_state_value,
                 'num_episodes_per_policy_update_plot': num_episodes_per_policy_update_plot,
+                'policy_update_plot_pdf_directory': policy_update_plot_pdf_directory,
                 'num_episodes_per_checkpoint': num_episodes_per_checkpoint,
                 'checkpoint_path': checkpoint_path,
                 'training_pool_directory': training_pool_directory,
