@@ -59,7 +59,7 @@ class Step:
         self.reward = reward
         self.gamma = gamma
 
-        self.return_values: Optional[Returns] = None
+        self.returns: Optional[Returns] = None
 
 
 class Returns:
@@ -182,7 +182,7 @@ def improve(
         # as the times of their first visits (only if we're doing first-visit evaluation).
         t = 0
         state_action_first_t = None if update_upon_every_visit else {}
-        step_values_list = []
+        steps = []
         truncation_time_step = None
         while not state.terminal:
             try:
@@ -202,7 +202,7 @@ def improve(
 
                 next_state, next_reward = environment.advance(state, t, a, agent)
                 gamma = agent.gamma
-                step_values_list.append(Step(t, state, a, next_reward, gamma))
+                steps.append(Step(t, state, a, next_reward, gamma))
                 state = next_state
                 t += 1
                 agent.sense(state, t)
@@ -227,18 +227,18 @@ def improve(
         # work backwards through the trace to calculate discounted returns. need to work backward in order for the value
         # of g at each time step t to be properly discounted.
         g = 0.0
-        for step_values in reversed(step_values_list):
+        for step in reversed(steps):
 
-            g = step_values.gamma * g + step_values.reward.r
+            g = step.gamma * g + step.reward.r
 
             # only update value estimates before the truncation time step if we have one
-            if truncation_time_step is not None and step_values.t >= truncation_time_step:
+            if truncation_time_step is not None and step.t >= truncation_time_step:
                 continue
 
             # if we're doing every-visit, or if the current time step was the first visit to the state-action, then g is
             # the discounted sample value. use it to update the policy.
             if state_action_first_t is None or (
-                state_action_first_t[(step_values.state, step_values.action)] == step_values.t
+                state_action_first_t[(step.state, step.action)] == step.t
             ):
                 # if we don't have a baseline, then the baseline return is zero and the target is the return.
                 if agent.v_S is None:
@@ -248,8 +248,8 @@ def improve(
                 # state-value estimator with the obtained return. this only adds state-return example to the estimator.
                 # it does not improve the estimator.
                 else:
-                    baseline_return = agent.v_S[step_values.state].get_value()
-                    agent.v_S[step_values.state].update(g)
+                    baseline_return = agent.v_S[step.state].get_value()
+                    agent.v_S[step.state].update(g)
 
                 # form the target as difference between observed return and baseline. actions that produce an
                 # above-baseline return will be reinforced.
@@ -257,9 +257,9 @@ def improve(
 
                 # append the update to the policy. this does not commit the updates.
                 if num_warmup_episodes is None or episodes_finished > num_warmup_episodes:
-                    agent.pi.append_update(step_values.action, step_values.state, alpha, target)
+                    agent.pi.append_update(step.action, step.state, alpha, target)
 
-                step_values.return_values = Returns(
+                step.returns = Returns(
                     return_value=g,
                     baseline_return_value=baseline_return,
                     target=target
@@ -294,30 +294,30 @@ def improve(
                 agent.v_S.plot(pdf)
 
             plt.figure(figsize=(10, 10))
-            time_steps = [step_values.t for step_values in step_values_list]
+            time_steps = [step.t for step in steps]
 
             # plot rewards and returns
             plt.plot(
                 time_steps,
-                [step_values.reward.r for step_values in step_values_list],
+                [step.reward.r for step in steps],
                 color='red',
                 label='Reward:  r(t)'
             )
             plt.plot(
                 time_steps,
-                [step_values.return_values.return_value for step_values in step_values_list],  # type: ignore[union-attr]
+                [step.returns.return_value for step in steps],  # type: ignore[union-attr]
                 color='green',
                 label='Return:  g(t)'
             )
             plt.plot(
                 time_steps,
-                [step_values.return_values.baseline_return_value for step_values in step_values_list],  # type: ignore[union-attr]
+                [step.returns.baseline_return_value for step in steps],  # type: ignore[union-attr]
                 color='violet',
                 label='Value:  v(t)',
             )
             plt.plot(
                 time_steps,
-                [step_values.return_values.target for step_values in step_values_list],  # type: ignore[union-attr]
+                [step.returns.target for step in steps],  # type: ignore[union-attr]
                 color='orange',
                 label='Target:  g(t) - v(t)'
             )
@@ -334,7 +334,7 @@ def improve(
             gamma_axe: plt.Axes = plt.twinx()  # type: ignore[assignment]
             gamma_axe.plot(
                 time_steps,
-                [step_values.gamma for step_values in step_values_list],
+                [step.gamma for step in steps],
                 color='blue',
                 label='gamma(t)'
             )
