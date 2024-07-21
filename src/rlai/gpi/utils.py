@@ -14,7 +14,7 @@ from rlai.policy_gradient.policies.continuous_action import ContinuousActionPoli
 
 # plotting data and objects
 _iteration_ax: Optional[plt.Axes] = None
-_iteration_average_reward: Optional[List[int]] = None
+_iteration_average_reward: Optional[List[float]] = None
 _iteration_average_reward_line: Optional[plt.Line2D] = None
 
 _state_space_ax: Optional[plt.Axes] = None
@@ -47,17 +47,32 @@ def update_policy_iteration_plot():
 
         iterations = list(range(1, len(_iteration_average_reward) + 1))
 
+        assert _iteration_average_reward_line is not None
         _iteration_average_reward_line.set_data(iterations, _iteration_average_reward)
+
+        assert _iteration_ax is not None
         _iteration_ax.relim()
         _iteration_ax.autoscale_view()
 
+        assert _iteration_total_states_line is not None
+        assert _iteration_total_states is not None
         _iteration_total_states_line.set_data(iterations, _iteration_total_states)
+
+        assert _iteration_num_states_improved_line is not None
+        assert _iteration_num_states_improved is not None
         _iteration_num_states_improved_line.set_data(iterations, _iteration_num_states_improved)
+
+        assert _state_space_ax is not None
         _state_space_ax.relim()
         _state_space_ax.autoscale_view()
 
+        assert _elapsed_seconds_average_rewards is not None
         seconds, averages = get_second_averages(_elapsed_seconds_average_rewards)
+
+        assert _elapsed_seconds_average_reward_line is not None
         _elapsed_seconds_average_reward_line.set_data(seconds, averages)
+
+        assert _time_ax is not None
         _time_ax.relim()
         _time_ax.autoscale_view()
 
@@ -118,6 +133,7 @@ def plot_policy_iteration(
 
     # reward per iteration
     _iteration_ax = axs[0]
+    assert _iteration_ax is not None
     iterations = list(range(1, len(iteration_average_reward) + 1))
     _iteration_average_reward_line, = _iteration_ax.plot(iterations, iteration_average_reward, '-', label='average')
     _iteration_ax.set_xlabel('Iteration')
@@ -126,7 +142,8 @@ def plot_policy_iteration(
     _iteration_ax.grid()
 
     # twin-x states per iteration
-    _state_space_ax = _iteration_ax.twinx()
+    _state_space_ax = _iteration_ax.twinx()  # type: ignore[assignment]
+    assert _state_space_ax is not None
     _iteration_total_states_line, = _state_space_ax.plot(
         iterations,
         iteration_total_states,
@@ -147,6 +164,7 @@ def plot_policy_iteration(
 
     # reward over elapsed time
     _time_ax = axs[1]
+    assert _time_ax is not None
     seconds, averages = get_second_averages(elapsed_seconds_average_rewards)
     _elapsed_seconds_average_reward_line, = _time_ax.plot(seconds, averages, '-', label='average')
     _time_ax.set_xlabel('Elapsed time (second intervals)')
@@ -161,6 +179,7 @@ def plot_policy_iteration(
         return fig
     else:
         pdf.savefig()
+        return None
 
 
 def get_second_averages(
@@ -188,7 +207,7 @@ def get_second_averages(
 def resume_from_checkpoint(
         checkpoint_path: str,
         resume_function: Callable,
-        resume_args_mutator: Callable[[Dict], None] = None,
+        resume_args_mutator: Optional[Callable[[Dict], None]] = None,
         **new_args
 ) -> MdpAgent:
     """

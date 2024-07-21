@@ -683,7 +683,7 @@ class FunctionApproximationPolicy(Policy):
 
     def __contains__(
             self,
-            state: MdpState
+            state: Optional[MdpState]
     ) -> bool:
         """
         Check whether the policy is defined for a state.

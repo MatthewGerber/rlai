@@ -72,8 +72,10 @@ def test_prioritized_planning_environment():
     planning_environment.add_state_action_priority(MdpState(3, [], False, False), Action(3), 0.3)
 
     s, a = planning_environment.get_state_action_with_highest_priority()
+    assert s is not None and a is not None
     assert s.i == 2 and a.i == 2
     s, a = planning_environment.get_state_action_with_highest_priority()
+    assert s is not None and a is not None
     assert s.i == 1 and a.i == 1
     s, a = planning_environment.get_state_action_with_highest_priority()
     assert s is None and a is None
@@ -158,8 +160,8 @@ def test_stochastic_environment_model():
     for i in range(1000):
         state = model.sample_state(random_state)
         action = model.sample_action(state, random_state)
-        next_state, reward = model.sample_next_state_and_reward(state, action, random_state)
-        environment_sequence.append((next_state, reward))
+        next_state, reward_value = model.sample_next_state_and_reward(state, action, random_state)
+        environment_sequence.append((next_state, reward_value))
 
     # uncomment the following line and run test to update fixture
     # with open(f'{os.path.dirname(__file__)}/fixtures/test_stochastic_environment_model.pickle', 'wb') as file:

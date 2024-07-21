@@ -10,7 +10,6 @@ from numpy.testing import assert_allclose
 from rlai.utils import (
     IncrementalSampleAverager,
     sample_list_item,
-    import_function,
     StdStreamTee,
     RunThreadManager,
     get_nearest_positive_definite_matrix,

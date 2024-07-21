@@ -5,18 +5,17 @@ import re
 import tempfile
 import time
 import warnings
-
 from copy import deepcopy
 from datetime import datetime, timedelta
 from os.path import join, expanduser
-from typing import Optional, Tuple
+from typing import Optional, Tuple, List, Dict, Any
 
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.backends.backend_pdf import PdfPages
 
 from rlai.core import MdpState, Action, Reward
-from rlai.core.environments.mdp import MdpEnvironment
+from rlai.core.environments.mdp import ContinuousMdpEnvironment
 from rlai.meta import rl_text
 from rlai.models.sklearn import SKLearnSGD
 from rlai.policy_gradient import ParameterizedMdpAgent
@@ -31,9 +30,9 @@ from rlai.utils import (
 )
 
 
-class StepValues:
+class Step:
     """
-    Bookkeeping values for improvement steps.
+    Bookkeeping values for a step.
     """
 
     def __init__(
@@ -45,27 +44,27 @@ class StepValues:
             gamma: float
     ):
         """
-        Initialize the step values.
+        Initialize the step.
 
         :param t: Time step.
-        :param state:
-        :param action:
-        :param reward:
-        :param gamma:
+        :param state: State.
+        :param action: Action.
+        :param reward: Reward.
+        :param gamma: Gamma (discount).
         """
-
 
         self.t = t
         self.state = state
         self.action = action
         self.reward = reward
         self.gamma = gamma
-        self.return_values: Optional[ReturnValues] = None
+
+        self.return_values: Optional[Returns] = None
 
 
-class ReturnValues:
+class Returns:
     """
-    Bookkeeping values for returns.
+    Bookkeeping values for returns at a step.
     """
 
     def __init__(
@@ -74,6 +73,14 @@ class ReturnValues:
             baseline_return_value: float,
             target: float
     ):
+        """
+        Initialize the return values.
+
+        :param return_value: Return value.
+        :param baseline_return_value: Baseline value.
+        :param target: Target resulting from return and baseline.
+        """
+
         self.return_value = return_value
         self.baseline_return_value = baseline_return_value
         self.target = target
@@ -82,7 +89,7 @@ class ReturnValues:
 @rl_text(chapter=13, page=326)
 def improve(
         agent: ParameterizedMdpAgent,
-        environment: MdpEnvironment,
+        environment: ContinuousMdpEnvironment,
         num_episodes: int,
         update_upon_every_visit: bool,
         alpha: float,
@@ -90,6 +97,7 @@ def improve(
         plot_state_value: bool,
         num_warmup_episodes: Optional[int] = None,
         num_episodes_per_policy_update_plot: Optional[int] = None,
+        policy_update_plot_pdf_directory: Optional[str] = None,
         num_episodes_per_checkpoint: Optional[int] = None,
         checkpoint_path: Optional[str] = None,
         training_pool_directory: Optional[str] = None,
@@ -116,7 +124,8 @@ def improve(
     :param num_warmup_episodes: Number of warmup episodes to run before updating the policy. Warmup episodes allow
     estimates (e.g., means and variances of feature scalers, baseline state-value estimators, etc.) to settle before
     updating the policy.
-    :param num_episodes_per_policy_update_plot: Number of episodes per baseline plot.
+    :param num_episodes_per_policy_update_plot: Number of episodes per plot.
+    :param policy_update_plot_pdf_directory: Directory in which to store plot PDFs, or None to display them directly.
     :param num_episodes_per_checkpoint: Number of episodes per checkpoint save.
     :param checkpoint_path: Checkpoint path. Must be provided if `num_episodes_per_checkpoint` is provided.
     :param training_pool_directory: Path to directory in which to store pooled training runs.
@@ -133,8 +142,6 @@ def improve(
 
     if checkpoint_path is not None:
         checkpoint_path = os.path.expanduser(checkpoint_path)
-
-    plot_to_pdf = True
 
     # we work backward through the episode when updating the baseline model. if we have a baseline model, then indicate
     # this so that plotting is ordered correctly.
@@ -195,7 +202,7 @@ def improve(
 
                 next_state, next_reward = environment.advance(state, t, a, agent)
                 gamma = agent.gamma
-                step_values_list.append(StepValues(t, state, a, next_reward, gamma))
+                step_values_list.append(Step(t, state, a, next_reward, gamma))
                 state = next_state
                 t += 1
                 agent.sense(state, t)
@@ -220,7 +227,7 @@ def improve(
         # work backwards through the trace to calculate discounted returns. need to work backward in order for the value
         # of g at each time step t to be properly discounted.
         g = 0.0
-        for _, step_values in enumerate(reversed(step_values_list)):
+        for step_values in reversed(step_values_list):
 
             g = step_values.gamma * g + step_values.reward.r
 
@@ -233,7 +240,6 @@ def improve(
             if state_action_first_t is None or (
                 state_action_first_t[(step_values.state, step_values.action)] == step_values.t
             ):
-
                 # if we don't have a baseline, then the baseline return is zero and the target is the return.
                 if agent.v_S is None:
                     baseline_return = 0.0
@@ -253,7 +259,7 @@ def improve(
                 if num_warmup_episodes is None or episodes_finished > num_warmup_episodes:
                     agent.pi.append_update(step_values.action, step_values.state, alpha, target)
 
-                step_values.return_values = ReturnValues(
+                step_values.return_values = Returns(
                     return_value=g,
                     baseline_return_value=baseline_return,
                     target=target
@@ -274,10 +280,15 @@ def improve(
             num_episodes_per_policy_update_plot is not None and
             episodes_finished % num_episodes_per_policy_update_plot == 0
         ):
-            if plot_to_pdf:
-                pdf = PdfPages(os.path.expanduser(f'~/Desktop/reinforce_{episodes_finished}.pdf'))
-            else:
+            # initialize pdf if we're saving to a directory
+            if policy_update_plot_pdf_directory is None:
                 pdf = None
+            else:
+                os.makedirs(policy_update_plot_pdf_directory, exist_ok=True)
+                pdf = PdfPages(os.path.expanduser(os.path.join(
+                    policy_update_plot_pdf_directory,
+                    f'reinforce_{episodes_finished}.pdf'
+                )))
 
             if agent.v_S is not None:
                 agent.v_S.plot(pdf)
@@ -294,19 +305,19 @@ def improve(
             )
             plt.plot(
                 time_steps,
-                [step_values.return_values.return_value for step_values in step_values_list],
+                [step_values.return_values.return_value for step_values in step_values_list],  # type: ignore[union-attr]
                 color='green',
                 label='Return:  g(t)'
             )
             plt.plot(
                 time_steps,
-                [step_values.return_values.baseline_return_value for step_values in step_values_list],
+                [step_values.return_values.baseline_return_value for step_values in step_values_list],  # type: ignore[union-attr]
                 color='violet',
                 label='Value:  v(t)',
             )
             plt.plot(
                 time_steps,
-                [step_values.return_values.target for step_values in step_values_list],
+                [step_values.return_values.target for step_values in step_values_list],  # type: ignore[union-attr]
                 color='orange',
                 label='Target:  g(t) - v(t)'
             )
@@ -320,11 +331,11 @@ def improve(
             plt.legend(loc='upper left')
 
             # plot gamma (discount) in a twin-x axes
-            gamma_axe = plt.twinx()
+            gamma_axe: plt.Axes = plt.twinx()  # type: ignore[assignment]
             gamma_axe.plot(
                 time_steps,
                 [step_values.gamma for step_values in step_values_list],
-                color='magenta',
+                color='blue',
                 label='gamma(t)'
             )
             gamma_axe.set_ylabel('Gamma')
@@ -362,10 +373,16 @@ def improve(
                 pdf.close()
 
         num_fallback_iterations = 0
-        if training_pool is not None and episodes_finished % training_pool_iterate_episodes == 0:
+        if (
+            training_pool is not None and
+            training_pool_iterate_episodes is not None and
+            episodes_finished % training_pool_iterate_episodes == 0
+        ):
             num_fallback_iterations = training_pool.iterate(False)
 
         if num_episodes_per_checkpoint is not None and episodes_finished % num_episodes_per_checkpoint == 0:
+
+            assert checkpoint_path is not None
 
             resume_args = {
                 'agent': agent,
@@ -400,6 +417,7 @@ def improve(
 
         # decrement episodes finished if we fell back to an earlier iteration
         if num_fallback_iterations > 0:
+            assert training_pool_iterate_episodes is not None
             num_fallback_episodes = num_fallback_iterations * training_pool_iterate_episodes
             episodes_finished -= num_fallback_episodes
             logging.info(f'Removed {num_fallback_episodes} finished episodes due to a fallback.')
@@ -421,7 +439,7 @@ class TrainingPool:
     @staticmethod
     def init(
             agent: ParameterizedMdpAgent,
-            environment: MdpEnvironment,
+            environment: ContinuousMdpEnvironment,
             training_pool_directory: Optional[str] = None,
             training_pool_count: Optional[int] = None,
             training_pool_iterate_episodes: Optional[int] = None,
@@ -443,16 +461,20 @@ class TrainingPool:
         :return: Training pool, or None if not configured.
         """
 
-        none_check_params = [
-            training_pool_directory,
-            training_pool_count,
-            training_pool_iterate_episodes,
-            training_pool_evaluate_episodes
-        ]
-
-        if all(param is None for param in none_check_params):
+        if (
+            training_pool_directory is None and
+            training_pool_count is None and
+            training_pool_iterate_episodes is None and
+            training_pool_evaluate_episodes is None
+        ):
             training_pool = None
-        elif all(param is not None for param in none_check_params):
+
+        elif (
+            training_pool_directory is not None and
+            training_pool_count is not None and
+            training_pool_iterate_episodes is not None and
+            training_pool_evaluate_episodes is not None
+        ):
 
             training_pool_directory = os.path.expanduser(training_pool_directory)
 
@@ -519,7 +541,7 @@ class TrainingPool:
                     )
 
         plt.plot(list(iteration_return.keys()), list(iteration_return.values()), label='Pooled REINFORCE')
-        to_iteration_color = {}
+        to_iteration_color: Dict[int, Any] = {}
         for at_iteration, (at_reward, to_iteration, to_reward) in fallback_at_iteration_at_reward_to_iteration_to_reward.items():
             color = to_iteration_color.get(to_iteration, None)
             lines = plt.plot([at_iteration, to_iteration], [at_reward, to_reward], color=color)
@@ -532,6 +554,43 @@ class TrainingPool:
         plt.grid()
         plt.legend()
         plt.show()
+
+    def __init__(
+            self,
+            agent: ParameterizedMdpAgent,
+            environment: ContinuousMdpEnvironment,
+            training_pool_directory: str,
+            training_pool_count: int,
+            training_pool_evaluate_episodes: int,
+            training_pool_max_iterations_without_improvement: Optional[int]
+    ):
+        """
+        Initialize the training pool.
+
+        :param agent: Agent.
+        :param environment: Environment.
+        :param training_pool_directory: Path to directory in which to store pooled training runs.
+        :param training_pool_count: Number of runners in the training pool.
+        :param training_pool_evaluate_episodes: Number of episodes to evaluate the agent when iterating the training
+        pool.
+        :param training_pool_max_iterations_without_improvement: Maximum number of training pool iterations to allow
+        before reverting to the best prior agent, or None to never revert.
+        """
+
+        self.agent = agent
+        self.environment = environment
+        self.training_pool_directory = training_pool_directory
+        self.training_pool_count = training_pool_count
+        self.training_pool_evaluate_episodes = training_pool_evaluate_episodes
+        self.training_pool_max_iterations_without_improvement = training_pool_max_iterations_without_improvement
+
+        self.training_pool_path = tempfile.NamedTemporaryFile(dir=training_pool_directory, delete=True).name
+        self.training_pool_iteration = 1
+        self.training_pool_iterations_without_improvement = 0
+        self.training_pool_best_overall_policy: Optional[ParameterizedPolicy] = None
+        self.training_pool_best_overall_v_S: Optional[StateValueEstimator] = None
+        self.training_pool_best_overall_average_return: Optional[float] = None
+        self.training_pool_best_overall_iteration: Optional[int] = None
 
     def iterate(
             self,
@@ -636,7 +695,7 @@ class TrainingPool:
                 f'{self.training_pool_best_overall_average_return}, after an average return of {best_average_return} '
                 f'and {self.training_pool_iterations_without_improvement} iteration(s) without improvement.'
             )
-            self.agent.pi = deepcopy(self.training_pool_best_overall_policy)
+            self.agent.pi = deepcopy(self.training_pool_best_overall_policy)  # type: ignore[assignment]
             self.agent.v_S = deepcopy(self.training_pool_best_overall_v_S)
             num_fallback_iterations = self.training_pool_iterations_without_improvement
             self.training_pool_iterations_without_improvement = 0
@@ -648,7 +707,7 @@ class TrainingPool:
                 f'Setting to greedy policy/v_S from iteration {self.training_pool_best_overall_iteration} with average '
                 f'return of {self.training_pool_best_overall_average_return}.'
             )
-            self.agent.pi = deepcopy(self.training_pool_best_overall_policy)
+            self.agent.pi = deepcopy(self.training_pool_best_overall_policy)  # type: ignore[assignment]
             self.agent.v_S = deepcopy(self.training_pool_best_overall_v_S)
 
         # set the agent's policy/v_S to the best available from the pool's current iteration. no need to copy here, as
@@ -667,7 +726,7 @@ class TrainingPool:
 
     def select_best(
             self,
-    ) -> Optional[Tuple[ParameterizedPolicy, StateValueEstimator, float]]:
+    ) -> Tuple[ParameterizedPolicy, StateValueEstimator, float]:
         """
         Select the best policy from the training pool.
 
@@ -675,7 +734,7 @@ class TrainingPool:
         """
 
         # wait for all pickles to appear for the current iteration
-        training_pool_policy_state_value_returns = []
+        training_pool_policy_state_value_returns: List[Tuple] = []
         while len(training_pool_policy_state_value_returns) != self.training_pool_count:
             logging.info(f'Waiting for pickles to appear for training pool iteration {self.training_pool_iteration}.')
             time.sleep(1.0)
@@ -694,9 +753,9 @@ class TrainingPool:
             logging.info(f'Read {len(training_pool_policy_state_value_returns)} pickle(s).')
 
         # select best policy
-        best_policy = None
-        best_state_value_estimator = None
-        best_average_return = None
+        best_policy: Optional[ParameterizedPolicy] = None
+        best_state_value_estimator: Optional[StateValueEstimator] = None
+        best_average_return: Optional[float] = None
         for policy, state_value_estimator, average_return in training_pool_policy_state_value_returns:
 
             if best_average_return is None or average_return > best_average_return:
@@ -722,41 +781,8 @@ class TrainingPool:
             f'{best_average_return:.2f}.'
         )
 
+        assert best_policy is not None
+        assert best_state_value_estimator is not None
+        assert best_average_return is not None
+
         return best_policy, best_state_value_estimator, best_average_return
-
-    def __init__(
-            self,
-            agent: ParameterizedMdpAgent,
-            environment: MdpEnvironment,
-            training_pool_directory: str,
-            training_pool_count: int,
-            training_pool_evaluate_episodes: int,
-            training_pool_max_iterations_without_improvement: Optional[int]
-    ):
-        """
-        Initialize the training pool.
-
-        :param agent: Agent.
-        :param environment: Environment.
-        :param training_pool_directory: Path to directory in which to store pooled training runs.
-        :param training_pool_count: Number of runners in the training pool.
-        :param training_pool_evaluate_episodes: Number of episodes to evaluate the agent when iterating the training
-        pool.
-        :param training_pool_max_iterations_without_improvement: Maximum number of training pool iterations to allow
-        before reverting to the best prior agent, or None to never revert.
-        """
-
-        self.agent = agent
-        self.environment = environment
-        self.training_pool_directory = training_pool_directory
-        self.training_pool_count = training_pool_count
-        self.training_pool_evaluate_episodes = training_pool_evaluate_episodes
-        self.training_pool_max_iterations_without_improvement = training_pool_max_iterations_without_improvement
-
-        self.training_pool_path = tempfile.NamedTemporaryFile(dir=training_pool_directory, delete=True).name
-        self.training_pool_iteration = 1
-        self.training_pool_iterations_without_improvement = 0
-        self.training_pool_best_overall_policy = None
-        self.training_pool_best_overall_v_S = None
-        self.training_pool_best_overall_average_return = None
-        self.training_pool_best_overall_iteration = None

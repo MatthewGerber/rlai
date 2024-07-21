@@ -375,7 +375,7 @@ class Policy(ABC):
     @abstractmethod
     def __contains__(
             self,
-            state: MdpState
+            state: Optional[MdpState]
     ) -> bool:
         """
         Check whether the policy is defined for a state.
@@ -1276,7 +1276,10 @@ class Human(Agent):
         A dummy policy to make the present agent compatible with our runners.
         """
 
-        def __contains__(self, state: MdpState) -> bool:
+        def __contains__(
+                self,
+                state: Optional[MdpState]
+        ) -> bool:
             """
             Check whether the policy is defined for a state.
 
@@ -1286,7 +1289,10 @@ class Human(Agent):
 
             return True
 
-        def __getitem__(self, state: MdpState) -> Dict[Action, float]:
+        def __getitem__(
+                self,
+                state: Optional[MdpState]
+        ) -> Dict[Action, float]:
             """
             Check whether the policy is defined for a state.
 

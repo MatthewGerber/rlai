@@ -2,7 +2,7 @@ import logging
 import warnings
 from abc import ABC
 from argparse import ArgumentParser
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Optional
 
 import numpy as np
 import pandas as pd
@@ -151,7 +151,7 @@ class ContinuousActionPolicy(ParameterizedPolicy, ABC):
 
     def __contains__(
             self,
-            state: MdpState
+            state: Optional[MdpState]
     ) -> bool:
         """
         Check whether the policy is defined for a state.

@@ -566,6 +566,8 @@ def test_iterate_value_q_pi_func_approx_multi_threaded():
 
     train_args_wait_event.wait()
 
+    assert q_S_A is not None
+
     # premature update should do nothing
     assert q_S_A.update_plot(-1) is None
 
@@ -807,8 +809,7 @@ def test_policy_overrides():
     assert isinstance(mdp_agent_2.most_recent_state, MdpState) and mdp_agent_2.most_recent_state in mdp_agent_2.pi
 
     with pytest.raises(ValueError, match='Attempted to check for None in policy.'):
-        # noinspection PyTypeChecker
-        if None in mdp_agent_2.pi:  # pragma no cover
+        if None in mdp_agent_2.pi:
             pass
 
     assert mdp_agent.pi == mdp_agent_2.pi

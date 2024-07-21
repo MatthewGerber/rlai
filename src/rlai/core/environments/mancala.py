@@ -106,7 +106,7 @@ class Pit:
         self.store = store
 
         # these will be assigned after all pits have been created
-        self.i = None
+        self.i: Optional[int] = None
         self.opposing_pocket = None
         self.action = None
 

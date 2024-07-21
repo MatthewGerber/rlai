@@ -318,6 +318,12 @@ def get_argument_parser_for_train_function(
     )
 
     add_argument(
+        '--policy-update-plot-pdf-directory',
+        type=str,
+        help='Directory in which to store plot PDFs, or None to display them directly.'
+    )
+
+    add_argument(
         '--num-warmup-episodes',
         type=int,
         help='Number of warmup episodes.'

@@ -9,8 +9,12 @@ from numpy.random import RandomState
 from numpy.testing import assert_allclose
 
 from rlai.core import Monitor
+from rlai.core.environments.gamblers_problem import GamblersProblem
+from rlai.core.environments.gridworld import Gridworld
+from rlai.core.environments.mancala import Mancala
+from rlai.core.environments.mdp import MdpEnvironment
 from rlai.gpi.state_action_value import ActionValueMdpAgent
-from rlai.gpi.state_action_value.tabular import TabularPolicy
+from rlai.gpi.state_action_value.tabular import TabularStateActionValueEstimator
 from rlai.runners.agent_in_environment import run
 
 
@@ -155,7 +159,7 @@ def test_mancala():
     Test.
     """
 
-    monitors = run(shlex.split(f'--random-seed 12345 --T 100 --n-runs 200 --environment rlai.core.environments.mancala.Mancala --initial-count 4 --agent {dump_agent()}'))
+    monitors = run(shlex.split(f'--random-seed 12345 --T 100 --n-runs 200 --environment rlai.core.environments.mancala.Mancala --initial-count 4 --agent {dump_agent(Mancala(RandomState(1234), None, 4, None))}'))
 
     # uncomment the following line and run test to update fixture
     # with open(f'{os.path.dirname(__file__)}/fixtures/test_mancala.pickle', 'wb') as file:
@@ -172,7 +176,7 @@ def test_gamblers_problem():
     Test.
     """
 
-    monitors = run(shlex.split(f'--random-seed 12345 --T 100 --n-runs 200 --environment rlai.core.environments.gamblers_problem.GamblersProblem --p-h 0.4 --agent {dump_agent()} --log INFO'))
+    monitors = run(shlex.split(f'--random-seed 12345 --T 100 --n-runs 200 --environment rlai.core.environments.gamblers_problem.GamblersProblem --p-h 0.4 --agent {dump_agent(GamblersProblem("test", RandomState(1234), None, 0.5))} --log INFO'))
 
     # uncomment the following line and run test to update fixture
     # with open(f'{os.path.dirname(__file__)}/fixtures/test_gamblers_problem.pickle', 'wb') as file:
@@ -205,32 +209,28 @@ def test_plot():
     run(shlex.split(f'--random-seed 12345 --T 100 --n-runs 200 --environment rlai.core.environments.bandit.KArmedBandit --k 10 --agent rlai.core.EpsilonGreedyQValueAgent --epsilon 0.2 0.0 --plot --pdf-save-path {tempfile.NamedTemporaryFile(delete=False).name}'))
 
 
-class DummyQSA:
-    """
-    State-action value estimator without an environment.
-    """
-
-    @staticmethod
-    def get_initial_policy() -> TabularPolicy:
-        """
-        Get initial policy.
-
-        :return: Policy.
-        """
-
-        return TabularPolicy(None, None)
-
-
-def dump_agent() -> str:
+def dump_agent(
+        environment: MdpEnvironment
+) -> str:
     """
     Dump agent.
 
+    :param environment: Environment.
     :return: String path.
     """
 
     # create dummy mdp agent for runner
     # noinspection PyTypeChecker
-    stochastic_mdp_agent = ActionValueMdpAgent('foo', RandomState(12345), 1.0, DummyQSA())
+    stochastic_mdp_agent = ActionValueMdpAgent(
+        'foo',
+        RandomState(12345),
+        1.0,
+        TabularStateActionValueEstimator(
+            environment,
+            None,
+            None
+        )
+    )
     agent_path = tempfile.NamedTemporaryFile(delete=False).name
     with open(agent_path, 'wb') as f:
         pickle.dump(stochastic_mdp_agent, f)

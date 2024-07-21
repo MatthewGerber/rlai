@@ -398,7 +398,7 @@ class TabularStateActionValueEstimator(StateActionValueEstimator):
     def __getitem__(
             self,
             state: MdpState
-    ) -> TabularActionValueEstimator:
+    ) -> ActionValueEstimator:
         """
         Get the action-value estimator for a state.
 
@@ -682,7 +682,7 @@ class TabularPolicy(Policy):
 
     def __contains__(
             self,
-            state: MdpState
+            state: Optional[MdpState]
     ) -> bool:
         """
         Check whether the policy is defined for a state.

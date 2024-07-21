@@ -65,7 +65,7 @@ def test_learn():
 
     # run same number of improvements without checkpoint...result should be the same.
     random_state = RandomState(12345)
-    mancala: Mancala = Mancala(
+    mancala = Mancala(
         random_state=random_state,
         T=None,
         initial_count=4,
@@ -127,13 +127,13 @@ def test_human_player():
     human = Human()
 
     def mock_input(
-            *_
+            prompt: str
     ) -> str:
         s = human.most_recent_state
         selected_a = sample_list_item(s.AA, probs=None, random_state=random_state)
         return selected_a.name
 
-    human.get_input = mock_input
+    human.get_input = mock_input  # type: ignore[method-assign]
 
     mancala: Mancala = Mancala(
         random_state=random_state,

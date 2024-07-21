@@ -32,8 +32,8 @@ def test_continuous_learn():
 
     if not update_fixture:
 
-        with open(f'{os.path.dirname(__file__)}/fixtures/test_continuous_learn.pickle', 'rb') as file:
-            state_sequence, fixture_pi = pickle.load(file)
+        with open(f'{os.path.dirname(__file__)}/fixtures/test_continuous_learn.pickle', 'rb') as load_f:
+            state_sequence, fixture_pi = pickle.load(load_f)
 
         # set up a mock robocode game that sends state sequence
         def robocode_mock():
@@ -81,17 +81,18 @@ def test_continuous_learn():
     run(shlex.split(cmd))
 
     if not update_fixture:
+        assert robocode_mock_thread is not None
         robocode_mock_thread.join()
 
-    with open(agent_path, 'rb') as f:
-        agent = pickle.load(f)
+    with open(agent_path, 'rb') as load_f:
+        agent = pickle.load(load_f)
 
     # if we're updating the test fixture, then save the state sequence and resulting policy to disk.
     if update_fixture:  # pragma no cover
-        with open(os.path.expanduser('~/Desktop/state_sequence.txt'), 'r') as f:
-            state_sequence = f.readlines()
-        with open(f'{os.path.dirname(__file__)}/fixtures/test_continuous_learn.pickle', 'wb') as file:
-            pickle.dump((state_sequence, agent.pi), file)
+        with open(os.path.expanduser('~/Desktop/state_sequence.txt'), 'r') as txt_f:
+            state_sequence = txt_f.readlines()
+        with open(f'{os.path.dirname(__file__)}/fixtures/test_continuous_learn.pickle', 'wb') as dump_f:
+            pickle.dump((state_sequence, agent.pi), dump_f)
     else:
         assert agent.pi == fixture_pi
 

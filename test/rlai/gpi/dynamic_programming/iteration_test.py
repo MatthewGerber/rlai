@@ -34,7 +34,7 @@ def test_policy_iteration():
 
     # action-value policy iteration
     random_state = RandomState(12345)
-    mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
+    mdp_environment = Gridworld.example_4_1(random_state, None)
     mdp_agent_q_pi = ActionValueMdpAgent(
         'test',
         random_state,
@@ -76,7 +76,7 @@ def test_value_iteration():
 
     # run value iteration on v_pi
     random_state = RandomState(12345)
-    mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
+    mdp_environment = Gridworld.example_4_1(random_state, None)
     mdp_agent_v_pi_value_iteration = ActionValueMdpAgent(
         'test',
         random_state,
@@ -95,7 +95,7 @@ def test_value_iteration():
 
     # run value iteration on q_pi
     random_state = RandomState(12345)
-    mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
+    mdp_environment = Gridworld.example_4_1(random_state, None)
     mdp_agent_q_pi_value_iteration = ActionValueMdpAgent(
         'test',
         random_state,

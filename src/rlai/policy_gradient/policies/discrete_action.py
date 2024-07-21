@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
 from functools import reduce
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Optional
 
 import numpy as np
 from jax import numpy as jnp, grad
@@ -182,7 +182,7 @@ class SoftMaxInActionPreferencesPolicy(ParameterizedPolicy):
 
     def __contains__(
             self,
-            state: MdpState
+            state: Optional[MdpState]
     ) -> bool:
         """
         Check whether the policy is defined for a state.
@@ -428,7 +428,7 @@ class SoftMaxInActionPreferencesJaxPolicy(ParameterizedPolicy):
 
     def __contains__(
             self,
-            state: MdpState
+            state: Optional[MdpState]
     ) -> bool:
         """
         Check whether the policy is defined for a state.

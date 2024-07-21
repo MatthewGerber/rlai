@@ -44,6 +44,8 @@ def iterate_policy_v_pi(
             initial_v_S=v_pi
         )
 
+        assert v_pi is not None
+
         improving = agent.pi.improve_with_v_pi(
             gamma=agent.gamma,
             environment=environment,
@@ -53,6 +55,8 @@ def iterate_policy_v_pi(
         i += 1
 
     logging.info(f'Policy iteration terminated after {i} iteration(s).')
+
+    assert v_pi is not None
 
     return v_pi
 

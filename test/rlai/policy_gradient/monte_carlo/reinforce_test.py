@@ -14,7 +14,7 @@ def test_manual_versus_jax_policy_gradient():
     """
 
     manual_agent_path = tempfile.NamedTemporaryFile(delete=False).name
-    run(shlex.split(f'--random-seed 12345 --agent rlai.policy_gradient.ParameterizedMdpAgent --gamma 1 --environment rlai.core.environments.gridworld.Gridworld --id example_4_1 --train-function rlai.policy_gradient.monte_carlo.reinforce.improve --num-episodes 10 --policy rlai.policy_gradient.policies.discrete_action.SoftMaxInActionPreferencesPolicy --policy-feature-extractor rlai.core.environments.gridworld.GridworldFeatureExtractor --alpha 0.0001 --update-upon-every-visit True --save-agent-path {manual_agent_path} --log DEBUG'))
+    run(shlex.split(f'--random-seed 12345 --agent rlai.policy_gradient.ParameterizedMdpAgent --gamma 1 --environment rlai.core.environments.gridworld.Gridworld --id example_4_1 --train-function rlai.policy_gradient.monte_carlo.reinforce.improve --num-episodes 10 --policy rlai.policy_gradient.policies.discrete_action.SoftMaxInActionPreferencesPolicy --policy-feature-extractor rlai.core.environments.gridworld.GridworldFeatureExtractor --alpha 0.0001 --update-upon-every-visit True --num-episodes-per-policy-update-plot 1 --policy-update-plot-pdf-directory {tempfile.NamedTemporaryFile(delete=True).name} --save-agent-path {manual_agent_path} --log DEBUG'))
     with open(manual_agent_path, 'rb') as f:
         manual_agent = pickle.load(f)
 
