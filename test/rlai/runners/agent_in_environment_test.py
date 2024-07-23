@@ -10,7 +10,6 @@ from numpy.testing import assert_allclose
 
 from rlai.core import Monitor
 from rlai.core.environments.gamblers_problem import GamblersProblem
-from rlai.core.environments.gridworld import Gridworld
 from rlai.core.environments.mancala import Mancala
 from rlai.core.environments.mdp import MdpEnvironment
 from rlai.gpi.state_action_value import ActionValueMdpAgent

@@ -181,7 +181,7 @@ def improve(
         # simulate until episode termination, keeping a trace of state-action pairs and their immediate rewards, as well
         # as the times of their first visits (only if we're doing first-visit evaluation).
         t = 0
-        state_action_first_t = None if update_upon_every_visit else {}
+        state_action_first_t: Optional[Dict[Tuple[MdpState, Action], int]] = None if update_upon_every_visit else {}
         steps = []
         truncation_time_step = None
         while not state.terminal:
@@ -193,7 +193,7 @@ def improve(
                 a = agent.act(t)
                 state_a = (state, a)
 
-                if state_value_plot is not None:
+                if state_value_plot is not None and agent.v_S is not None:
                     state_value_plot.update(np.array([agent.v_S[state].get_value()]))
 
                 # mark time step of first visit, if we're doing first-visit evaluation.
@@ -323,8 +323,8 @@ def improve(
             )
             plt.ylabel('Returns and Rewards')
 
-            for step, label in environment.time_step_axv_lines.items():
-                plt.axvline(step, color='violet', alpha=0.25)
+            for time_step, label in environment.time_step_axv_lines.items():
+                plt.axvline(time_step, color='violet', alpha=0.25)
 
             plt.xlabel('Time step')
             plt.title(f'Episode {episodes_finished}')

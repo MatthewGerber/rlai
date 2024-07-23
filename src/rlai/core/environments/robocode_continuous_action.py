@@ -189,42 +189,6 @@ class RobocodeEnvironment(ContinuousMdpEnvironment, TcpMdpEnvironment):
     information.
     """
 
-    def get_state_space_dimensionality(self) -> int:
-        """
-        Get state-space dimensionality.
-
-        :return: Dimensionality.
-        """
-
-        return 15
-
-    def get_state_dimension_names(self) -> List[str]:
-        """
-        Get state dimension names.
-
-        :return: Names.
-        """
-
-        return [str(i) for i in range(self.get_state_space_dimensionality())]
-
-    def get_action_space_dimensionality(self) -> int:
-        """
-        Get action-space dimensionality.
-
-        :return: Dimensionality.
-        """
-
-        return 5
-
-    def get_action_dimension_names(self) -> List[str]:
-        """
-        Get action dimension names.
-
-        :return: Names.
-        """
-
-        return [str(i) for i in range(self.get_action_space_dimensionality())]
-
     @classmethod
     def get_argument_parser(
             cls,
@@ -272,6 +236,94 @@ class RobocodeEnvironment(ContinuousMdpEnvironment, TcpMdpEnvironment):
         )
 
         return robocode, unparsed_args
+
+    def __init__(
+            self,
+            random_state: RandomState,
+            T: Optional[int],
+            port: int,
+            bullet_power_decay: float
+    ):
+        """
+        Initialize the Robocode environment.
+
+        :param random_state: Random state.
+        :param T: Maximum number of steps to run, or None for no limit.
+        :param port: Port to serve networked environment on.
+        :param bullet_power_decay: Exponential decay rate for cumulative bullet power values.
+        """
+
+        super().__init__(
+            name='robocode',
+            random_state=random_state,
+            T=T,
+            port=port
+        )
+
+        self.bullet_power_decay = bullet_power_decay
+
+        min_values = np.array([
+            -100.0,  # RobocodeAction.AHEAD
+            -180.0,  # RobocodeAction.TURN_LEFT
+            -180.0,  # RobocodeAction.TURN_RADAR_LEFT
+            -180.0,  # RobocodeAction.TURN_GUN_LEFT
+            0.0  # RobocodeAction.FIRE
+        ])
+
+        max_values = np.array([
+            100.0,  # RobocodeAction.AHEAD
+            180.0,  # RobocodeAction.TURN_LEFT
+            180.0,  # RobocodeAction.TURN_RADAR_LEFT
+            180.0,  # RobocodeAction.TURN_GUN_LEFT
+            5.0  # RobocodeAction.FIRE
+        ])
+
+        self.robot_actions = [
+            ContinuousMultiDimensionalAction(
+                value=None,
+                min_values=min_values,
+                max_values=max_values
+            )
+        ]
+
+        self.previous_state: Optional[RobocodeState] = None
+        self.bullet_id_fired_event: Dict[str, Dict] = {}
+
+    def get_state_space_dimensionality(self) -> int:
+        """
+        Get state-space dimensionality.
+
+        :return: Dimensionality.
+        """
+
+        return 15
+
+    def get_state_dimension_names(self) -> List[str]:
+        """
+        Get state dimension names.
+
+        :return: Names.
+        """
+
+        return [str(i) for i in range(self.get_state_space_dimensionality())]
+
+    def get_action_space_dimensionality(self) -> int:
+        """
+        Get action-space dimensionality.
+
+        :return: Dimensionality.
+        """
+
+        return 5
+
+    def get_action_dimension_names(self) -> List[str]:
+        """
+        Get action dimension names.
+
+        :return: Names.
+        """
+
+        return [str(i) for i in range(self.get_action_space_dimensionality())]
 
     def reset_for_new_run(
             self,
@@ -450,58 +502,6 @@ class RobocodeEnvironment(ContinuousMdpEnvironment, TcpMdpEnvironment):
 
         return state, reward
 
-    def __init__(
-            self,
-            random_state: RandomState,
-            T: Optional[int],
-            port: int,
-            bullet_power_decay: float
-    ):
-        """
-        Initialize the Robocode environment.
-
-        :param random_state: Random state.
-        :param T: Maximum number of steps to run, or None for no limit.
-        :param port: Port to serve networked environment on.
-        :param bullet_power_decay: Exponential decay rate for cumulative bullet power values.
-        """
-
-        super().__init__(
-            name='robocode',
-            random_state=random_state,
-            T=T,
-            port=port
-        )
-
-        self.bullet_power_decay = bullet_power_decay
-
-        min_values = np.array([
-            -100.0,  # RobocodeAction.AHEAD
-            -180.0,  # RobocodeAction.TURN_LEFT
-            -180.0,  # RobocodeAction.TURN_RADAR_LEFT
-            -180.0,  # RobocodeAction.TURN_GUN_LEFT
-            0.0  # RobocodeAction.FIRE
-        ])
-
-        max_values = np.array([
-            100.0,  # RobocodeAction.AHEAD
-            180.0,  # RobocodeAction.TURN_LEFT
-            180.0,  # RobocodeAction.TURN_RADAR_LEFT
-            180.0,  # RobocodeAction.TURN_GUN_LEFT
-            5.0  # RobocodeAction.FIRE
-        ])
-
-        self.robot_actions = [
-            ContinuousMultiDimensionalAction(
-                value=None,
-                min_values=min_values,
-                max_values=max_values
-            )
-        ]
-
-        self.previous_state: Optional[RobocodeState] = None
-        self.bullet_id_fired_event: Dict[str, Dict] = {}
-
 
 @rl_text(chapter='States', page=1)
 class RobocodeState(MdpState):
@@ -678,7 +678,7 @@ class RobocodeFeatureExtractor(StateFeatureExtractor):
     def init_from_arguments(
             cls,
             args: List[str],
-            environment: RobocodeEnvironment
+            environment: Environment
     ) -> Tuple[FeatureExtractor, List[str]]:
         """
         Initialize a feature extractor from arguments.
@@ -687,6 +687,8 @@ class RobocodeFeatureExtractor(StateFeatureExtractor):
         :param environment: Environment.
         :return: 2-tuple of a feature extractor and a list of unparsed arguments.
         """
+
+        assert isinstance(environment, RobocodeEnvironment)
 
         parsed_args, unparsed_args = parse_arguments(cls, args)
 
@@ -752,6 +754,9 @@ class RobocodeFeatureExtractor(StateFeatureExtractor):
             most_recent_enemy_distance_from_self = None
             most_recent_scanned_robot_age_discount = None
         else:
+
+            assert state.most_recent_scanned_robot_age_turns is not None
+
             # the bearing comes to us in radians. normalize to [0,360]. this bearing is relative to our heading, so
             # degrees from north to the enemy would be our heading plus this value.
             most_recent_enemy_bearing_from_self = self.normalize(math.degrees(state.most_recent_scanned_robot['bearing']))
@@ -819,7 +824,7 @@ class RobocodeFeatureExtractor(StateFeatureExtractor):
 
             # bearing is clockwise-orthogonal to enemy
             0.0 if most_recent_enemy_bearing_from_self is None else
-            most_recent_scanned_robot_age_discount * self.funnel(
+            most_recent_scanned_robot_age_discount * self.funnel(  # type: ignore[operator]
                 self.get_shortest_degree_change(
                     state.heading,
                     self.normalize(state.heading + most_recent_enemy_bearing_from_self + 90.0)
@@ -830,7 +835,7 @@ class RobocodeFeatureExtractor(StateFeatureExtractor):
 
             # bearing is counterclockwise-orthogonal to enemy
             0.0 if most_recent_enemy_bearing_from_self is None else
-            most_recent_scanned_robot_age_discount * self.funnel(
+            most_recent_scanned_robot_age_discount * self.funnel(  # type: ignore[operator]
                 self.get_shortest_degree_change(
                     state.heading,
                     self.normalize(state.heading + most_recent_enemy_bearing_from_self - 90.0)
@@ -841,7 +846,7 @@ class RobocodeFeatureExtractor(StateFeatureExtractor):
 
             #  sigmoid_cw_ortho
             0.0 if most_recent_enemy_bearing_from_self is None else
-            most_recent_scanned_robot_age_discount * self.sigmoid(
+            most_recent_scanned_robot_age_discount * self.sigmoid(  # type: ignore[operator]
                 self.get_shortest_degree_change(
                     state.heading,
                     self.normalize(state.heading + most_recent_enemy_bearing_from_self + 90.0)
@@ -851,7 +856,7 @@ class RobocodeFeatureExtractor(StateFeatureExtractor):
 
             #  sigmoid_ccw_ortho
             0.0 if most_recent_enemy_bearing_from_self is None else
-            most_recent_scanned_robot_age_discount * self.sigmoid(
+            most_recent_scanned_robot_age_discount * self.sigmoid(  # type: ignore[operator]
                 self.get_shortest_degree_change(
                     state.heading,
                     self.normalize(state.heading + most_recent_enemy_bearing_from_self - 90.0)
@@ -863,26 +868,26 @@ class RobocodeFeatureExtractor(StateFeatureExtractor):
 
             # squashed lateral distance from radar to enemy
             0.0 if most_recent_enemy_bearing_from_self is None else
-            most_recent_scanned_robot_age_discount * self.sigmoid(
+            most_recent_scanned_robot_age_discount * self.sigmoid(  # type: ignore[operator]
                 self.get_lateral_distance(
                     -self.get_shortest_degree_change(
                         state.radar_heading,
                         self.normalize(state.heading + most_recent_enemy_bearing_from_self)
                     ),
-                    most_recent_enemy_distance_from_self
+                    most_recent_enemy_distance_from_self  # type: ignore[arg-type]
                 ),
                 20.0
             ),
 
             # squashed lateral distance from gun to enemy
             0.0 if most_recent_enemy_bearing_from_self is None else
-            most_recent_scanned_robot_age_discount * self.sigmoid(
+            most_recent_scanned_robot_age_discount * self.sigmoid(  # type: ignore[operator]
                 self.get_lateral_distance(
                     -self.get_shortest_degree_change(
                         state.gun_heading,
                         self.normalize(state.heading + most_recent_enemy_bearing_from_self)
                     ),
-                    most_recent_enemy_distance_from_self
+                    most_recent_enemy_distance_from_self  # type: ignore[arg-type]
                 ),
                 20.0
             ),
@@ -891,13 +896,13 @@ class RobocodeFeatureExtractor(StateFeatureExtractor):
 
             # funnel_lat_dist:  funnel lateral distance to 0.0
             0.0 if most_recent_enemy_bearing_from_self is None else
-            most_recent_scanned_robot_age_discount * self.funnel(
+            most_recent_scanned_robot_age_discount * self.funnel(  # type: ignore[operator]
                 self.get_lateral_distance(
                     -self.get_shortest_degree_change(
                         state.gun_heading,
                         self.normalize(state.heading + most_recent_enemy_bearing_from_self)
                     ),
-                    most_recent_enemy_distance_from_self
+                    most_recent_enemy_distance_from_self  # type: ignore[arg-type]
                 ),
                 True,
                 20.0
