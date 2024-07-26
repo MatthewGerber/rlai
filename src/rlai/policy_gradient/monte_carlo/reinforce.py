@@ -360,6 +360,7 @@ def improve(
                         label=plot_label,
                         **environment.plot_label_data_kwargs[plot_label][1]
                     )
+                plt.legend()
                 plt.tight_layout()
 
                 if pdf is None:
