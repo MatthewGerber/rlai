@@ -143,6 +143,9 @@ def improve(
     if checkpoint_path is not None:
         checkpoint_path = os.path.expanduser(checkpoint_path)
 
+    if policy_update_plot_pdf_directory is not None:
+        policy_update_plot_pdf_directory = os.path.expanduser(policy_update_plot_pdf_directory)
+
     # we work backward through the episode when updating the baseline model. if we have a baseline model, then indicate
     # this so that plotting is ordered correctly.
     if isinstance(agent.v_S, ApproximateStateValueEstimator) and isinstance(agent.v_S.model, SKLearnSGD):
