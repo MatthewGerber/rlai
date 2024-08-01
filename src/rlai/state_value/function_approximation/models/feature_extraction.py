@@ -39,12 +39,12 @@ class StateDimensionIndicator(ABC):
 
     def __init__(
             self,
-            dimension: int
+            dimension: Optional[int]
     ):
         """
         Initialize the indicator.
 
-        :param dimension: Dimension.
+        :param dimension: Dimension, or None for an indicator that is not based on a value of the state vector.
         """
 
         self.dimension = dimension
@@ -155,6 +155,8 @@ class StateDimensionSegment(StateDimensionIndicator):
         :return: Value.
         """
 
+        assert self.dimension is not None
+
         dimension_value = float(state[self.dimension])
         above_low = self.low is None or dimension_value >= self.low
         below_high = self.high is None or dimension_value < self.high
@@ -169,14 +171,14 @@ class StateDimensionLambda(StateDimensionIndicator):
 
     def __init__(
             self,
-            dimension: int,
-            function: Callable[[float], Any],
+            dimension: Optional[int],
+            function: Callable[[Optional[float]], Any],
             function_range: List[Any]
     ):
         """
         Initialize the segment.
 
-        :param dimension: Dimension index.
+        :param dimension: Dimension, or None for an indicator that is not based on a value of the state vector.
         :param function: Function to apply to values in the given dimension.
         :param function_range: Range of function.
         """
@@ -217,7 +219,10 @@ class StateDimensionLambda(StateDimensionIndicator):
         :return: Value.
         """
 
-        dimension_value = float(state[self.dimension])
+        if self.dimension is None:
+            dimension_value = None
+        else:
+            dimension_value = float(state[self.dimension])
 
         return self.function(dimension_value)
 
