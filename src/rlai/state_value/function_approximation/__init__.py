@@ -5,8 +5,7 @@ import numpy as np
 from matplotlib.backends.backend_pdf import PdfPages
 from numpy.random import RandomState
 
-from rlai.core import MdpState
-from rlai.core.environments.mdp import MdpEnvironment
+from rlai.core import MdpState, Environment
 from rlai.meta import rl_text
 from rlai.models.feature_extraction import StationaryFeatureScaler
 from rlai.state_value import StateValueEstimator, ValueEstimator
@@ -111,7 +110,7 @@ class ApproximateStateValueEstimator(StateValueEstimator):
             cls,
             args: List[str],
             random_state: RandomState,
-            environment: MdpEnvironment
+            environment: Environment
     ) -> Tuple[StateValueEstimator, List[str]]:
         """
         Initialize a state-value estimator from arguments.
@@ -150,6 +149,32 @@ class ApproximateStateValueEstimator(StateValueEstimator):
 
         return estimator, unparsed_args
 
+    def __init__(
+            self,
+            model: StateFunctionApproximationModel,
+            feature_extractor: StateFeatureExtractor,
+            scale_outcomes: bool
+    ):
+        """
+        Initialize the estimator.
+
+        :param model: Model.
+        :param feature_extractor: Feature extractor.
+        :param scale_outcomes: Whether to scale state-value outcomes before fitting the estimator model.
+        """
+
+        super().__init__()
+
+        self.model = model
+        self.feature_extractor = feature_extractor
+        self.scale_outcomes = scale_outcomes
+
+        self.experience_states: List[MdpState] = []
+        self.experience_values: List[float] = []
+        self.weights: Optional[np.ndarray] = None
+        self.experience_pending: bool = False
+        self.value_scaler = StationaryFeatureScaler()
+
     def add_sample(
             self,
             state: MdpState,
@@ -184,8 +209,6 @@ class ApproximateStateValueEstimator(StateValueEstimator):
 
         :return: Number of states improved.
         """
-
-        super().improve()
 
         # if we have pending experience, then fit the model and reset the data.
         if self.experience_pending:
@@ -276,32 +299,6 @@ class ApproximateStateValueEstimator(StateValueEstimator):
         """
 
         self.feature_extractor.reset_for_new_run(state)
-
-    def __init__(
-            self,
-            model: StateFunctionApproximationModel,
-            feature_extractor: StateFeatureExtractor,
-            scale_outcomes: bool
-    ):
-        """
-        Initialize the estimator.
-
-        :param model: Model.
-        :param feature_extractor: Feature extractor.
-        :param scale_outcomes: Whether to scale state-value outcomes before fitting the estimator model.
-        """
-
-        super().__init__()
-
-        self.model = model
-        self.feature_extractor = feature_extractor
-        self.scale_outcomes = scale_outcomes
-
-        self.experience_states: List[MdpState] = []
-        self.experience_values: List[float] = []
-        self.weights: Optional[np.ndarray] = None
-        self.experience_pending: bool = False
-        self.value_scaler = StationaryFeatureScaler()
 
     def __getitem__(
             self,

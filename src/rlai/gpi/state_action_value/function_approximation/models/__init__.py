@@ -22,6 +22,17 @@ class StateActionFunctionApproximationModel(FunctionApproximationModel, ABC):
     Base class for models that approximate state-action value functions.
     """
 
+    def __init__(
+            self
+    ):
+        """
+        Initialize the model.
+        """
+
+        super().__init__()
+
+        self.feature_action_coefficients: Optional[pd.DataFrame] = None
+
     def plot(
             self,
             feature_extractor: StateActionFeatureExtractor,
@@ -179,17 +190,6 @@ class StateActionFunctionApproximationModel(FunctionApproximationModel, ABC):
         :return: DataFrame (#features, #actions), or None to omit plotting of feature-action coefficient boxplots. The
         DataFrame is indexed by feature name.
         """
-
-    def __init__(
-            self
-    ):
-        """
-        Initialize the model.
-        """
-
-        super().__init__()
-
-        self.feature_action_coefficients: Optional[pd.DataFrame] = None
 
     def __getstate__(
             self

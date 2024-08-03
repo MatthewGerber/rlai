@@ -68,7 +68,7 @@ def evaluate_q_pi(
 
     logging.info(f'Running temporal-difference evaluation of q_pi for {num_episodes} episode(s).')
 
-    evaluated_states = set()
+    evaluated_states: Set[MdpState] = set()
 
     # check whether we're currently executing in a planning environment. if so, then the passed planning environment
     # must be none since we're actually running in the planning environment rather than building an environment model.
@@ -86,7 +86,7 @@ def evaluate_q_pi(
             q_S_A=agent.q_S_A,
             environment=environment
         )
-        environment.q_S_A = agent.q_S_A
+        environment.q_S_A = agent.q_S_A  # type: ignore[assignment]
 
     # run episodes
     episode_reward_averager = IncrementalSampleAverager()
@@ -100,12 +100,14 @@ def evaluate_q_pi(
 
         # simulate until episode termination. begin by taking an action in the first state.
         curr_t = 0
-        curr_a = agent.act(curr_t)
+        curr_a: Optional[Action] = agent.act(curr_t)
         total_reward = 0.0
         t_state_a_g: Dict[int, Tuple[MdpState, Action, float]] = {}  # dictionary from time steps to tuples of state, action, and truncated return.
         next_state_q_s_a = 0.0
         truncation_time_step = None
         while not curr_state.terminal:
+
+            assert curr_a is not None
 
             advance_result, next_reward = environment.advance(
                 state=curr_state,
@@ -120,7 +122,9 @@ def evaluate_q_pi(
             # state, current action, and next state. this is because the planning environment may revise any one of
             # these variables to conduct the planning process (e.g., by prioritized sweeping).
             if currently_planning:
+                assert isinstance(advance_result, tuple)
                 curr_state, curr_a, next_state = advance_result
+                assert curr_a is not None
 
             # otherwise, the advance result is simply the next state as usual.
             else:
@@ -321,12 +325,12 @@ def get_state_action_value(
 
 def update_state_action_value_estimator(
         q_S_A: StateActionValueEstimator,
-        n_steps: Optional[int],
+        n_steps: int,
         curr_t: int,
         t_state_a_g: Dict[int, Tuple[MdpState, Action, float]],
         agent: MdpAgent,
         next_state_q_s_a: float,
-        alpha: float,
+        alpha: Optional[float],
         evaluated_states: Set[MdpState],
         planning_environment: Optional[MdpPlanningEnvironment],
         num_updates_per_improvement: Optional[int],
@@ -384,6 +388,7 @@ def update_state_action_value_estimator(
         # highest errors to come out of the queue first.
         if prioritized_planning:
             assert isinstance(planning_environment, PrioritizedSweepingMdpPlanningEnvironment)
+            assert error is not None
             planning_environment.add_state_action_priority(update_state, update_a, -abs(error))
 
         # note the evaluated state if it has an index. states will only have indices if they are enumerated up front, or

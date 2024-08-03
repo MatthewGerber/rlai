@@ -278,7 +278,7 @@ class RobocodeEnvironment(ContinuousMdpEnvironment, TcpMdpEnvironment):
             5.0  # RobocodeAction.FIRE
         ])
 
-        self.robot_actions = [
+        self.robot_actions: List[Action] = [
             ContinuousMultiDimensionalAction(
                 value=None,
                 min_values=min_values,
@@ -430,6 +430,7 @@ class RobocodeEnvironment(ContinuousMdpEnvironment, TcpMdpEnvironment):
         if most_recent_scanned_robot is None:
             if self.previous_state is not None and self.previous_state.most_recent_scanned_robot is not None:
                 most_recent_scanned_robot = self.previous_state.most_recent_scanned_robot
+                assert self.previous_state.most_recent_scanned_robot_age_turns is not None
                 most_recent_scanned_robot_age_turns = self.previous_state.most_recent_scanned_robot_age_turns + turns_passed
         else:
             most_recent_scanned_robot_age_turns = 0
@@ -538,8 +539,8 @@ class RobocodeState(MdpState):
             bullet_power_missed_others_cumulative: float,
             bullet_power_missed_others_since_previous_hit: float,
             events: Dict[str, List[Dict]],
-            previous_state: 'RobocodeState',
-            prior_state_different_location: 'RobocodeState',
+            previous_state: Optional['RobocodeState'],
+            prior_state_different_location: Optional['RobocodeState'],
             most_recent_scanned_robot: Optional[Dict],
             most_recent_scanned_robot_age_turns: Optional[int],
             AA: List[Action],

@@ -9,7 +9,7 @@ import pandas as pd
 from jax import numpy as jnp, jit, grad, vmap, Array
 from jax.scipy import stats as jstats
 from numpy.random import RandomState
-from scipy import stats
+from scipy import stats  # type: ignore[import-untyped]
 from tabulate import tabulate
 
 from rlai.core import Policy, Action, ContinuousMultiDimensionalAction, MdpState
@@ -57,6 +57,36 @@ class ContinuousActionPolicy(ParameterizedPolicy, ABC):
 
         return parser
 
+    def __init__(
+            self,
+            environment: ContinuousMdpEnvironment,
+            feature_extractor: StateFeatureExtractor,
+            plot_policy: bool
+    ):
+        """
+        Initialize the parameterized policy.
+
+        :param environment: Environment.
+        :param feature_extractor: Feature extractor.
+        :param plot_policy: Whether to plot policy values (e.g., action).
+        """
+
+        super().__init__()
+
+        self.environment = environment
+        self.feature_extractor = feature_extractor
+        self.plot_policy = plot_policy
+
+        self.action_scatter_plot = None
+        if self.plot_policy:
+            # local-import so that we don't crash on raspberry pi os, where we can't install qt6.
+            from rlai.plot_utils import ScatterPlot
+            self.action_scatter_plot = ScatterPlot('Actions', self.environment.get_action_dimension_names(), None)
+
+        self.action: Optional[
+            ContinuousMultiDimensionalAction] = None  # we'll fill this in upon the first call to __getitem__, where we have access to a state and its actions.
+        self.random_state = RandomState(12345)
+
     def set_action(
             self,
             state: MdpState
@@ -86,6 +116,7 @@ class ContinuousActionPolicy(ParameterizedPolicy, ABC):
         """
 
         if self.action_scatter_plot is not None:
+            assert action.value is not None
             self.action_scatter_plot.update(action.value)
 
     def reset_action_scatter_plot_y_range(
@@ -119,35 +150,6 @@ class ContinuousActionPolicy(ParameterizedPolicy, ABC):
         """
 
         self.feature_extractor.reset_for_new_run(state)
-
-    def __init__(
-            self,
-            environment: ContinuousMdpEnvironment,
-            feature_extractor: StateFeatureExtractor,
-            plot_policy: bool
-    ):
-        """
-        Initialize the parameterized policy.
-
-        :param environment: Environment.
-        :param feature_extractor: Feature extractor.
-        :param plot_policy: Whether to plot policy values (e.g., action).
-        """
-
-        super().__init__()
-
-        self.environment = environment
-        self.feature_extractor = feature_extractor
-        self.plot_policy = plot_policy
-
-        self.action_scatter_plot = None
-        if self.plot_policy:
-            # local-import so that we don't crash on raspberry pi os, where we can't install qt6.
-            from rlai.plot_utils import ScatterPlot
-            self.action_scatter_plot = ScatterPlot('Actions', self.environment.get_action_dimension_names(), None)
-
-        self.action = None  # we'll fill this in upon the first call to __getitem__, where we have access to a state and its actions.
-        self.random_state = RandomState(12345)
 
     def __contains__(
             self,
@@ -225,6 +227,70 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
         )
 
         return policy, unparsed_args
+
+    @staticmethod
+    def get_action_density(
+            theta_mean: np.ndarray,
+            theta_cov: np.ndarray,
+            state_features: np.ndarray,
+            action_vector: np.ndarray
+    ) -> Array:
+        """
+        Get the value of the probability density function at an action.
+
+        :param theta_mean: Policy parameters for mean.
+        :param theta_cov: Policy parameters for covariance matrix.
+        :param state_features: A vector of state features.
+        :param action_vector: Multidimensional action vector.
+        :return: Value of the PDF.
+        """
+
+        action_space_dimensionality = action_vector.shape[0]
+
+        mean = jnp.dot(theta_mean, state_features)
+        cov = jnp.array([
+
+            # ensure that the diagonal of the covariance matrix has positive values by exponentiating
+            jnp.exp(jnp.dot(theta_cov_row, state_features)) if i % (action_space_dimensionality + 1) == 0
+
+            # off-diagonal elements can be positive or negative
+            else jnp.dot(theta_cov_row, state_features)
+
+            # iterate over each row of coefficients
+            for (i, theta_cov_row) in enumerate(theta_cov)
+
+        ]).reshape(action_space_dimensionality, action_space_dimensionality)
+
+        return jstats.multivariate_normal.pdf(x=action_vector, mean=mean, cov=cov)
+
+    def __init__(
+            self,
+            environment: ContinuousMdpEnvironment,
+            feature_extractor: StateFeatureExtractor,
+            plot_policy: bool
+    ):
+        """
+        Initialize the parameterized policy.
+
+        :param environment: Environment.
+        :param feature_extractor: Feature extractor.
+        :param plot_policy: Whether to plot policy values (e.g., action).
+        """
+
+        super().__init__(
+            environment=environment,
+            feature_extractor=feature_extractor,
+            plot_policy=plot_policy
+        )
+
+        # coefficients for mean and covariance. these will be initialized upon the first call to the feature extractor
+        # within __getitem__.
+        self.theta_mean: Optional[np.ndarray] = None
+        self.theta_cov: Optional[np.ndarray] = None
+
+        self.get_action_density_gradients = jit(grad(self.get_action_density, argnums=(0, 1)))
+        self.get_action_density_gradients_vmap = jit(
+            vmap(self.get_action_density_gradients, in_axes=(None, None, 0, 0)))
 
     def __commit_updates__(
             self
@@ -322,69 +388,6 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
             for i, theta_cov_row in enumerate(theta_cov)
 
         ]).reshape(self.environment.get_action_space_dimensionality(), self.environment.get_action_space_dimensionality())
-
-    @staticmethod
-    def get_action_density(
-            theta_mean: np.ndarray,
-            theta_cov: np.ndarray,
-            state_features: np.ndarray,
-            action_vector: np.ndarray
-    ) -> Array:
-        """
-        Get the value of the probability density function at an action.
-
-        :param theta_mean: Policy parameters for mean.
-        :param theta_cov: Policy parameters for covariance matrix.
-        :param state_features: A vector of state features.
-        :param action_vector: Multidimensional action vector.
-        :return: Value of the PDF.
-        """
-
-        action_space_dimensionality = action_vector.shape[0]
-
-        mean = jnp.dot(theta_mean, state_features)
-        cov = jnp.array([
-
-            # ensure that the diagonal of the covariance matrix has positive values by exponentiating
-            jnp.exp(jnp.dot(theta_cov_row, state_features)) if i % (action_space_dimensionality + 1) == 0
-
-            # off-diagonal elements can be positive or negative
-            else jnp.dot(theta_cov_row, state_features)
-
-            # iterate over each row of coefficients
-            for (i, theta_cov_row) in enumerate(theta_cov)
-
-        ]).reshape(action_space_dimensionality, action_space_dimensionality)
-
-        return jstats.multivariate_normal.pdf(x=action_vector, mean=mean, cov=cov)
-
-    def __init__(
-            self,
-            environment: ContinuousMdpEnvironment,
-            feature_extractor: StateFeatureExtractor,
-            plot_policy: bool
-    ):
-        """
-        Initialize the parameterized policy.
-
-        :param environment: Environment.
-        :param feature_extractor: Feature extractor.
-        :param plot_policy: Whether to plot policy values (e.g., action).
-        """
-
-        super().__init__(
-            environment=environment,
-            feature_extractor=feature_extractor,
-            plot_policy=plot_policy
-        )
-
-        # coefficients for mean and covariance. these will be initialized upon the first call to the feature extractor
-        # within __getitem__.
-        self.theta_mean = None
-        self.theta_cov = None
-
-        self.get_action_density_gradients = jit(grad(self.get_action_density, argnums=(0, 1)))
-        self.get_action_density_gradients_vmap = jit(vmap(self.get_action_density_gradients, in_axes=(None, None, 0, 0)))
 
     def __getitem__(
             self,
@@ -485,6 +488,11 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
         if not isinstance(other, ContinuousActionNormalDistributionPolicy):
             raise ValueError(f'Expected {ContinuousActionNormalDistributionPolicy}')
 
+        assert self.theta_mean is not None
+        assert other.theta_mean is not None
+        assert self.theta_cov is not None
+        assert other.theta_cov is not None
+
         # using the default values for `allclose` is too strict to achieve cross-platform testing success. back off a little with atol.
         return np.allclose(self.theta_mean, other.theta_mean, atol=0.0001) and np.allclose(self.theta_cov, other.theta_cov, atol=0.0001)
 
@@ -551,6 +559,9 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
         """
         Commit updates that were previously appended with calls to `append_update`.
         """
+
+        assert self.action_theta_a is not None
+        assert self.action_theta_b is not None
 
         # extract state-feature matrix:  one row per update and one column per state dimension.
         state_feature_matrix = np.array([
@@ -670,7 +681,7 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
                 for theta_a_row, theta_b_row in zip(self.action_theta_a, self.action_theta_b)
                 for row in [theta_a_row, theta_b_row]
             ], index=row_names, columns=col_names)
-            logging.info(f'Per-action beta hyperparameters:\n{tabulate(theta_df, headers="keys", tablefmt="psql")}')
+            logging.info(f'Per-action beta hyperparameters:\n{tabulate(theta_df, headers="keys", tablefmt="psql")}')  # type: ignore[arg-type]
 
     def reset_action_scatter_plot_y_range(
             self
@@ -717,6 +728,10 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
         :return: Rescaled action value.
         """
 
+        assert self.action is not None
+        assert self.action.min_values is not None
+        assert self.action.max_values is not None
+
         value_ranges = [
             max_value - min_value
             for min_value, max_value in zip(self.action.min_values, self.action.max_values)
@@ -740,6 +755,10 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
         :param rescaled_action_value: Rescaled action value.
         :return: Action value.
         """
+
+        assert self.action is not None
+        assert self.action.min_values is not None
+        assert self.action.max_values is not None
 
         value_ranges = [
             max_value - min_value
@@ -788,8 +807,8 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
         # coefficients for shape parameters a and b. each array has one row per action and one column per state
         # dimension. these will be initialized upon the first call to the feature extractor within
         # __getitem__.
-        self.action_theta_a = None
-        self.action_theta_b = None
+        self.action_theta_a: Optional[np.ndarray] = None
+        self.action_theta_b: Optional[np.ndarray] = None
 
         # get jax function for gradients with respect to theta_a and theta_b
         self.get_action_density_gradients = jit(grad(fun=self.get_action_density, argnums=(0, 1)))
@@ -829,6 +848,8 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
         """
 
         self.set_action(state)
+
+        assert self.action is not None
 
         state_feature_vector = self.feature_extractor.extract(state, False)
 
@@ -884,6 +905,7 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
 
         if self.plot_policy:
             self.update_action_scatter_plot(action)
+            assert self.beta_shape_scatter_plot is not None
             self.beta_shape_scatter_plot.update(np.array([
                 v
                 for a, b in zip(action_a, action_b)
@@ -936,6 +958,11 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
 
         if not isinstance(other, ContinuousActionBetaDistributionPolicy):
             raise ValueError(f'Expected {ContinuousActionBetaDistributionPolicy}')
+
+        assert self.action_theta_a is not None
+        assert other.action_theta_a is not None
+        assert self.action_theta_b is not None
+        assert other.action_theta_b is not None
 
         # using the default values for `allclose` is too strict to achieve cross-platform testing success. back off a little with atol.
         return np.allclose(self.action_theta_a, other.action_theta_a, atol=0.0001) and np.allclose(self.action_theta_b, other.action_theta_b, atol=0.0001)

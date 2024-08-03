@@ -52,7 +52,7 @@ class TabularValueEstimator(ValueEstimator):
     def __init__(
             self,
             estimator: 'TabularStateActionValueEstimator',
-            alpha: float,
+            alpha: Optional[float],
             weighted: bool
     ):
         """
@@ -302,7 +302,9 @@ class TabularStateActionValueEstimator(StateActionValueEstimator):
             self[state] = TabularActionValueEstimator(estimator=self)
 
         if a not in self[state]:
-            self[state][a] = TabularValueEstimator(estimator=self, alpha=alpha, weighted=weighted)
+            action_value_estimator = self[state]
+            assert isinstance(action_value_estimator, TabularActionValueEstimator)
+            action_value_estimator[a] = TabularValueEstimator(estimator=self, alpha=alpha, weighted=weighted)
 
     def improve_policy(
             self,

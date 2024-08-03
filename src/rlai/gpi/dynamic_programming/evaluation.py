@@ -212,7 +212,7 @@ def evaluate_q_pi(
 def check_termination_criteria(
         theta: Optional[float],
         num_iterations: Optional[int]
-) -> Tuple[float, int]:
+) -> Tuple[Optional[float], Optional[int]]:
     """
     Check theta and number of iterations.
 

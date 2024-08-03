@@ -1,13 +1,13 @@
 import logging
 from argparse import ArgumentParser
-from typing import Optional, Iterator, List, Tuple, Set, Dict
+from typing import Optional, Iterator, List, Tuple, Dict, Iterable
 
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 from numpy.random import RandomState
-from patsy.highlevel import dmatrix
+from patsy.highlevel import dmatrix  # type: ignore[import-untyped]
 
 from rlai.core import Policy, Action, MdpState, MdpAgent
 from rlai.core.environments.mdp import MdpEnvironment
@@ -257,6 +257,64 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
 
         return estimator, unparsed_args
 
+    def __init__(
+            self,
+            environment: MdpEnvironment,
+            epsilon: Optional[float],
+            model: StateActionFunctionApproximationModel,
+            feature_extractor: StateActionFeatureExtractor,
+            formula: Optional[str],
+            plot_model: bool,
+            plot_model_per_improvements: Optional[int],
+            plot_model_bins: Optional[int]
+    ):
+        """
+        Initialize the estimator.
+
+        :param environment: Environment.
+        :param epsilon: Epsilon.
+        :param model: Model.
+        :param feature_extractor: Feature extractor.
+        :param formula: Model formula. This is only the right-hand side of the model. If you want to implement a model
+        like "r ~ x + y + z" (i.e., to model reward as a linear function of features x, y, and z), then you should pass
+        "x + y + z" for this argument. See the Patsy documentation for full details of the formula language. Statistical
+        learning models used in reinforcement learning generally need to operate "online", learning the reward function
+        incrementally at each step. An example of such a model would be
+        `rlai.gpi.state_action_value.function_approximation.models.sklearn.SKLearnSGD`. Online learning
+        has implications for the use and coding of categorical variables in the model formula. In particular, the full
+        ranges of state and action levels must be specified up front. See
+        `test.rlai.gpi.temporal_difference.iteration_test.test_q_learning_iterate_value_q_pi_function_approximation` for
+        an example of how this is done. If it is not convenient or possible to specify all state and action levels up
+        front, then avoid using categorical variables in the model formula. The variables referenced by the model
+        formula must be extracted with identical names by the feature extractor. Although model formulae are convenient
+        they are also inefficiently processed in the online fashion described above. Patsy introduces significant
+        overhead with each call to the formula parser. A faster alternative is to avoid formula specification (pass
+        None here) and return the feature matrix directly from the feature extractor as a numpy.ndarray.
+        :param plot_model: Whether to plot the model.
+        :param plot_model_per_improvements: Number of policy improvements between plots of the model. Only used
+        if `plot_model` is True. Pass None to only plot the model at the end.
+        :param plot_model_bins: Number of plotting bins. Only used if `plot_model` is True. Pass None for no binning.
+        """
+
+        super().__init__(
+            environment=environment,
+            epsilon=epsilon
+        )
+
+        self.model = model
+        self.feature_extractor = feature_extractor
+        self.formula = formula
+        self.plot_model = plot_model
+        self.plot_model_per_improvements = plot_model_per_improvements
+        self.plot_model_bins = plot_model_bins
+
+        self.experience_states: List[MdpState] = []
+        self.experience_actions: List[Action] = []
+        self.experience_values: List[float] = []
+        self.weights: Optional[np.ndarray] = None
+        self.experience_pending: bool = False
+        self.value_scaler = StationaryFeatureScaler()
+
     def get_initial_policy(
             self
     ) -> 'FunctionApproximationPolicy':
@@ -314,7 +372,7 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
     def improve_policy(
             self,
             agent: MdpAgent,
-            states: Optional[Set[MdpState]],
+            states: Optional[Iterable[MdpState]],
             event: PolicyImprovementEvent
     ) -> int:
         """
@@ -362,7 +420,7 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
 
         log_with_border(logging.DEBUG, 'Policy improved')
 
-        return -1 if states is None else len(states)
+        return -1 if states is None else len(list(states))
 
     def evaluate(
             self,
@@ -431,6 +489,8 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
                 f'{type(state_action_feature_matrix)}'
             )
 
+        assert isinstance(state_action_feature_matrix, np.ndarray)
+
         return state_action_feature_matrix
 
     def plot(
@@ -468,6 +528,8 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
                 pdf=pdf
             )
 
+        return None
+
     def update_plot(
             self,
             time_step_detail_iteration: Optional[int]
@@ -482,64 +544,6 @@ class ApproximateStateActionValueEstimator(StateActionValueEstimator):
         assert isinstance(self.model, SKLearnSGD)
 
         self.model.sklearn_sgd.update_plot(time_step_detail_iteration)
-
-    def __init__(
-            self,
-            environment: MdpEnvironment,
-            epsilon: Optional[float],
-            model: StateActionFunctionApproximationModel,
-            feature_extractor: StateActionFeatureExtractor,
-            formula: Optional[str],
-            plot_model: bool,
-            plot_model_per_improvements: Optional[int],
-            plot_model_bins: Optional[int]
-    ):
-        """
-        Initialize the estimator.
-
-        :param environment: Environment.
-        :param epsilon: Epsilon.
-        :param model: Model.
-        :param feature_extractor: Feature extractor.
-        :param formula: Model formula. This is only the right-hand side of the model. If you want to implement a model
-        like "r ~ x + y + z" (i.e., to model reward as a linear function of features x, y, and z), then you should pass
-        "x + y + z" for this argument. See the Patsy documentation for full details of the formula language. Statistical
-        learning models used in reinforcement learning generally need to operate "online", learning the reward function
-        incrementally at each step. An example of such a model would be
-        `rlai.gpi.state_action_value.function_approximation.models.sklearn.SKLearnSGD`. Online learning
-        has implications for the use and coding of categorical variables in the model formula. In particular, the full
-        ranges of state and action levels must be specified up front. See
-        `test.rlai.gpi.temporal_difference.iteration_test.test_q_learning_iterate_value_q_pi_function_approximation` for
-        an example of how this is done. If it is not convenient or possible to specify all state and action levels up
-        front, then avoid using categorical variables in the model formula. The variables referenced by the model
-        formula must be extracted with identical names by the feature extractor. Although model formulae are convenient
-        they are also inefficiently processed in the online fashion described above. Patsy introduces significant
-        overhead with each call to the formula parser. A faster alternative is to avoid formula specification (pass
-        None here) and return the feature matrix directly from the feature extractor as a numpy.ndarray.
-        :param plot_model: Whether to plot the model.
-        :param plot_model_per_improvements: Number of policy improvements between plots of the model. Only used
-        if `plot_model` is True. Pass None to only plot the model at the end.
-        :param plot_model_bins: Number of plotting bins. Only used if `plot_model` is True. Pass None for no binning.
-        """
-
-        super().__init__(
-            environment=environment,
-            epsilon=epsilon
-        )
-
-        self.model = model
-        self.feature_extractor = feature_extractor
-        self.formula = formula
-        self.plot_model = plot_model
-        self.plot_model_per_improvements = plot_model_per_improvements
-        self.plot_model_bins = plot_model_bins
-
-        self.experience_states: List[MdpState] = []
-        self.experience_actions: List[Action] = []
-        self.experience_values: List[float] = []
-        self.weights: Optional[np.ndarray] = None
-        self.experience_pending: bool = False
-        self.value_scaler = StationaryFeatureScaler()
 
     def __getitem__(
             self,

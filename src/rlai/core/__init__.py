@@ -1205,7 +1205,7 @@ class StochasticMdpAgent(MdpAgent, ABC):
 
     def reset_for_new_run(
             self,
-            state: MdpState
+            state: State
     ):
         """
         Reset the agent for a new run.
@@ -1215,6 +1215,7 @@ class StochasticMdpAgent(MdpAgent, ABC):
 
         super().reset_for_new_run(state)
 
+        assert isinstance(state, MdpState)
         self.pi.reset_for_new_run(state)
 
     def __act__(

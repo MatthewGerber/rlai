@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, Tuple, Set
+from typing import Dict, Tuple, Set, Optional
 
 import numpy as np
 
@@ -128,7 +128,7 @@ def evaluate_q_pi(
         num_episodes: int,
         exploring_starts: bool,
         update_upon_every_visit: bool,
-        off_policy_agent: ActionValueMdpAgent = None,
+        off_policy_agent: Optional[ActionValueMdpAgent] = None
 ) -> Tuple[Set[MdpState], float]:
     """
     Perform Monte Carlo evaluation of an agent's policy within an environment. This evaluation function operates over
@@ -169,7 +169,7 @@ def evaluate_q_pi(
         # simulate until episode termination, keeping a trace of state-action pairs and their immediate rewards, as well
         # as the times of their first visits (only if we're doing first-visit evaluation).
         t = 0
-        state_action_first_t = None if update_upon_every_visit else {}
+        state_action_first_t: Optional[Dict] = None if update_upon_every_visit else {}
         t_state_action_reward = []
         total_reward = 0.0
         truncation_time_step = None
