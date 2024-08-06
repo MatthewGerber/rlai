@@ -56,7 +56,7 @@ class StateActionFunctionApproximationModel(FunctionApproximationModel, ABC):
         # TODO:  update the current function to follow the ui/background thread pattern used elsewhere to surface plots
         #   in the jupyter notebook.
         if threading.current_thread() != threading.main_thread():
-            return
+            return None
 
         feature_action_coefficients = self.get_feature_action_coefficients(feature_extractor)
 
@@ -78,6 +78,8 @@ class StateActionFunctionApproximationModel(FunctionApproximationModel, ABC):
             )
 
         if plot_coefficients:
+
+            assert feature_action_coefficients is not None
 
             if 'feature_name' in feature_action_coefficients.columns:  # pragma no cover
                 raise ValueError('Feature extractor returned disallowed column:  feature_name')
@@ -177,6 +179,8 @@ class StateActionFunctionApproximationModel(FunctionApproximationModel, ABC):
                     return fig
                 else:
                     pdf.savefig()
+
+        return None
 
     def get_feature_action_coefficients(
             self,

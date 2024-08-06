@@ -5,7 +5,7 @@ import numpy as np
 from numpy.random import RandomState
 
 from rlai.core import Reward, Action, MdpState, Environment
-from rlai.core.environments.mdp import ModelBasedMdpEnvironment
+from rlai.core.environments.mdp import ModelBasedMdpEnvironment, MdpEnvironment
 from rlai.gpi.state_action_value.function_approximation.models.feature_extraction import (
     StateActionInteractionFeatureExtractor
 )
@@ -367,7 +367,7 @@ class GridworldStateFeatureExtractor(StateFeatureExtractor):
     def init_from_arguments(
             cls,
             args: List[str],
-            environment: Gridworld
+            environment: MdpEnvironment
     ) -> Tuple[FeatureExtractor, List[str]]:
         """
         Initialize a feature extractor from arguments.
@@ -376,6 +376,8 @@ class GridworldStateFeatureExtractor(StateFeatureExtractor):
         :param environment: Environment.
         :return: 2-tuple of a feature extractor and a list of unparsed arguments.
         """
+
+        assert isinstance(environment, Gridworld)
 
         parsed_args, unparsed_args = parse_arguments(cls, args)
 
@@ -413,6 +415,7 @@ class GridworldStateFeatureExtractor(StateFeatureExtractor):
         :return: State-feature vector.
         """
 
+        assert state.i is not None
         row = int(state.i / self.num_cols)
         col = state.i % self.num_cols
 

@@ -8,8 +8,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.backends.backend_pdf import PdfPages
 from numpy.random import RandomState
-from sklearn.exceptions import NotFittedError
-from sklearn.linear_model import SGDRegressor
+from sklearn.exceptions import NotFittedError  # type: ignore[import-untyped]
+from sklearn.linear_model import SGDRegressor  # type: ignore[import-untyped]
 
 from rlai.meta import rl_text
 from rlai.models import FunctionApproximationModel
@@ -147,6 +147,56 @@ class SKLearnSGD(FunctionApproximationModel):
 
         return model, unparsed_args
 
+    def __init__(
+            self,
+            **kwargs
+    ):
+        """
+        Initialize the model.
+
+        :param kwargs: Keyword arguments to pass to SGDRegressor.
+        """
+
+        super().__init__()
+
+        self.reverse_time_steps = False
+
+        # if a verbosity level is not passed or passed as 0, then set flag indicating that we should not print captured
+        # output back to stdout; otherwise, print captured output back to stdout as the caller expects.
+        self.print_output = kwargs.get('verbose', 0) != 0
+
+        # verbose is required in order to capture standard output for plotting.
+        kwargs['verbose'] = 1
+
+        self.model_kwargs = kwargs
+        self.model = SGDRegressor(**self.model_kwargs)
+        self.base_eta0 = self.model.eta0
+
+        # plotting data (update __getstate__ below when changing these attributes)
+        self.iteration_y_values: Dict[int, List[float]] = dict()
+        self.y_averager = IncrementalSampleAverager()
+        self.y_averages: List[float] = []
+        self.iteration_loss_values: Dict[int, List[float]] = dict()
+        self.loss_averager = IncrementalSampleAverager()
+        self.loss_averages: List[float] = []
+        self.iteration_eta0_values: Dict[int, List[float]] = dict()
+        self.eta0_averager = IncrementalSampleAverager()
+        self.eta0_averages: List[float] = []
+        self.plot_iteration = 0  # number of iterations that have been plotted
+        self.plot_data_lock = threading.Lock()  # plotting data is read/written from multiple threads
+
+        # plotting objects
+        self.iteration_ax = None
+        self.iteration_return_line = None
+        self.iteration_loss_line = None
+        self.iteration_eta0_ax = None
+        self.iteration_eta0_line = None
+        self.time_step_ax = None
+        self.time_step_return_line = None
+        self.time_step_loss_line = None
+        self.time_step_eta0_ax = None
+        self.time_step_eta0_line = None
+
     def fit(
             self,
             feature_matrix: Any,
@@ -163,7 +213,7 @@ class SKLearnSGD(FunctionApproximationModel):
 
         # put tee on standard output in order to grab the loss value printed by sklearn
         stdout_tee = StdStreamTee(sys.stdout, 20, self.print_output)
-        sys.stdout = stdout_tee
+        sys.stdout = stdout_tee  # type: ignore[assignment]
 
         # update fit
         self.model.partial_fit(X=feature_matrix, y=outcomes, sample_weight=weights)
@@ -307,6 +357,7 @@ class SKLearnSGD(FunctionApproximationModel):
 
                 # plot twin-x for average step size per iteration
                 self.iteration_eta0_ax = self.iteration_ax.twinx()
+                assert isinstance(self.iteration_eta0_ax, plt.Axes)
                 self.iteration_eta0_line, = self.iteration_eta0_ax.plot(
                     iterations,
                     self.eta0_averages,
@@ -343,6 +394,7 @@ class SKLearnSGD(FunctionApproximationModel):
 
                 # plot twin-x for step size per time step of the most recent plot iteration.
                 self.time_step_eta0_ax = self.time_step_ax.twinx()
+                assert isinstance(self.time_step_eta0_ax, plt.Axes)
                 self.time_step_eta0_line, = self.time_step_eta0_ax.plot(
                     time_steps,
                     self.iteration_eta0_values.get(self.plot_iteration, []),
@@ -390,12 +442,18 @@ class SKLearnSGD(FunctionApproximationModel):
 
             iterations = list(range(1, len(self.y_averages) + 1))
 
+            assert self.iteration_return_line is not None
             self.iteration_return_line.set_data(iterations, self.y_averages)
+
+            assert self.iteration_loss_line is not None
             self.iteration_loss_line.set_data(iterations, self.loss_averages)
             self.iteration_ax.relim()
             self.iteration_ax.autoscale_view()
 
+            assert self.iteration_eta0_line is not None
             self.iteration_eta0_line.set_data(iterations, self.eta0_averages)
+
+            assert self.iteration_eta0_ax is not None
             self.iteration_eta0_ax.relim()
             self.iteration_eta0_ax.autoscale_view()
 
@@ -412,65 +470,23 @@ class SKLearnSGD(FunctionApproximationModel):
                     y_values = self.iteration_y_values[time_step_detail_iteration]
                     time_steps = list(range(1, len(y_values) + 1))
 
+                    assert self.time_step_return_line is not None
                     self.time_step_return_line.set_data(time_steps, y_values)
+
+                    assert self.time_step_loss_line is not None
                     self.time_step_loss_line.set_data(time_steps, self.iteration_loss_values[time_step_detail_iteration])
+
+                    assert self.time_step_ax is not None
                     self.time_step_ax.set_xlabel(f'Time step (iteration {time_step_detail_iteration + 1})')  # display as 1-based
                     self.time_step_ax.relim()
                     self.time_step_ax.autoscale_view()
 
+                    assert self.time_step_eta0_line is not None
                     self.time_step_eta0_line.set_data(time_steps, self.iteration_eta0_values[time_step_detail_iteration])
+
+                    assert self.time_step_eta0_ax is not None
                     self.time_step_eta0_ax.relim()
                     self.time_step_eta0_ax.autoscale_view()
-
-    def __init__(
-            self,
-            **kwargs
-    ):
-        """
-        Initialize the model.
-
-        :param kwargs: Keyword arguments to pass to SGDRegressor.
-        """
-
-        super().__init__()
-
-        self.reverse_time_steps = False
-
-        # if a verbosity level is not passed or passed as 0, then set flag indicating that we should not print captured
-        # output back to stdout; otherwise, print captured output back to stdout as the caller expects.
-        self.print_output = kwargs.get('verbose', 0) != 0
-
-        # verbose is required in order to capture standard output for plotting.
-        kwargs['verbose'] = 1
-
-        self.model_kwargs = kwargs
-        self.model = SGDRegressor(**self.model_kwargs)
-        self.base_eta0 = self.model.eta0
-
-        # plotting data (update __getstate__ below when changing these attributes)
-        self.iteration_y_values: Dict[int, List[float]] = dict()
-        self.y_averager = IncrementalSampleAverager()
-        self.y_averages: List[float] = []
-        self.iteration_loss_values: Dict[int, List[float]] = dict()
-        self.loss_averager = IncrementalSampleAverager()
-        self.loss_averages: List[float] = []
-        self.iteration_eta0_values: Dict[int, List[float]] = dict()
-        self.eta0_averager = IncrementalSampleAverager()
-        self.eta0_averages: List[float] = []
-        self.plot_iteration = 0  # number of iterations that have been plotted
-        self.plot_data_lock = threading.Lock()  # plotting data is read/written from multiple threads
-
-        # plotting objects
-        self.iteration_ax = None
-        self.iteration_return_line = None
-        self.iteration_loss_line = None
-        self.iteration_eta0_ax = None
-        self.iteration_eta0_line = None
-        self.time_step_ax = None
-        self.time_step_return_line = None
-        self.time_step_loss_line = None
-        self.time_step_eta0_ax = None
-        self.time_step_eta0_line = None
 
     def __getstate__(
             self
