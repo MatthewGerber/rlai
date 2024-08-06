@@ -353,7 +353,7 @@ def improve(
 
             plt.close()
 
-            # plot any data add by the environment
+            # plot any data added by the environment
             if len(environment.plot_label_data_kwargs) > 0:
                 for plot_label in environment.plot_label_data_kwargs:
                     plot_data = environment.plot_label_data_kwargs[plot_label][0]
