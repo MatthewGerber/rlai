@@ -228,7 +228,7 @@ class GridworldFeatureExtractor(StateActionInteractionFeatureExtractor):
     def init_from_arguments(
             cls,
             args: List[str],
-            environment: Gridworld
+            environment: MdpEnvironment
     ) -> Tuple[FeatureExtractor, List[str]]:
         """
         Initialize a feature extractor from arguments.
@@ -237,6 +237,8 @@ class GridworldFeatureExtractor(StateActionInteractionFeatureExtractor):
         :param environment: Environment.
         :return: 2-tuple of a feature extractor and a list of unparsed arguments.
         """
+
+        assert isinstance(environment, Gridworld)
 
         parsed_args, unparsed_args = parse_arguments(cls, args)
 
@@ -280,8 +282,8 @@ class GridworldFeatureExtractor(StateActionInteractionFeatureExtractor):
 
         self.check_state_and_action_lists(states, actions)
 
-        state_row = [int(state.i / self.num_cols) for state in states]
-        state_col = [state.i % self.num_cols for state in states]
+        state_row = [int(state.i / self.num_cols) for state in states]  # type: ignore[operator]
+        state_col = [state.i % self.num_cols for state in states]  # type: ignore[operator]
 
         state_features = np.array([
             [
@@ -309,7 +311,7 @@ class GridworldFeatureExtractor(StateActionInteractionFeatureExtractor):
         """
 
         return {
-            a.name: ['intercept', 'from-top', 'from-bottom', 'from-left', 'from-right']
+            a.name: ['intercept', 'from-top', 'from-bottom', 'from-left', 'from-right']  # type: ignore[misc]
             for a in self.actions
         }
 

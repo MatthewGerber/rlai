@@ -90,7 +90,7 @@ class StateDimensionSegment(StateDimensionIndicator):
     @staticmethod
     def get_segments(
             dimension_breakpoints: Dict[int, List[float]]
-    ) -> List['StateDimensionSegment']:
+    ) -> List['StateDimensionIndicator']:
         """
         Get segments for a dictionary of breakpoints
 

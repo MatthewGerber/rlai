@@ -22,7 +22,7 @@ from rlai.core import (
     MdpAgent,
     Environment
 )
-from rlai.core.environments.mdp import ContinuousMdpEnvironment
+from rlai.core.environments.mdp import ContinuousMdpEnvironment, MdpEnvironment
 from rlai.gpi.state_action_value.function_approximation.models.feature_extraction import (
     StateActionInteractionFeatureExtractor
 )
@@ -693,6 +693,8 @@ class ContinuousActionGymCustomizer(GymCustomizer):
             'No Gym customizer is available, so the action-dimension names for are unknown. Defaulting to numbers.'
         )
 
+        assert gym.action_space.shape is not None
+
         return [
             str(x) for
             x in range(0, gym.action_space.shape[0])
@@ -729,7 +731,7 @@ class ScaledFeatureExtractor(StateFeatureExtractor, ABC):
     def init_from_arguments(
             cls,
             args: List[str],
-            environment: Gym
+            environment: MdpEnvironment
     ) -> Tuple[FeatureExtractor, List[str]]:
         """
         Initialize a feature extractor from arguments.
@@ -738,6 +740,8 @@ class ScaledFeatureExtractor(StateFeatureExtractor, ABC):
         :param environment: Environment.
         :return: 2-tuple of a feature extractor and a list of unparsed arguments.
         """
+
+        assert isinstance(environment, Gym)
 
         parsed_args, unparsed_args = parse_arguments(cls, args)
 
@@ -751,7 +755,7 @@ class ScaledFeatureExtractor(StateFeatureExtractor, ABC):
 
     def extract(
             self,
-            state: GymState,
+            state: MdpState,
             refit_scaler: bool
     ) -> np.ndarray:
         """
@@ -763,6 +767,8 @@ class ScaledFeatureExtractor(StateFeatureExtractor, ABC):
         scaler should remain fixed, which means this should be False.
         :return: Scaled (standardized) state-feature vector.
         """
+
+        assert isinstance(state, GymState)
 
         return self.feature_scaler.scale_features(
             np.array([state.observation]),
@@ -788,6 +794,19 @@ class SignedCodingFeatureExtractor(ScaledFeatureExtractor):
     the continuous feature vector into its associated category. Works for all continuous-valued state spaces in Gym.
     """
 
+    def __init__(
+            self
+    ):
+        """
+        Initialize the feature extractor.
+        """
+
+        super().__init__()
+
+        # this is a generic feature extractor for all gym environments. as such, we don't know the dimensionality of the
+        # state space until the first call to extract. do lazy-init here.
+        self.state_category_interacter = None
+
     def extracts_intercept(
             self
     ) -> bool:
@@ -801,7 +820,7 @@ class SignedCodingFeatureExtractor(ScaledFeatureExtractor):
 
     def extract(
             self,
-            state: GymState,
+            state: MdpState,
             refit_scaler: bool
     ) -> np.ndarray:
         """
@@ -813,6 +832,8 @@ class SignedCodingFeatureExtractor(ScaledFeatureExtractor):
         scaler should remain fixed, which means this should be False.
         :return: State-feature vector.
         """
+
+        assert isinstance(state, GymState)
 
         state_matrix = np.array([state.observation])
 
@@ -830,19 +851,6 @@ class SignedCodingFeatureExtractor(ScaledFeatureExtractor):
         )[0]
 
         return state_category_feature_vector
-
-    def __init__(
-            self
-    ):
-        """
-        Initialize the feature extractor.
-        """
-
-        super().__init__()
-
-        # this is a generic feature extractor for all gym environments. as such, we don't know the dimensionality of the
-        # state space until the first call to extract. do lazy-init here.
-        self.state_category_interacter = None
 
 
 class CartpoleCustomizer(DiscreteActionGymCustomizer):
@@ -947,7 +955,7 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
     def init_from_arguments(
             cls,
             args: List[str],
-            environment: Gym
+            environment: MdpEnvironment
     ) -> Tuple[FeatureExtractor, List[str]]:
         """
         Initialize a feature extractor from arguments.
@@ -956,6 +964,8 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
         :param environment: Environment.
         :return: 2-tuple of a feature extractor and a list of unparsed arguments.
         """
+
+        assert isinstance(environment, Gym)
 
         parsed_args, unparsed_args = parse_arguments(cls, args)
 
@@ -997,13 +1007,11 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
         :return: State-feature numpy.ndarray.
         """
 
-        states: List[GymState]
-
         self.check_state_and_action_lists(states, actions)
 
         # get the raw state matrix
         state_matrix = np.array([
-            state.observation
+            state.observation  # type: ignore[attr-defined]
             for state in states
         ])
 
@@ -1192,6 +1200,8 @@ class ContinuousMountainCarCustomizer(ContinuousActionGymCustomizer):
         :return: Observation resulting from a step.
         """
 
+        assert self.fuel_level is not None
+
         return np.append(observation, self.fuel_level)
 
     def get_reward(
@@ -1217,6 +1227,8 @@ class ContinuousMountainCarCustomizer(ContinuousActionGymCustomizer):
         position, velocity = observation[0:2]
 
         # provide the next incremental reward if any exist, then remove from availability.
+        assert self.reward_x_positions is not None
+        assert self.fuel_level is not None
         if len(self.reward_x_positions) > 0 and position >= self.reward_x_positions[0]:
             custom_reward = (self.reward_x_positions[0] - self.TROUGH_X_POS) * self.fuel_level
             self.reward_x_positions = self.reward_x_positions[1:]
@@ -1249,7 +1261,7 @@ class ContinuousMountainCarFeatureExtractor(ScaledFeatureExtractor):
 
     def extract(
             self,
-            state: GymState,
+            state: MdpState,
             refit_scaler: bool
     ) -> np.ndarray:
         """
@@ -1261,6 +1273,8 @@ class ContinuousMountainCarFeatureExtractor(ScaledFeatureExtractor):
         scaler should remain fixed, which means this should be False.
         :return: State-feature vector.
         """
+
+        assert isinstance(state, GymState)
 
         state_feature_vector = np.append([0.01], super().extract(state, refit_scaler))
         state_category_feature_vector = self.state_category_interacter.interact(
@@ -1473,7 +1487,7 @@ class ContinuousLunarLanderFeatureExtractor(ScaledFeatureExtractor):
 
     def extract(
             self,
-            state: GymState,
+            state: MdpState,
             refit_scaler: bool
     ) -> np.ndarray:
         """
@@ -1485,6 +1499,8 @@ class ContinuousLunarLanderFeatureExtractor(ScaledFeatureExtractor):
         scaler should remain fixed, which means this should be False.
         :return: State-feature vector.
         """
+
+        assert isinstance(state, GymState)
 
         # extract raw feature values
         scaled_feature_vector = super().extract(state, refit_scaler)
