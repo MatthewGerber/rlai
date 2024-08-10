@@ -45,6 +45,33 @@ class TcpMdpEnvironment(MdpEnvironment, ABC):
 
         return parser
 
+    def __init__(
+            self,
+            name: str,
+            random_state: RandomState,
+            T: Optional[int],
+            port: int
+    ):
+        """
+        Initialize the MDP environment.
+
+        :param name: Name.
+        :param random_state: Random state.
+        :param T: Maximum number of steps to run, or None for no limit.
+        :param port: Port to serve networked environment on.
+        """
+
+        super().__init__(
+            name=name,
+            random_state=random_state,
+            T=T
+        )
+
+        self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.server_socket.bind(('127.0.0.1', port))
+        self.server_socket.listen()
+        self.server_connection: Optional[socket.socket] = None
+
     def reset_for_new_run(
             self,
             agent: MdpAgent
@@ -75,6 +102,8 @@ class TcpMdpEnvironment(MdpEnvironment, ABC):
             # terminal and the caller will skip the iteration.
             if self.state is not None:
                 self.state.terminal = True
+
+        assert self.state is not None
 
         return self.state
 
@@ -115,11 +144,15 @@ class TcpMdpEnvironment(MdpEnvironment, ABC):
             logging.info(f'Exception while advancing networked environment:  {ex}')
 
             # terminate episode and return zero reward
+            assert self.state is not None
             self.state.terminal = True
             reward = Reward(None, 0.0)
 
+        assert self.state is not None
+
         # close the socket if the state is terminal
         if self.state.terminal:
+            assert self.server_connection is not None
             try:
                 self.server_connection.close()
             except Exception as ex:  # pragma no cover
@@ -162,6 +195,7 @@ class TcpMdpEnvironment(MdpEnvironment, ABC):
         # self.state_sequence_file.write(message)
         # return message
 
+        assert self.server_connection is not None
         return self.server_connection.recv(999999999).decode('utf-8')
 
     def write_to_client(
@@ -174,6 +208,7 @@ class TcpMdpEnvironment(MdpEnvironment, ABC):
         :param s: Message string.
         """
 
+        assert self.server_connection is not None
         self.server_connection.sendall(f'{s}\n'.encode('utf-8'))
 
     def close(
@@ -186,35 +221,10 @@ class TcpMdpEnvironment(MdpEnvironment, ABC):
         # uncomment the following line to update the test fixture.
         # self.state_sequence_file.close()
 
+        assert self.server_connection is not None
+
         try:
             self.server_connection.close()
             self.server_socket.close()
         except Exception as ex:  # pragma no cover
             logging.info(f'Exception while closing TCP environment:  {ex}')
-
-    def __init__(
-            self,
-            name: str,
-            random_state: RandomState,
-            T: Optional[int],
-            port: int
-    ):
-        """
-        Initialize the MDP environment.
-
-        :param name: Name.
-        :param random_state: Random state.
-        :param T: Maximum number of steps to run, or None for no limit.
-        :param port: Port to serve networked environment on.
-        """
-
-        super().__init__(
-            name=name,
-            random_state=random_state,
-            T=T
-        )
-
-        self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.server_socket.bind(('127.0.0.1', port))
-        self.server_socket.listen()
-        self.server_connection: socket = None

@@ -51,6 +51,8 @@ class Reward:
         :return: Hash code
         """
 
+        assert self.i is not None
+
         return self.i
 
     def __eq__(
@@ -273,6 +275,8 @@ class State:
         :return: Hash code
         """
 
+        assert self.i is not None
+
         return self.i
 
     def __eq__(
@@ -432,6 +436,27 @@ class Agent(ABC):
         :return: 2-tuple of a list of agents and a list of unparsed arguments.
         """
 
+    def __init__(
+            self,
+            name: str,
+            random_state: RandomState
+    ):
+        """
+        Initialize the agent.
+
+        :param name: Name of the agent.
+        :param random_state: Random state.
+        """
+
+        self.name = name
+        self.random_state = random_state
+
+        self.most_recent_action: Optional[Action] = None
+        self.most_recent_action_tick: Optional[int] = None
+        self.most_recent_state: Optional[State] = None
+        self.most_recent_state_tick: Optional[int] = None
+        self.N_t_A: Dict[Action, float] = {}
+
     def reset_for_new_run(
             self,
             state: State
@@ -479,6 +504,8 @@ class Agent(ABC):
         if a is None:
             raise ValueError('Agent returned action of None.')
 
+        assert self.most_recent_state is not None
+
         if not self.most_recent_state.is_feasible(a):
             raise ValueError(f'Action {a} is not feasible in state {self.most_recent_state}')
 
@@ -513,27 +540,6 @@ class Agent(ABC):
 
         :param r: Reward.
         """
-
-    def __init__(
-            self,
-            name: str,
-            random_state: RandomState
-    ):
-        """
-        Initialize the agent.
-
-        :param name: Name of the agent.
-        :param random_state: Random state.
-        """
-
-        self.name = name
-        self.random_state = random_state
-
-        self.most_recent_action: Optional[Action] = None
-        self.most_recent_action_tick: Optional[int] = None
-        self.most_recent_state: Optional[State] = None
-        self.most_recent_state_tick: Optional[int] = None
-        self.N_t_A: Dict[Action, int] = {}
 
     def __str__(
             self
@@ -585,44 +591,6 @@ class QValueAgent(Agent, ABC):
 
         return parser
 
-    def reset_for_new_run(
-            self,
-            state: State
-    ):
-        """
-        Reset the agent to a state prior to any learning.
-
-        :param state: New state.
-        """
-
-        super().reset_for_new_run(state)
-
-        if self.Q is None:
-            self.Q = {
-                a: IncrementalSampleAverager(
-                    initial_value=self.initial_q_value,
-                    alpha=self.alpha
-                )
-                for a in self.most_recent_state.AA
-            }
-        else:
-            for averager in self.Q.values():
-                averager.reset()
-
-    def reward(
-            self,
-            r: float
-    ):
-        """
-        Reward the agent.
-
-        :param r: Reward value.
-        """
-
-        super().reward(r)
-
-        self.Q[self.most_recent_action].update(r)
-
     def __init__(
             self,
             name: str,
@@ -649,6 +617,48 @@ class QValueAgent(Agent, ABC):
         self.alpha = alpha
 
         self.Q: Optional[Dict[Action, IncrementalSampleAverager]] = None
+
+    def reset_for_new_run(
+            self,
+            state: State
+    ):
+        """
+        Reset the agent to a state prior to any learning.
+
+        :param state: New state.
+        """
+
+        super().reset_for_new_run(state)
+
+        assert self.most_recent_state is not None
+
+        if self.Q is None:
+            self.Q = {
+                a: IncrementalSampleAverager(
+                    initial_value=self.initial_q_value,
+                    alpha=self.alpha
+                )
+                for a in self.most_recent_state.AA
+            }
+        else:
+            for averager in self.Q.values():
+                averager.reset()
+
+    def reward(
+            self,
+            r: float
+    ):
+        """
+        Reward the agent.
+
+        :param r: Reward value.
+        """
+
+        super().reward(r)
+
+        assert self.Q is not None
+        assert self.most_recent_action is not None
+        self.Q[self.most_recent_action].update(r)
 
 
 @rl_text(chapter=2, page=27)
@@ -713,7 +723,7 @@ class EpsilonGreedyQValueAgent(QValueAgent):
         del parsed_args.epsilon
 
         # initialize agents
-        agents = [
+        agents: List[Agent] = [
             cls(
                 name=f'epsilon-greedy (e={epsilon:0.2f})',
                 random_state=random_state,
@@ -724,55 +734,6 @@ class EpsilonGreedyQValueAgent(QValueAgent):
         ]
 
         return agents, unparsed_args
-
-    def reset_for_new_run(
-            self,
-            state: State
-    ):
-        """
-        Reset the agent to a state prior to any learning.
-
-        :param state: New state.
-        """
-
-        super().reset_for_new_run(state)
-
-        self.epsilon = self.original_epsilon
-        self.greedy_action = list(self.Q.keys())[0]
-
-    def __act__(
-            self,
-            t: int
-    ) -> Action:
-        """
-        Act in an epsilon-greedy fashion.
-
-        :param t: Current time step.
-        :return: Action.
-        """
-
-        if self.random_state.random_sample() < self.epsilon:
-            a = self.random_state.choice(self.most_recent_state.AA)  # type: ignore
-            self.epsilon *= (1 - self.epsilon_reduction_rate)
-        else:
-            a = self.greedy_action
-
-        return a
-
-    def reward(
-            self,
-            r: float
-    ):
-        """
-        Reward the agent.
-
-        :param r: Reward value.
-        """
-
-        super().reward(r)
-
-        # get new greedy action, which might have changed
-        self.greedy_action = max(self.Q.items(), key=lambda action_value: action_value[1].get_value())[0]
 
     def __init__(
             self,
@@ -806,7 +767,63 @@ class EpsilonGreedyQValueAgent(QValueAgent):
 
         self.epsilon = self.original_epsilon = epsilon
         self.epsilon_reduction_rate = epsilon_reduction_rate
-        self.greedy_action = None
+        self.greedy_action: Optional[Action] = None
+
+    def reset_for_new_run(
+            self,
+            state: State
+    ):
+        """
+        Reset the agent to a state prior to any learning.
+
+        :param state: New state.
+        """
+
+        super().reset_for_new_run(state)
+
+        self.epsilon = self.original_epsilon
+        assert self.Q is not None
+        self.greedy_action = list(self.Q.keys())[0]
+
+    def __act__(
+            self,
+            t: int
+    ) -> Action:
+        """
+        Act in an epsilon-greedy fashion.
+
+        :param t: Current time step.
+        :return: Action.
+        """
+
+        if self.random_state.random_sample() < self.epsilon:
+            a: Action = self.random_state.choice(self.most_recent_state.AA)  # type: ignore
+            self.epsilon *= (1 - self.epsilon_reduction_rate)
+        else:
+            assert self.greedy_action is not None
+            a = self.greedy_action
+
+        assert isinstance(a, Action)
+
+        return a
+
+    def reward(
+            self,
+            r: float
+    ):
+        """
+        Reward the agent.
+
+        :param r: Reward value.
+        """
+
+        super().reward(r)
+
+        Q = self.Q
+        assert Q is not None
+
+        # get new greedy action, which might have changed
+        self.greedy_action = max(Q.items(), key=lambda action_value: action_value[1].get_value())[0]
 
 
 @rl_text(chapter=2, page=35)
@@ -864,7 +881,7 @@ class UpperConfidenceBoundAgent(QValueAgent):
         del parsed_args.c
 
         # initialize agents
-        agents = [
+        agents: List[Agent] = [
             cls(
                 name=f'UCB (c={c})',
                 random_state=random_state,
@@ -904,7 +921,13 @@ class UpperConfidenceBoundAgent(QValueAgent):
         :return: Action.
         """
 
-        return max(self.most_recent_state.AA, key=lambda a: self.Q[a].get_value() + self.c * math.sqrt(math.log(t + 1) / self.get_denominator(a)))
+        assert self.most_recent_state is not None
+        Q = self.Q
+        assert Q is not None
+        return max(
+            self.most_recent_state.AA,
+            key=lambda a: Q[a].get_value() + self.c * math.sqrt(math.log(t + 1) / self.get_denominator(a))
+        )
 
     def __init__(
             self,
@@ -999,7 +1022,7 @@ class PreferenceGradientAgent(Agent):
         parsed_args, unparsed_args = parse_arguments(cls, args)
 
         # initialize agents
-        agents = [
+        agents: List[Agent] = [
             cls(
                 name=f'preference gradient (step size={parsed_args.step_size_alpha})',
                 random_state=random_state,
@@ -1008,78 +1031,6 @@ class PreferenceGradientAgent(Agent):
         ]
 
         return agents, unparsed_args
-
-    def reset_for_new_run(
-            self,
-            state: State
-    ):
-        """
-        Reset the agent to a state prior to any learning.
-
-        :param state: New state.
-        """
-
-        super().reset_for_new_run(state)
-
-        self.H_t_A = np.zeros(len(self.most_recent_state.AA))
-        self.update_action_probabilities()
-        self.R_bar.reset()
-
-    def __act__(
-            self,
-            t: int
-    ) -> Action:
-        """
-        Sample a random action based on current preferences.
-
-        :param t: Time step.
-        :return: Action.
-        """
-
-        return sample_list_item(self.most_recent_state.AA, self.Pr_A, self.random_state)
-
-    def reward(
-            self,
-            r: float
-    ):
-        """
-        Reward the agent.
-
-        :param r: Reward value.
-        """
-
-        super().reward(r)
-
-        if self.use_reward_baseline:
-            self.R_bar.update(r)
-            preference_update = self.step_size_alpha * (r - self.R_bar.get_value())
-        else:
-            preference_update = self.step_size_alpha * r
-
-        # get preference update for action taken
-        most_recent_action_i = self.most_recent_action.i
-        update_action_taken = self.H_t_A[most_recent_action_i] + preference_update * (1 - self.Pr_A[most_recent_action_i])
-
-        # get other-action preference update for all actions
-        update_all = self.H_t_A - preference_update * self.Pr_A
-
-        # set preferences
-        self.H_t_A = update_all
-        self.H_t_A[most_recent_action_i] = update_action_taken
-
-        self.update_action_probabilities()
-
-    def update_action_probabilities(
-            self
-    ):
-        """
-        Update action probabilities based on current preferences.
-        """
-
-        exp_h_t_a = np.e ** self.H_t_A
-        exp_h_t_a_sum = exp_h_t_a.sum()
-
-        self.Pr_A = exp_h_t_a / exp_h_t_a_sum
 
     def __init__(
             self,
@@ -1111,8 +1062,89 @@ class PreferenceGradientAgent(Agent):
             alpha=reward_average_alpha
         )
 
-        self.H_t_A: Optional[np.array] = None
-        self.Pr_A: Optional[np.array] = None
+        self.H_t_A: Optional[np.ndarray] = None
+        self.Pr_A: Optional[np.ndarray] = None
+
+    def reset_for_new_run(
+            self,
+            state: State
+    ):
+        """
+        Reset the agent to a state prior to any learning.
+
+        :param state: New state.
+        """
+
+        super().reset_for_new_run(state)
+
+        assert self.most_recent_state is not None
+        self.H_t_A = np.zeros(len(self.most_recent_state.AA))
+        self.update_action_probabilities()
+        self.R_bar.reset()
+
+    def __act__(
+            self,
+            t: int
+    ) -> Action:
+        """
+        Sample a random action based on current preferences.
+
+        :param t: Time step.
+        :return: Action.
+        """
+
+        assert self.most_recent_state is not None
+        return sample_list_item(self.most_recent_state.AA, self.Pr_A, self.random_state)
+
+    def reward(
+            self,
+            r: float
+    ):
+        """
+        Reward the agent.
+
+        :param r: Reward value.
+        """
+
+        super().reward(r)
+
+        if self.use_reward_baseline:
+            self.R_bar.update(r)
+            preference_update = self.step_size_alpha * (r - self.R_bar.get_value())
+        else:
+            preference_update = self.step_size_alpha * r
+
+        assert self.H_t_A is not None
+        assert self.Pr_A is not None
+
+        # get preference update for action taken
+        assert self.most_recent_action is not None
+        most_recent_action_i = self.most_recent_action.i
+        update_action_taken = self.H_t_A[most_recent_action_i] + preference_update * (1 - self.Pr_A[most_recent_action_i])
+
+        # get other-action preference update for all actions
+        update_all = self.H_t_A - preference_update * self.Pr_A
+
+        # set preferences
+        self.H_t_A = update_all
+        assert self.H_t_A is not None
+        self.H_t_A[most_recent_action_i] = update_action_taken
+
+        self.update_action_probabilities()
+
+    def update_action_probabilities(
+            self
+    ):
+        """
+        Update action probabilities based on current preferences.
+        """
+
+        assert self.H_t_A is not None
+
+        exp_h_t_a = np.e ** self.H_t_A
+        exp_h_t_a_sum = exp_h_t_a.sum()
+
+        self.Pr_A = exp_h_t_a / exp_h_t_a_sum
 
 
 @rl_text(chapter='Agents', page=1)
@@ -1340,7 +1372,7 @@ class Human(Agent):
                 for i, a in enumerate(self.most_recent_state.AA)
             }
 
-            for i, name in enumerate(sorted(a_name_i.keys())):
+            for i, name in enumerate(sorted(a_name_i.keys())):  # type: ignore[type-var]
                 prompt += f'{", " if i > 0 else ""}{name}'
 
             prompt += '\nEnter your selection:  '
@@ -1453,9 +1485,8 @@ class Environment(ABC):
         :param monitor: Monitor.
         """
 
-        have_T = self.T is not None
         t = 0
-        while (not have_T or t < self.T) and not self.run_step(t, agent, monitor):
+        while (self.T is None or t < self.T) and not self.run_step(t, agent, monitor):
             t += 1
 
     @abstractmethod
@@ -1531,6 +1562,19 @@ class Monitor:
     Monitor for runs of an environment with an agent.
     """
 
+    def __init__(
+            self
+    ):
+        """
+        Initialize the monitor.
+        """
+
+        self.t_count_optimal_action = {}
+        self.t_average_reward = {}
+        self.t_average_cumulative_reward = {}
+        self.cumulative_reward = 0.0
+        self.most_recent_time_step: Optional[int] = None
+
     def reset_for_new_run(
             self
     ):
@@ -1543,9 +1587,9 @@ class Monitor:
     def report(
             self,
             t: int,
-            agent_action: Action = None,
-            optimal_action: Action = None,
-            action_reward: float = None
+            agent_action: Optional[Action] = None,
+            optimal_action: Optional[Action] = None,
+            action_reward: Optional[float] = None
     ):
         """
         Report information about a run.
@@ -1574,16 +1618,3 @@ class Monitor:
             self.t_average_cumulative_reward[t].update(self.cumulative_reward)
 
         self.most_recent_time_step = t
-
-    def __init__(
-            self
-    ):
-        """
-        Initialize the monitor.
-        """
-
-        self.t_count_optimal_action = {}
-        self.t_average_reward = {}
-        self.t_average_cumulative_reward = {}
-        self.cumulative_reward = 0.0
-        self.most_recent_time_step: Optional[int] = None

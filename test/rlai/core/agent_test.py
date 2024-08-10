@@ -16,14 +16,14 @@ def test_agent_invalid_action():
     agent = ActionValueMdpAgent('foo', random, 1.0, TabularStateActionValueEstimator(Gridworld.example_4_1(random, None), None, None))
 
     # test None action
-    agent.__act__ = lambda t: None
+    agent.__act__ = lambda t: None  # type: ignore
 
     with pytest.raises(ValueError, match='Agent returned action of None'):
         agent.act(0)
 
     # test infeasible action
     action = Action(1, 'foo')
-    agent.__act__ = lambda t: action
+    agent.__act__ = lambda t: action  # type: ignore
     state = MdpState(1, [], False, truncated=False)
     agent.sense(state, 0)
     with pytest.raises(ValueError, match=f'Action {action} is not feasible in state {state}'):
@@ -56,7 +56,7 @@ def test_human_agent():
         else:
             return 'Bar'
 
-    agent.get_input = mock_input  # MagicMock(return_value='Bar')
+    agent.get_input = mock_input  # type: ignore
 
     assert agent.act(0) == a2
 

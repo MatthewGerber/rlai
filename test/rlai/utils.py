@@ -21,7 +21,7 @@ def tabular_pi_legacy_eq(
     :return: True if equal.
     """
 
-    pi: TabularPolicy
+    assert isinstance(pi, TabularPolicy)
 
     if len(pi) == len(fixture):
         for s in pi:

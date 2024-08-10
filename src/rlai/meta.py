@@ -3,7 +3,7 @@ import inspect
 import os
 import pkgutil
 import time
-from typing import Set, Dict, List, Union, Callable, Any
+from typing import Set, Dict, List, Union, Callable, Any, Optional
 
 import requests
 
@@ -42,7 +42,7 @@ def rl_text(
 def summarize(
         pkg: Any,
         chapter_page_descriptions: Dict[int, Dict[int, List[str]]],
-        paths_summarized: Set[str] = None,
+        paths_summarized: Optional[Set[str]] = None
 ):
     """
     Summarize all code decorated.
@@ -90,6 +90,7 @@ def summarize(
                         line_no += 1
 
                         relative_url_filepath = full_path.replace(".", "/").rsplit("/", maxsplit=1)[0]
+                        assert module.__file__ is not None
                         if module.__file__.endswith('__init__.py'):
                             relative_url_filepath = f'{relative_url_filepath}/__init__'
 
@@ -119,7 +120,7 @@ def main():
     Generate docs.
     """
 
-    chapter_page_descriptions = {}
+    chapter_page_descriptions: Dict = {}
 
     # noinspection PyTypeChecker
     summarize(rlai, chapter_page_descriptions)
@@ -152,7 +153,11 @@ def main():
 
         # write sorted-string chapters
         meta_md.write('# Links to Code by Topic\n')
-        for chapter in sorted(filter(lambda ch: isinstance(ch, str), chapter_page_descriptions)):
+        for chapter in sorted([
+            ch
+            for ch in chapter_page_descriptions
+            if isinstance(ch, str)
+        ]):
             ch_filename = f'ch_{chapter.replace(" ", "_")}.md'
             meta_md.write(f'### [{chapter}]({ch_filename})\n')
             with open(f'{docs_dir}{ch_filename}', 'w') as ch_md:
@@ -163,13 +168,17 @@ def main():
 
         # write sorted numeric chapters
         meta_md.write('\n# Links to Code by Book Chapter\n')
-        for chapter in sorted(filter(lambda ch: isinstance(ch, int), chapter_page_descriptions)):
-            ch_filename = f'ch_{chapter}.md'
-            meta_md.write(f'### [Chapter {chapter}:  {ch_num_name[chapter]}]({ch_filename})\n')
+        for num_chapter in sorted([
+            int(ch)
+            for ch in chapter_page_descriptions
+            if isinstance(ch, int)
+        ]):
+            ch_filename = f'ch_{num_chapter}.md'
+            meta_md.write(f'### [Chapter {num_chapter}:  {ch_num_name[num_chapter]}]({ch_filename})\n')
             with open(f'{docs_dir}{ch_filename}', 'w') as ch_md:
-                ch_md.write(f'[Home](index.md) > Chapter {chapter}:  {ch_num_name[chapter]}\n')
-                for page in sorted(chapter_page_descriptions[chapter]):
-                    for description in sorted(chapter_page_descriptions[chapter][page]):
+                ch_md.write(f'[Home](index.md) > Chapter {num_chapter}:  {ch_num_name[num_chapter]}\n')
+                for page in sorted(chapter_page_descriptions[num_chapter]):
+                    for description in sorted(chapter_page_descriptions[num_chapter][page]):
                         ch_md.write(description)
 
 

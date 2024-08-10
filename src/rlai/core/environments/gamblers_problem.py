@@ -125,11 +125,13 @@ class GamblersProblem(ModelBasedMdpEnvironment):
             for a in self.p_S_prime_R_given_S_A[s]:
 
                 # next state and reward if heads
+                assert s.i is not None
                 s_prime_h = self.SS[s.i + a.i]
                 r_h = self.r_win if not s.terminal and s_prime_h.i == 100 else self.r_not_win
                 self.p_S_prime_R_given_S_A[s][a][s_prime_h][r_h] = self.p_h
 
                 # next state and reward if tails
+                assert s.i is not None
                 s_prime_t = self.SS[s.i - a.i]
                 r_t = self.r_win if not s.terminal and s_prime_t.i == 100 else self.r_not_win
                 self.p_S_prime_R_given_S_A[s][a][s_prime_t][r_t] += self.p_t  # add the probability, in case the results of head and tail are the same.

@@ -49,12 +49,14 @@ class FeatureExtractor(ABC):
 
     def get_feature_names(
             self
-    ) -> List[str]:
+    ) -> Optional[List[str]]:
         """
         Get names of features.
 
         :return: List of feature names.
         """
+
+        return None
 
     def reset_for_new_run(
             self,
@@ -195,6 +197,28 @@ class NonstationaryFeatureScaler(FeatureScaler):
     with the observation age.
     """
 
+    def __init__(
+            self,
+            num_observations_refit_feature_scaler: int,
+            refit_history_length: int,
+            refit_weight_decay: float
+    ):
+        """
+        Initialize the scaler.
+
+        :param num_observations_refit_feature_scaler: Number of observations to collect before refitting.
+        :param refit_history_length: Number of observations to use when refitting the feature scaler.
+        :param refit_weight_decay: Exponential weight decay for the observations used in refitting the feature scaler.
+        """
+
+        self.num_observations_refit_feature_scaler = num_observations_refit_feature_scaler
+        self.refit_history_length = refit_history_length
+        self.refit_weight_decay = refit_weight_decay
+
+        self.refit_history: Optional[np.ndarray] = None
+        self.feature_scaler = StandardScaler()
+        self.num_observations = 0
+
     def scale_features(
             self,
             feature_matrix: np.ndarray,
@@ -281,28 +305,6 @@ class NonstationaryFeatureScaler(FeatureScaler):
             inverted_feature_matrix = feature_matrix
 
         return inverted_feature_matrix
-
-    def __init__(
-            self,
-            num_observations_refit_feature_scaler: int,
-            refit_history_length: int,
-            refit_weight_decay: float
-    ):
-        """
-        Initialize the scaler.
-
-        :param num_observations_refit_feature_scaler: Number of observations to collect before refitting.
-        :param refit_history_length: Number of observations to use when refitting the feature scaler.
-        :param refit_weight_decay: Exponential weight decay for the observations used in refitting the feature scaler.
-        """
-
-        self.num_observations_refit_feature_scaler = num_observations_refit_feature_scaler
-        self.refit_history_length = refit_history_length
-        self.refit_weight_decay = refit_weight_decay
-
-        self.refit_history: Optional[np.ndarray] = None
-        self.feature_scaler = StandardScaler()
-        self.num_observations = 0
 
 
 @rl_text(chapter='Feature Extractors', page=1)

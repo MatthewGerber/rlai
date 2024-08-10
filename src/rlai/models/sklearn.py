@@ -8,8 +8,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.backends.backend_pdf import PdfPages
 from numpy.random import RandomState
-from sklearn.exceptions import NotFittedError  # type: ignore[import-untyped]
-from sklearn.linear_model import SGDRegressor  # type: ignore[import-untyped]
+from sklearn.exceptions import NotFittedError
+from sklearn.linear_model import SGDRegressor
 
 from rlai.meta import rl_text
 from rlai.models import FunctionApproximationModel

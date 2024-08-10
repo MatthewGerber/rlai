@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from argparse import ArgumentParser
-from typing import List, Tuple, Union, Dict
+from typing import List, Tuple, Union, Dict, Optional
 
 import numpy as np
 import pandas as pd
@@ -56,12 +56,14 @@ class StateActionFeatureExtractor(FeatureExtractor):
 
     def get_action_feature_names(
             self
-    ) -> Dict[str, List[str]]:
+    ) -> Optional[Dict[str, List[str]]]:
         """
         Get names of actions and their associated feature names.
 
         :return: Dictionary of action names and their associated feature names.
         """
+
+        return None
 
     def __init__(
             self,

@@ -28,112 +28,6 @@ class ScatterPlot:
 
     next_position = ScatterPlotPosition.TOP_LEFT
 
-    def update(
-            self,
-            y_values: np.ndarray
-    ):
-        """
-        Update the scatter plot.
-
-        :param y_values: New y values.
-        """
-
-        if np.isinf(y_values).any() or np.isnan(y_values).any():
-            return
-
-        # expand y range if needed. never shrink it. this helps to keep the visual interpretable.
-        max_abs_y = np.abs(y_values).max()
-        if self.plot_max_abs_y is None or max_abs_y > self.plot_max_abs_y:
-            self.plot_max_abs_y = max_abs_y
-            self.plot_widget.setYRange(-self.plot_max_abs_y, self.plot_max_abs_y)
-
-        # create initial plot item if we don't have one
-        if self.plot_item is None:
-            self.plot_item = self.plot_widget.plot(self.plot_x_vals, y_values, pen=pg.mkPen(None), symbol='o')
-
-        # update data in plot item if we already have one
-        else:
-            self.plot_item.setData(self.plot_x_vals, y_values)
-
-    def reset_y_range(
-            self
-    ):
-        """
-        Reset the y-axis range, so that the next call to `update` will determine it.
-        """
-
-        self.plot_max_abs_y = None
-
-    def move_to_top_left(self):
-        """
-        Move the scatter plot to the top-left corner of the screen.
-        """
-
-        top_left_point = QApplication.primaryScreen().availableGeometry().topLeft()
-        plot_layout_geometry = self.plot_layout.frameGeometry()
-        plot_layout_geometry.moveTopLeft(top_left_point)
-        self.plot_layout.move(plot_layout_geometry.topLeft())
-
-    def move_to_top_right(self):
-        """
-        Move the scatter plot to the top-right corner of the screen.
-        """
-
-        top_right_point = QApplication.primaryScreen().availableGeometry().topRight()
-        plot_layout_geometry = self.plot_layout.frameGeometry()
-        plot_layout_geometry.moveTopRight(top_right_point)
-        self.plot_layout.move(plot_layout_geometry.topLeft())
-
-    def move_to_bottom_left(self):
-        """
-        Move the scatter plot to the bottom-left corner of the screen.
-        """
-
-        bottom_left_point = QApplication.primaryScreen().availableGeometry().bottomLeft()
-        plot_layout_geometry = self.plot_layout.frameGeometry()
-        plot_layout_geometry.moveBottomLeft(bottom_left_point)
-        self.plot_layout.move(plot_layout_geometry.topLeft())
-
-    def move_to_bottom_right(self):
-        """
-        Move the scatter plot to the bottom-right corner of the screen.
-        """
-
-        bottom_right_point = QApplication.primaryScreen().availableGeometry().bottomRight()
-        plot_layout_geometry = self.plot_layout.frameGeometry()
-        plot_layout_geometry.moveBottomRight(bottom_right_point)
-        self.plot_layout.move(plot_layout_geometry.topLeft())
-
-    def set_position(
-            self,
-            position: ScatterPlotPosition
-    ):
-        """
-        Set the position of the scatter plot on the screen.
-
-        :param position: Position.
-        """
-
-        self.position = position
-
-        if self.position == ScatterPlotPosition.TOP_LEFT:
-            self.move_to_top_left()
-        elif self.position == ScatterPlotPosition.TOP_RIGHT:
-            self.move_to_top_right()
-        elif self.position == ScatterPlotPosition.BOTTOM_LEFT:
-            self.move_to_bottom_left()
-        else:
-            self.move_to_bottom_right()
-
-    def close(
-            self
-    ):
-        """
-        Close the scatter plot.
-        """
-
-        self.plot_layout.close()
-
     def __init__(
             self,
             title: str,
@@ -172,6 +66,125 @@ class ScatterPlot:
         self.plot_max_abs_y = None
 
         self.set_position(self.position)
+
+    def update(
+            self,
+            y_values: np.ndarray
+    ):
+        """
+        Update the scatter plot.
+
+        :param y_values: New y values.
+        """
+
+        if np.isinf(y_values).any() or np.isnan(y_values).any():
+            return
+
+        # expand y range if needed. never shrink it. this helps to keep the visual interpretable.
+        max_abs_y = np.abs(y_values).max()
+        if self.plot_max_abs_y is None or max_abs_y > self.plot_max_abs_y:
+            self.plot_max_abs_y = max_abs_y
+            assert self.plot_max_abs_y is not None
+            self.plot_widget.setYRange(-self.plot_max_abs_y, self.plot_max_abs_y)
+
+        # create initial plot item if we don't have one
+        if self.plot_item is None:
+            self.plot_item = self.plot_widget.plot(self.plot_x_vals, y_values, pen=pg.mkPen(None), symbol='o')
+
+        # update data in plot item if we already have one
+        else:
+            self.plot_item.setData(self.plot_x_vals, y_values)
+
+    def reset_y_range(
+            self
+    ):
+        """
+        Reset the y-axis range, so that the next call to `update` will determine it.
+        """
+
+        self.plot_max_abs_y = None
+
+    def move_to_top_left(self):
+        """
+        Move the scatter plot to the top-left corner of the screen.
+        """
+
+        screen = QApplication.primaryScreen()
+        assert screen is not None
+
+        top_left_point = screen.availableGeometry().topLeft()
+        plot_layout_geometry = self.plot_layout.frameGeometry()
+        plot_layout_geometry.moveTopLeft(top_left_point)
+        self.plot_layout.move(plot_layout_geometry.topLeft())
+
+    def move_to_top_right(self):
+        """
+        Move the scatter plot to the top-right corner of the screen.
+        """
+
+        screen = QApplication.primaryScreen()
+        assert screen is not None
+
+        top_right_point = screen.availableGeometry().topRight()
+        plot_layout_geometry = self.plot_layout.frameGeometry()
+        plot_layout_geometry.moveTopRight(top_right_point)
+        self.plot_layout.move(plot_layout_geometry.topLeft())
+
+    def move_to_bottom_left(self):
+        """
+        Move the scatter plot to the bottom-left corner of the screen.
+        """
+
+        screen = QApplication.primaryScreen()
+        assert screen is not None
+
+        bottom_left_point = screen.availableGeometry().bottomLeft()
+        plot_layout_geometry = self.plot_layout.frameGeometry()
+        plot_layout_geometry.moveBottomLeft(bottom_left_point)
+        self.plot_layout.move(plot_layout_geometry.topLeft())
+
+    def move_to_bottom_right(self):
+        """
+        Move the scatter plot to the bottom-right corner of the screen.
+        """
+
+        screen = QApplication.primaryScreen()
+        assert screen is not None
+
+        bottom_right_point = screen.availableGeometry().bottomRight()
+        plot_layout_geometry = self.plot_layout.frameGeometry()
+        plot_layout_geometry.moveBottomRight(bottom_right_point)
+        self.plot_layout.move(plot_layout_geometry.topLeft())
+
+    def set_position(
+            self,
+            position: ScatterPlotPosition
+    ):
+        """
+        Set the position of the scatter plot on the screen.
+
+        :param position: Position.
+        """
+
+        self.position = position
+
+        if self.position == ScatterPlotPosition.TOP_LEFT:
+            self.move_to_top_left()
+        elif self.position == ScatterPlotPosition.TOP_RIGHT:
+            self.move_to_top_right()
+        elif self.position == ScatterPlotPosition.BOTTOM_LEFT:
+            self.move_to_bottom_left()
+        else:
+            self.move_to_bottom_right()
+
+    def close(
+            self
+    ):
+        """
+        Close the scatter plot.
+        """
+
+        self.plot_layout.close()
 
     def __getstate__(
             self

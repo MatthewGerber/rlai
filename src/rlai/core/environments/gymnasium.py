@@ -5,12 +5,13 @@ from abc import ABC
 from argparse import ArgumentParser
 from itertools import product
 from time import sleep
-from typing import List, Tuple, Optional, Union, Dict
+from typing import List, Tuple, Optional, Dict, Union
 
 import gymnasium
 import numpy as np
+from gymnasium import Env
 from gymnasium.spaces import Discrete, Box
-from gymnasium.wrappers import TimeLimit, RecordVideo
+from gymnasium.wrappers import RecordVideo
 from numpy.random import RandomState
 
 from rlai.core import (
@@ -20,7 +21,7 @@ from rlai.core import (
     ContinuousMultiDimensionalAction,
     MdpState,
     MdpAgent,
-    Environment
+    Environment, Agent
 )
 from rlai.core.environments.mdp import ContinuousMdpEnvironment, MdpEnvironment
 from rlai.gpi.state_action_value.function_approximation.models.feature_extraction import (
@@ -220,7 +221,7 @@ class Gym(ContinuousMdpEnvironment):
         self.gym_native = self.init_gym_native()
 
         if self.gym_id == Gym.LLC_V3:
-            self.gym_customizer = ContinuousLunarLanderCustomizer()
+            self.gym_customizer: GymCustomizer = ContinuousLunarLanderCustomizer()
         elif self.gym_id == Gym.MCC_V0:
             self.gym_customizer = ContinuousMountainCarCustomizer()
         elif self.gym_id == Gym.CARTPOLE_V1:
@@ -251,6 +252,7 @@ class Gym(ContinuousMdpEnvironment):
 
         # action space is already discrete:  initialize n actions from it.
         if isinstance(action_space, Discrete):
+            assert isinstance(self.gym_customizer, DiscreteActionGymCustomizer)
             self.actions = [
                 Action(
                     i=i,
@@ -329,7 +331,7 @@ class Gym(ContinuousMdpEnvironment):
             state: MdpState,
             t: int,
             a: Action,
-            agent: MdpAgent
+            agent: Agent
     ) -> Tuple[MdpState, Reward]:
         """
         Advance the state.
@@ -342,13 +344,15 @@ class Gym(ContinuousMdpEnvironment):
         """
 
         assert isinstance(state, GymState)
+        assert isinstance(agent, MdpAgent)
 
         # map discretized actions back to continuous space
         if isinstance(a, DiscretizedAction):
-            gym_action = a.continuous_value
+            gym_action: Union[np.ndarray, int] = a.continuous_value
 
         # use continuous action values (which are vectors) directly
         elif isinstance(a, ContinuousMultiDimensionalAction):
+            assert a.value is not None
             gym_action = a.value
 
         # use discretized action indices
@@ -371,6 +375,7 @@ class Gym(ContinuousMdpEnvironment):
                 sleep(1.0 / self.steps_per_second)
 
             if self.plot_environment:
+                assert self.state_reward_scatter_plot is not None
                 self.state_reward_scatter_plot.update(np.append(observation, reward))
 
             # swimmer is a non-qt environment, so we need to process qt events manually.
@@ -403,6 +408,7 @@ class Gym(ContinuousMdpEnvironment):
         super().reset_for_new_run(agent)
 
         if self.plot_environment:
+            assert self.state_reward_scatter_plot is not None
             self.state_reward_scatter_plot.reset_y_range()
 
         observation, _ = self.gym_native.reset()
@@ -464,7 +470,7 @@ class Gym(ContinuousMdpEnvironment):
 
     def init_gym_native(
             self
-    ) -> Union[TimeLimit, RecordVideo]:
+    ) -> Env:
         """
         Initialize the native Gym environment object.
 
@@ -492,10 +498,13 @@ class Gym(ContinuousMdpEnvironment):
         # save videos via wrapper if we are recording
         if record_video:
             try:
+                assert self.video_directory is not None
+                render_every_nth_episode = self.render_every_nth_episode
+                assert render_every_nth_episode is not None
                 gym_native = RecordVideo(
                     env=gym_native,
                     video_folder=os.path.expanduser(self.video_directory),
-                    episode_trigger=lambda episode_id: episode_id % self.render_every_nth_episode == 0
+                    episode_trigger=lambda episode_id: (episode_id % render_every_nth_episode) == 0
                 )
 
             # pickled checkpoints can come from another os where the video directory is valid, but the directory might
@@ -570,7 +579,7 @@ class GymCustomizer(ABC):
 
     def get_state_dimension_names(
             self,
-            gym: Union[TimeLimit, RecordVideo]
+            gym: Env
     ) -> List[str]:
         """
         Get state-dimension names.
@@ -581,6 +590,8 @@ class GymCustomizer(ABC):
         warnings.warn(
             'No Gym customizer is available, so the state-dimension names for are unknown. Defaulting to numbers.'
         )
+
+        assert gym.observation_space.shape is not None
 
         return [
             str(x)
@@ -602,8 +613,8 @@ class GymCustomizer(ABC):
 
     def get_action_to_step(
             self,
-            action: np.ndarray
-    ) -> np.ndarray:
+            action: Union[np.ndarray, int]
+    ) -> Union[np.ndarray, int]:
         """
         Get action to step.
 
@@ -628,7 +639,7 @@ class GymCustomizer(ABC):
 
     def get_reward(
             self,
-            gym: Union[TimeLimit, RecordVideo],
+            gym: Env,
             reward: float,
             observation: np.ndarray,
             terminated: bool,
@@ -655,7 +666,7 @@ class DiscreteActionGymCustomizer(GymCustomizer, ABC):
 
     def get_action_names(
             self,
-            gym: Union[TimeLimit, RecordVideo]
+            gym: Env
     ) -> List[Optional[str]]:
         """
         Get discrete-action names.
@@ -670,7 +681,8 @@ class DiscreteActionGymCustomizer(GymCustomizer, ABC):
 
         action_space = gym.action_space
         assert isinstance(action_space, Discrete)
-        return [None] * action_space.n
+
+        return [None] * action_space.n  # type: ignore[return-value]
 
 
 class ContinuousActionGymCustomizer(GymCustomizer):
@@ -680,7 +692,7 @@ class ContinuousActionGymCustomizer(GymCustomizer):
 
     def get_action_dimension_names(
             self,
-            gym: Union[TimeLimit, RecordVideo]
+            gym: Env
     ) -> List[str]:
         """
         Get action-dimension names.
@@ -860,7 +872,7 @@ class CartpoleCustomizer(DiscreteActionGymCustomizer):
 
     def get_action_names(
             self,
-            gym: Union[TimeLimit, RecordVideo]
+            gym: Env
     ) -> List[Optional[str]]:
         """
         Get discrete-action names.
@@ -873,7 +885,7 @@ class CartpoleCustomizer(DiscreteActionGymCustomizer):
 
     def get_state_dimension_names(
             self,
-            gym: Union[TimeLimit, RecordVideo]
+            gym: Env
     ) -> List[str]:
         """
         Get state-dimension names.
@@ -891,7 +903,7 @@ class CartpoleCustomizer(DiscreteActionGymCustomizer):
 
     def get_reward(
             self,
-            gym: Union[TimeLimit, RecordVideo],
+            gym: Env,
             reward: float,
             observation: np.ndarray,
             terminated: bool,
@@ -1116,7 +1128,7 @@ class ContinuousMountainCarCustomizer(ContinuousActionGymCustomizer):
 
     def get_action_dimension_names(
             self,
-            gym: Union[TimeLimit, RecordVideo]
+            gym: Env
     ) -> List[str]:
         """
         Get action-dimension names.
@@ -1129,7 +1141,7 @@ class ContinuousMountainCarCustomizer(ContinuousActionGymCustomizer):
 
     def get_state_dimension_names(
             self,
-            gym: Union[TimeLimit, RecordVideo]
+            gym: Env
     ) -> List[str]:
         """
         Get state-dimension names.
@@ -1169,14 +1181,16 @@ class ContinuousMountainCarCustomizer(ContinuousActionGymCustomizer):
 
     def get_action_to_step(
             self,
-            action: np.ndarray
-    ) -> np.ndarray:
+            action: Union[np.ndarray, int]
+    ) -> Union[np.ndarray, int]:
         """
         Get action to step.
 
         :param action: Native Gym action.
         :return: Action to step.
         """
+
+        assert isinstance(action, np.ndarray)
 
         custom_action = action.copy()
         throttle = custom_action[0]
@@ -1206,7 +1220,7 @@ class ContinuousMountainCarCustomizer(ContinuousActionGymCustomizer):
 
     def get_reward(
             self,
-            gym: Union[TimeLimit, RecordVideo],
+            gym: Env,
             reward: float,
             observation: np.ndarray,
             terminated: bool,
@@ -1328,7 +1342,7 @@ class ContinuousLunarLanderCustomizer(ContinuousActionGymCustomizer):
 
     def get_action_dimension_names(
             self,
-            gym: Union[TimeLimit, RecordVideo]
+            gym: Env
     ) -> List[str]:
         """
         Get action-dimension names.
@@ -1341,7 +1355,7 @@ class ContinuousLunarLanderCustomizer(ContinuousActionGymCustomizer):
 
     def get_state_dimension_names(
             self,
-            gym: Union[TimeLimit, RecordVideo]
+            gym: Env
     ) -> List[str]:
         """
         Get state-dimension names.
@@ -1381,14 +1395,16 @@ class ContinuousLunarLanderCustomizer(ContinuousActionGymCustomizer):
 
     def get_action_to_step(
             self,
-            action: np.ndarray
-    ) -> np.ndarray:
+            action: Union[np.ndarray, int]
+    ) -> Union[np.ndarray, int]:
         """
         Get action to step.
 
         :param action: Native Gym action.
         :return: Action to step.
         """
+
+        assert isinstance(action, np.ndarray)
 
         custom_action = action.copy()
 
@@ -1428,7 +1444,7 @@ class ContinuousLunarLanderCustomizer(ContinuousActionGymCustomizer):
 
     def get_reward(
             self,
-            gym: Union[TimeLimit, RecordVideo],
+            gym: Env,
             reward: float,
             observation: np.ndarray,
             terminated: bool,

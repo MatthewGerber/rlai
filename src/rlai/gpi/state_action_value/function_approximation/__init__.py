@@ -7,7 +7,7 @@ import pandas as pd
 from matplotlib import pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 from numpy.random import RandomState
-from patsy.highlevel import dmatrix  # type: ignore[import-untyped]
+from patsy.highlevel import dmatrix
 
 from rlai.core import Policy, Action, MdpState, MdpAgent
 from rlai.core.environments.mdp import MdpEnvironment

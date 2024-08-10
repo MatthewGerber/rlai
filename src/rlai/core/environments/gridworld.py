@@ -303,7 +303,7 @@ class GridworldFeatureExtractor(StateActionInteractionFeatureExtractor):
 
     def get_action_feature_names(
             self
-    ) -> Dict[str, List[str]]:
+    ) -> Optional[Dict[str, List[str]]]:
         """
         Get names of actions and their associated feature names.
 
@@ -432,7 +432,7 @@ class GridworldStateFeatureExtractor(StateFeatureExtractor):
 
     def get_feature_names(
             self
-    ) -> List[str]:
+    ) -> Optional[List[str]]:
         """
         Get names of features.
 

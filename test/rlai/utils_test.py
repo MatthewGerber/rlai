@@ -91,7 +91,7 @@ def test_stdstream_tee():
     """
 
     tee = StdStreamTee(sys.stdout, 10, True)
-    sys.stdout = tee
+    sys.stdout = tee  # type: ignore[assignment]
 
     for i in range(20):
         print(f'{i}')

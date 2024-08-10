@@ -33,7 +33,7 @@ def test_evaluate_v_pi():
     )
 
     random_state = RandomState(12345)
-    mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
+    mdp_environment = Gridworld.example_4_1(random_state, None)
     mdp_agent = ActionValueMdpAgent(
         'test',
         random_state,
@@ -84,7 +84,7 @@ def test_evaluate_q_pi():
     )
 
     random_state = RandomState(12345)
-    mdp_environment: Gridworld = Gridworld.example_4_1(random_state, None)
+    mdp_environment = Gridworld.example_4_1(random_state, None)
     q_pi_not_in_place, _ = evaluate_q_pi(
         agent=mdp_agent,
         environment=mdp_environment,

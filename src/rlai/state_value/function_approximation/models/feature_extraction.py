@@ -100,7 +100,7 @@ class StateDimensionSegment(StateDimensionIndicator):
         return [
             StateDimensionSegment(dimension, low, high)
             for dimension, breakpoints in dimension_breakpoints.items()
-            for low, high in zip([None] + breakpoints[:-1], breakpoints)
+            for low, high in zip([None] + breakpoints[:-1], breakpoints)  # type: ignore[operator]
         ]
 
     def __init__(

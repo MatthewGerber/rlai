@@ -9,7 +9,7 @@ import pandas as pd
 from jax import numpy as jnp, jit, grad, vmap, Array
 from jax.scipy import stats as jstats
 from numpy.random import RandomState
-from scipy import stats  # type: ignore[import-untyped]
+from scipy import stats
 from tabulate import tabulate
 
 from rlai.core import Policy, Action, ContinuousMultiDimensionalAction, MdpState

@@ -178,7 +178,10 @@ class SoftMaxInActionPreferencesPolicy(ParameterizedPolicy):
 
         self.feature_extractor = feature_extractor
 
-        self.theta = np.zeros(sum(len(features) for features in feature_extractor.get_action_feature_names().values()))
+        action_feature_names = feature_extractor.get_action_feature_names()
+        assert action_feature_names is not None
+
+        self.theta = np.zeros(sum(len(features) for features in action_feature_names.values()))
 
     def __contains__(
             self,
@@ -423,7 +426,10 @@ class SoftMaxInActionPreferencesJaxPolicy(ParameterizedPolicy):
 
         self.feature_extractor = feature_extractor
 
-        self.theta = np.zeros(sum(len(features) for features in feature_extractor.get_action_feature_names().values()))
+        action_feature_names = feature_extractor.get_action_feature_names()
+        assert action_feature_names is not None
+
+        self.theta = np.zeros(sum(len(features) for features in action_feature_names.values()))
         self.get_action_prob_gradient = grad(self.get_action_prob)
 
     def __contains__(

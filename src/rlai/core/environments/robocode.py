@@ -702,7 +702,7 @@ class RobocodeFeatureExtractor(StateActionFeatureExtractor):
 
     def get_action_feature_names(
             self
-    ) -> Dict[str, List[str]]:
+    ) -> Optional[Dict[str, List[str]]]:
         """
         Get names of actions and their associated feature names.
 
@@ -992,6 +992,7 @@ class RobocodeFeatureExtractor(StateActionFeatureExtractor):
 
         if any([v != 0.0 for v in feature_values]):
             action_feature_names = self.get_action_feature_names()
+            assert action_feature_names is not None
             assert action_to_extract.name is not None
             feature_names = action_feature_names[action_to_extract.name]
             logging.debug(action_to_extract.name)

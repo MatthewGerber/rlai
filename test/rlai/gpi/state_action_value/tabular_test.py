@@ -20,7 +20,7 @@ def test_invalid_get_state_i():
 
     with pytest.raises(ValueError, match=f'Unknown state space type:  {type(3)}'):
         # noinspection PyTypeChecker
-        policy.get_state_i(3)
+        policy.get_state_i(3)  # type: ignore
 
 
 def test_policy_not_equal():
@@ -41,7 +41,7 @@ def test_invalid_epsilon():
     """
 
     with pytest.raises(ValueError, match='epsilon must be >= 0'):
-        TabularStateActionValueEstimator(None, -1, None)
+        TabularStateActionValueEstimator(None, -1, None)  # type: ignore
 
 
 def test_invalid_improve_policy_with_q_pi():

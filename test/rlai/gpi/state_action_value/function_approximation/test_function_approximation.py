@@ -10,4 +10,7 @@ def test_invalid_epsilon():
     """
 
     with pytest.raises(ValueError, match='epsilon must be >= 0'):
-        ApproximateStateActionValueEstimator(None, -1, None, None, None, False, None, None)
+        ApproximateStateActionValueEstimator(
+            None, -1, None, None, None, False,  # type: ignore
+            None, None
+        )

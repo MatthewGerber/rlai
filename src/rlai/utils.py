@@ -54,12 +54,14 @@ class IncrementalSampleAverager:
         self.n += 1
 
         if self.has_alpha:
+            assert self.alpha is not None
             step_size = self.alpha
         elif self.weighted:
 
             if weight is None:
                 raise ValueError('The averager is weighted, so non-None values must be passed for weight.')
 
+            assert self.cumulative_weight is not None
             self.cumulative_weight += weight
             step_size = weight / self.cumulative_weight
 
@@ -315,14 +317,9 @@ def get_argument_parser(
     :return: Argument parser.
     """
 
-    parser = None
-
     # noinspection PyBroadException
-    try:
-        loaded_class = load_class(fully_qualified_class_name)
-        parser = loaded_class.get_argument_parser()
-    except Exception:
-        pass
+    loaded_class = load_class(fully_qualified_class_name)
+    parser = loaded_class.get_argument_parser()
 
     return parser
 
@@ -405,6 +402,26 @@ class StdStreamTee:
     Standard stream tee.
     """
 
+    def __init__(
+            self,
+            stream: TextIO,
+            max_buffer_len: int,
+            print_to_stream: bool
+    ):
+        """
+        Initialize the reader.
+
+        :param stream: Standard stream.
+        :param max_buffer_len: Maximum buffer length.
+        :param print_to_stream: Whether to print back to stream.
+        """
+
+        self.stream = stream
+        self.max_buffer_len = max_buffer_len
+        self.print_to_stream = print_to_stream
+
+        self.buffer: List[str] = []
+
     def write(
             self,
             s: str
@@ -431,26 +448,6 @@ class StdStreamTee:
         """
 
         self.stream.flush()
-
-    def __init__(
-            self,
-            stream: TextIO,
-            max_buffer_len: int,
-            print_to_stream: bool
-    ):
-        """
-        Initialize the reader.
-
-        :param stream: Standard stream.
-        :param max_buffer_len: Maximum buffer length.
-        :param print_to_stream: Whether to print back to stream.
-        """
-
-        self.stream = stream
-        self.max_buffer_len = max_buffer_len
-        self.print_to_stream = print_to_stream
-
-        self.buffer = []
 
 
 class RunThreadManager(threading.Event):
