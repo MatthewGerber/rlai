@@ -308,19 +308,31 @@ def improve(
             )
             plt.plot(
                 time_steps,
-                [step.returns.return_value for step in steps],  # type: ignore[union-attr]
+                [
+                    step.returns.return_value
+                    for step in steps
+                    if step.returns is not None
+                ],
                 color='green',
                 label='Return:  g(t)'
             )
             plt.plot(
                 time_steps,
-                [step.returns.baseline_return_value for step in steps],  # type: ignore[union-attr]
+                [
+                    step.returns.baseline_return_value
+                    for step in steps
+                    if step.returns is not None
+                ],
                 color='violet',
                 label='Value:  v(t)',
             )
             plt.plot(
                 time_steps,
-                [step.returns.target for step in steps],  # type: ignore[union-attr]
+                [
+                    step.returns.target
+                    for step in steps
+                    if step.returns is not None
+                ],
                 color='orange',
                 label='Target:  g(t) - v(t)'
             )
