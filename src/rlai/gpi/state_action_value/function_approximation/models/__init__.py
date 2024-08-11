@@ -111,8 +111,6 @@ class StateActionFunctionApproximationModel(FunctionApproximationModel, ABC):
 
             if render:
 
-                plt.close('all')
-
                 # assign coefficients to bins
                 if num_improvement_bins is None:
                     improvements_per_bin = 1
@@ -179,6 +177,8 @@ class StateActionFunctionApproximationModel(FunctionApproximationModel, ABC):
                     return fig
                 else:
                     pdf.savefig()
+
+                plt.close()
 
         return None
 

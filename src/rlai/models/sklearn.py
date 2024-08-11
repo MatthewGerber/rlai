@@ -415,6 +415,8 @@ class SKLearnSGD(FunctionApproximationModel):
                 else:
                     pdf.savefig()
 
+                plt.close()
+
             # move to next plot iteration
             self.plot_iteration += 1
 

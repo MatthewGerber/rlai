@@ -168,7 +168,8 @@ def run(
             plt.show(block=False)
         else:
             pdf.savefig()
-            pdf.close()
+
+        pdf.close()
 
     return monitors
 

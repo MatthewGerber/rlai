@@ -126,8 +126,6 @@ def plot_policy_iteration(
 
         return None
 
-    plt.close('all')
-
     # noinspection PyTypeChecker
     fig, axs = plt.subplots(nrows=1, ncols=2, sharey=True, figsize=(12, 6))
 
@@ -176,10 +174,10 @@ def plot_policy_iteration(
 
     if pdf is None:
         plt.show(block=False)
-        return fig
     else:
         pdf.savefig()
-        return None
+
+    plt.close()
 
 
 def get_second_averages(
