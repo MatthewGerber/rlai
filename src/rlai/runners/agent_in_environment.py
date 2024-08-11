@@ -8,6 +8,7 @@ from argparse import ArgumentParser
 from typing import List
 
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.backends.backend_pdf import PdfPages
 from numpy.random import RandomState
 
@@ -80,6 +81,8 @@ def run(
             pdf = PdfPages(parsed_args.pdf_save_path)
 
         _, axs = plt.subplots(2, 1, sharex='all', figsize=(6, 9))
+
+        assert isinstance(axs, np.ndarray)
 
         reward_ax = axs[0]
         cum_reward_ax = reward_ax.twinx()
@@ -169,7 +172,7 @@ def run(
         else:
             pdf.savefig()
 
-        pdf.close()
+        plt.close()
 
     return monitors
 

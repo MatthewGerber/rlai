@@ -333,6 +333,8 @@ class SKLearnSGD(FunctionApproximationModel):
                 # noinspection PyTypeChecker
                 fig, axs = plt.subplots(nrows=1, ncols=2, sharey=True, figsize=(13, 6.5))
 
+                assert isinstance(axs, np.ndarray)
+
                 # plot average return and loss per iteration
                 self.iteration_ax = axs[0]
                 assert isinstance(self.iteration_ax, plt.Axes)

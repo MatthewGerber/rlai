@@ -7,6 +7,7 @@ import time
 from typing import Dict, List, Callable, Optional, Tuple
 
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.backends.backend_pdf import PdfPages
 
 from rlai.core import MdpAgent
@@ -129,9 +130,11 @@ def plot_policy_iteration(
     # noinspection PyTypeChecker
     fig, axs = plt.subplots(nrows=1, ncols=2, sharey=True, figsize=(12, 6))
 
+    assert isinstance(axs, np.ndarray)
+
     # reward per iteration
     _iteration_ax = axs[0]
-    assert _iteration_ax is not None
+    assert isinstance(_iteration_ax, plt.Axes)
     iterations = list(range(1, len(iteration_average_reward) + 1))
     _iteration_average_reward_line, = _iteration_ax.plot(iterations, iteration_average_reward, '-', label='average')
     _iteration_ax.set_xlabel('Iteration')
@@ -162,7 +165,7 @@ def plot_policy_iteration(
 
     # reward over elapsed time
     _time_ax = axs[1]
-    assert _time_ax is not None
+    assert isinstance(_time_ax, plt.Axes)
     seconds, averages = get_second_averages(elapsed_seconds_average_rewards)
     _elapsed_seconds_average_reward_line, = _time_ax.plot(seconds, averages, '-', label='average')
     _time_ax.set_xlabel('Elapsed time (second intervals)')
@@ -178,6 +181,8 @@ def plot_policy_iteration(
         pdf.savefig()
 
     plt.close()
+
+    return fig
 
 
 def get_second_averages(

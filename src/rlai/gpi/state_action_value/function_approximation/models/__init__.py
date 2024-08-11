@@ -5,6 +5,7 @@ from abc import ABC
 from typing import Optional, Dict
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 from matplotlib.backends.backend_pdf import PdfPages
 
@@ -133,6 +134,8 @@ class StateActionFunctionApproximationModel(FunctionApproximationModel, ABC):
                     sharey='row',
                     figsize=(3 * n_cols, 3 * n_rows)
                 )
+
+                assert isinstance(boxplot_axs, np.ndarray)
 
                 # plot one row per feature and one column per action, with the plots in the array being boxplots of
                 # coefficient values within the bin. only plot actions (columns) that have non-nan values for the
