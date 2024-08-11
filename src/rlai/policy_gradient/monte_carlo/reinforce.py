@@ -297,42 +297,34 @@ def improve(
                 agent.v_S.plot(pdf)
 
             plt.figure(figsize=(10, 10))
-            time_steps = [step.t for step in steps]
+
+            steps_t = [step.t for step in steps]
+
+            non_truncated_steps = [step for step in steps if step.returns is not None]
+            non_truncated_steps_t = [step.t for step in non_truncated_steps]
 
             # plot rewards and returns
             plt.plot(
-                time_steps,
+                steps_t,
                 [step.reward.r for step in steps],
                 color='red',
                 label='Reward:  r(t)'
             )
             plt.plot(
-                time_steps,
-                [
-                    step.returns.return_value
-                    for step in steps
-                    if step.returns is not None
-                ],
+                non_truncated_steps_t,
+                [step.returns.return_value for step in non_truncated_steps],  # type: ignore[union-attr]
                 color='green',
                 label='Return:  g(t)'
             )
             plt.plot(
-                time_steps,
-                [
-                    step.returns.baseline_return_value
-                    for step in steps
-                    if step.returns is not None
-                ],
+                non_truncated_steps_t,
+                [step.returns.baseline_return_value for step in non_truncated_steps],  # type: ignore[union-attr]
                 color='violet',
                 label='Value:  v(t)',
             )
             plt.plot(
-                time_steps,
-                [
-                    step.returns.target
-                    for step in steps
-                    if step.returns is not None
-                ],
+                non_truncated_steps_t,
+                [step.returns.target for step in non_truncated_steps],  # type: ignore[union-attr]
                 color='orange',
                 label='Target:  g(t) - v(t)'
             )
@@ -348,7 +340,7 @@ def improve(
             # plot gamma (discount) in a twin-x axes
             gamma_axe: plt.Axes = plt.twinx()  # type: ignore[assignment]
             gamma_axe.plot(
-                time_steps,
+                steps_t,
                 [step.gamma for step in steps],
                 color='blue',
                 label='gamma(t)'
