@@ -55,7 +55,7 @@ class MdpEnvironment(Environment, ABC):
         self.terminal_states = [s for s in self.SS if s.terminal]
         self.nonterminal_states = [s for s in self.SS if not s.terminal]
         self.state: Optional[MdpState] = None
-        self.time_step_axv_lines: Dict[int, Tuple[str, str]] = {}
+        self.time_step_axv_lines: Dict[int, Dict[str, Any]] = {}
         self.plot_label_data_kwargs: Dict[str, Tuple[Dict[int, float], Dict]] = {}
 
     def reset_for_new_run(

@@ -53,9 +53,12 @@ def evaluate_v_pi(
         truncation_time_step = None
         while not state.terminal:
             try:
+
                 if state.truncated and truncation_time_step is None:
                     truncation_time_step = t
                     logging.info(f'Episode was truncated after {t} step(s).')
+                elif not state.truncated and truncation_time_step is not None:
+                    raise ValueError('Truncation cannot be exited.')
 
                 if state not in state_first_t:
                     state_first_t[state] = t
@@ -175,6 +178,7 @@ def evaluate_q_pi(
         truncation_time_step = None
         while not state.terminal:
             try:
+
                 # mark truncation time and exclude the state from those that were properly evaluated
                 if state.truncated:
                     if truncation_time_step is None:
@@ -182,6 +186,9 @@ def evaluate_q_pi(
                         logging.info(f'Episode was truncated after {t} step(s).')
                 else:
                     evaluated_states.add(state)
+
+                if not state.truncated and truncation_time_step is not None:
+                    raise ValueError('Truncation cannot be exited.')
 
                 if exploring_starts and t == 0:
                     a = sample_list_item(state.AA, None, environment.random_state)

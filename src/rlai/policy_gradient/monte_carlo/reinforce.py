@@ -189,9 +189,12 @@ def improve(
         truncation_time_step = None
         while not state.terminal:
             try:
+
                 if state.truncated and truncation_time_step is None:
                     truncation_time_step = t
                     logging.info(f'Episode was truncated after {t} step(s).')
+                elif not state.truncated and truncation_time_step is not None:
+                    raise ValueError('Truncation cannot be exited.')
 
                 a = agent.act(t)
                 state_a = (state, a)
@@ -330,8 +333,8 @@ def improve(
             )
             plt.ylabel('Returns and Rewards')
 
-            for time_step, label in environment.time_step_axv_lines.items():
-                plt.axvline(time_step, color='violet', alpha=0.25)
+            for time_step, kwargs in environment.time_step_axv_lines.items():
+                plt.axvline(time_step, **kwargs)
 
             plt.xlabel('Time step')
             plt.title(f'Episode {episodes_finished}')

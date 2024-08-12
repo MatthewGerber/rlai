@@ -148,6 +148,9 @@ def evaluate_q_pi(
             else:
                 t_state_a_g[curr_t] = (curr_state, curr_a, 0.0)
 
+            if not curr_state.truncated and truncation_time_step is not None:
+                raise ValueError('Truncation cannot be exited.')
+
             # allow the agent to sense the next state at the next time step
             next_t = curr_t + 1
             agent.sense(next_state, next_t)
