@@ -114,22 +114,51 @@ not shown in the text.
 See [here](links_to_code.md).
 
 # Releasing
-1. Bump to release and tag:
-   ```bash
+1. Begin the next prerelease number within the current prerelease phase (e.g., `0.1.0a0` → `0.1.0a1`):
+   ```shell
    OLD_VERSION=$(poetry version --short)
-   poetry version prerelease --next-phase  # beta
-   poetry version prerelease --next-phase  # rc
-   poetry version prerelease --next-phase  # release
+   poetry version prerelease
    VERSION=$(poetry version --short)
-   git commit -a -m "Bump version:  ${OLD_VERSION} → ${VERSION}"
-   git tag -a -m "rlai v${VERSION}" v${VERSION}
+   git commit -a -m "Next prerelease number:  ${OLD_VERSION} → ${VERSION}"
+   git push
+   ```
+2. Begin the next prerelease phase (e.g., `0.1.0a1` → `0.1.0b0`):
+   ```shell
+   OLD_VERSION=$(poetry version --short)
+   poetry version prerelease --next-phase
+   VERSION=$(poetry version --short)
+   git commit -a -m "Next prerelease phase:  ${OLD_VERSION} → ${VERSION}"
+   git push
+   ```
+   The phases progress as alpha (`a`), beta (`b`), and release candidate (`rc`), each time resetting to a prerelease 
+   number of 0. After `rc`, the prerelease suffix (e.g., `rc3`) is stripped, leaving the `major.minor.patch` version.
+3. Release the next minor version (e.g., `0.1.0b1` → `0.1.0`):
+   ```shell
+   OLD_VERSION=$(poetry version --short)
+   poetry version minor
+   VERSION=$(poetry version --short)
+   git commit -a -m "New minor release:  ${OLD_VERSION} → ${VERSION}"
+   git push
+   ```
+4. Release the next major version (e.g., `0.1.0a0` → `2.0.0`):
+   ```shell
+   OLD_VERSION=$(poetry version --short)
+   poetry version major
+   VERSION=$(poetry version --short)
+   git commit -a -m "New major release:  ${OLD_VERSION} → ${VERSION}"
+   git push
+   ```
+5. Tag the current version:
+   ```shell
+   VERSION=$(poetry version --short)
+   git tag -a -m "rlai v${VERSION}" "v${VERSION}"
    git push --follow-tags
    ```
-2. Increment the version to the next preminor:
-   ```bash
+6. Begin the next minor prerelease (e.g., `0.1.0` → `0.2.0a0`):
+   ```shell
    OLD_VERSION=$(poetry version --short)
    poetry version preminor
    VERSION=$(poetry version --short)
-   git commit -a -m "Bump version:  ${OLD_VERSION} → ${VERSION}"
+   git commit -a -m "Next minor prerelease:  ${OLD_VERSION} → ${VERSION}"
    git push
    ```
