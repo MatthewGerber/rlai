@@ -185,7 +185,7 @@ model learns a separate set of parameters for each context. The one-hot-context 
 [interacted](https://github.com/MatthewGerber/rlai/blob/36b755098e75dd1222a802933075db2ab889b29c/src/rlai/environments/openai_gym.py#L457-L459)
 with the action space to produce the final one-hot-action-context form of the state-action value function used here.
 
-### Nonstantionary Feature Scaling
+### Nonstationary Feature Scaling
 All features are [scaled](https://github.com/MatthewGerber/rlai/blob/36b755098e75dd1222a802933075db2ab889b29c/src/rlai/environments/openai_gym.py#L443)
 to address step-size issues when using state variables on different scales. These issues are covered nicely in an
 [article](https://towardsdatascience.com/gradient-descent-the-learning-rate-and-the-importance-of-feature-scaling-6c0b416596e1)

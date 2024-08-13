@@ -37,22 +37,22 @@ echo 'export IMAGEIO_FFMPEG_EXE="/opt/homebrew/bin/ffmpeg"' >> ~/.bash_profile
 The RLAI code is distributed via [PyPI](https://pypi.org/project/rlai/). There are several ways to use the package.
 
 * JupyterLab notebook:  Most of the RLAI functionality is exposed via the companion JupyterLab notebook. See the 
-  [JupyterLab guide](docs/jupyterlab_guide.md) for more information.  
+  [JupyterLab guide](https://matthewgerber.github.io/rlai/jupyterlab_guide.html) for more information.  
 
 * Package dependency:  See the [example repository](https://github.com/MatthewGerber/rlai-dependency-example) for how a 
   project can be structured to consume the RLAI package functionality within source code.
   
 * Command-line interface:  Using RLAI from the command-line interface (CLI) is demonstrated in the case studies below 
-  and is also explored in the [CLI guide](docs/cli_guide.md).
+  and is also explored in the [CLI guide](https://matthewgerber.github.io/rlai/cli_guide.html).
 
-* See [here](docs/raspberry_pi.md) for how to use RLAI on a Raspberry Pi system. 
+* See [here](https://matthewgerber.github.io/rlai/raspberry_pi.html) for how to use RLAI on a Raspberry Pi system. 
 
 # Development
 Looking for a place to dig in? Below are a few ideas organized by area of interest.
 
 * Explore new Gym environments:  Gym provides a wide range of interesting environments, and
   experimenting with them can be as simple as modifying an existing training command (e.g., the one for
-  [inverted pendulum](docs/case_studies/inverted_pendulum.md)) and replacing the 
+  [inverted pendulum](https://matthewgerber.github.io/rlai/case_studies/inverted_pendulum.html)) and replacing the 
   `--gym-id` with something else. Other changes might be needed depending on the environment, but Gym is particularly
   convenient.
 
@@ -71,7 +71,7 @@ Looking for a place to dig in? Below are a few ideas organized by area of intere
 * Diagnostic and interpretation tools:  Diagnostic and interpretation tools become critical as the environment and agent 
   increase in complexity (e.g., from tabular methods in small, discrete-space gridworlds to value function approximation 
   methods in large, continuous-space control problems). Such tools can be found 
-  [here](docs/model_diagnostics_and_interpretation.md).
+  [here](https://matthewgerber.github.io/rlai/model_diagnostics_and_interpretation.html).
 
 # Case Studies
 The gridworld and other simple environments (e.g., gambler's problem) are used throughout the package to develop, 
@@ -85,13 +85,13 @@ understanding how agents are parameterized and rewarded.
 advanced robotics. Case studies have been developed for the following environments, which are ordered roughly by 
 increasing complexity:
 
-* [Inverted Pendulum](docs/case_studies/inverted_pendulum.md)
-* [Acrobot](docs/case_studies/acrobot.md)
-* [Mountain Car](docs/case_studies/mountain_car.md)
-* [Mountain Car with Continuous Control](docs/case_studies/mountain_car_continuous.md)
-* [Lunar Lander with Continuous Control](docs/case_studies/lunar_lander_continuous.md)
-* [MuJoCo Swimming Worm with Continuous Control](docs/case_studies/mujoco_swimming_worm.md) 
-  * A follow-up using [process-level parallelization](docs/case_studies/mujoco_swimming_worm_pooled.md) for faster, better 
+* [Inverted Pendulum](https://matthewgerber.github.io/rlai/case_studies/inverted_pendulum.html)
+* [Acrobot](https://matthewgerber.github.io/rlai/case_studies/acrobot.html)
+* [Mountain Car](https://matthewgerber.github.io/rlai/case_studies/mountain_car.html)
+* [Mountain Car with Continuous Control](https://matthewgerber.github.io/rlai/case_studies/mountain_car_continuous.html)
+* [Lunar Lander with Continuous Control](https://matthewgerber.github.io/rlai/case_studies/lunar_lander_continuous.html)
+* [MuJoCo Swimming Worm with Continuous Control](https://matthewgerber.github.io/rlai/case_studies/mujoco_swimming_worm.html) 
+  * A follow-up using [process-level parallelization](https://matthewgerber.github.io/rlai/case_studies/mujoco_swimming_worm_pooled.html) for faster, better 
     results.
   * See the MuJoCo section below for tips on installing MuJoCo.
 
@@ -103,7 +103,7 @@ for how to fix OpenGL errors.
 ## Robocode
 [Robocode](https://github.com/robo-code/robocode) is a simulation-based robotic combat programming game with a 
 dynamically rich environment, multi-agent teaming, and a large user community. Read more 
-[here](docs/case_studies/robocode.md).
+[here](https://matthewgerber.github.io/rlai/case_studies/robocode.html).
    
 # Figures from the Textbook
 A list of figures can be found [here](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/figures). Most of these 
@@ -111,7 +111,7 @@ are reproductions of those shown in the Sutton and Barto text; however, even the
 not shown in the text.
 
 # Links to Code
-See [here](docs/links_to_code.md).
+See [here](https://matthewgerber.github.io/rlai/links_to_code.html).
 
 # Incrementing and Tagging Versions with Poetry
 1. Begin the next prerelease number within the current prerelease phase (e.g., `0.1.0a0` → `0.1.0a1`):
