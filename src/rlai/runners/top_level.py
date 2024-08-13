@@ -2,7 +2,7 @@ import sys
 from argparse import ArgumentParser
 from typing import List, Union, Tuple, Optional
 
-from rlai.meta import rl_text
+from rlai.docs import rl_text
 from rlai.runners import trainer, agent_in_environment
 from rlai.utils import parse_arguments, get_argument_parser
 

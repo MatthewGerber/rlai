@@ -1,5 +1,5 @@
 [Home](index.md) > Environments
-### [rlai.core.environments.gymnasium.Gym](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/core/environments/gymnasium.py#L92)
+### [rlai.core.environments.gymnasium.Gym](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/core/environments/gymnasium.py#L93)
 ```
 Generalized Gym environment. Any Gym environment can be executed by supplying the appropriate identifier.
 ```
@@ -18,7 +18,7 @@ Environment for the mancala game. This is a simple game with many rule variation
     A couple of hours of Monte Carlo optimization explores more than 1 million states when playing against an
     equiprobable random opponent.
 ```
-### [rlai.core.environments.mdp.ContinuousMdpEnvironment](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/core/environments/mdp.py#L841)
+### [rlai.core.environments.mdp.ContinuousMdpEnvironment](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/core/environments/mdp.py#L849)
 ```
 MDP environment in which states and actions are continuous and multidimensional.
 ```
@@ -27,7 +27,7 @@ MDP environment in which states and actions are continuous and multidimensional.
 An MDP environment served over a TCP connection from an external source (e.g., a simulation environment running as
     a separate program).
 ```
-### [rlai.core.environments.robocode.RobocodeEnvironment](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/core/environments/robocode.py#L175)
+### [rlai.core.environments.robocode.RobocodeEnvironment](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/core/environments/robocode.py#L176)
 ```
 Robocode environment. The Java implementation of Robocode runs alongside the current environment, and a specialized
     robot implementation on the Java side makes TCP calls to the present Python class to exchange action and state

@@ -10,7 +10,7 @@ from numpy.random import RandomState
 
 from rlai.core import Reward, Action, MdpState, Agent, MdpAgent
 from rlai.core.environments.mdp import MdpEnvironment
-from rlai.meta import rl_text
+from rlai.docs import rl_text
 
 
 @rl_text(chapter='Environments', page=1)

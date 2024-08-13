@@ -5,7 +5,7 @@ from numpy.random import RandomState
 
 from rlai.core import Reward, Action, MdpState, Environment
 from rlai.core.environments.mdp import ModelBasedMdpEnvironment
-from rlai.meta import rl_text
+from rlai.docs import rl_text
 from rlai.utils import parse_arguments
 
 

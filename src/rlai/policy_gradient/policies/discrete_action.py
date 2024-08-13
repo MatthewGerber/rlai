@@ -7,8 +7,8 @@ from jax import numpy as jnp, grad
 
 from rlai.core import Policy, Action, MdpState
 from rlai.core.environments.mdp import MdpEnvironment
+from rlai.docs import rl_text
 from rlai.gpi.state_action_value.function_approximation.models import StateActionFeatureExtractor
-from rlai.meta import rl_text
 from rlai.policy_gradient.policies import ParameterizedPolicy
 from rlai.utils import parse_arguments, load_class
 

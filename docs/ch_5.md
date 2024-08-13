@@ -13,7 +13,7 @@ Perform Monte Carlo evaluation of an agent's policy within an environment, retur
     :param num_episodes: Number of episodes to execute.
     :return: Dictionary of MDP states and their estimated values under the agent's policy.
 ```
-### [rlai.gpi.monte_carlo.evaluation.evaluate_q_pi](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/monte_carlo/evaluation.py#L125)
+### [rlai.gpi.monte_carlo.evaluation.evaluate_q_pi](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/monte_carlo/evaluation.py#L127)
 ```
 Perform Monte Carlo evaluation of an agent's policy within an environment. This evaluation function operates over
     rewards obtained at the end of episodes, so it is only appropriate for episodic tasks.

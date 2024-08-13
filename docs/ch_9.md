@@ -1,5 +1,5 @@
 [Home](index.md) > Chapter 9:  On-policy Prediction with Approximation
-### [rlai.gpi.state_action_value.function_approximation.models.StateActionFunctionApproximationModel](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/state_action_value/function_approximation/models/__init__.py#L20)
+### [rlai.gpi.state_action_value.function_approximation.models.StateActionFunctionApproximationModel](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/gpi/state_action_value/function_approximation/models/__init__.py#L21)
 ```
 Base class for models that approximate state-action value functions.
 ```

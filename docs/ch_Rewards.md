@@ -3,7 +3,7 @@
 ```
 Reward.
 ```
-### [rlai.core.environments.robocode.RobocodeReward](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/core/environments/robocode.py#L18)
+### [rlai.core.environments.robocode.RobocodeReward](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/core/environments/robocode.py#L19)
 ```
 Robocode reward.
 ```

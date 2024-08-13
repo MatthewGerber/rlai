@@ -11,6 +11,7 @@ from patsy.highlevel import dmatrix
 
 from rlai.core import Policy, Action, MdpState, MdpAgent
 from rlai.core.environments.mdp import MdpEnvironment
+from rlai.docs import rl_text
 from rlai.gpi import PolicyImprovementEvent
 from rlai.gpi.state_action_value import ValueEstimator, ActionValueEstimator, StateActionValueEstimator
 from rlai.gpi.state_action_value.function_approximation.models import (
@@ -18,7 +19,6 @@ from rlai.gpi.state_action_value.function_approximation.models import (
     StateActionFeatureExtractor
 )
 from rlai.gpi.state_action_value.function_approximation.models.sklearn import SKLearnSGD
-from rlai.meta import rl_text
 from rlai.models.feature_extraction import StationaryFeatureScaler
 from rlai.utils import parse_arguments, load_class, log_with_border
 

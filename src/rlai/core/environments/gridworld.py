@@ -6,10 +6,10 @@ from numpy.random import RandomState
 
 from rlai.core import Reward, Action, MdpState, Environment
 from rlai.core.environments.mdp import ModelBasedMdpEnvironment, MdpEnvironment
+from rlai.docs import rl_text
 from rlai.gpi.state_action_value.function_approximation.models.feature_extraction import (
     StateActionInteractionFeatureExtractor
 )
-from rlai.meta import rl_text
 from rlai.models.feature_extraction import FeatureExtractor
 from rlai.state_value.function_approximation.models.feature_extraction import StateFeatureExtractor
 from rlai.utils import parse_arguments

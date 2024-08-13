@@ -11,7 +11,7 @@ from numpy.random import RandomState
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import SGDRegressor
 
-from rlai.meta import rl_text
+from rlai.docs import rl_text
 from rlai.models import FunctionApproximationModel
 from rlai.utils import parse_arguments, StdStreamTee, IncrementalSampleAverager
 

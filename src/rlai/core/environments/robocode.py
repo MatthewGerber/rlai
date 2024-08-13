@@ -9,9 +9,9 @@ from numpy.random import RandomState
 from rlai.core import Reward, Action, MdpState, MdpAgent, Environment
 from rlai.core.environments.mdp import MdpEnvironment
 from rlai.core.environments.network import TcpMdpEnvironment
+from rlai.docs import rl_text
 from rlai.gpi.state_action_value import StateActionValueEstimator, ActionValueMdpAgent
 from rlai.gpi.state_action_value.function_approximation.models.feature_extraction import StateActionFeatureExtractor
-from rlai.meta import rl_text
 from rlai.utils import parse_arguments
 
 

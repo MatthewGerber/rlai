@@ -6,7 +6,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 from numpy.random import RandomState
 
 from rlai.core import MdpState, Environment
-from rlai.meta import rl_text
+from rlai.docs import rl_text
 from rlai.utils import get_base_argument_parser
 
 

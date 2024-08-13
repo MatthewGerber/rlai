@@ -9,8 +9,8 @@ from numpy.random import RandomState
 
 from rlai.core import Policy, Action, MdpState, Agent, StochasticMdpAgent, Environment
 from rlai.core.environments.mdp import MdpEnvironment
+from rlai.docs import rl_text
 from rlai.gpi import PolicyImprovementEvent
-from rlai.meta import rl_text
 from rlai.utils import get_base_argument_parser, log_with_border, parse_arguments, load_class
 
 

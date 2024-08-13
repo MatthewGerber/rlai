@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from argparse import ArgumentParser
 
 from rlai.core import Policy, Action, MdpState
-from rlai.meta import rl_text
+from rlai.docs import rl_text
 from rlai.utils import get_base_argument_parser
 
 

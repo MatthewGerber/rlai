@@ -9,8 +9,8 @@ import numpy as np
 import pandas as pd
 from matplotlib.backends.backend_pdf import PdfPages
 
+from rlai.docs import rl_text
 from rlai.gpi.state_action_value.function_approximation.models.feature_extraction import StateActionFeatureExtractor
-from rlai.meta import rl_text
 from rlai.models import FunctionApproximationModel
 
 MAX_PLOT_COEFFICIENTS = 50

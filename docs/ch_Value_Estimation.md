@@ -23,11 +23,11 @@ Tabular state-action value estimator.
 ```
 Tabular value estimator.
 ```
-### [rlai.state_value.StateValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/state_value/__init__.py#L54)
+### [rlai.state_value.StateValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/state_value/__init__.py#L55)
 ```
 State-value estimator.
 ```
-### [rlai.state_value.ValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/state_value/__init__.py#L13)
+### [rlai.state_value.ValueEstimator](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/state_value/__init__.py#L14)
 ```
 Value estimator.
 ```

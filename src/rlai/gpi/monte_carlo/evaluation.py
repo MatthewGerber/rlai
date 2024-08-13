@@ -5,8 +5,8 @@ import numpy as np
 
 from rlai.core import MdpState
 from rlai.core.environments.mdp import MdpEnvironment
+from rlai.docs import rl_text
 from rlai.gpi.state_action_value import ActionValueMdpAgent
-from rlai.meta import rl_text
 from rlai.utils import IncrementalSampleAverager, sample_list_item
 
 

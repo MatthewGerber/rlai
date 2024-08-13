@@ -6,7 +6,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 from numpy.random import RandomState
 
 from rlai.core import MdpState, Environment
-from rlai.meta import rl_text
+from rlai.docs import rl_text
 from rlai.models.feature_extraction import StationaryFeatureScaler
 from rlai.state_value import StateValueEstimator, ValueEstimator
 from rlai.state_value.function_approximation.models import StateFunctionApproximationModel

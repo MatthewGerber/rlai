@@ -24,10 +24,10 @@ from rlai.core import (
     Environment, Agent
 )
 from rlai.core.environments.mdp import ContinuousMdpEnvironment, MdpEnvironment
+from rlai.docs import rl_text
 from rlai.gpi.state_action_value.function_approximation.models.feature_extraction import (
     StateActionInteractionFeatureExtractor
 )
-from rlai.meta import rl_text
 from rlai.models.feature_extraction import (
     FeatureExtractor,
     OneHotCategoricalFeatureInteracter,

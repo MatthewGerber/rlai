@@ -5,9 +5,9 @@ from numpy.random import RandomState
 
 from rlai.core import Reward, Action, MdpState, Agent, MdpAgent, Human, Environment
 from rlai.core.environments.mdp import MdpEnvironment
+from rlai.docs import rl_text
 from rlai.gpi.state_action_value import ActionValueMdpAgent
 from rlai.gpi.state_action_value.tabular import TabularStateActionValueEstimator
-from rlai.meta import rl_text
 from rlai.utils import parse_arguments
 
 

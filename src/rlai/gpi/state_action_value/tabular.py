@@ -7,9 +7,9 @@ from numpy.random import RandomState
 
 from rlai.core import Policy, Action, MdpState, MdpAgent
 from rlai.core.environments.mdp import MdpEnvironment, ModelBasedMdpEnvironment
+from rlai.docs import rl_text
 from rlai.gpi import PolicyImprovementEvent
 from rlai.gpi.state_action_value import ValueEstimator, ActionValueEstimator, StateActionValueEstimator
-from rlai.meta import rl_text
 from rlai.utils import IncrementalSampleAverager, parse_arguments, log_with_border
 
 

@@ -5,7 +5,7 @@ from typing import List, Optional, Dict, Callable, Any
 import numpy as np
 
 from rlai.core import MdpState
-from rlai.meta import rl_text
+from rlai.docs import rl_text
 from rlai.models.feature_extraction import FeatureExtractor, OneHotCategory, OneHotCategoricalFeatureInteracter
 
 

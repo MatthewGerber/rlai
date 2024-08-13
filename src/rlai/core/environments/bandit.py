@@ -5,7 +5,7 @@ import numpy as np
 from numpy.random import RandomState
 
 from rlai.core import Action, State, Agent, Environment, Monitor
-from rlai.meta import rl_text
+from rlai.docs import rl_text
 from rlai.utils import parse_arguments
 
 ARM_QSTAR_BUFFER_SIZE = 1000

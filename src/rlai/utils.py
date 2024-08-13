@@ -11,7 +11,7 @@ import scipy
 from numpy import linalg as la
 from numpy.random import RandomState
 
-from rlai.meta import rl_text
+from rlai.docs import rl_text
 
 
 @rl_text(chapter=2, page=30)

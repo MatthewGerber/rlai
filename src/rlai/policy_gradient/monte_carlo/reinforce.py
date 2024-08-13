@@ -16,7 +16,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 
 from rlai.core import MdpState, Action, Reward
 from rlai.core.environments.mdp import ContinuousMdpEnvironment
-from rlai.meta import rl_text
+from rlai.docs import rl_text
 from rlai.models.sklearn import SKLearnSGD
 from rlai.policy_gradient import ParameterizedMdpAgent
 from rlai.policy_gradient.policies import ParameterizedPolicy

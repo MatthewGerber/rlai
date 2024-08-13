@@ -1,7 +1,7 @@
 # RLAI
 * Content
 {:toc}
-  
+
 # Introduction
 This is an implementation of concepts and algorithms described in "Reinforcement Learning: An Introduction" (Sutton
 and Barto, 2018, 2nd edition). It is a work in progress, implemented with the following objectives in mind.
@@ -13,7 +13,12 @@ some.
 4. **General-purpose design**:  The text provides concise pseudocode that is not difficult to implement for the
 examples covered; however, such implementations do not necessarily lead to reusable and extensible code that is 
 generally applicable beyond such examples. The approach taken here should be generally applicable well beyond the text.
-   
+
+# Status
+* [![PyPI version](https://badge.fury.io/py/rlai.svg)](https://badge.fury.io/py/rlai)
+* [![Run Python Tests](https://github.com/MatthewGerber/rlai/actions/workflows/run-tests-on-push.yml/badge.svg)](https://github.com/MatthewGerber/rlai/actions/workflows/run-tests-on-push.yml)
+* [![Coverage Status](https://coveralls.io/repos/github/MatthewGerber/rlai/badge.svg?branch=master)](https://coveralls.io/github/MatthewGerber/rlai?branch=master)
+
 # Quick Start
 For single-click access to a graphical interface for RLAI, please click below:
 
@@ -24,7 +29,6 @@ placed on each notebook, so don't expect the Binder interface to support heavy w
 alternatives.
 
 # Installation and Use
-
 RLAI requires `swig` and `ffmpeg` to be installed on the system. These can be installed using a package manager on your
 OS (e.g., Homebrew for macOS, `apt` for Ubuntu, etc.). If installing with Homebrew on macOS, then you might need to add 
 an environment variable pointing to ffmpeg as follows:
@@ -46,7 +50,6 @@ The RLAI code is distributed via [PyPI](https://pypi.org/project/rlai/). There a
 * See [here](raspberry_pi.md) for how to use RLAI on a Raspberry Pi system. 
 
 # Development
-
 Looking for a place to dig in? Below are a few ideas organized by area of interest.
 
 * Explore new Gym environments:  Gym provides a wide range of interesting environments, and
@@ -110,10 +113,9 @@ are reproductions of those shown in the Sutton and Barto text; however, even the
 not shown in the text.
 
 # Links to Code
-
 See [here](links_to_code.md).
 
-# Releasing
+# Incrementing and Tagging Versions with Poetry
 1. Begin the next prerelease number within the current prerelease phase (e.g., `0.1.0a0` → `0.1.0a1`):
    ```shell
    OLD_VERSION=$(poetry version --short)

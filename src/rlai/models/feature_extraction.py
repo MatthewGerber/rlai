@@ -8,7 +8,7 @@ from sklearn.preprocessing import StandardScaler
 
 from rlai.core import MdpState
 from rlai.core.environments.mdp import MdpEnvironment
-from rlai.meta import rl_text
+from rlai.docs import rl_text
 from rlai.utils import get_base_argument_parser
 
 

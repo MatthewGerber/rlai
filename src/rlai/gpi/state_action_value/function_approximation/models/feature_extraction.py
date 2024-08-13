@@ -7,7 +7,7 @@ import pandas as pd
 
 from rlai.core import Action, MdpState
 from rlai.core.environments.mdp import MdpEnvironment
-from rlai.meta import rl_text
+from rlai.docs import rl_text
 from rlai.models.feature_extraction import FeatureExtractor, OneHotCategoricalFeatureInteracter
 from rlai.utils import parse_arguments
 

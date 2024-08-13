@@ -9,7 +9,7 @@ import numpy as np
 from numpy.random import RandomState
 
 from rlai.core import Reward, Action, MdpState, Agent, Environment, Monitor
-from rlai.meta import rl_text
+from rlai.docs import rl_text
 from rlai.utils import IncrementalSampleAverager, sample_list_item, parse_arguments, get_base_argument_parser
 
 

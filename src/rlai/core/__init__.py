@@ -7,7 +7,7 @@ from typing import Union, Optional, Dict, List, Tuple, Any
 import numpy as np
 from numpy.random import RandomState
 
-from rlai.meta import rl_text
+from rlai.docs import rl_text
 from rlai.utils import get_base_argument_parser, IncrementalSampleAverager, parse_arguments, sample_list_item
 
 

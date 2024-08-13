@@ -5,7 +5,7 @@ import numpy as np
 import pyqtgraph as pg
 from PyQt6.QtWidgets import QApplication
 
-from rlai.meta import rl_text
+from rlai.docs import rl_text
 
 
 # noinspection PyArgumentList

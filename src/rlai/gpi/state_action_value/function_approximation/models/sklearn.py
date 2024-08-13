@@ -6,11 +6,11 @@ import pandas as pd
 from matplotlib.backends.backend_pdf import PdfPages
 from numpy.random import RandomState
 
+from rlai.docs import rl_text
 from rlai.gpi.state_action_value.function_approximation.models import (
     StateActionFeatureExtractor,
     StateActionFunctionApproximationModel
 )
-from rlai.meta import rl_text
 from rlai.models import FunctionApproximationModel
 from rlai.models.sklearn import SKLearnSGD as SKLearnSGDRegressor
 

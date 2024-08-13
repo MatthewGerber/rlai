@@ -6,8 +6,8 @@ import numpy as np
 
 from rlai.core import Action, MdpState, MdpAgent
 from rlai.core.environments.mdp import ModelBasedMdpEnvironment
+from rlai.docs import rl_text
 from rlai.gpi.state_action_value.tabular import TabularPolicy
-from rlai.meta import rl_text
 
 
 @rl_text(chapter=4, page=74)

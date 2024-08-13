@@ -1,21 +1,21 @@
 [Home](index.md) > Agents
-### [rlai.core.Agent](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/core/__init__.py#L400)
+### [rlai.core.Agent](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/core/__init__.py#L404)
 ```
 Base class for all agents.
 ```
-### [rlai.core.Human](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/core/__init__.py#L1269)
+### [rlai.core.Human](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/core/__init__.py#L1302)
 ```
 An interactive, human-driven agent that prompts for actions at each time step.
 ```
-### [rlai.core.MdpAgent](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/core/__init__.py#L1119)
+### [rlai.core.MdpAgent](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/core/__init__.py#L1151)
 ```
 MDP agent. Adds the concepts of state, reward discounting, and policy-based action to the base agent.
 ```
-### [rlai.core.StochasticMdpAgent](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/core/__init__.py#L1201)
+### [rlai.core.StochasticMdpAgent](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/core/__init__.py#L1233)
 ```
 Stochastic MDP agent. Adds random selection of actions based on probabilities specified in the agent's policy.
 ```
-### [rlai.core.environments.robocode.RobocodeAgent](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/core/environments/robocode.py#L58)
+### [rlai.core.environments.robocode.RobocodeAgent](https://github.com/MatthewGerber/rlai/tree/master/src/rlai/core/environments/robocode.py#L59)
 ```
 Robocode agent.
 ```

@@ -10,7 +10,7 @@ from numpy.random import RandomState
 from rlai.core import Reward, Action, ContinuousMultiDimensionalAction, MdpState, MdpAgent, Environment
 from rlai.core.environments.mdp import ContinuousMdpEnvironment
 from rlai.core.environments.network import TcpMdpEnvironment
-from rlai.meta import rl_text
+from rlai.docs import rl_text
 from rlai.models.feature_extraction import FeatureExtractor, StationaryFeatureScaler
 from rlai.policy_gradient import ParameterizedMdpAgent
 from rlai.policy_gradient.policies import ParameterizedPolicy
