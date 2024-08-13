@@ -7,6 +7,7 @@ from importlib import import_module
 from typing import List, Any, Optional, Callable, Tuple, TextIO
 
 import numpy as np
+import scipy
 from numpy import linalg as la
 from numpy.random import RandomState
 
@@ -587,3 +588,22 @@ def insert_index_into_path(
     path_parts.insert(1, f'-{index}')
 
     return ''.join(path_parts)
+
+
+def get_sample_size(
+        confidence: float,
+        std: float,
+        margin_of_error: float
+) -> int:
+    """
+    Get sample size for calculating the mean for a given standard deviation and margin of error.
+
+    :param confidence: Confidence in (0.0, 1.0].
+    :param std: Standard deviation.
+    :param margin_of_error: Margin of error.
+    :return: Sample size.
+    """
+
+    z = scipy.stats.norm.ppf(1.0 - ((1.0 - confidence) / 2.0))
+
+    return ((z * std) / margin_of_error) ** 2.0

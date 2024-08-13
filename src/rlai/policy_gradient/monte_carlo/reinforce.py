@@ -213,15 +213,14 @@ def improve(
                 t += 1
                 agent.sense(state, t)
 
-                # if we've truncated and the discounted reward has converged to zero, then there's no point in running
-                # longer.
+                # if we've truncated and the discount has converged to zero, then the return at the truncation time will
+                # not change by running longer. we've got an accurate return estimate at truncation. exit the episode.
                 if truncation_time_step is not None:
-                    steps_past_truncation = (t - truncation_time_step)
-                    discounted_reward = next_reward.r * (gamma ** steps_past_truncation)
-                    if np.isclose(discounted_reward, 0.0):
+                    num_post_truncation_steps = (t - truncation_time_step)
+                    post_truncation_discount = gamma ** num_post_truncation_steps
+                    if np.isclose(post_truncation_discount, 0.0):
                         raise ValueError(
-                            f'Discounted reward converged to zero after {steps_past_truncation} post-truncation '
-                            f'step(s).'
+                            f'Post-truncation discount converged to zero after {num_post_truncation_steps} step(s).'
                         )
 
             # if anything blows up, then let the environment know that we are exiting the episode.
@@ -639,15 +638,14 @@ class TrainingPool:
                     t += 1
                     self.agent.sense(state, t)
 
-                    # if we've truncated and the discounted reward has converged to zero, then there's no point in running
-                    # longer.
+                    # if we've truncated and the discount has converged to zero, then the return at the truncation time will
+                    # not change by running longer. we've got an accurate return estimate at truncation. exit the episode.
                     if truncation_time_step is not None:
-                        steps_past_truncation = (t - truncation_time_step)
-                        discounted_reward = next_reward.r * (self.agent.gamma ** steps_past_truncation)
-                        if np.isclose(discounted_reward, 0.0):
+                        num_post_truncation_steps = (t - truncation_time_step)
+                        post_truncation_discount = self.agent.gamma ** num_post_truncation_steps
+                        if np.isclose(post_truncation_discount, 0.0):
                             raise ValueError(
-                                f'Discounted reward converged to zero after {steps_past_truncation} post-truncation '
-                                f'step(s).'
+                                f'Post-truncation discount converged to zero after {num_post_truncation_steps} step(s).'
                             )
 
                 # if anything blows up, then let the environment know that we are exiting the episode.
