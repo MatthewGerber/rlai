@@ -900,7 +900,8 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
         action = ContinuousMultiDimensionalAction(
             value=action_value,
             min_values=self.action.min_values,
-            max_values=self.action.max_values
+            max_values=self.action.max_values,
+            name=self.action.name
         )
 
         if self.plot_policy:

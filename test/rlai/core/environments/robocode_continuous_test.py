@@ -19,9 +19,9 @@ def test_continuous_learn():
     Test.
     """
 
-    # set the following to True to update the fixture. if you do this, then you'll also need to start the robocode game
-    # and uncomment some stuff in rlai.core.environments.network.TcpMdpEnvironment.read_from_client in order to update
-    # the test fixture. run a battle for 10 rounds to complete the fixture update.
+    # set the following to True to update the fixture. then uncomment some stuff in
+    # rlai.core.environments.network.TcpMdpEnvironment.read_from_client in order to update the test fixture. finally,
+    # start this test and then start the robocode game. run a battle for 10 rounds to complete the fixture update.
     update_fixture = False
 
     # updating the fixture uses the game (per above) on 54321. running test needs to be on a different port to avoid

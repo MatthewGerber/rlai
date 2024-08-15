@@ -92,8 +92,8 @@ def test_learn():
         with open(f'{os.path.dirname(__file__)}/fixtures/test_robocode.pickle', 'wb') as dump_f:
             pickle.dump((state_sequence, agent.pi, agent.pi.estimator), dump_f)
     else:
-        assert np.allclose(agent.pi.estimator.model.model.coef_, fixture_q_S_A.model.model.coef_)
-        assert np.allclose(agent.pi.estimator.model.model.intercept_, fixture_q_S_A.model.model.intercept_)
+        assert np.allclose(agent.pi.estimator.model.sklearn_sgd.model.coef_, fixture_q_S_A.model.sklearn_sgd.model.coef_)
+        assert np.allclose(agent.pi.estimator.model.sklearn_sgd.model.intercept_, fixture_q_S_A.model.sklearn_sgd.model.intercept_)
 
 
 def test_feature_extractor():

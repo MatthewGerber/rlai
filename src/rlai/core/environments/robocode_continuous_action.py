@@ -282,7 +282,8 @@ class RobocodeEnvironment(ContinuousMdpEnvironment, TcpMdpEnvironment):
             ContinuousMultiDimensionalAction(
                 value=None,
                 min_values=min_values,
-                max_values=max_values
+                max_values=max_values,
+                name='Robocode continuous action'
             )
         ]
 
