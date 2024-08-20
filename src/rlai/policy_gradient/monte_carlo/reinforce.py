@@ -298,7 +298,10 @@ def improve(
             if agent.v_S is not None:
                 agent.v_S.plot(pdf)
 
-            plt.figure(figsize=(10, 10))
+            fig_inches_per_step = 0.025
+            fig_inches = len(steps) * fig_inches_per_step
+
+            plt.figure(figsize=(fig_inches, fig_inches))
 
             steps_t = [step.t for step in steps]
 
@@ -361,6 +364,7 @@ def improve(
 
             # plot any data added by the environment
             if len(environment.plot_label_data_kwargs) > 0:
+                plt.figure(figsize=(fig_inches, fig_inches))
                 for plot_label in environment.plot_label_data_kwargs:
                     plot_data = environment.plot_label_data_kwargs[plot_label][0]
                     plt.plot(
