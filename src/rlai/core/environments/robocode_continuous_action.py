@@ -182,7 +182,7 @@ class RobocodeAgent(ParameterizedMdpAgent):
 
 
 @rl_text(chapter='Environments', page=1)
-class RobocodeEnvironment(ContinuousMdpEnvironment, TcpMdpEnvironment):
+class RobocodeEnvironment(TcpMdpEnvironment, ContinuousMdpEnvironment):
     """
     Robocode environment. The Java implementation of Robocode runs alongside the current environment, and a specialized
     robot implementation on the Java side makes TCP calls to the present Python class to exchange action and state
