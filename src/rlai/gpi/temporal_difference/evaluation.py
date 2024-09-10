@@ -116,7 +116,7 @@ def evaluate_q_pi(
                 agent=agent
             )
 
-            logging.debug(f'Obtained reward:  {next_reward}\n')
+            logging.debug(f'Obtained reward:  {next_reward}')
 
             # in the case of a planning-based advancement, the planning environment returns a 3-tuple of the current
             # state, current action, and next state. this is because the planning environment may revise any one of
