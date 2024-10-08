@@ -390,9 +390,6 @@ def improve(
 
                 plt.close()
 
-            if pdf is not None:
-                pdf.close()
-
             # plot per-episode metrics
             if len(environment.metric_episode_value) > 0:
                 for metric in environment.metric_episode_value:
@@ -413,6 +410,9 @@ def improve(
                     pdf.savefig()
 
                 plt.close()
+
+            if pdf is not None:
+                pdf.close()
 
         num_fallback_iterations = 0
         if (
