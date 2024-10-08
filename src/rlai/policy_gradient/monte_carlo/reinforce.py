@@ -229,6 +229,13 @@ def improve(
                 environment.exiting_episode_without_termination()
                 break
 
+        # add metrics to per-episode collection
+        for metric, value in environment.metric_value.items():
+            if metric in environment.metric_episode_value:
+                environment.metric_episode_value[metric][episodes_finished] = value
+            else:
+                environment.metric_episode_value[metric] = {episodes_finished: value}
+
         # work backwards through the trace to calculate discounted returns. need to work backward in order for the value
         # of g at each time step t to be properly discounted.
         g = 0.0
@@ -385,6 +392,27 @@ def improve(
 
             if pdf is not None:
                 pdf.close()
+
+            # plot per-episode metrics
+            if len(environment.metric_episode_value) > 0:
+                for metric in environment.metric_episode_value:
+                    plt.plot(
+                        list(environment.metric_episode_value[metric].keys()),
+                        list(environment.metric_episode_value[metric].values()),
+                        label=metric
+                    )
+                    plt.xlabel('Episode')
+                    plt.ylabel('Value')
+                    plt.grid()
+                    plt.legend()
+                    plt.tight_layout()
+
+                if pdf is None:
+                    plt.show()
+                else:
+                    pdf.savefig()
+
+                plt.close()
 
         num_fallback_iterations = 0
         if (
