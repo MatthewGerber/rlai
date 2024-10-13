@@ -79,12 +79,18 @@ class ContinuousActionPolicy(ParameterizedPolicy, ABC):
 
         self.action_scatter_plot = None
         if self.plot_policy:
+
             # local-import so that we don't crash on raspberry pi os, where we can't install qt6.
             from rlai.plot_utils import ScatterPlot
-            self.action_scatter_plot = ScatterPlot('Actions', self.environment.get_action_dimension_names(), None)
+            self.action_scatter_plot = ScatterPlot(
+                'Actions',
+                self.environment.get_action_dimension_names(),
+                None
+            )
 
-        self.action: Optional[
-            ContinuousMultiDimensionalAction] = None  # we'll fill this in upon the first call to __getitem__, where we have access to a state and its actions.
+        # we'll fill this in upon the first call to __getitem__, where we have access to a state and its actions.
+        self.action: Optional[ContinuousMultiDimensionalAction] = None
+
         self.random_state = RandomState(12345)
 
     def set_action(
@@ -669,7 +675,10 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
         # extractors expand the feature space beyond the dimension names (e.g., via interaction terms), and we don't
         # have a good way to generate names for these extra features. such extractors also tend to generate large
         # feature spaces for which tabular output isn't easily readable.
-        if logging.getLogger().level <= logging.INFO and self.action_theta_a.shape[1] == len(self.environment.get_state_dimension_names()) + 1:
+        if (
+            logging.getLogger().level <= logging.INFO and
+            self.action_theta_a.shape[1] == len(self.environment.get_state_dimension_names()) + 1
+        ):
             row_names = [
                 f'{action_name}_{p}'
                 for action_name in self.environment.get_action_dimension_names()
@@ -681,7 +690,10 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
                 for theta_a_row, theta_b_row in zip(self.action_theta_a, self.action_theta_b)
                 for row in [theta_a_row, theta_b_row]
             ], index=row_names, columns=col_names)
-            logging.info(f'Per-action beta hyperparameters:\n{tabulate(theta_df, headers="keys", tablefmt="psql")}')  # type: ignore[arg-type]
+            logging.info(
+                'Per-action beta hyperparameters:\n'
+                f'{tabulate(theta_df, headers="keys", tablefmt="psql")}'  # type: ignore[arg-type]
+            )
 
     def reset_action_scatter_plot_y_range(
             self

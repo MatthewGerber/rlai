@@ -121,7 +121,10 @@ def iterate_value_q_pi(
         # run planning through a recursive call to the iteration method, passing the planning environment as the
         # environment to interact with and disabling planning in the recursive call.
         if planning_environment is not None:
-            logging.info(f'Running {planning_environment.num_planning_improvements_per_direct_improvement} planning improvement(s).')
+            logging.info(
+                f'Running {planning_environment.num_planning_improvements_per_direct_improvement} planning '
+                'improvement(s).'
+            )
             iterate_value_q_pi(
                 agent=agent,
                 environment=planning_environment,
