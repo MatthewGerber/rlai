@@ -257,8 +257,8 @@ def improve(
                     baseline_return = 0.0
 
                 # otherwise, the baseline return is the current estimate of the return from the state. update the
-                # state-value estimator with the obtained return. this only adds state-return example to the estimator.
-                # it does not improve the estimator.
+                # state-value estimator with the obtained return. this only adds the example to the estimator. it does
+                # not improve the estimator.
                 else:
                     baseline_return = agent.v_S[step.state].get_value()
                     agent.v_S[step.state].update(g)
