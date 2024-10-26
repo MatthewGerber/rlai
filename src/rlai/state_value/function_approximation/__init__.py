@@ -254,9 +254,11 @@ class ApproximateStateValueEstimator(StateValueEstimator):
 
         # invert the state value back to the original space if we're scaling
         if self.scale_outcomes:
-            state_values = self.value_scaler.invert_scaled_features(state_values.reshape((-1, 1)).flatten())
+            state_values = self.value_scaler.invert_scaled_features(state_values.reshape((-1, 1))).flatten()
 
-        return float(state_values)
+        assert len(state_values) == 1
+
+        return float(state_values[0])
 
     def extract_features(
             self,
