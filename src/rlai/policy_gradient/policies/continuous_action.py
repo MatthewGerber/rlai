@@ -307,10 +307,7 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
         """
 
         # extract state-feature matrix
-        state_feature_matrix = np.array([
-            self.feature_extractor.extract(s, True)
-            for s in self.update_batch_s
-        ])
+        state_feature_matrix = self.feature_extractor.extract(self.update_batch_s, True)
 
         # add intercept if the extractor doesn't extract one
         if not self.feature_extractor.extracts_intercept():
@@ -408,7 +405,7 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
 
         self.set_action(state)
 
-        state_feature_vector = self.feature_extractor.extract(state, False)
+        state_feature_vector = self.feature_extractor.extract([state], False)[0]
 
         # add intercept if the extractor doesn't extract one
         if not self.feature_extractor.extracts_intercept():
@@ -570,10 +567,7 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
         assert self.action_theta_b is not None
 
         # extract state-feature matrix:  one row per update and one column per state dimension.
-        state_feature_matrix = np.array([
-            self.feature_extractor.extract(s, True)
-            for s in self.update_batch_s
-        ])
+        state_feature_matrix = self.feature_extractor.extract(self.update_batch_s, True)
 
         # add intercept if the extractor doesn't extract one
         if not self.feature_extractor.extracts_intercept():
@@ -863,7 +857,7 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
 
         assert self.action is not None
 
-        state_feature_vector = self.feature_extractor.extract(state, False)
+        state_feature_vector = self.feature_extractor.extract([state], False)[0]
 
         # add intercept if the extractor doesn't extract one
         if not self.feature_extractor.extracts_intercept():

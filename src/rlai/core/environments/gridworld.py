@@ -406,29 +406,42 @@ class GridworldStateFeatureExtractor(StateFeatureExtractor):
 
     def extract(
             self,
-            state: MdpState,
+            states: List[MdpState],
             refit_scaler: bool
     ) -> np.ndarray:
         """
         Extract state features.
 
-        :param state: State.
+        :param states: States.
         :param refit_scaler: Unused.
-        :return: State-feature vector.
+        :return: State-feature matrix (#states, #features).
         """
 
-        assert state.i is not None
-        row = int(state.i / self.num_cols)
-        col = state.i % self.num_cols
+        state_indices = [
+            state.i
+            for state in states
+            if state.i is not None
+        ]
 
-        state_features = np.array([
-            row,  # from top
-            self.num_rows - row - 1,  # from bottom
-            col,  # from left
-            self.num_cols - col - 1  # from right
+        row_col_list = [
+            (
+                i / self.num_cols,
+                i % self.num_cols
+            )
+            for i in state_indices
+        ]
+
+        state_feature_matrix = np.array([
+            [
+                row,  # from top
+                self.num_rows - row - 1,  # from bottom
+                col,  # from left
+                self.num_cols - col - 1  # from right
+            ]
+            for row, col in row_col_list
         ])
 
-        return state_features
+        return state_feature_matrix
 
     def get_feature_names(
             self

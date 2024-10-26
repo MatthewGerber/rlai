@@ -717,28 +717,29 @@ class RobocodeFeatureExtractor(StateFeatureExtractor):
 
     def extract(
             self,
-            state: MdpState,
+            states: List[MdpState],
             refit_scaler: bool
     ) -> np.ndarray:
         """
         Extract state features.
 
-        :param state: State.
+        :param states: States.
         :param refit_scaler: Whether to refit the feature scaler before scaling the extracted features. This is
         only appropriate in settings where nonstationarity is desired (e.g., during training). During evaluation, the
         scaler should remain fixed, which means this should be False.
-        :return: State-feature vector.
+        :return: State-feature matrix (#states, #features).
         """
 
-        if not isinstance(state, RobocodeState):
-            raise ValueError(f'Expected a {RobocodeState}')
-
-        x = np.array(self.get_feature_values(state))
+        x = np.array([
+            self.get_feature_values(state)
+            for state in states
+            if isinstance(state, RobocodeState)
+        ])
 
         return self.feature_scaler.scale_features(
-            np.array([x]),
+            x,
             refit_before_scaling=refit_scaler
-        )[0]
+        )
 
     def get_feature_values(
             self,

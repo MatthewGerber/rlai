@@ -767,25 +767,27 @@ class ScaledFeatureExtractor(StateFeatureExtractor, ABC):
 
     def extract(
             self,
-            state: MdpState,
+            states: List[MdpState],
             refit_scaler: bool
     ) -> np.ndarray:
         """
         Extract state features.
 
-        :param state: State.
+        :param states: States.
         :param refit_scaler: Whether to refit the feature scaler before scaling the extracted features. This is
         only appropriate in settings where nonstationarity is desired (e.g., during training). During evaluation, the
         scaler should remain fixed, which means this should be False.
-        :return: Scaled (standardized) state-feature vector.
+        :return: Scaled (standardized) state-feature matrix (#states, #features).
         """
 
-        assert isinstance(state, GymState)
-
         return self.feature_scaler.scale_features(
-            np.array([state.observation]),
+            np.array([
+                state.observation
+                for state in states
+                if isinstance(state, GymState)
+            ]),
             refit_before_scaling=refit_scaler
-        )[0]
+        )
 
     def __init__(
             self
@@ -832,22 +834,24 @@ class SignedCodingFeatureExtractor(ScaledFeatureExtractor):
 
     def extract(
             self,
-            state: MdpState,
+            states: List[MdpState],
             refit_scaler: bool
     ) -> np.ndarray:
         """
         Extract state features.
 
-        :param state: State.
+        :param states: State.
         :param refit_scaler: Whether to refit the feature scaler before scaling the extracted features. This is only
         appropriate in settings where nonstationarity is desired (e.g., during training). During evaluation, the
         scaler should remain fixed, which means this should be False.
-        :return: State-feature vector.
+        :return: State-feature matrix (#states, #features).
         """
 
-        assert isinstance(state, GymState)
-
-        state_matrix = np.array([state.observation])
+        state_matrix = np.array([
+            state.observation
+            for state in states
+            if isinstance(state, GymState)
+        ])
 
         if self.state_category_interacter is None:
             self.state_category_interacter = OneHotStateIndicatorFeatureInteracter(StateDimensionSegment.get_segments({
@@ -855,14 +859,21 @@ class SignedCodingFeatureExtractor(ScaledFeatureExtractor):
                 for dimension in range(state_matrix.shape[1])
             }))
 
-        # extract and encode feature values
-        state_feature_vector = np.append([1.0], super().extract(state, refit_scaler))
-        state_category_feature_vector = self.state_category_interacter.interact(
-            state_matrix,
-            np.array([state_feature_vector])
-        )[0]
+        # extract feature matrix and prepend constant term
+        state_feature_matrix = super().extract(states, refit_scaler)
+        state_feature_matrix = np.append(
+            np.ones((state_feature_matrix.shape[0], 1)),
+            state_feature_matrix,
+            axis=1
+        )
 
-        return state_category_feature_vector
+        # extract and encode feature values
+        state_category_feature_matrix = self.state_category_interacter.interact(
+            state_matrix,
+            state_feature_matrix
+        )
+
+        return state_category_feature_matrix
 
 
 class CartpoleCustomizer(DiscreteActionGymCustomizer):
@@ -1275,28 +1286,38 @@ class ContinuousMountainCarFeatureExtractor(ScaledFeatureExtractor):
 
     def extract(
             self,
-            state: MdpState,
+            states: List[MdpState],
             refit_scaler: bool
     ) -> np.ndarray:
         """
         Extract state features.
 
-        :param state: State.
+        :param states: State.
         :param refit_scaler: Whether to refit the feature scaler before scaling the extracted features. This is
         only appropriate in settings where nonstationarity is desired (e.g., during training). During evaluation, the
         scaler should remain fixed, which means this should be False.
-        :return: State-feature vector.
+        :return: State-feature matrix (#states, #features).
         """
 
-        assert isinstance(state, GymState)
+        state_matrix = np.array([
+            state.observation
+            for state in states
+            if isinstance(state, GymState)
+        ])
 
-        state_feature_vector = np.append([0.01], super().extract(state, refit_scaler))
-        state_category_feature_vector = self.state_category_interacter.interact(
-            np.array([state.observation]),
-            np.array([state_feature_vector])
-        )[0]
+        state_feature_matrix = super().extract(states, refit_scaler)
+        state_feature_matrix = np.append(
+            0.01 * np.ones((state_feature_matrix.shape[0], 1)),
+            state_feature_matrix,
+            axis=1
+        )
 
-        return state_category_feature_vector
+        state_category_feature_matrix = self.state_category_interacter.interact(
+            state_matrix,
+            state_feature_matrix
+        )
+
+        return state_category_feature_matrix
 
     def __init__(
             self
@@ -1503,23 +1524,20 @@ class ContinuousLunarLanderFeatureExtractor(ScaledFeatureExtractor):
 
     def extract(
             self,
-            state: MdpState,
+            states: List[MdpState],
             refit_scaler: bool
     ) -> np.ndarray:
         """
         Extract state features.
 
-        :param state: State.
+        :param states: States.
         :param refit_scaler: Whether to refit the feature scaler before scaling the extracted features. This is
         only appropriate in settings where nonstationarity is desired (e.g., during training). During evaluation, the
         scaler should remain fixed, which means this should be False.
-        :return: State-feature vector.
+        :return: State-feature matrix (#states, #features).
         """
 
-        assert isinstance(state, GymState)
-
-        # extract raw feature values
-        scaled_feature_vector = super().extract(state, refit_scaler)
+        scaled_feature_matrix = super().extract(states, refit_scaler)
 
         # features:
         #   0 (x pos)
@@ -1534,28 +1552,51 @@ class ContinuousLunarLanderFeatureExtractor(ScaledFeatureExtractor):
 
         # form the one-hot state category. start by thresholding some feature values.
         state_category_feature_idxs = [0, 2, 3, 4, 5]
-        state_category = OneHotCategory(*[
-            value < 0.0
-            for idx, value in zip(state_category_feature_idxs, state.observation[state_category_feature_idxs])
-        ])
+        state_categories = [
+            OneHotCategory(*[
+                value < 0.0
+                for value in state.observation[state_category_feature_idxs]
+            ])
+            for state in states
+            if isinstance(state, GymState)
+        ]
 
         # encode feature values
         encoded_feature_idxs = [0, 2, 3, 4, 5]
-        feature_values_to_encode = scaled_feature_vector[encoded_feature_idxs]
-        encoded_feature_values = self.state_category_interacter.interact(
-            np.array([feature_values_to_encode]),
-            [state_category]
-        )[0]
+        encoded_feature_matrix = self.state_category_interacter.interact(
+            np.array([
+                row[encoded_feature_idxs]
+                for row in scaled_feature_matrix
+            ]),
+            state_categories
+        )
 
         # get unencoded feature values
-        both_legs_in_contact = 1.0 if np.all(state.observation[6:8] == 1.0) else 0.0
-        unencoded_feature_values = np.append(scaled_feature_vector[[1, 6, 7, 8]], [both_legs_in_contact])
+        both_legs_in_contact = np.array([
+            1.0 if np.all(state.observation[6:8] == 1.0) else 0.0
+            for state in states
+            if isinstance(state, GymState)
+        ]).reshape(-1, 1)
+        unencoded_feature_matrix = np.append(
+            np.array([
+                row[[1, 6, 7, 8]]
+                for row in scaled_feature_matrix
+            ]),
+            both_legs_in_contact,
+            axis=1
+        )
 
-        # combine encoded and unencoded feature values
-        final_feature_values = np.append(encoded_feature_values, unencoded_feature_values)
-        final_feature_values = np.append([1.0], final_feature_values)
+        # combine encoded and unencoded feature value columns
+        final_feature_matrix = np.append(encoded_feature_matrix, unencoded_feature_matrix, axis=1)
 
-        return final_feature_values
+        # prepend intercept column
+        final_feature_matrix = np.append(
+            np.ones((final_feature_matrix.shape[0], 1)),
+            final_feature_matrix,
+            axis=1
+        )
+
+        return final_feature_matrix
 
     def __init__(
             self
