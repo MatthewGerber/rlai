@@ -15,6 +15,18 @@ class StateFeatureExtractor(FeatureExtractor, ABC):
     Feature extractor for states.
     """
 
+    def __init__(
+            self,
+            scale_features: bool
+    ):
+        """
+        Initialize the extractor.
+
+        :param scale_features: Whether to scale features.
+        """
+
+        self.scale_features = scale_features
+
     @abstractmethod
     def extract(
             self,
@@ -291,13 +303,15 @@ class OneHotStateIndicatorFeatureInteracter:
     def interact(
             self,
             state_matrix: np.ndarray,
-            state_feature_matrix: np.ndarray
+            state_feature_matrix: np.ndarray,
+            refit_scaler: bool
     ) -> np.ndarray:
         """
         Interact a state-feature matrix with its one-hot state-indicator encoding.
 
         :param state_matrix: State matrix (#obs, #state_dimensionality), from which to derive indicators.
         :param state_feature_matrix: State-feature matrix (#obs, #features).
+        :param refit_scaler: Whether to refit the scaler.
         :return: Interacted state-feature matrix (#obs, #features * #joint_indicators).
         """
 
@@ -312,27 +326,33 @@ class OneHotStateIndicatorFeatureInteracter:
 
         interacted_state_feature_matrix = self.interacter.interact(
             feature_matrix=state_feature_matrix,
-            categorical_values=state_categories
+            categorical_values=state_categories,
+            refit_scaler=refit_scaler
         )
 
         return interacted_state_feature_matrix
 
     def __init__(
             self,
-            indicators: List[StateIndicator]
+            indicators: List[StateIndicator],
+            scale_features: bool
     ):
         """
         Initialize the interacter.
 
         :param indicators: State-dimension indicators.
+        :param scale_features: Whether to scale features.
         """
 
         self.indicators = indicators
 
-        self.interacter = OneHotCategoricalFeatureInteracter([
-            OneHotCategory(*args)
-            for args in product(*[
-                indicator.get_range()
-                for indicator in self.indicators
-            ])
-        ])
+        self.interacter = OneHotCategoricalFeatureInteracter(
+            categories=[
+                OneHotCategory(*args)
+                for args in product(*[
+                    indicator.get_range()
+                    for indicator in self.indicators
+                ])
+            ],
+            scale_features=scale_features
+        )

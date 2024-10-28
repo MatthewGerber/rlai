@@ -1383,7 +1383,7 @@ class RobocodeFeatureExtractor(StateFeatureExtractor):
         :param environment: Environment.
         """
 
-        super().__init__()
+        super().__init__(True)
 
         self.scanned_robot_decay = 0.75
         self.robot_actions = environment.robot_actions

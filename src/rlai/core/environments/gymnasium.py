@@ -796,30 +796,81 @@ class ScaledFeatureExtractor(StateFeatureExtractor, ABC):
         Initialize the feature extractor.
         """
 
-        super().__init__()
+        super().__init__(True)
 
         self.feature_scaler = StationaryFeatureScaler()
 
 
 @rl_text(chapter='Feature Extractors', page=1)
-class SignedCodingFeatureExtractor(ScaledFeatureExtractor):
+class SignedCodingFeatureExtractor(StateFeatureExtractor):
     """
     Signed-coding feature extractor. Forms a category from the conjunction of all state-feature signs and then places
     the continuous feature vector into its associated category. Works for all continuous-valued state spaces in Gym.
     """
 
+    @classmethod
+    def get_argument_parser(
+            cls
+    ) -> ArgumentParser:
+        """
+        Get argument parser.
+
+        :return: Argument parser.
+        """
+
+        parser = ArgumentParser(
+            prog=f'{cls.__module__}.{cls.__name__}',
+            parents=[super().get_argument_parser()],
+            allow_abbrev=False,
+            add_help=False
+        )
+
+        parser.add_argument(
+            '--scale-features',
+            action='store_true',
+            help='Whether to scale features.'
+        )
+
+        return parser
+
+    @classmethod
+    def init_from_arguments(
+            cls,
+            args: List[str],
+            environment: MdpEnvironment
+    ) -> Tuple[FeatureExtractor, List[str]]:
+        """
+        Initialize a feature extractor from arguments.
+
+        :param args: Arguments.
+        :param environment: Environment.
+        :return: 2-tuple of a feature extractor and a list of unparsed arguments.
+        """
+
+        assert isinstance(environment, Gym)
+
+        parsed_args, unparsed_args = parse_arguments(cls, args)
+
+        fex = cls(**vars(parsed_args))
+
+        return fex, unparsed_args
+
     def __init__(
-            self
+            self,
+            scale_features: bool
     ):
         """
         Initialize the feature extractor.
+
+        :param scale_features: Whether to scale features.
         """
 
-        super().__init__()
+        super().__init__(scale_features)
 
         # this is a generic feature extractor for all gym environments. as such, we don't know the dimensionality of the
         # state space until the first call to extract. do lazy-init here.
-        self.state_category_interacter = None
+        self.state_category_interacter: Optional[OneHotStateIndicatorFeatureInteracter] = None
+        self.state_category_intercept_interacter = Optional[OneHotStateIndicatorFeatureInteracter] = None
 
     def extracts_intercept(
             self
@@ -854,23 +905,40 @@ class SignedCodingFeatureExtractor(ScaledFeatureExtractor):
         ])
 
         if self.state_category_interacter is None:
-            self.state_category_interacter = OneHotStateIndicatorFeatureInteracter(StateDimensionSegment.get_segments({
-                dimension: [0.0]
-                for dimension in range(state_matrix.shape[1])
-            }))
+            self.state_category_interacter = OneHotStateIndicatorFeatureInteracter(
+                indicators=StateDimensionSegment.get_segments({
+                    dimension: [0.0]
+                    for dimension in range(state_matrix.shape[1])
+                }),
+                scale_features=self.scale_features
+            )
 
-        # extract feature matrix and prepend constant term
-        state_feature_matrix = super().extract(states, refit_scaler)
-        state_feature_matrix = np.append(
-            np.ones((state_feature_matrix.shape[0], 1)),
-            state_feature_matrix,
-            axis=1
-        )
+        if self.state_category_intercept_interacter is None:
+            self.state_category_intercept_interacter = OneHotStateIndicatorFeatureInteracter(
+                indicators=StateDimensionSegment.get_segments({
+                    dimension: [0.0]
+                    for dimension in range(state_matrix.shape[1])
+                }),
+                scale_features=False
+            )
 
         # extract and encode feature values
         state_category_feature_matrix = self.state_category_interacter.interact(
             state_matrix,
-            state_feature_matrix
+            state_matrix,
+            refit_scaler
+        )
+
+        # prepend constant intercept terms
+        intercepts = self.state_category_intercept_interacter.interact(
+            state_matrix=state_matrix,
+            state_feature_matrix=np.ones((state_category_feature_matrix.shape[0], 1)),
+            refit_scaler=False
+        )
+        state_category_feature_matrix = np.append(
+            intercepts,
+            state_category_feature_matrix,
+            axis=1
         )
 
         return state_category_feature_matrix
@@ -997,7 +1065,8 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
             raise ValueError('Parsed args remain. Need to pass to constructor.')
 
         fex = cls(
-            environment=environment
+            environment=environment,
+            scale_features=True
         )
 
         return fex, unparsed_args
@@ -1032,40 +1101,46 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
 
         self.check_state_and_action_lists(states, actions)
 
-        # get the raw state matrix
         state_matrix = np.array([
-            state.observation  # type: ignore[attr-defined]
+            state.observation
             for state in states
+            if isinstance(state, GymState)
         ])
-
-        # extract and scale features for each state vector
-        state_feature_matrix = self.feature_scaler.scale_features(state_matrix, refit_scaler)
-        intercept_state_feature_matrix = 0.01 * np.ones(shape=np.add(state_feature_matrix.shape, (0, 1)))
-        intercept_state_feature_matrix[:, 1:] = state_feature_matrix
-        state_feature_matrix = intercept_state_feature_matrix
 
         # interact the feature matrix with its state-segment indicators
         state_category_feature_matrix = self.state_segment_interacter.interact(
             state_matrix=state_matrix,
-            state_feature_matrix=state_feature_matrix
+            state_feature_matrix=state_matrix,
+            refit_scaler=refit_scaler
         )
 
-        # interact features per action
+        # add intercepts
+        intercepts = self.state_segment_intercept_interacter.interact(
+            state_matrix=state_matrix,
+            state_feature_matrix=np.ones((state_category_feature_matrix.shape[0], 1)),
+            refit_scaler=False
+        )
+        state_category_feature_matrix = np.append(intercepts, state_category_feature_matrix, axis=1)
+
+        # interact features per action. do not interact at the action level.
         state_action_feature_matrix = self.interact(
             state_features=state_category_feature_matrix,
-            actions=actions
+            actions=actions,
+            refit_scaler=False
         )
 
         return state_action_feature_matrix
 
     def __init__(
             self,
-            environment: Gym
+            environment: Gym,
+            scale_features: bool
     ):
         """
         Initialize the feature extractor.
 
         :param environment: Environment.
+        :param scale_features: Whether to scale features.
         """
 
         action_space = environment.gym_native.action_space
@@ -1076,6 +1151,7 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
         if action_space.n != 2:  # pragma no cover
             raise ValueError('Expected two actions:  left and right')
 
+        # don't rescale in the action-interactor
         super().__init__(
             environment=environment,
             actions=[
@@ -1087,10 +1163,11 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
                     i=1,
                     name='right'
                 )
-            ]
+            ],
+            scale_features=False
         )
 
-        self.state_segment_interacter = OneHotStateIndicatorFeatureInteracter(StateDimensionSegment.get_segments({
+        indicators = StateDimensionSegment.get_segments({
 
             # cart position is [-2.4, 2.4]
             0: [-1.2, 0.0, 1.2],
@@ -1103,9 +1180,17 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
 
             # pole angle velocity is (-inf, inf) but typical values are in [-2.0, 2.0]
             3: [-1.5, 0.0, 1.5]
-        }))
+        })
 
-        self.feature_scaler = StationaryFeatureScaler()
+        self.state_segment_interacter = OneHotStateIndicatorFeatureInteracter(
+            indicators=indicators,
+            scale_features=scale_features
+        )
+
+        self.state_segment_intercept_interacter = OneHotStateIndicatorFeatureInteracter(
+            indicators=indicators,
+            scale_features=False
+        )
 
 
 class ContinuousMountainCarCustomizer(ContinuousActionGymCustomizer):
@@ -1268,10 +1353,57 @@ class ContinuousMountainCarCustomizer(ContinuousActionGymCustomizer):
 
 
 @rl_text(chapter='Feature Extractors', page=1)
-class ContinuousMountainCarFeatureExtractor(ScaledFeatureExtractor):
+class ContinuousMountainCarFeatureExtractor(StateFeatureExtractor):
     """
     Feature extractor for the continuous mountain car environment.
     """
+
+    @classmethod
+    def get_argument_parser(
+            cls
+    ) -> ArgumentParser:
+        """
+        Get argument parser.
+
+        :return: Argument parser.
+        """
+
+        parser = ArgumentParser(
+            prog=f'{cls.__module__}.{cls.__name__}',
+            parents=[super().get_argument_parser()],
+            allow_abbrev=False,
+            add_help=False
+        )
+
+        parser.add_argument(
+            '--scale-features',
+            action='store_true',
+            help='Whether to scale features.'
+        )
+
+        return parser
+
+    @classmethod
+    def init_from_arguments(
+            cls,
+            args: List[str],
+            environment: MdpEnvironment
+    ) -> Tuple[FeatureExtractor, List[str]]:
+        """
+        Initialize a feature extractor from arguments.
+
+        :param args: Arguments.
+        :param environment: Environment.
+        :return: 2-tuple of a feature extractor and a list of unparsed arguments.
+        """
+
+        assert isinstance(environment, Gym)
+
+        parsed_args, unparsed_args = parse_arguments(cls, args)
+
+        fex = cls(**vars(parsed_args))
+
+        return fex, unparsed_args
 
     def extracts_intercept(
             self
@@ -1305,31 +1437,35 @@ class ContinuousMountainCarFeatureExtractor(ScaledFeatureExtractor):
             if isinstance(state, GymState)
         ])
 
-        state_feature_matrix = super().extract(states, refit_scaler)
-        state_feature_matrix = np.append(
-            0.01 * np.ones((state_feature_matrix.shape[0], 1)),
-            state_feature_matrix,
-            axis=1
+        state_category_feature_matrix = self.state_category_interacter.interact(
+            state_matrix=state_matrix,
+            state_feature_matrix=state_matrix,
+            refit_scaler=refit_scaler
         )
 
-        state_category_feature_matrix = self.state_category_interacter.interact(
-            state_matrix,
-            state_feature_matrix
+        intercepts = self.state_category_intercept_interacter.interact(
+            state_matrix=state_matrix,
+            state_feature_matrix=0.01 * np.ones((state_category_feature_matrix.shape[0], 1)),
+            refit_scaler=False
         )
+
+        state_category_feature_matrix = np.append(intercepts, state_category_feature_matrix, axis=1)
 
         return state_category_feature_matrix
 
     def __init__(
-            self
+            self,
+            scale_features: bool
     ):
         """
         Initialize the feature extractor.
+
+        :param scale_features: Whether to scale features.
         """
 
-        super().__init__()
+        super().__init__(scale_features)
 
-        # interact features with relevant state categories
-        self.state_category_interacter = OneHotStateIndicatorFeatureInteracter(StateDimensionSegment.get_segments({
+        indicators = StateDimensionSegment.get_segments({
 
             # shift the x-location midpoint to the bottom of the trough
             0: [ContinuousMountainCarCustomizer.TROUGH_X_POS],
@@ -1339,7 +1475,18 @@ class ContinuousMountainCarFeatureExtractor(ScaledFeatureExtractor):
 
             # fuel bottoms out at zero
             2: [0.0000001]
-        }))
+        })
+
+        # interact features with relevant state categories
+        self.state_category_interacter = OneHotStateIndicatorFeatureInteracter(
+            indicators=indicators,
+            scale_features=scale_features
+        )
+
+        self.state_category_intercept_interacter = OneHotStateIndicatorFeatureInteracter(
+            indicators=indicators,
+            scale_features=False
+        )
 
 
 class ContinuousLunarLanderCustomizer(ContinuousActionGymCustomizer):
@@ -1506,10 +1653,55 @@ class ContinuousLunarLanderCustomizer(ContinuousActionGymCustomizer):
 
 
 @rl_text(chapter='Feature Extractors', page=1)
-class ContinuousLunarLanderFeatureExtractor(ScaledFeatureExtractor):
+class ContinuousLunarLanderFeatureExtractor(StateFeatureExtractor):
     """
     Feature extractor for the continuous lunar lander environment.
     """
+
+    @classmethod
+    def get_argument_parser(
+            cls
+    ) -> ArgumentParser:
+        """
+        Get argument parser.
+
+        :return: Argument parser.
+        """
+
+        parser = ArgumentParser(
+            prog=f'{cls.__module__}.{cls.__name__}',
+            parents=[super().get_argument_parser()],
+            allow_abbrev=False,
+            add_help=False
+        )
+
+        return parser
+
+    @classmethod
+    def init_from_arguments(
+            cls,
+            args: List[str],
+            environment: MdpEnvironment
+    ) -> Tuple[FeatureExtractor, List[str]]:
+        """
+        Initialize a feature extractor from arguments.
+
+        :param args: Arguments.
+        :param environment: Environment.
+        :return: 2-tuple of a feature extractor and a list of unparsed arguments.
+        """
+
+        assert isinstance(environment, Gym)
+
+        parsed_args, unparsed_args = parse_arguments(cls, args)
+
+        # there shouldn't be anything left
+        if len(vars(parsed_args)) > 0:  # pragma no cover
+            raise ValueError('Parsed args remain. Need to pass to constructor.')
+
+        fex = cls(True)
+
+        return fex, unparsed_args
 
     def extracts_intercept(
             self
@@ -1537,8 +1729,6 @@ class ContinuousLunarLanderFeatureExtractor(ScaledFeatureExtractor):
         :return: State-feature matrix (#states, #features).
         """
 
-        scaled_feature_matrix = super().extract(states, refit_scaler)
-
         # features:
         #   0 (x pos)
         #   1 (y pos)
@@ -1549,6 +1739,12 @@ class ContinuousLunarLanderFeatureExtractor(ScaledFeatureExtractor):
         #   6 (leg 1 contact)
         #   7 (leg 2 contact)
         #   8 (fuel level)
+
+        state_matrix = np.array([
+            state.observation
+            for state in states
+            if isinstance(state, GymState)
+        ])
 
         # form the one-hot state category. start by thresholding some feature values.
         state_category_feature_idxs = [0, 2, 3, 4, 5]
@@ -1566,9 +1762,10 @@ class ContinuousLunarLanderFeatureExtractor(ScaledFeatureExtractor):
         encoded_feature_matrix = self.state_category_interacter.interact(
             np.array([
                 row[encoded_feature_idxs]
-                for row in scaled_feature_matrix
+                for row in state_matrix
             ]),
-            state_categories
+            state_categories,
+            refit_scaler
         )
 
         # get unencoded feature values
@@ -1580,35 +1777,46 @@ class ContinuousLunarLanderFeatureExtractor(ScaledFeatureExtractor):
         unencoded_feature_matrix = np.append(
             np.array([
                 row[[1, 6, 7, 8]]
-                for row in scaled_feature_matrix
+                for row in state_matrix
             ]),
             both_legs_in_contact,
             axis=1
         )
 
         # combine encoded and unencoded feature value columns
-        final_feature_matrix = np.append(encoded_feature_matrix, unencoded_feature_matrix, axis=1)
+        feature_matrix = np.append(encoded_feature_matrix, unencoded_feature_matrix, axis=1)
 
-        # prepend intercept column
+        # add intercepts
+        intercepts = self.state_category_intercept_interacter.interact(
+            np.ones((feature_matrix.shape[0], 1)),
+            state_categories,
+            refit_scaler=False
+        )
         final_feature_matrix = np.append(
-            np.ones((final_feature_matrix.shape[0], 1)),
-            final_feature_matrix,
+            intercepts,
+            feature_matrix,
             axis=1
         )
 
         return final_feature_matrix
 
     def __init__(
-            self
+            self,
+            scale_features: bool
     ):
         """
         Initialize the feature extractor.
+
+        :param scale_features: Whether to scale features.
         """
 
-        super().__init__()
+        super().__init__(scale_features)
 
         # interact features with relevant state categories
-        self.state_category_interacter = OneHotCategoricalFeatureInteracter([
+        categories = [
             OneHotCategory(*category_args)
             for category_args in product(*([[True, False]] * 5))
-        ])
+        ]
+
+        self.state_category_interacter = OneHotCategoricalFeatureInteracter(categories, self.scale_features)
+        self.state_category_intercept_interacter = OneHotCategoricalFeatureInteracter(categories, False)

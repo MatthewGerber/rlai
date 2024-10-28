@@ -298,7 +298,8 @@ class GridworldFeatureExtractor(StateActionInteractionFeatureExtractor):
 
         return self.interact(
             state_features=state_features,
-            actions=actions
+            actions=actions,
+            refit_scaler=refit_scaler
         )
 
     def get_action_feature_names(
@@ -332,7 +333,8 @@ class GridworldFeatureExtractor(StateActionInteractionFeatureExtractor):
                 environment.a_down,
                 environment.a_left,
                 environment.a_right
-            ]
+            ],
+            scale_features=False
         )
 
         self.num_rows = environment.grid.shape[0]
@@ -464,7 +466,7 @@ class GridworldStateFeatureExtractor(StateFeatureExtractor):
         :param environment: Environment.
         """
 
-        super().__init__()
+        super().__init__(False)
 
         self.num_rows = environment.grid.shape[0]
         self.num_cols = environment.grid.shape[1]

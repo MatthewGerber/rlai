@@ -67,13 +67,19 @@ class StateActionFeatureExtractor(FeatureExtractor):
 
     def __init__(
             self,
-            **_
+            environment: MdpEnvironment,
+            scale_features: bool
     ):
         """
         Initialize the feature extractor.
+
+        :param environment: Environment.
+        :param scale_features: Whether to scale features.
         """
 
         super().__init__()
+
+        self.scale_features = scale_features
 
 
 @rl_text(chapter='Feature Extractors', page=1)
@@ -107,37 +113,42 @@ class StateActionInteractionFeatureExtractor(StateActionFeatureExtractor, ABC):
     def interact(
             self,
             state_features: np.ndarray,
-            actions: List[Action]
+            actions: List[Action],
+            refit_scaler: bool
     ) -> np.ndarray:
         """
         Interact a state-feature matrix with one-hot encoded actions.
 
         :param state_features: Feature matrix (#states, #features)
         :param actions: Actions, with length equal to #states.
+        :param refit_scaler: Whether to refit the scaler.
         :return: State-action interacted feature matrix (#states, #action levels * #features)
         """
 
-        return self.interacter.interact(state_features, actions)
+        return self.interacter.interact(state_features, actions, refit_scaler)
 
     def __init__(
             self,
             environment: MdpEnvironment,
-            actions: List[Action]
+            actions: List[Action],
+            scale_features: bool
     ):
         """
         Initialize the feature extractor.
 
         :param environment: Environment.
         :param actions: Actions.
+        :param scale_features: Whether to scale features.
         """
 
         super().__init__(
-            environment=environment
+            environment=environment,
+            scale_features=scale_features
         )
 
         self.actions = actions
 
-        self.interacter = OneHotCategoricalFeatureInteracter(actions)
+        self.interacter = OneHotCategoricalFeatureInteracter(self.actions, scale_features)
 
 
 @rl_text(chapter='Feature Extractors', page=1)
@@ -245,5 +256,6 @@ class StateActionIdentityFeatureExtractor(StateActionFeatureExtractor):
         """
 
         super().__init__(
-            environment=environment
+            environment=environment,
+            scale_features=False
         )

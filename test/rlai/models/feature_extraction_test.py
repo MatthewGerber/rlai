@@ -44,9 +44,13 @@ def test_bad_interact():
     """
 
     cats = [1, 2]
-    interacter = OneHotCategoricalFeatureInteracter(cats)
+    interacter = OneHotCategoricalFeatureInteracter(cats, False)
     with pytest.raises(ValueError, match='Expected '):
-        interacter.interact(np.array([
-            [1, 2, 3],
-            [4, 5, 6]
-        ]), [1])
+        interacter.interact(
+            feature_matrix=np.array([
+                [1, 2, 3],
+                [4, 5, 6]
+            ]),
+            categorical_values=[1],
+            refit_scaler=False
+        )
