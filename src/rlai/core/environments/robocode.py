@@ -1478,7 +1478,8 @@ class RobocodeFeatureExtractor(StateActionFeatureExtractor):
         """
 
         super().__init__(
-            environment=environment
+            environment=environment,
+            scale_features=False
         )
 
         self.scanned_robot_decay = scanned_robot_decay

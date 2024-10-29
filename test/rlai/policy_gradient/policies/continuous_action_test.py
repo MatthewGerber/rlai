@@ -19,7 +19,7 @@ def test_rescale():
         gym_id='LunarLanderContinuous-v3'
     )
 
-    fex = ContinuousLunarLanderFeatureExtractor()
+    fex = ContinuousLunarLanderFeatureExtractor(True)
     policy = ContinuousActionBetaDistributionPolicy(gym, fex, False)
     # noinspection PyTypeChecker
     agent = ParameterizedMdpAgent('test', random_state, policy, 0.9, None)

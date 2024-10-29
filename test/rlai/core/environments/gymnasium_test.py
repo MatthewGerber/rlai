@@ -72,6 +72,6 @@ def test_unimplemented_feature_names():
     """
 
     cartpole_environment = Gym(RandomState(), None, 'CartPole-v1')
-    cartpole_fex = CartpoleFeatureExtractor(cartpole_environment)
+    cartpole_fex = CartpoleFeatureExtractor(cartpole_environment, True)
 
     assert cartpole_fex.get_action_feature_names() is None

@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from argparse import ArgumentParser
-from typing import List, Tuple, Any, Optional
+from typing import List, Tuple, Any, Optional, Dict
 
 import numpy as np
 from sklearn.exceptions import NotFittedError
@@ -76,13 +76,6 @@ class FeatureExtractor(ABC):
         Whether the feature extractor extracts an intercept (constant) term.
 
         :return: True if an intercept (constant) term is extracted and False otherwise.
-        """
-
-    def __init__(
-            self
-    ):
-        """
-        Initialize the feature extractor.
         """
 
 
@@ -316,14 +309,18 @@ class OneHotCategoricalFeatureInteracter:
     def interact(
             self,
             feature_matrix: np.ndarray,
-            categorical_values: List[Any]
+            categorical_values: List[Any],
+            refit_scaler: bool
     ) -> np.ndarray:
         """
         Perform one-hot interaction of a matrix of feature vectors with associated categorical levels.
 
         :param feature_matrix: Feature matrix (#obs, #features).
         :param categorical_values: List of categorical levels, with length equal to #obs.
-        :return: Interacted feature matrix (#obs, #features * #levels).
+        :param refit_scaler: Whether to refit the scaler. Only has an effect if `scale_features` was True when
+        initializing the current interacter.
+        :return: Interacted feature matrix (#obs, #features * #levels), where #levels is the number of categories in the
+        current interacter.
         """
 
         num_rows = feature_matrix.shape[0]
@@ -331,30 +328,82 @@ class OneHotCategoricalFeatureInteracter:
         if num_rows != num_cats:
             raise ValueError(f'Expected {num_rows} categorical values but got {num_cats}')
 
-        num_features = feature_matrix.shape[1]
-        interacted_state_features = np.zeros((num_rows, num_features * len(self.category_idx)))
-        for i, feature_vector in enumerate(feature_matrix):
-            cat_idx = self.category_idx[categorical_values[i]]
-            start_idx = cat_idx * num_features
-            end_idx = start_idx + num_features - 1
-            interacted_state_features[i, start_idx:end_idx + 1] = feature_vector
+        # partition feature matrix by categorical values
+        category_feature_matrix: Dict[Any, np.ndarray] = {}
+        feature_matrix_row_category_row = []
+        for feature_vector, categorical_value in zip(feature_matrix, categorical_values):
 
-        return interacted_state_features
+            # append a row to the category's feature matrix if we've already seen the category
+            if categorical_value in category_feature_matrix:
+                category_feature_matrix[categorical_value] = np.append(
+                    category_feature_matrix[categorical_value],
+                    feature_vector.reshape(1, -1),
+                    axis=0
+                )
+
+            # start a feature matrix for the new category
+            else:
+                category_feature_matrix[categorical_value] = np.array([feature_vector])
+
+            # record the feature vector's category and row, so we know where to find it later.
+            feature_matrix_row_category_row.append((
+                categorical_value,
+                category_feature_matrix[categorical_value].shape[0] - 1
+            ))
+
+        # scale the feature matrix in each category independently
+        if self.scale_features:
+            for categorical_value in list(category_feature_matrix):
+                category_feature_matrix[categorical_value] = self.category_scaler[categorical_value].scale_features(
+                    category_feature_matrix[categorical_value],
+                    refit_scaler
+                )
+
+        # assemble the interacted (and optionally scaled) feature matrix in the original order of rows
+        num_features = feature_matrix.shape[1]
+        interacted_feature_matrix = np.zeros((num_rows, num_features * len(self.category_idx)))
+        for i in range(feature_matrix.shape[0]):
+
+            categorical_value, category_row = feature_matrix_row_category_row[i]
+
+            # get the column range of the categorical value within the interacted matrix
+            cat_idx = self.category_idx[categorical_value]
+            col_start = cat_idx * num_features
+            col_end = col_start + num_features - 1
+
+            # get the current row's vector in its category matrix
+            category_feature_vector = category_feature_matrix[categorical_value][category_row]
+
+            # set the vector in the interacted matrix
+            interacted_feature_matrix[i, col_start:col_end + 1] = category_feature_vector
+
+        return interacted_feature_matrix
 
     def __init__(
             self,
-            categories: List[Any]
+            categories: List[Any],
+            scale_features: bool
     ):
         """
         Initialize the interacter.
 
         :param categories: List of categories that will be one-hot encoded. These can be of any type that is hashable.
         See `rlai.models.feature_extraction.OneHotCategory` for a general-purpose category class.
+        :param scale_features: Whether to scale features. This applies an independent `StationaryFeatureScaler` to
+        features within each category.
         """
+
+        self.categories = categories
+        self.scale_features = scale_features
 
         self.category_idx = {
             category: i
             for i, category in enumerate(categories)
+        }
+
+        self.category_scaler = {
+            category: StationaryFeatureScaler()
+            for category in categories
         }
 
 
