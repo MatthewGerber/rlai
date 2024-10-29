@@ -736,10 +736,13 @@ class RobocodeFeatureExtractor(StateFeatureExtractor):
             if isinstance(state, RobocodeState)
         ])
 
-        return self.feature_scaler.scale_features(
-            x,
-            refit_before_scaling=refit_scaler
-        )
+        if self.scale_features:
+            x = self.feature_scaler.scale_features(
+                x,
+                refit_before_scaling=refit_scaler
+            )
+
+        return x
 
     def get_feature_values(
             self,

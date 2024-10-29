@@ -333,21 +333,25 @@ class OneHotCategoricalFeatureInteracter:
         feature_matrix_row_category_row = []
         for feature_vector, categorical_value in zip(feature_matrix, categorical_values):
 
+            # append a row to the category's feature matrix if we've already seen the category
             if categorical_value in category_feature_matrix:
                 category_feature_matrix[categorical_value] = np.append(
                     category_feature_matrix[categorical_value],
                     feature_vector.reshape(1, -1),
                     axis=0
                 )
+
+            # start a feature matrix for the new category
             else:
                 category_feature_matrix[categorical_value] = np.array([feature_vector])
 
+            # record the feature vector's category and row, so we know where to find it later.
             feature_matrix_row_category_row.append((
                 categorical_value,
                 category_feature_matrix[categorical_value].shape[0] - 1
             ))
 
-        # scale the feature matrix in each category
+        # scale the feature matrix in each category independently
         if self.scale_features:
             for categorical_value in list(category_feature_matrix):
                 category_feature_matrix[categorical_value] = self.category_scaler[categorical_value].scale_features(
@@ -355,12 +359,12 @@ class OneHotCategoricalFeatureInteracter:
                     refit_scaler
                 )
 
-        # reassemble the feature matrix in order
+        # assemble the interacted (and optionally scaled) feature matrix in the original order of rows
         num_features = feature_matrix.shape[1]
         interacted_feature_matrix = np.zeros((num_rows, num_features * len(self.category_idx)))
-        for row in range(feature_matrix.shape[0]):
+        for i in range(feature_matrix.shape[0]):
 
-            categorical_value, category_row = feature_matrix_row_category_row[row]
+            categorical_value, category_row = feature_matrix_row_category_row[i]
 
             # get the column range of the categorical value within the interacted matrix
             cat_idx = self.category_idx[categorical_value]
@@ -371,7 +375,7 @@ class OneHotCategoricalFeatureInteracter:
             category_feature_vector = category_feature_matrix[categorical_value][category_row]
 
             # set the vector in the interacted matrix
-            interacted_feature_matrix[row, col_start:col_end + 1] = category_feature_vector
+            interacted_feature_matrix[i, col_start:col_end + 1] = category_feature_vector
 
         return interacted_feature_matrix
 

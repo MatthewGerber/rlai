@@ -326,6 +326,7 @@ class GridworldFeatureExtractor(StateActionInteractionFeatureExtractor):
         :param environment: Environment.
         """
 
+        # don't rescale features in the superclass action-interactor. no rescaling at all in this class.
         super().__init__(
             environment=environment,
             actions=[

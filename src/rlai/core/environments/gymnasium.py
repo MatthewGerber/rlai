@@ -868,9 +868,9 @@ class SignedCodingFeatureExtractor(StateFeatureExtractor):
         super().__init__(scale_features)
 
         # this is a generic feature extractor for all gym environments. as such, we don't know the dimensionality of the
-        # state space until the first call to extract. do lazy-init here.
+        # state space until the first call to extract. do lazy-inits here.
         self.state_category_interacter: Optional[OneHotStateIndicatorFeatureInteracter] = None
-        self.state_category_intercept_interacter = Optional[OneHotStateIndicatorFeatureInteracter] = None
+        self.state_category_intercept_interacter: Optional[OneHotStateIndicatorFeatureInteracter] = None
 
     def extracts_intercept(
             self
@@ -904,6 +904,7 @@ class SignedCodingFeatureExtractor(StateFeatureExtractor):
             if isinstance(state, GymState)
         ])
 
+        # lazy init based on state dimensionality
         if self.state_category_interacter is None:
             self.state_category_interacter = OneHotStateIndicatorFeatureInteracter(
                 indicators=StateDimensionSegment.get_segments({
@@ -913,6 +914,7 @@ class SignedCodingFeatureExtractor(StateFeatureExtractor):
                 scale_features=self.scale_features
             )
 
+        # lazy init based on state dimensionality
         if self.state_category_intercept_interacter is None:
             self.state_category_intercept_interacter = OneHotStateIndicatorFeatureInteracter(
                 indicators=StateDimensionSegment.get_segments({
@@ -922,14 +924,14 @@ class SignedCodingFeatureExtractor(StateFeatureExtractor):
                 scale_features=False
             )
 
-        # extract and encode feature values
+        # extract and encode feature values with optional feature scaling
         state_category_feature_matrix = self.state_category_interacter.interact(
             state_matrix,
             state_matrix,
             refit_scaler
         )
 
-        # prepend constant intercept terms
+        # prepend constant intercept terms, one per state category, without any scaling.
         intercepts = self.state_category_intercept_interacter.interact(
             state_matrix=state_matrix,
             state_feature_matrix=np.ones((state_category_feature_matrix.shape[0], 1)),
@@ -1107,14 +1109,14 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
             if isinstance(state, GymState)
         ])
 
-        # interact the feature matrix with its state-segment indicators
+        # interact the feature matrix with its state-segment indicators and optional scaling
         state_category_feature_matrix = self.state_segment_interacter.interact(
             state_matrix=state_matrix,
             state_feature_matrix=state_matrix,
             refit_scaler=refit_scaler
         )
 
-        # add intercepts
+        # add constant intercepts without scaling
         intercepts = self.state_segment_intercept_interacter.interact(
             state_matrix=state_matrix,
             state_feature_matrix=np.ones((state_category_feature_matrix.shape[0], 1)),
@@ -1122,7 +1124,7 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
         )
         state_category_feature_matrix = np.append(intercepts, state_category_feature_matrix, axis=1)
 
-        # interact features per action. do not interact at the action level.
+        # interact features per action without scaling
         state_action_feature_matrix = self.interact(
             state_features=state_category_feature_matrix,
             actions=actions,
@@ -1151,7 +1153,8 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
         if action_space.n != 2:  # pragma no cover
             raise ValueError('Expected two actions:  left and right')
 
-        # don't rescale in the action-interactor
+        # don't rescale features in the superclass action-interactor. they'll be rescaled in the current class if
+        # specified.
         super().__init__(
             environment=environment,
             actions=[
@@ -1182,11 +1185,13 @@ class CartpoleFeatureExtractor(StateActionInteractionFeatureExtractor):
             3: [-1.5, 0.0, 1.5]
         })
 
+        # scale features in the state segment if specified
         self.state_segment_interacter = OneHotStateIndicatorFeatureInteracter(
             indicators=indicators,
             scale_features=scale_features
         )
 
+        # do not scale intercepts
         self.state_segment_intercept_interacter = OneHotStateIndicatorFeatureInteracter(
             indicators=indicators,
             scale_features=False
@@ -1445,7 +1450,7 @@ class ContinuousMountainCarFeatureExtractor(StateFeatureExtractor):
 
         intercepts = self.state_category_intercept_interacter.interact(
             state_matrix=state_matrix,
-            state_feature_matrix=0.01 * np.ones((state_category_feature_matrix.shape[0], 1)),
+            state_feature_matrix=np.ones((state_category_feature_matrix.shape[0], 1)),
             refit_scaler=False
         )
 
@@ -1477,12 +1482,13 @@ class ContinuousMountainCarFeatureExtractor(StateFeatureExtractor):
             2: [0.0000001]
         })
 
-        # interact features with relevant state categories
+        # interact features with relevant state categories and optional scaling
         self.state_category_interacter = OneHotStateIndicatorFeatureInteracter(
             indicators=indicators,
             scale_features=scale_features
         )
 
+        # do not scale intercepts
         self.state_category_intercept_interacter = OneHotStateIndicatorFeatureInteracter(
             indicators=indicators,
             scale_features=False
@@ -1757,7 +1763,7 @@ class ContinuousLunarLanderFeatureExtractor(StateFeatureExtractor):
             if isinstance(state, GymState)
         ]
 
-        # encode feature values
+        # encode feature values with optional scaling
         encoded_feature_idxs = [0, 2, 3, 4, 5]
         encoded_feature_matrix = self.state_category_interacter.interact(
             np.array([
@@ -1768,7 +1774,7 @@ class ContinuousLunarLanderFeatureExtractor(StateFeatureExtractor):
             refit_scaler
         )
 
-        # get unencoded feature values
+        # get unencoded feature values with optional scaling
         both_legs_in_contact = np.array([
             1.0 if np.all(state.observation[6:8] == 1.0) else 0.0
             for state in states
@@ -1782,11 +1788,13 @@ class ContinuousLunarLanderFeatureExtractor(StateFeatureExtractor):
             both_legs_in_contact,
             axis=1
         )
+        if self.scale_features:
+            unencoded_feature_matrix = self.unencoded_scaler.scale_features(unencoded_feature_matrix, refit_scaler)
 
         # combine encoded and unencoded feature value columns
         feature_matrix = np.append(encoded_feature_matrix, unencoded_feature_matrix, axis=1)
 
-        # add intercepts
+        # add intercepts with state encoding and without scaling
         intercepts = self.state_category_intercept_interacter.interact(
             np.ones((feature_matrix.shape[0], 1)),
             state_categories,
@@ -1820,3 +1828,4 @@ class ContinuousLunarLanderFeatureExtractor(StateFeatureExtractor):
 
         self.state_category_interacter = OneHotCategoricalFeatureInteracter(categories, self.scale_features)
         self.state_category_intercept_interacter = OneHotCategoricalFeatureInteracter(categories, False)
+        self.unencoded_scaler = StationaryFeatureScaler()

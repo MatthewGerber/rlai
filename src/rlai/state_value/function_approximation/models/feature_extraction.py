@@ -324,6 +324,7 @@ class OneHotStateIndicatorFeatureInteracter:
             for state_vector in state_matrix
         ]
 
+        # use optional scaling
         interacted_state_feature_matrix = self.interacter.interact(
             feature_matrix=state_feature_matrix,
             categorical_values=state_categories,
