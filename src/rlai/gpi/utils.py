@@ -212,7 +212,7 @@ def resume_from_checkpoint(
         resume_function: Callable,
         resume_args_mutator: Optional[Callable[[Dict], None]] = None,
         **new_args
-) -> MdpAgent:
+) -> Tuple[Optional[str], MdpAgent]:
     """
     Resume the execution of a previous optimization based on a stored checkpoint.
 
@@ -222,7 +222,7 @@ def resume_from_checkpoint(
     arguments comprising the checkpoint. The passed function can change these arguments if desired.
     :param new_args: As a simpler alternative to `resume_args_mutator`, pass any keyword arguments that should replace
     those in the checkpoint. Only those with non-None values will be used.
-    :return: The updated agent.
+    :return: 2-tuple of (1) final checkpoint path, or None if checkpoints were not saved, and (2) the updated agent.
     """
 
     logging.info('Reading checkpoint file to resume.')
@@ -244,9 +244,9 @@ def resume_from_checkpoint(
     if hasattr(agent, 'pi') and isinstance(agent.pi, ContinuousActionPolicy):
         agent.pi.environment = resume_args['environment']
 
-    resume_function(**resume_args)
+    final_checkpoint_path = resume_function(**resume_args)
 
     # some environments (e.g., gym) hold resources that need to be released
     resume_args['environment'].close()
 
-    return resume_args['agent']
+    return final_checkpoint_path, resume_args['agent']

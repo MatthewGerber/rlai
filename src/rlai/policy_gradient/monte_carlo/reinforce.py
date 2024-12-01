@@ -105,7 +105,8 @@ def improve(
         training_pool_count: Optional[int] = None,
         training_pool_iterate_episodes: Optional[int] = None,
         training_pool_evaluate_episodes: Optional[int] = None,
-        training_pool_max_iterations_without_improvement: Optional[int] = None
+        training_pool_max_iterations_without_improvement: Optional[int] = None,
+        start_episode: Optional[int] = None
 ) -> Optional[str]:
     """
     Perform Monte Carlo improvement of an agent's policy within an environment via the REINFORCE policy gradient method.
@@ -135,6 +136,7 @@ def improve(
     :param training_pool_evaluate_episodes: Number of episodes to evaluate the agent when iterating the training pool.
     :param training_pool_max_iterations_without_improvement: Maximum number of training pool iterations to allow
     before reverting to the best prior agent, or None to never revert.
+    :param start_episode: 1-based episode to start at, or None to start at episode 1.
     :return: Final checkpoint path, or None if checkpoints were not saved.
     """
 
@@ -174,7 +176,13 @@ def improve(
 
     start_timestamp = datetime.now()
     final_checkpoint_path = None
-    episodes_finished = 0
+
+    if start_episode is None:
+        episodes_finished = 0
+    else:
+        episodes_finished = start_episode - 1
+        logging.info(f'Starting with episode {start_episode}.')
+
     while episodes_finished < num_episodes:
 
         # reset the environment for the new run (always use the agent we're learning about, as state identifiers come
@@ -230,12 +238,11 @@ def improve(
                 environment.exiting_episode_without_termination()
                 break
 
-        # add metrics to per-episode collection
+        # add metrics to per-episode collection for easy plotting
         for metric, value in environment.metric_value.items():
-            if metric in environment.metric_episode_value:
-                environment.metric_episode_value[metric][episodes_finished] = value
-            else:
-                environment.metric_episode_value[metric] = {episodes_finished: value}
+            if metric not in environment.metric_episode_value:
+                environment.metric_episode_value[metric] = {}
+            environment.metric_episode_value[metric][episodes_finished] = value
 
         # work backwards through the trace to calculate discounted returns. need to work backward in order for the value
         # of g at each time step t to be properly discounted.
@@ -453,7 +460,8 @@ def improve(
                 'training_pool_count': training_pool_count,
                 'training_pool_iterate_episodes': training_pool_iterate_episodes,
                 'training_pool_evaluate_episodes': training_pool_evaluate_episodes,
-                'training_pool_max_iterations_without_improvement': training_pool_max_iterations_without_improvement
+                'training_pool_max_iterations_without_improvement': training_pool_max_iterations_without_improvement,
+                'start_episode': episodes_finished + 1
             }
 
             checkpoint_path_with_index = insert_index_into_path(checkpoint_path, episodes_finished)

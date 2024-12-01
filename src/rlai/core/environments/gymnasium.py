@@ -218,7 +218,7 @@ class Gym(ContinuousMdpEnvironment):
 
         self.video_directory = video_directory
         self.steps_per_second = steps_per_second
-        self.gym_native = self.init_gym_native()
+        self.gym_native = self.init_gym_native(True)  # reset the gym random seed, as we're at first init.
 
         if self.gym_id == Gym.LLC_V3:
             self.gym_customizer: GymCustomizer = ContinuousLunarLanderCustomizer()
@@ -307,7 +307,10 @@ class Gym(ContinuousMdpEnvironment):
 
         state = dict(self.__dict__)
 
-        # the native gym environment cannot be pickled. blank it out.
+        # the native gym environment cannot be pickled. blank it out but save the random objects so that we can properly
+        # resume the environment at a later time.
+        # noinspection PyProtectedMember
+        state['gym_native_random'] = self.gym_native.unwrapped._np_random, self.gym_native.unwrapped._np_random_seed
         state['gym_native'] = None
 
         return state
@@ -322,9 +325,20 @@ class Gym(ContinuousMdpEnvironment):
         :param state: State dictionary.
         """
 
+        # grab the resume objects from the state and then load the current object
+        gym_native_random = state['gym_native_random']
+        del state['gym_native_random']
+
         self.__dict__ = state
 
-        self.gym_native = self.init_gym_native()
+        # do not reset the native gym seed, as we've already got the random objects in hand.
+        self.gym_native = self.init_gym_native(False)
+
+        # set random objects
+        (
+            self.gym_native.unwrapped._np_random,
+            self.gym_native.unwrapped._np_random_seed
+        ) = gym_native_random
 
     def advance(
             self,
@@ -469,11 +483,13 @@ class Gym(ContinuousMdpEnvironment):
             self.state_reward_scatter_plot.close()
 
     def init_gym_native(
-            self
+            self,
+            reset_seed: bool
     ) -> Env:
         """
         Initialize the native Gym environment object.
 
+        :param reset_seed: Whether to reset the random seed of the native Gym environment.
         :return: Either a native Gym environment or a wrapped native Gym environment.
         """
 
@@ -512,7 +528,8 @@ class Gym(ContinuousMdpEnvironment):
             except PermissionError as ex:
                 warnings.warn(f'Permission error when initializing Gym monitor. Videos will not be saved. Error:  {ex}')
 
-        gym_native.reset(seed=self.random_state.randint(1000))
+        if reset_seed:
+            gym_native.reset(seed=self.random_state.randint(1000))
 
         return gym_native
 

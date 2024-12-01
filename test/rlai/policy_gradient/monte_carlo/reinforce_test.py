@@ -39,9 +39,32 @@ def test_resume():
     Test.
     """
 
-    checkpoint_path, agent_path = run(shlex.split(f'--random-seed 12345 --agent rlai.policy_gradient.ParameterizedMdpAgent --gamma 1.0 --environment rlai.core.environments.gymnasium.Gym --gym-id LunarLanderContinuous-v3 --T 500 --train-function rlai.policy_gradient.monte_carlo.reinforce.improve --num-episodes 2 --v-S rlai.state_value.function_approximation.ApproximateStateValueEstimator --feature-extractor rlai.core.environments.gymnasium.ContinuousLunarLanderFeatureExtractor --function-approximation-model rlai.models.sklearn.SKLearnSGD --loss squared_error --sgd-alpha 0.0 --learning-rate constant --eta0 0.0001 --policy rlai.policy_gradient.policies.continuous_action.ContinuousActionBetaDistributionPolicy --policy-feature-extractor rlai.core.environments.gymnasium.ContinuousLunarLanderFeatureExtractor --alpha 0.0001 --update-upon-every-visit True --checkpoint-path {tempfile.NamedTemporaryFile(delete=False).name} --num-episodes-per-checkpoint 1 --save-agent-path {tempfile.NamedTemporaryFile(delete=False).name} --log DEBUG'))
+    checkpoint_path, agent_path = run(shlex.split(
+        '--random-seed 12345 --agent rlai.policy_gradient.ParameterizedMdpAgent --gamma 1.0 '
+        '--environment rlai.core.environments.gymnasium.Gym --gym-id LunarLanderContinuous-v3 --T 500 '
+        '--train-function rlai.policy_gradient.monte_carlo.reinforce.improve --num-episodes 2 '
+        '--v-S rlai.state_value.function_approximation.ApproximateStateValueEstimator '
+        '--feature-extractor rlai.core.environments.gymnasium.ContinuousLunarLanderFeatureExtractor '
+        '--function-approximation-model rlai.models.sklearn.SKLearnSGD --loss squared_error --sgd-alpha 0.0 '
+        '--learning-rate constant --eta0 0.0001 '
+        '--policy rlai.policy_gradient.policies.continuous_action.ContinuousActionBetaDistributionPolicy '
+        '--policy-feature-extractor rlai.core.environments.gymnasium.ContinuousLunarLanderFeatureExtractor '
+        '--alpha 0.0001 --update-upon-every-visit True '
+        f'--checkpoint-path {tempfile.NamedTemporaryFile(delete=False).name} --num-episodes-per-checkpoint 1 '
+        f'--save-agent-path {tempfile.NamedTemporaryFile(delete=False).name} --log DEBUG'
+    ))
 
-    _, resumed_agent_path = run(shlex.split(f'--resume --random-seed 12345 --train-function rlai.policy_gradient.monte_carlo.reinforce.improve --num-episodes 2 --checkpoint-path {checkpoint_path} --save-agent-path {tempfile.NamedTemporaryFile(delete=False).name}'))
+    checkpoint_path, _ = run(shlex.split(
+        '--resume --train-function rlai.policy_gradient.monte_carlo.reinforce.improve '
+        f'--num-episodes 5 --checkpoint-path {checkpoint_path} --num-episodes-per-checkpoint 1 '
+        f'--save-agent-path {tempfile.NamedTemporaryFile(delete=False).name}'
+    ))
+
+    _, resumed_agent_path = run(shlex.split(
+        '--resume --train-function rlai.policy_gradient.monte_carlo.reinforce.improve '
+        f'--num-episodes 10 --start-episode 9 --checkpoint-path {checkpoint_path} '
+        f'--save-agent-path {tempfile.NamedTemporaryFile(delete=False).name}'
+    ))
 
     with open(resumed_agent_path, 'rb') as f:
         agent = pickle.load(f)
@@ -55,3 +78,24 @@ def test_resume():
 
     # assert that we get the expected result
     assert agent.pi == agent_fixture.pi
+
+    # run the full number of episodes and check equal agents
+    _, full_agent_path = run(shlex.split(
+        '--random-seed 12345 --agent rlai.policy_gradient.ParameterizedMdpAgent --gamma 1.0 '
+        '--environment rlai.core.environments.gymnasium.Gym --gym-id LunarLanderContinuous-v3 --T 500 '
+        '--train-function rlai.policy_gradient.monte_carlo.reinforce.improve --num-episodes 7 '
+        '--v-S rlai.state_value.function_approximation.ApproximateStateValueEstimator '
+        '--feature-extractor rlai.core.environments.gymnasium.ContinuousLunarLanderFeatureExtractor '
+        '--function-approximation-model rlai.models.sklearn.SKLearnSGD --loss squared_error --sgd-alpha 0.0 '
+        '--learning-rate constant --eta0 0.0001 '
+        '--policy rlai.policy_gradient.policies.continuous_action.ContinuousActionBetaDistributionPolicy '
+        '--policy-feature-extractor rlai.core.environments.gymnasium.ContinuousLunarLanderFeatureExtractor '
+        '--alpha 0.0001 --update-upon-every-visit True '
+        f'--checkpoint-path {tempfile.NamedTemporaryFile(delete=False).name} --num-episodes-per-checkpoint 1 '
+        f'--save-agent-path {tempfile.NamedTemporaryFile(delete=False).name} --log DEBUG'
+    ))
+
+    with open(full_agent_path, 'rb') as f:
+        full_agent = pickle.load(f)
+
+    assert full_agent.pi == agent.pi

@@ -55,11 +55,13 @@ def run(
         raise ValueError('No training function specified. Cannot train.')
 
     if parsed_args.random_seed is None:
-        warnings.warn(
-            'No random seed provided to the trainer. Results will not be replicable. Consider passing --random-seed '
-            'argument.'
-        )
-        random_state = RandomState()
+        if parsed_args.resume:
+            random_state = None
+        else:
+            raise ValueError(
+                'It is an error to start fresh training without a random seed, since results will not be replicable. '
+                'Pass the seed with the --random-seed argument.'
+            )
     else:
         random_state = RandomState(parsed_args.random_seed)
 
@@ -89,6 +91,7 @@ def run(
 
     # load environment
     if train_function_args.get('environment', None) is not None:
+        assert random_state is not None
         environment_class = load_class(train_function_args['environment'])
         train_function_args['environment'], unparsed_args = environment_class.init_from_arguments(
             args=unparsed_args,
@@ -97,6 +100,7 @@ def run(
 
     # load planning environment
     if train_function_args.get('planning_environment', None) is not None:
+        assert random_state is not None
         planning_environment_class = load_class(train_function_args['planning_environment'])
         train_function_args['planning_environment'], unparsed_args = planning_environment_class.init_from_arguments(
             args=unparsed_args,
@@ -105,6 +109,7 @@ def run(
 
     # load agent
     if train_function_args.get('agent', None) is not None:
+        assert random_state is not None
         agent_class = load_class(train_function_args['agent'])
         agents, unparsed_args = agent_class.init_from_arguments(
             args=unparsed_args,
@@ -126,11 +131,9 @@ def run(
     if len(unparsed_args) > 0:
         raise ValueError(f'Unparsed arguments remain:  {unparsed_args}')
 
-    new_checkpoint_path = None
-
     # resumption will return a trained version of the agent contained in the checkpoint file
     if parsed_args.resume:
-        agent = resume_from_checkpoint(
+        new_checkpoint_path, agent = resume_from_checkpoint(
             resume_function=train_function,
             **train_function_args
         )
@@ -402,6 +405,22 @@ def get_argument_parser_for_train_function(
         help=(
             'Maximum number of training pool iterations to allow before reverting to the best prior agent, or None to '
             'never revert.'
+        )
+    )
+
+    add_argument(
+        '--start-episode',
+        type=int,
+        help=(
+            '1-based episode to start at.'
+        )
+    )
+
+    add_argument(
+        '--start-improvement',
+        type=int,
+        help=(
+            '1-based improvement to start at.'
         )
     )
 

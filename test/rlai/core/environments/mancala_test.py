@@ -57,10 +57,10 @@ def test_learn():
 
     assert tabular_pi_legacy_eq(p1.pi, fixture)
 
-    resumed_p1 = resume_from_checkpoint(
+    _, resumed_p1 = resume_from_checkpoint(
         checkpoint_path=checkpoint_path,
         resume_function=iterate_value_q_pi,
-        num_improvements=2
+        num_improvements=5
     )
 
     # run same number of improvements without checkpoint...result should be the same.

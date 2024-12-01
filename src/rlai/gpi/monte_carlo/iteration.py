@@ -31,7 +31,8 @@ def iterate_value_q_pi(
         num_improvements_per_plot: Optional[int] = None,
         num_improvements_per_checkpoint: Optional[int] = None,
         checkpoint_path: Optional[str] = None,
-        pdf_save_path: Optional[str] = None
+        pdf_save_path: Optional[str] = None,
+        start_improvement: Optional[int] = None
 ) -> Optional[str]:
     """
     Run Monte Carlo value iteration on an agent using state-action value estimates. This iteration function operates
@@ -56,6 +57,7 @@ def iterate_value_q_pi(
     :param num_improvements_per_checkpoint: Number of improvements per checkpoint save.
     :param checkpoint_path: Checkpoint path. Must be provided if `num_improvements_per_checkpoint` is provided.
     :param pdf_save_path: Path where a PDF of all plots is to be saved, or None for no PDF.
+    :param start_improvement: 1-based improvement to start at, or None to start at episode 1.
     :return: Final checkpoint path, or None if checkpoints were not saved.
     """
 
@@ -78,20 +80,25 @@ def iterate_value_q_pi(
     if pdf_save_path is not None:
         pdf = PdfPages(os.path.expanduser(pdf_save_path))
 
-    i = 0
+    if start_improvement is None:
+        improvements_finished = 0
+    else:
+        improvements_finished = start_improvement - 1
+        logging.info(f'Starting with improvement {start_improvement}.')
+
     iteration_average_reward = []
     iteration_total_states = []
     iteration_num_states_improved = []
     elapsed_seconds_average_rewards: Dict[int, List[float]] = {}
     start_datetime = datetime.now()
     final_checkpoint_path = None
-    while i < num_improvements:
+    while improvements_finished < num_improvements:
 
         thread_manager.wait()
         if thread_manager.abort:
             break
 
-        logging.info(f'Value iteration {i + 1}')
+        logging.info(f'Value iteration {improvements_finished + 1}')
 
         evaluated_states, average_reward = evaluate_q_pi(
             agent=agent,
@@ -118,9 +125,9 @@ def iterate_value_q_pi(
 
         elapsed_seconds_average_rewards[elapsed_seconds].append(average_reward)
 
-        i += 1
+        improvements_finished += 1
 
-        if num_improvements_per_plot is not None and i % num_improvements_per_plot == 0:
+        if num_improvements_per_plot is not None and improvements_finished % num_improvements_per_plot == 0:
             plot_policy_iteration(
                 iteration_average_reward,
                 iteration_total_states,
@@ -129,7 +136,7 @@ def iterate_value_q_pi(
                 pdf
             )
 
-        if num_improvements_per_checkpoint is not None and i % num_improvements_per_checkpoint == 0:
+        if num_improvements_per_checkpoint is not None and improvements_finished % num_improvements_per_checkpoint == 0:
 
             if checkpoint_path is None:
                 raise ValueError('Checkpoint path is required if checkpointing.')
@@ -137,7 +144,7 @@ def iterate_value_q_pi(
             resume_args = {
                 'agent': agent,
                 'environment': environment,
-                'num_improvements': num_improvements - i,
+                'num_improvements': num_improvements - improvements_finished,
                 'num_episodes_per_improvement': num_episodes_per_improvement,
                 'update_upon_every_visit': update_upon_every_visit,
                 'planning_environment': planning_environment,
@@ -146,16 +153,17 @@ def iterate_value_q_pi(
                 'num_improvements_per_plot': num_improvements_per_plot,
                 'num_improvements_per_checkpoint': num_improvements_per_checkpoint,
                 'checkpoint_path': checkpoint_path,
-                'pdf_save_path': pdf_save_path
+                'pdf_save_path': pdf_save_path,
+                'start_improvement': improvements_finished + 1
             }
 
-            checkpoint_path_with_index = insert_index_into_path(checkpoint_path, i)
+            checkpoint_path_with_index = insert_index_into_path(checkpoint_path, improvements_finished)
             final_checkpoint_path = checkpoint_path_with_index
             os.makedirs(os.path.dirname(final_checkpoint_path), exist_ok=True)
             with open(checkpoint_path_with_index, 'wb') as checkpoint_file:
                 pickle.dump(resume_args, checkpoint_file)
 
-    logging.info(f'Value iteration of q_pi terminated after {i} iteration(s).')
+    logging.info(f'Value iteration of q_pi terminated after {improvements_finished} iteration(s).')
 
     if make_final_policy_greedy:
         agent.q_S_A.epsilon = 0.0
