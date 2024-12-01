@@ -359,6 +359,7 @@ def improve(
                 )
                 plt.ylabel('Returns and Rewards')
 
+                # plot any vertical lines in the current group of steps
                 for time_step, kwargs in environment.time_step_axv_lines.items():
                     if group_start_t <= time_step <= group_end_t:
                         plt.axvline(time_step, **kwargs)
@@ -388,7 +389,7 @@ def improve(
 
                 plt.close()
 
-                # plot any data added by the environment
+                # plot any data added by the environment for the current group of steps
                 if len(environment.plot_label_data_kwargs) > 0:
                     plt.figure(figsize=figure_size)
                     for plot_label, (plot_data, plot_kwargs) in environment.plot_label_data_kwargs.items():
@@ -409,29 +410,29 @@ def improve(
 
                     plt.close()
 
-                # plot per-episode metrics
-                if len(environment.metric_episode_value) > 0:
-                    for metric in environment.metric_episode_value:
-                        plt.plot(
-                            list(environment.metric_episode_value[metric].keys()),
-                            list(environment.metric_episode_value[metric].values()),
-                            label=metric
-                        )
-                        plt.xlabel('Episode')
-                        plt.ylabel('Value')
-                        plt.grid()
-                        plt.legend()
-                        plt.tight_layout()
+            # plot per-episode metrics
+            if len(environment.metric_episode_value) > 0:
+                for metric in environment.metric_episode_value:
+                    plt.plot(
+                        list(environment.metric_episode_value[metric].keys()),
+                        list(environment.metric_episode_value[metric].values()),
+                        label=metric
+                    )
+                    plt.xlabel('Episode')
+                    plt.ylabel('Value')
+                    plt.grid()
+                    plt.legend()
+                    plt.tight_layout()
 
-                    if pdf is None:
-                        plt.show()
-                    else:
-                        pdf.savefig()
+                if pdf is None:
+                    plt.show()
+                else:
+                    pdf.savefig()
 
-                    plt.close()
+                plt.close()
 
-                if pdf is not None:
-                    pdf.close()
+            if pdf is not None:
+                pdf.close()
 
         num_fallback_iterations = 0
         if (
