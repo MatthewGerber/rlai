@@ -7,6 +7,7 @@ import time
 import warnings
 from copy import deepcopy
 from datetime import datetime, timedelta
+from itertools import groupby
 from os.path import join, expanduser
 from typing import Optional, Tuple, List, Dict, Any
 
@@ -305,82 +306,72 @@ def improve(
             if agent.v_S is not None:
                 agent.v_S.plot(pdf)
 
-            fig_inches_per_step = 0.025
-            fig_inches = len(steps) * fig_inches_per_step
+            num_steps_per_plot_group = 1000
+            for _, plot_step_grouper in groupby(steps, key=lambda s: s.t // num_steps_per_plot_group):
 
-            plt.figure(figsize=(fig_inches, fig_inches))
+                group_steps = list(plot_step_grouper)
+                group_t = [step.t for step in group_steps]
 
-            steps_t = [step.t for step in steps]
+                group_start_t = group_steps[0].t
+                group_end_t = group_steps[-1].t
 
-            non_truncated_steps = [step for step in steps if step.returns is not None]
-            non_truncated_steps_t = [step.t for step in non_truncated_steps]
+                figure_size = (0.05 * len(group_steps), 0.025 * len(group_steps))
+                plt.figure(figsize=figure_size)
 
-            # plot rewards and returns
-            plt.plot(
-                steps_t,
-                [step.reward.r for step in steps],
-                color='red',
-                label='Reward:  r(t)'
-            )
-            plt.plot(
-                non_truncated_steps_t,
-                [step.returns.return_value for step in non_truncated_steps],  # type: ignore[union-attr]
-                color='green',
-                label='Return:  g(t)'
-            )
-            plt.plot(
-                non_truncated_steps_t,
-                [step.returns.baseline_return_value for step in non_truncated_steps],  # type: ignore[union-attr]
-                color='violet',
-                label='Value:  v(t)',
-            )
-            plt.plot(
-                non_truncated_steps_t,
-                [step.returns.target for step in non_truncated_steps],  # type: ignore[union-attr]
-                color='orange',
-                label='Target:  g(t) - v(t)'
-            )
-            plt.ylabel('Returns and Rewards')
+                group_non_truncated_steps = [step for step in group_steps if step.returns is not None]
+                group_non_truncated_steps_t = [step.t for step in group_non_truncated_steps]
 
-            for time_step, kwargs in environment.time_step_axv_lines.items():
-                plt.axvline(time_step, **kwargs)
+                # plot rewards and returns
+                plt.plot(
+                    group_t,
+                    [step.reward.r for step in group_steps],
+                    color='red',
+                    label='Reward:  r(t)',
+                    linewidth=0.5
+                )
+                plt.plot(
+                    group_non_truncated_steps_t,
+                    [step.returns.return_value for step in group_non_truncated_steps],  # type: ignore[union-attr]
+                    color='green',
+                    label='Return:  g(t)',
+                    linewidth=0.5
+                )
+                plt.plot(
+                    group_non_truncated_steps_t,
+                    [step.returns.baseline_return_value for step in group_non_truncated_steps],  # type: ignore[union-attr]
+                    color='violet',
+                    label='Value:  v(t)',
+                    linewidth=0.5
+                )
+                plt.plot(
+                    group_non_truncated_steps_t,
+                    [step.returns.target for step in group_non_truncated_steps],  # type: ignore[union-attr]
+                    color='orange',
+                    label='Target:  g(t) - v(t)',
+                    linewidth=0.5
+                )
+                plt.ylabel('Returns and Rewards')
 
-            plt.xlabel('Time step')
-            plt.title(f'Episode {episodes_finished}')
-            plt.legend(loc='upper left')
+                for time_step, kwargs in environment.time_step_axv_lines.items():
+                    if group_start_t <= time_step <= group_end_t:
+                        plt.axvline(time_step, **kwargs)
 
-            # plot gamma (discount) in a twin-x axes
-            gamma_axe: plt.Axes = plt.twinx()  # type: ignore[assignment]
-            gamma_axe.plot(
-                steps_t,
-                [step.gamma for step in steps],
-                color='blue',
-                label='gamma(t)'
-            )
-            gamma_axe.set_ylabel('Gamma')
-            gamma_axe.legend(loc='upper right')
+                plt.xlabel('Time step')
+                plt.title(f'Episode {episodes_finished} Steps {group_start_t}-{group_end_t}')
+                plt.legend(loc='upper left')
 
-            plt.tight_layout()
+                # plot gamma (discount) in a twin-x axes, as the scale is much different.
+                gamma_axe: plt.Axes = plt.twinx()  # type: ignore[assignment]
+                gamma_axe.plot(
+                    group_t,
+                    [step.gamma for step in group_steps],
+                    color='blue',
+                    label='gamma(t)',
+                    linewidth=0.5
+                )
+                gamma_axe.set_ylabel('Gamma')
+                gamma_axe.legend(loc='upper right')
 
-            if pdf is None:
-                plt.show()
-            else:
-                pdf.savefig()
-
-            plt.close()
-
-            # plot any data added by the environment
-            if len(environment.plot_label_data_kwargs) > 0:
-                plt.figure(figsize=(fig_inches, fig_inches))
-                for plot_label in environment.plot_label_data_kwargs:
-                    plot_data = environment.plot_label_data_kwargs[plot_label][0]
-                    plt.plot(
-                        list(plot_data.keys()),
-                        list(plot_data.values()),
-                        label=plot_label,
-                        **environment.plot_label_data_kwargs[plot_label][1]
-                    )
-                plt.legend()
                 plt.tight_layout()
 
                 if pdf is None:
@@ -390,29 +381,50 @@ def improve(
 
                 plt.close()
 
-            # plot per-episode metrics
-            if len(environment.metric_episode_value) > 0:
-                for metric in environment.metric_episode_value:
-                    plt.plot(
-                        list(environment.metric_episode_value[metric].keys()),
-                        list(environment.metric_episode_value[metric].values()),
-                        label=metric
-                    )
-                    plt.xlabel('Episode')
-                    plt.ylabel('Value')
-                    plt.grid()
+                # plot any data added by the environment
+                if len(environment.plot_label_data_kwargs) > 0:
+                    plt.figure(figsize=figure_size)
+                    for plot_label, (plot_data, plot_kwargs) in environment.plot_label_data_kwargs.items():
+                        plot_data_steps = [t for t in plot_data if group_start_t <= t <= group_end_t]
+                        plt.plot(
+                            plot_data_steps,
+                            [plot_data[t] for t in plot_data_steps],
+                            label=plot_label,
+                            **plot_kwargs
+                        )
                     plt.legend()
                     plt.tight_layout()
 
-                if pdf is None:
-                    plt.show()
-                else:
-                    pdf.savefig()
+                    if pdf is None:
+                        plt.show()
+                    else:
+                        pdf.savefig()
 
-                plt.close()
+                    plt.close()
 
-            if pdf is not None:
-                pdf.close()
+                # plot per-episode metrics
+                if len(environment.metric_episode_value) > 0:
+                    for metric in environment.metric_episode_value:
+                        plt.plot(
+                            list(environment.metric_episode_value[metric].keys()),
+                            list(environment.metric_episode_value[metric].values()),
+                            label=metric
+                        )
+                        plt.xlabel('Episode')
+                        plt.ylabel('Value')
+                        plt.grid()
+                        plt.legend()
+                        plt.tight_layout()
+
+                    if pdf is None:
+                        plt.show()
+                    else:
+                        pdf.savefig()
+
+                    plt.close()
+
+                if pdf is not None:
+                    pdf.close()
 
         num_fallback_iterations = 0
         if (
