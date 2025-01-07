@@ -400,6 +400,7 @@ def improve(
                             label=plot_label,
                             **plot_kwargs
                         )
+                    plt.grid()
                     plt.legend()
                     plt.tight_layout()
 
