@@ -313,7 +313,7 @@ def improve(
             if agent.v_S is not None:
                 agent.v_S.plot(pdf)
 
-            num_steps_per_plot_group = 1000
+            num_steps_per_plot_group = 500
             for _, plot_step_grouper in groupby(steps, key=lambda s: s.t // num_steps_per_plot_group):
 
                 group_steps = list(plot_step_grouper)
