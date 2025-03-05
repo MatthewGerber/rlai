@@ -2,7 +2,7 @@ import logging
 import warnings
 from abc import ABC
 from argparse import ArgumentParser
-from typing import List, Tuple, Dict, Optional
+from typing import List, Tuple, Dict, Optional, Callable
 
 import numpy as np
 import pandas as pd
@@ -82,6 +82,7 @@ class ContinuousActionPolicy(ParameterizedPolicy, ABC):
 
             # local-import so that we don't crash on raspberry pi os, where we can't install qt6.
             from rlai.plot_utils import ScatterPlot
+
             self.action_scatter_plot = ScatterPlot(
                 'Actions',
                 self.environment.get_action_dimension_names(),
@@ -263,7 +264,7 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
             else jnp.dot(theta_cov_row, state_features)
 
             # iterate over each row of coefficients
-            for (i, theta_cov_row) in enumerate(theta_cov)
+            for i, theta_cov_row in enumerate(theta_cov)
 
         ]).reshape(action_space_dimensionality, action_space_dimensionality)
 
@@ -811,8 +812,7 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
         )
 
         # coefficients for shape parameters a and b. each array has one row per action and one column per state
-        # dimension. these will be initialized upon the first call to the feature extractor within
-        # __getitem__.
+        # dimension. these will be initialized upon the first call to the feature extractor within __getitem__.
         self.action_theta_a: Optional[np.ndarray] = None
         self.action_theta_b: Optional[np.ndarray] = None
 
@@ -829,8 +829,10 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
 
         self.beta_shape_scatter_plot = None
         if self.plot_policy:
+
             # local-import so that we don't crash on raspberry pi os, where we can't install qt6.
             from rlai.plot_utils import ScatterPlot
+
             self.beta_shape_scatter_plot_x_tick_labels = [
                 label
                 for action_name in self.environment.get_action_dimension_names()
@@ -841,6 +843,8 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
                 self.beta_shape_scatter_plot_x_tick_labels,
                 None
             )
+
+        self.get_item_hook: Optional[Callable] = None
 
     def __getitem__(
             self,
@@ -918,6 +922,15 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
                 for a, b in zip(action_a, action_b)
                 for v in [a, b]
             ]))
+
+        # send the results to the hook if we have one
+        if self.get_item_hook is not None:
+            self.get_item_hook(
+                state_feature_vector,
+                action_a,
+                action_b,
+                action
+            )
 
         return {action: 1.0}
 
