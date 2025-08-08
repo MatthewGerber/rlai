@@ -20,14 +20,17 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y ffmpeg xvfb freeglut3-dev libxcb-xinerama0 libxcb-icccm4 libxcb-image0 libxcb-render-util0 libxcb-xinerama0 libxkbcommon-x11-0 libxcb-keysyms1 libxcb-randr0
-        curl -sSL https://install.python-poetry.org | python3 -
-        poetry install --with 'dev'
+        sudo apt-get install -y ffmpeg xvfb freeglut3-dev libxcb-xinerama0 libxcb-icccm4 libxcb-image0 libxcb-render-util0 libxcb-xinerama0 libxkbcommon-x11-0 libxcb-keysyms1 libxcb-randr0                
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
+
+    - name: Install RLAI
+      run: |
+        curl -sSL https://install.python-poetry.org | python3 -
+        poetry install --with 'dev'
 
     - name: Run linters
       run: |
