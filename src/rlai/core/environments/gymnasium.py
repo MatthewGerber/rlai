@@ -239,8 +239,10 @@ class Gym(ContinuousMdpEnvironment):
         self.plot_environment = plot_environment
         self.state_reward_scatter_plot = None
         if self.plot_environment:
+
             # local-import so that we don't crash on raspberry pi os, where we can't install qt6.
             from rlai.plot_utils import ScatterPlot
+
             self.state_reward_scatter_plot = ScatterPlot(
                 f'{self.gym_id}:  State and Reward',
                 self.get_state_dimension_names() + ['reward'],
@@ -401,6 +403,7 @@ class Gym(ContinuousMdpEnvironment):
             if self.gym_id in Gym.MUJOCO_ENVIRONMENTS:
                 # local-import so that we don't crash on raspberry pi os, where we can't install qt6.
                 from PyQt6.QtWidgets import QApplication  # type: ignore
+
                 QApplication.processEvents()
 
         self.state = GymState(

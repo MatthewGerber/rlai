@@ -168,8 +168,10 @@ def improve(
 
     state_value_plot = None
     if plot_state_value and agent.v_S is not None:
+
         # local-import so that we don't crash on raspberry pi os, where we can't install qt6.
         from rlai.plot_utils import ScatterPlot
+
         state_value_plot = ScatterPlot('REINFORCE:  State Value', ['Estimate'], None)
 
     logging.info(f'Running Monte Carlo-based REINFORCE improvement for {num_episodes} episode(s).')
@@ -313,7 +315,7 @@ def improve(
             if agent.v_S is not None:
                 agent.v_S.plot(pdf)
 
-            num_steps_per_plot_group = 1000
+            num_steps_per_plot_group = 500
             for _, plot_step_grouper in groupby(steps, key=lambda s: s.t // num_steps_per_plot_group):
 
                 group_steps = list(plot_step_grouper)
@@ -400,6 +402,7 @@ def improve(
                             label=plot_label,
                             **plot_kwargs
                         )
+                    plt.grid()
                     plt.legend()
                     plt.tight_layout()
 
