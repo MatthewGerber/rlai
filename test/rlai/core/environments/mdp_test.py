@@ -3,6 +3,7 @@ import pickle
 
 import pytest
 from numpy.random import RandomState
+from numpy.testing import assert_allclose
 
 from rlai.core import Reward, Action, MdpState, Monitor, State
 from rlai.core.environments.gamblers_problem import GamblersProblem
@@ -48,7 +49,7 @@ def test_gamblers_problem():
     with open(f'{os.path.dirname(__file__)}/fixtures/test_gamblers_problem.pickle', 'rb') as file:
         fixture = pickle.load(file)
 
-    assert v_pi == fixture
+    assert_allclose(list(v_pi.values()), list(fixture.values()))
 
 
 def test_prioritized_planning_environment():

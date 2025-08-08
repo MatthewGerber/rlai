@@ -4,6 +4,7 @@ import shlex
 import tempfile
 from typing import List
 
+import numpy as np
 import pytest
 from numpy.random import RandomState
 from numpy.testing import assert_allclose
@@ -252,7 +253,7 @@ def assert_monitors(
 
     for monitor, monitor_fixture in zip(monitors, monitors_fixture):
 
-        assert monitor.cumulative_reward == monitor_fixture.cumulative_reward
+        assert np.isclose(monitor.cumulative_reward, monitor_fixture.cumulative_reward)
 
         assert_allclose(
             [

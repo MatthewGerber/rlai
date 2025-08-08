@@ -138,13 +138,13 @@ class IncrementalSampleAverager:
         """
 
         if isinstance(other, IncrementalSampleAverager):
-            result = self.get_value() == other.get_value()
+            result = np.isclose(self.get_value(), other.get_value())
         elif isinstance(other, float):
-            result = self.get_value() == other
+            result = np.isclose(self.get_value(), other)
         else:
             raise ValueError(f'Expected a {IncrementalSampleAverager} or {float}')
 
-        return result
+        return bool(result)
 
     def __ne__(
             self,

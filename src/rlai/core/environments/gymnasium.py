@@ -99,6 +99,9 @@ class Gym(ContinuousMdpEnvironment):
     MCC_V0 = 'MountainCarContinuous-v0'
     SWIMMER_V5 = 'Swimmer-v5'
     CARTPOLE_V1 = 'CartPole-v1'
+    INVERTED_PENDULUM_V5 = 'InvertedPendulum-v5'
+
+    MUJOCO_ENVIRONMENTS = [SWIMMER_V5, INVERTED_PENDULUM_V5]
 
     @classmethod
     def get_argument_parser(
@@ -228,6 +231,8 @@ class Gym(ContinuousMdpEnvironment):
             self.gym_customizer = CartpoleCustomizer()
         elif self.gym_id == Gym.SWIMMER_V5:
             self.gym_customizer = ContinuousActionGymCustomizer()
+        elif self.gym_id == Gym.INVERTED_PENDULUM_V5:
+            self.gym_customizer = ContinuousInvertedPendulumCustomizer()
         else:
             self.gym_customizer = GymCustomizer()
 
@@ -393,7 +398,7 @@ class Gym(ContinuousMdpEnvironment):
                 self.state_reward_scatter_plot.update(np.append(observation, reward))
 
             # swimmer is a non-qt environment, so we need to process qt events manually.
-            if self.gym_id == Gym.SWIMMER_V5:
+            if self.gym_id in Gym.MUJOCO_ENVIRONMENTS:
                 # local-import so that we don't crash on raspberry pi os, where we can't install qt6.
                 from PyQt6.QtWidgets import QApplication  # type: ignore
                 QApplication.processEvents()
@@ -1846,3 +1851,242 @@ class ContinuousLunarLanderFeatureExtractor(StateFeatureExtractor):
         self.state_category_interacter = OneHotCategoricalFeatureInteracter(categories, self.scale_features)
         self.state_category_intercept_interacter = OneHotCategoricalFeatureInteracter(categories, False)
         self.unencoded_scaler = StationaryFeatureScaler()
+
+
+class ContinuousInvertedPendulumCustomizer(ContinuousActionGymCustomizer):
+    """
+    Continuous inverted pendulum customizer.
+    """
+
+    def __init__(
+            self
+    ):
+        """
+        Initialize the customizer.
+        """
+
+        super().__init__()
+
+    def get_action_dimension_names(
+            self,
+            gym: Env
+    ) -> List[str]:
+        """
+        Get action-dimension names.
+
+        :param gym: Native gym environment.
+        :return: List of names.
+        """
+
+        return ['force']
+
+    def get_state_dimension_names(
+            self,
+            gym: Env
+    ) -> List[str]:
+        """
+        Get state-dimension names.
+
+        :param gym: Native gym environment.
+        :return: List of names.
+        """
+
+        return [
+            'cart_position',
+            'pole_angle',
+            'cart_velocity',
+            'pole_velocity'
+        ]
+
+    def get_reset_observation(
+            self,
+            observation: np.ndarray
+    ) -> np.ndarray:
+        """
+        Get observation for episode reset.
+
+        :param observation: Observation from native environment.
+        :return: Observation.
+        """
+
+        return observation
+
+    def get_action_to_step(
+            self,
+            action: Union[np.ndarray, int]
+    ) -> Union[np.ndarray, int]:
+        """
+        Get action to step.
+
+        :param action: Native Gym action.
+        :return: Action to step.
+        """
+
+        return action
+
+    def get_post_step_observation(
+            self,
+            observation: np.ndarray
+    ) -> np.ndarray:
+        """
+        Get observation resulting from a step.
+
+        :param observation: Native Gym observation.
+        :return: Observation resulting from a step.
+        """
+
+        return observation
+
+    def get_reward(
+            self,
+            gym: Env,
+            reward: float,
+            observation: np.ndarray,
+            terminated: bool,
+            truncated: bool
+    ) -> Tuple[float, bool]:
+        """
+        Get reward.
+
+        :param gym: Native gym environment.
+        :param reward: Reward specified by the native Gym environment.
+        :param observation: Observation, either native or custom.
+        :param terminated: Terminated specified by the native Gym environment.
+        :param truncated: Truncated specified by the native Gym environment.
+        :return: 2-tuple of reward and termination indicator.
+        """
+
+        return reward, terminated
+
+
+@rl_text(chapter='Feature Extractors', page=1)
+class ContinuousInvertedPendulumFeatureExtractor(StateFeatureExtractor):
+    """
+    Feature extractor for the continuous inverted pendulum environment.
+    """
+
+    @classmethod
+    def get_argument_parser(
+            cls
+    ) -> ArgumentParser:
+        """
+        Get argument parser.
+
+        :return: Argument parser.
+        """
+
+        parser = ArgumentParser(
+            prog=f'{cls.__module__}.{cls.__name__}',
+            parents=[super().get_argument_parser()],
+            allow_abbrev=False,
+            add_help=False
+        )
+
+        parser.add_argument(
+            '--scale-features',
+            action='store_true',
+            help='Whether to scale features.'
+        )
+
+        return parser
+
+    @classmethod
+    def init_from_arguments(
+            cls,
+            args: List[str],
+            environment: MdpEnvironment
+    ) -> Tuple[FeatureExtractor, List[str]]:
+        """
+        Initialize a feature extractor from arguments.
+
+        :param args: Arguments.
+        :param environment: Environment.
+        :return: 2-tuple of a feature extractor and a list of unparsed arguments.
+        """
+
+        assert isinstance(environment, Gym)
+
+        parsed_args, unparsed_args = parse_arguments(cls, args)
+
+        fex = cls(**vars(parsed_args))
+
+        return fex, unparsed_args
+
+    def extracts_intercept(
+            self
+    ) -> bool:
+        """
+        Whether the feature extractor extracts an intercept (constant) term.
+
+        :return: True if an intercept (constant) term is extracted and False otherwise.
+        """
+
+        return True
+
+    def extract(
+            self,
+            states: List[MdpState],
+            refit_scaler: bool
+    ) -> np.ndarray:
+        """
+        Extract state features.
+
+        :param states: State.
+        :param refit_scaler: Whether to refit the feature scaler before scaling the extracted features. This is
+        only appropriate in settings where nonstationarity is desired (e.g., during training). During evaluation, the
+        scaler should remain fixed, which means this should be False.
+        :return: State-feature matrix (#states, #features).
+        """
+
+        state_matrix = np.array([
+            state.observation
+            for state in states
+            if isinstance(state, GymState)
+        ])
+
+        state_category_feature_matrix = self.state_category_interacter.interact(
+            state_matrix=state_matrix,
+            state_feature_matrix=state_matrix,
+            refit_scaler=refit_scaler
+        )
+
+        intercepts = self.state_category_intercept_interacter.interact(
+            state_matrix=state_matrix,
+            state_feature_matrix=np.ones((state_category_feature_matrix.shape[0], 1)),
+            refit_scaler=False
+        )
+
+        state_category_feature_matrix = np.append(intercepts, state_category_feature_matrix, axis=1)
+
+        return state_category_feature_matrix
+
+    def __init__(
+            self,
+            scale_features: bool
+    ):
+        """
+        Initialize the feature extractor.
+
+        :param scale_features: Whether to scale features.
+        """
+
+        super().__init__(scale_features)
+
+        indicators = StateDimensionSegment.get_segments({
+            0: [0.0],
+            1: [0.0],
+            2: [0.0],
+            3: [0.0]
+        })
+
+        # interact features with relevant state categories and optional scaling
+        self.state_category_interacter = OneHotStateIndicatorFeatureInteracter(
+            indicators=indicators,
+            scale_features=scale_features
+        )
+
+        # do not scale intercepts
+        self.state_category_intercept_interacter = OneHotStateIndicatorFeatureInteracter(
+            indicators=indicators,
+            scale_features=False
+        )

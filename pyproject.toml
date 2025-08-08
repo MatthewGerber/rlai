@@ -16,39 +16,39 @@ packages = [
 repository = 'https://github.com/MatthewGerber/rlai'
 
 [tool.poetry.dependencies]
-python = '>=3.10,<3.13'
-scipy = '~=1.13'
-matplotlib = '~=3.9'
-numpy = '~=1.26'
-gymnasium = { version = '==1.0.0a2', extras = ['classic-control', 'box2d', 'mujoco'] }
-moviepy = '~=1.0'
-scikit-learn = '~=1.5'
-pandas = '~=2.2'
-patsy = '~=0.5'
-pyqtgraph = '~=0.13'
-tabulate = '~=0.9'
-jupyterlab = '~=4.2'
-ipython = '~=8.25'
-jax = { version = '~=0.4', extras = ['cpu'] }
+python = '>=3.11,<3.13'
+scipy = '^1.16'
+matplotlib = '^3.10'
+numpy = '^2.3'
+gymnasium = { version = '^1.2', extras = ['classic-control', 'box2d', 'mujoco'] }
+moviepy = '^2.2'
+scikit-learn = '^1.7'
+pandas = '^2.3'
+patsy = '^1.0'
+pyqtgraph = '^0.13'
+tabulate = '^0.9'
+jupyterlab = '^4.4'
+ipython = '^9.4'
+jax = { version = '^0.7', extras = ['cpu'] }
 # can't get Qt6 to compile on raspberry pi. exclude this architecture.
-PyQt6 = { version = '~=6.7', markers = 'platform_machine != "aarch64"' }
-types-requests = "^2.32.0.20240712"
-types-tabulate = "^0.9.0.20240106"
+PyQt6 = { version = '^6.9', markers = 'platform_machine != "aarch64"' }
+types-requests = "^2.32"
+types-tabulate = "^0.9"
 
 [tool.poetry.group.dev]
 optional = true
 
 [tool.poetry.group.dev.dependencies]
-pytest = '~=8.2'
-pytest-cov = '~=5.0'
-pytest-xdist = '~=3.6'
-flake8 = '~=7.0'
-flake8-annotations = '~=3.1'
-flake8-docstrings = '~=1.7'
-flake8-rst-docstrings = '~=0.3'
-mypy = '~=1.10'
-xvfbwrapper = '~=0.2'
-coveralls = '~=4.0'
+pytest = '^8.4'
+pytest-cov = '^6.2'
+pytest-xdist = '^3.8'
+flake8 = '^7.3'
+flake8-annotations = '^3.1'
+flake8-docstrings = '^1.7'
+flake8-rst-docstrings = '^0.3'
+mypy = '^1.17'
+xvfbwrapper = '^0.2'
+coveralls = '^4.0'
 
 [tool.pytest.ini_options]
 markers = [
