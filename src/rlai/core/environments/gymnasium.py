@@ -101,8 +101,6 @@ class Gym(ContinuousMdpEnvironment):
     CARTPOLE_V1 = 'CartPole-v1'
     INVERTED_PENDULUM_V5 = 'InvertedPendulum-v5'
 
-    MUJOCO_ENVIRONMENTS = [SWIMMER_V5, INVERTED_PENDULUM_V5]
-
     @classmethod
     def get_argument_parser(
             cls,
@@ -398,13 +396,6 @@ class Gym(ContinuousMdpEnvironment):
             if self.plot_environment:
                 assert self.state_reward_scatter_plot is not None
                 self.state_reward_scatter_plot.update(np.append(observation, reward))
-
-            # swimmer is a non-qt environment, so we need to process qt events manually.
-            if self.gym_id in Gym.MUJOCO_ENVIRONMENTS:
-                # local-import so that we don't crash on raspberry pi os, where we can't install qt6.
-                from PyQt6.QtWidgets import QApplication  # type: ignore
-
-                QApplication.processEvents()
 
         self.state = GymState(
             environment=self,

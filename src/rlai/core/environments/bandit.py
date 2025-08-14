@@ -227,7 +227,7 @@ class KArmedBandit(Environment):
                 variance=self.reward_variance,
                 random_state=self.random_state
             )
-            for (i, mean) in enumerate(q_star_means)
+            for i, mean in enumerate(q_star_means)
         ]
 
         self.best_arm = max(self.arms, key=lambda arm: arm.mean)
