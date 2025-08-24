@@ -39,6 +39,7 @@ def test_resume():
     Test.
     """
 
+    # run 2 episodes
     checkpoint_path, agent_path = run(shlex.split(
         '--random-seed 12345 --agent rlai.policy_gradient.ParameterizedMdpAgent --gamma 1.0 '
         '--environment rlai.core.environments.gymnasium.Gym --gym-id LunarLanderContinuous-v3 --T 500 '
@@ -51,15 +52,17 @@ def test_resume():
         '--policy-feature-extractor rlai.core.environments.gymnasium.ContinuousLunarLanderFeatureExtractor '
         '--alpha 0.0001 --update-upon-every-visit True '
         f'--checkpoint-path {tempfile.NamedTemporaryFile(delete=False).name} --num-episodes-per-checkpoint 1 '
-        f'--save-agent-path {tempfile.NamedTemporaryFile(delete=False).name} --log DEBUG'
+        f'--save-agent-path {tempfile.NamedTemporaryFile(delete=False).name}'
     ))
 
+    # run a total of 5 episodes
     checkpoint_path, _ = run(shlex.split(
         '--resume --train-function rlai.policy_gradient.monte_carlo.reinforce.improve '
         f'--num-episodes 5 --checkpoint-path {checkpoint_path} --num-episodes-per-checkpoint 1 '
         f'--save-agent-path {tempfile.NamedTemporaryFile(delete=False).name}'
     ))
 
+    # add 2 more episodes for total of 7
     _, resumed_agent_path = run(shlex.split(
         '--resume --train-function rlai.policy_gradient.monte_carlo.reinforce.improve '
         f'--num-episodes 10 --start-episode 9 --checkpoint-path {checkpoint_path} '
@@ -92,7 +95,7 @@ def test_resume():
         '--policy-feature-extractor rlai.core.environments.gymnasium.ContinuousLunarLanderFeatureExtractor '
         '--alpha 0.0001 --update-upon-every-visit True '
         f'--checkpoint-path {tempfile.NamedTemporaryFile(delete=False).name} --num-episodes-per-checkpoint 1 '
-        f'--save-agent-path {tempfile.NamedTemporaryFile(delete=False).name} --log DEBUG'
+        f'--save-agent-path {tempfile.NamedTemporaryFile(delete=False).name}'
     ))
 
     with open(full_agent_path, 'rb') as f:
