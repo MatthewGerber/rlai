@@ -36,6 +36,23 @@ an environment variable pointing to ffmpeg as follows:
 echo 'export IMAGEIO_FFMPEG_EXE="/opt/homebrew/bin/ffmpeg"' >> ~/.bash_profile
 ```
 
+1. Ensure Poetry is installed:
+   ```shell
+   poetry --version
+   ```
+2. If Poetry is not installed, then install it on Python 3.11 with the [official poetry installer](https://python-poetry.org/docs/#installing-with-the-official-installer):
+   ```shell
+   curl -sSL https://install.python-poetry.org | python3.11 -
+   ```
+3. Clone and install as follows:
+   ```shell
+   git clone git@github.com:MatthewGerber/rlai.git
+   cd rlai
+   poetry env use 3.11
+   poetry install
+   $(poetry env activate)
+   ```
+
 The RLAI code is distributed via [PyPI](https://pypi.org/project/rlai/). There are several ways to use the package.
 
 * JupyterLab notebook:  Most of the RLAI functionality is exposed via the companion JupyterLab notebook. See the 
