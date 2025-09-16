@@ -268,3 +268,9 @@ Much can be learned from the instrumentation displays, particularly the lower-ri
 shape parameters `a` and `b`. The shape parameters respond to the car state such that negative force is applied the 
 instant the car begins to fall backward down the right slope. When moving to the right through the trough, positive 
 force is reduced since there is typically sufficient rightward momentum to carry the car to the goal.
+
+To rerun this trained agent:
+
+```
+rlai run --agent ./trained_agents/mountaincar_continuous/mountaincar_continuous_agent.pickle --environment rlai.core.environments.gymnasium.Gym --steps-per-second 35 --gym-id MountainCarContinuous-v0 --render-every-nth-episode 1 --n-runs 1 --T 2000 --plot --plot-environment
+```
