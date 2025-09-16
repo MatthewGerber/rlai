@@ -924,7 +924,7 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
             ]))
 
         # send the results to the hook if we have one
-        if self.get_item_hook is not None:
+        if hasattr(self, 'get_item_hook') and self.get_item_hook is not None:
             self.get_item_hook(
                 state_feature_vector,
                 action_a,
