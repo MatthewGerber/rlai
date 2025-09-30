@@ -590,6 +590,26 @@ def insert_index_into_path(
     return ''.join(path_parts)
 
 
+def delete_prior_indexed_paths(
+        path: str,
+        starting_with_index: int
+):
+    """
+    Delete prior indexed paths.
+
+    :param path: Path to index.
+    :param starting_with_index: Where deletion should start.
+    """
+
+    index = starting_with_index
+    indexed_path = insert_index_into_path(path, index)
+    while os.path.exists(indexed_path):
+        os.unlink(indexed_path)
+        logging.info(f'Deleted indexed path:  {indexed_path}')
+        index -= 1
+        indexed_path = insert_index_into_path(path, index)
+
+
 def get_sample_size(
         confidence: float,
         std: float,

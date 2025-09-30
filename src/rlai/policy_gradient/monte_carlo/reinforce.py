@@ -27,7 +27,7 @@ from rlai.state_value.function_approximation import ApproximateStateValueEstimat
 from rlai.utils import (
     IncrementalSampleAverager,
     RunThreadManager,
-    insert_index_into_path
+    insert_index_into_path, delete_prior_indexed_paths
 )
 
 
@@ -101,6 +101,7 @@ def improve(
         policy_update_plot_pdf_directory: Optional[str] = None,
         num_episodes_per_checkpoint: Optional[int] = None,
         checkpoint_path: Optional[str] = None,
+        num_checkpoints_to_retain: Optional[int] = None,
         training_pool_directory: Optional[str] = None,
         training_pool_count: Optional[int] = None,
         training_pool_iterate_episodes: Optional[int] = None,
@@ -130,6 +131,8 @@ def improve(
     :param policy_update_plot_pdf_directory: Directory in which to store plot PDFs, or None to display them directly.
     :param num_episodes_per_checkpoint: Number of episodes per checkpoint save.
     :param checkpoint_path: Checkpoint path. Must be provided if `num_episodes_per_checkpoint` is provided.
+    :param num_checkpoints_to_retain: Number of checkpoints to retain. Pass None to retain all checkpoint files. If
+    non-None, then the oldest checkpoint files will be deleted once the number of checkpoints exceeds this value.
     :param training_pool_directory: Path to directory in which to store pooled training runs.
     :param training_pool_count: Number of runners in the training pool.
     :param training_pool_iterate_episodes: Number of episodes per training pool iteration.
@@ -473,6 +476,9 @@ def improve(
             os.makedirs(os.path.dirname(final_checkpoint_path), exist_ok=True)
             with open(checkpoint_path_with_index, 'wb') as checkpoint_file:
                 pickle.dump(resume_args, checkpoint_file)
+
+            if num_checkpoints_to_retain is not None:
+                delete_prior_indexed_paths(checkpoint_path, episodes_finished - num_checkpoints_to_retain)
 
         elapsed_minutes = (datetime.now() - start_timestamp).total_seconds() / 60.0
         episodes_per_minute = episodes_finished / elapsed_minutes
