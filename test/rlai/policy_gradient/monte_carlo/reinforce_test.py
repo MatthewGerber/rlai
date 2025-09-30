@@ -83,7 +83,7 @@ def test_resume():
     assert agent.pi == agent_fixture.pi
 
     # run the full number of episodes and check equal agents
-    _, full_agent_path = run(shlex.split(
+    full_run_checkpoint_path, full_agent_path = run(shlex.split(
         '--random-seed 12345 --agent rlai.policy_gradient.ParameterizedMdpAgent --gamma 1.0 '
         '--environment rlai.core.environments.gymnasium.Gym --gym-id LunarLanderContinuous-v3 --T 500 '
         '--train-function rlai.policy_gradient.monte_carlo.reinforce.improve --num-episodes 7 '
@@ -95,6 +95,7 @@ def test_resume():
         '--policy-feature-extractor rlai.core.environments.gymnasium.ContinuousLunarLanderFeatureExtractor '
         '--alpha 0.0001 --update-upon-every-visit True '
         f'--checkpoint-path {tempfile.NamedTemporaryFile(delete=False).name} --num-episodes-per-checkpoint 1 '
+        '--num-checkpoints-to-retain 2 '
         f'--save-agent-path {tempfile.NamedTemporaryFile(delete=False).name}'
     ))
 
@@ -102,3 +103,12 @@ def test_resume():
         full_agent = pickle.load(f)
 
     assert full_agent.pi == agent.pi
+
+    checkpoint_filename_without_index = os.path.basename(full_run_checkpoint_path).rsplit('-', maxsplit=1)[0] + '-'
+    checkpoint_six, checkpoint_seven = sorted([
+        p
+        for p in os.listdir(os.path.dirname(full_run_checkpoint_path))
+        if p.startswith(checkpoint_filename_without_index)
+    ], key=lambda s: int(s[-1]))
+    assert checkpoint_six.endswith('-6')
+    assert checkpoint_seven.endswith('-7')
