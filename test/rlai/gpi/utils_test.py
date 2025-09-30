@@ -35,8 +35,8 @@ def test_resume_from_checkpoint():
         '--num-episodes-per-improvement 2 --update-upon-every-visit True --epsilon 0.2 '
         '--q-S-A rlai.gpi.state_action_value.tabular.TabularStateActionValueEstimator '
         '--make-final-policy-greedy False --num-improvements-per-plot 2 --num-improvements-per-checkpoint 2 '
-        f'--checkpoint-path {tempfile.NamedTemporaryFile(delete=False).name} '
-        f'--save-agent-path {tempfile.NamedTemporaryFile(delete=False).name}'
+        f'--checkpoint-path {tempfile.NamedTemporaryFile().name} '
+        f'--save-agent-path {tempfile.NamedTemporaryFile().name}'
     )
     checkpoint_path, agent_path = run(
         args=shlex.split(run_args),
@@ -68,8 +68,8 @@ def test_resume_from_checkpoint():
         '--num-episodes-per-improvement 2 --update-upon-every-visit True --epsilon 0.2 '
         '--q-S-A rlai.gpi.state_action_value.tabular.TabularStateActionValueEstimator '
         '--make-final-policy-greedy False --num-improvements-per-plot 2 --num-improvements-per-checkpoint 2 '
-        f'--checkpoint-path {tempfile.NamedTemporaryFile(delete=False).name} '
-        f'--save-agent-path {tempfile.NamedTemporaryFile(delete=False).name}'
+        f'--checkpoint-path {tempfile.NamedTemporaryFile().name} '
+        f'--save-agent-path {tempfile.NamedTemporaryFile().name}'
     )
     _, full_agent_path = run(
         args=shlex.split(run_args),

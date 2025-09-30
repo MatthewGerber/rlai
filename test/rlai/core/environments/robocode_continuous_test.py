@@ -75,7 +75,7 @@ def test_continuous_learn():
         robocode_mock_thread.start()
 
     # run training and load resulting agent
-    agent_path = tempfile.NamedTemporaryFile(delete=False).name
+    agent_path = tempfile.NamedTemporaryFile().name
     cmd = f'--random-seed 12345 --agent rlai.core.environments.robocode_continuous_action.RobocodeAgent --gamma 1.0 --environment rlai.core.environments.robocode_continuous_action.RobocodeEnvironment --port {robocode_port} --bullet-power-decay 0.75 --train-function rlai.policy_gradient.monte_carlo.reinforce.improve --num-episodes 10 --v-S rlai.state_value.function_approximation.ApproximateStateValueEstimator --feature-extractor rlai.core.environments.robocode_continuous_action.RobocodeFeatureExtractor --function-approximation-model rlai.models.sklearn.SKLearnSGD --loss squared_error --sgd-alpha 0.0 --learning-rate constant --eta0 0.00001 --policy rlai.policy_gradient.policies.continuous_action.ContinuousActionBetaDistributionPolicy --policy-feature-extractor rlai.core.environments.robocode_continuous_action.RobocodeFeatureExtractor --alpha 0.00001 --update-upon-every-visit True --save-agent-path {agent_path} --log DEBUG'
 
     run(shlex.split(cmd))

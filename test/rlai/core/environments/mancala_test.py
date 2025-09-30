@@ -45,7 +45,7 @@ def test_learn():
         planning_environment=None,
         make_final_policy_greedy=False,
         num_improvements_per_checkpoint=3,
-        checkpoint_path=tempfile.NamedTemporaryFile(delete=False).name
+        checkpoint_path=tempfile.NamedTemporaryFile().name
     )
 
     # uncomment the following line and run test to update fixture

@@ -13,12 +13,12 @@ def test_manual_versus_jax_policy_gradient():
     Test.
     """
 
-    manual_agent_path = tempfile.NamedTemporaryFile(delete=False).name
+    manual_agent_path = tempfile.NamedTemporaryFile().name
     run(shlex.split(f'--random-seed 12345 --agent rlai.policy_gradient.ParameterizedMdpAgent --gamma 1 --environment rlai.core.environments.gridworld.Gridworld --id example_4_1 --train-function rlai.policy_gradient.monte_carlo.reinforce.improve --num-episodes 10 --policy rlai.policy_gradient.policies.discrete_action.SoftMaxInActionPreferencesPolicy --policy-feature-extractor rlai.core.environments.gridworld.GridworldFeatureExtractor --alpha 0.0001 --update-upon-every-visit True --num-episodes-per-policy-update-plot 1 --policy-update-plot-pdf-directory {tempfile.NamedTemporaryFile(delete=True).name} --save-agent-path {manual_agent_path} --log DEBUG'))
     with open(manual_agent_path, 'rb') as f:
         manual_agent = pickle.load(f)
 
-    jax_agent_path = tempfile.NamedTemporaryFile(delete=False).name
+    jax_agent_path = tempfile.NamedTemporaryFile().name
     run(shlex.split(f'--random-seed 12345 --agent rlai.policy_gradient.ParameterizedMdpAgent --gamma 1 --environment rlai.core.environments.gridworld.Gridworld --id example_4_1 --train-function rlai.policy_gradient.monte_carlo.reinforce.improve --num-episodes 10 --policy rlai.policy_gradient.policies.discrete_action.SoftMaxInActionPreferencesJaxPolicy --policy-feature-extractor rlai.core.environments.gridworld.GridworldFeatureExtractor --alpha 0.0001 --update-upon-every-visit True --save-agent-path {jax_agent_path} --log DEBUG'))
     with open(jax_agent_path, 'rb') as f:
         jax_agent = pickle.load(f)
@@ -51,22 +51,22 @@ def test_resume():
         '--policy rlai.policy_gradient.policies.continuous_action.ContinuousActionBetaDistributionPolicy '
         '--policy-feature-extractor rlai.core.environments.gymnasium.ContinuousLunarLanderFeatureExtractor '
         '--alpha 0.0001 --update-upon-every-visit True '
-        f'--checkpoint-path {tempfile.NamedTemporaryFile(delete=False).name} --num-episodes-per-checkpoint 1 '
-        f'--save-agent-path {tempfile.NamedTemporaryFile(delete=False).name}'
+        f'--checkpoint-path {tempfile.NamedTemporaryFile().name} --num-episodes-per-checkpoint 1 '
+        f'--save-agent-path {tempfile.NamedTemporaryFile().name}'
     ))
 
     # run a total of 5 episodes
     checkpoint_path, _ = run(shlex.split(
         '--resume --train-function rlai.policy_gradient.monte_carlo.reinforce.improve '
         f'--num-episodes 5 --checkpoint-path {checkpoint_path} --num-episodes-per-checkpoint 1 '
-        f'--save-agent-path {tempfile.NamedTemporaryFile(delete=False).name}'
+        f'--save-agent-path {tempfile.NamedTemporaryFile().name}'
     ))
 
     # add 2 more episodes for total of 7
     _, resumed_agent_path = run(shlex.split(
         '--resume --train-function rlai.policy_gradient.monte_carlo.reinforce.improve '
         f'--num-episodes 10 --start-episode 9 --checkpoint-path {checkpoint_path} '
-        f'--save-agent-path {tempfile.NamedTemporaryFile(delete=False).name}'
+        f'--save-agent-path {tempfile.NamedTemporaryFile().name}'
     ))
 
     with open(resumed_agent_path, 'rb') as f:
@@ -94,9 +94,9 @@ def test_resume():
         '--policy rlai.policy_gradient.policies.continuous_action.ContinuousActionBetaDistributionPolicy '
         '--policy-feature-extractor rlai.core.environments.gymnasium.ContinuousLunarLanderFeatureExtractor '
         '--alpha 0.0001 --update-upon-every-visit True '
-        f'--checkpoint-path {tempfile.NamedTemporaryFile(delete=False).name} --num-episodes-per-checkpoint 1 '
+        f'--checkpoint-path {tempfile.NamedTemporaryFile().name} --num-episodes-per-checkpoint 1 '
         '--num-checkpoints-to-retain 2 '
-        f'--save-agent-path {tempfile.NamedTemporaryFile(delete=False).name}'
+        f'--save-agent-path {tempfile.NamedTemporaryFile().name}'
     ))
 
     with open(full_agent_path, 'rb') as f:
@@ -104,7 +104,7 @@ def test_resume():
 
     assert full_agent.pi == agent.pi
 
-    checkpoint_filename_without_index = os.path.basename(full_run_checkpoint_path).rsplit('-', maxsplit=1)[0] + '-'
+    checkpoint_filename_without_index = os.path.basename(full_run_checkpoint_path).rsplit('-', maxsplit=1)[0]
     checkpoint_six, checkpoint_seven = sorted([
         p
         for p in os.listdir(os.path.dirname(full_run_checkpoint_path))

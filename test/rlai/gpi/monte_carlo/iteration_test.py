@@ -239,7 +239,7 @@ def test_iterate_value_q_pi_with_pdf():
         planning_environment=None,
         make_final_policy_greedy=False,
         num_improvements_per_plot=1500,
-        pdf_save_path=tempfile.NamedTemporaryFile(delete=False).name
+        pdf_save_path=tempfile.NamedTemporaryFile().name
     )
 
     with pytest.raises(ValueError, match='Epsilon must be >= 0'):

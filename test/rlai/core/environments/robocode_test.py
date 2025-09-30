@@ -74,7 +74,7 @@ def test_learn():
         robocode_mock_thread.start()
 
     # run training and load resulting agent
-    agent_path = tempfile.NamedTemporaryFile(delete=False).name
+    agent_path = tempfile.NamedTemporaryFile().name
     cmd = f'--random-seed 12345 --agent rlai.core.environments.robocode.RobocodeAgent --gamma 0.95 --environment rlai.core.environments.robocode.RobocodeEnvironment --port {robocode_port} --bullet-power-decay 0.75 --train-function rlai.gpi.temporal_difference.iteration.iterate_value_q_pi --mode SARSA --n-steps 50 --num-improvements 10 --num-episodes-per-improvement 1 --num-updates-per-improvement 1 --epsilon 0.25 --q-S-A rlai.gpi.state_action_value.function_approximation.ApproximateStateActionValueEstimator --function-approximation-model rlai.gpi.state_action_value.function_approximation.models.sklearn.SKLearnSGD --loss squared_error --sgd-alpha 0.0 --learning-rate constant --eta0 0.0001 --feature-extractor rlai.core.environments.robocode.RobocodeFeatureExtractor --scanned-robot-decay 0.75 --make-final-policy-greedy True --num-improvements-per-plot 100 --save-agent-path {agent_path} --log DEBUG'
     run(shlex.split(cmd))
 

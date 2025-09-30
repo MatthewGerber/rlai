@@ -206,7 +206,7 @@ def test_plot():
     run(shlex.split('--T 100 --n-runs 200 --environment rlai.core.environments.bandit.KArmedBandit --k 10 --agent rlai.core.EpsilonGreedyQValueAgent --epsilon 0.2 0.0 --plot --figure-name test'))
 
     # with pdf
-    run(shlex.split(f'--random-seed 12345 --T 100 --n-runs 200 --environment rlai.core.environments.bandit.KArmedBandit --k 10 --agent rlai.core.EpsilonGreedyQValueAgent --epsilon 0.2 0.0 --plot --pdf-save-path {tempfile.NamedTemporaryFile(delete=False).name}'))
+    run(shlex.split(f'--random-seed 12345 --T 100 --n-runs 200 --environment rlai.core.environments.bandit.KArmedBandit --k 10 --agent rlai.core.EpsilonGreedyQValueAgent --epsilon 0.2 0.0 --plot --pdf-save-path {tempfile.NamedTemporaryFile().name}'))
 
 
 def dump_agent(
@@ -231,7 +231,7 @@ def dump_agent(
             None
         )
     )
-    agent_path = tempfile.NamedTemporaryFile(delete=False).name
+    agent_path = tempfile.NamedTemporaryFile().name
     with open(agent_path, 'wb') as f:
         pickle.dump(stochastic_mdp_agent, f)
 
