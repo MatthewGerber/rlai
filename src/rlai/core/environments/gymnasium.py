@@ -1,5 +1,6 @@
 import math
 import os
+import typing
 import warnings
 from abc import ABC
 from argparse import ArgumentParser
@@ -440,7 +441,7 @@ class Gym(ContinuousMdpEnvironment):
             truncated=False
         )
 
-        return self.state
+        return typing.cast(GymState, self.state)
 
     def check_render_current_episode(
             self,
@@ -581,7 +582,7 @@ class Gym(ContinuousMdpEnvironment):
         return self.gym_customizer.get_action_dimension_names(self.gym_native)
 
 
-class GymCustomizer(ABC):
+class GymCustomizer:
     """
     A standard interface for customizing the behavior of Gym environments.
     """
