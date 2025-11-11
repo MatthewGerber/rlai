@@ -56,7 +56,7 @@ class MdpEnvironment(Environment, ABC):
         self.nonterminal_states = [s for s in self.SS if not s.terminal]
         self.state: Optional[MdpState] = None
         self.time_step_axv_lines: Dict[int, Dict[str, Any]] = {}
-        self.plot_label_data_kwargs: Dict[str, Tuple[Dict[int, float], Dict]] = {}
+        self.plot_title_label_data_kwargs: Dict[str, Dict[str, Tuple[Dict[int, float], Dict]]] = {}
         self.metric_episode_value: Dict[str, Dict[int, float]] = {}
         self.metric_value: Dict[str, float] = {}
 
@@ -79,7 +79,7 @@ class MdpEnvironment(Environment, ABC):
             self.state = None
 
         self.time_step_axv_lines.clear()
-        self.plot_label_data_kwargs.clear()
+        self.plot_title_label_data_kwargs.clear()
         self.metric_value.clear()
 
         return self.state  # type: ignore[return-value]

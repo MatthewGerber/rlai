@@ -395,9 +395,10 @@ def improve(
                 plt.close()
 
                 # plot any data added by the environment for the current group of steps
-                if len(environment.plot_label_data_kwargs) > 0:
+                for title in environment.plot_title_label_data_kwargs:
                     plt.figure(figsize=figure_size)
-                    for plot_label, (plot_data, plot_kwargs) in environment.plot_label_data_kwargs.items():
+                    plt.title(title)
+                    for plot_label, (plot_data, plot_kwargs) in environment.plot_title_label_data_kwargs[title].items():
                         plot_data_steps = [t for t in plot_data if group_start_t <= t <= group_end_t]
                         plt.plot(
                             plot_data_steps,
