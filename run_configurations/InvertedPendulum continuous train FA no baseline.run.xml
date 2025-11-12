@@ -1,0 +1,25 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="InvertedPendulum continuous train FA no baseline" type="PythonConfigurationType" factoryName="Python" folderName="Gymnasium">
+    <module name="rlai" />
+    <option name="ENV_FILES" value="" />
+    <option name="INTERPRETER_OPTIONS" value="" />
+    <option name="PARENT_ENVS" value="true" />
+    <envs>
+      <env name="PYTHONUNBUFFERED" value="1" />
+    </envs>
+    <option name="SDK_HOME" value="" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src/rlai/runners" />
+    <option name="IS_MODULE_SDK" value="true" />
+    <option name="ADD_CONTENT_ROOTS" value="true" />
+    <option name="ADD_SOURCE_ROOTS" value="true" />
+    <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+    <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/rlai/runners/trainer.py" />
+    <option name="PARAMETERS" value="--random-seed 12345 --agent rlai.policy_gradient.ParameterizedMdpAgent --gamma 0.95 --environment rlai.core.environments.gymnasium.Gym --gym-id InvertedPendulum-v5 --render-every-nth-episode 100 --video-directory ~/Desktop/inverted_pendulum_continuous_videos --T 100 --plot-environment --train-function rlai.policy_gradient.monte_carlo.reinforce.improve --num-episodes 20000 --plot-state-value True --policy rlai.policy_gradient.policies.continuous_action.ContinuousActionBetaDistributionPolicy --policy-feature-extractor rlai.core.environments.gymnasium.ContinuousInvertedPendulumFeatureExtractor --alpha 0.00001 --update-upon-every-visit True --plot-policy --save-agent-path ~/Desktop/inverted_pendulum_continuous_agent.pickle --log INFO" />
+    <option name="SHOW_COMMAND_LINE" value="false" />
+    <option name="EMULATE_TERMINAL" value="false" />
+    <option name="MODULE_MODE" value="false" />
+    <option name="REDIRECT_INPUT" value="false" />
+    <option name="INPUT_FILE" value="" />
+    <method v="2" />
+  </configuration>
+</component>
