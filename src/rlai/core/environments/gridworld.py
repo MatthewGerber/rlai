@@ -72,8 +72,8 @@ class Gridworld(ModelBasedMdpEnvironment):
                 raise ValueError(f'Unknown action:  {a}')
 
             # go row by row, with the final row transitioning to itself
-            for s_row_i, s_prime_row_i in zip(range(grid.shape[0]), list(range(1, grid.shape[0])) + [-1]):
-                for s, s_prime in zip(grid[s_row_i, :], grid[s_prime_row_i, :]):
+            for s_row_i, s_prime_row_i in zip(range(grid.shape[0]), list(range(1, grid.shape[0])) + [-1], strict=True):
+                for s, s_prime in zip(grid[s_row_i, :], grid[s_prime_row_i, :], strict=True):
                     if not s.terminal:
                         g.p_S_prime_R_given_S_A[s][a][s_prime][r_minus_one] = 1.0
 
@@ -293,7 +293,7 @@ class GridworldFeatureExtractor(StateActionInteractionFeatureExtractor):
                 col,  # from left
                 self.num_cols - col - 1  # from right
             ]
-            for row, col in zip(state_row, state_col)
+            for row, col in zip(state_row, state_col, strict=True)
         ])
 
         return self.interact(

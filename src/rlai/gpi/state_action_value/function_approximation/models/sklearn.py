@@ -174,7 +174,7 @@ class SKLearnSGD(StateActionFunctionApproximationModel):
             num_coefs = len(feature_names)
             coefs = coefficients[curr_coef:curr_coef + num_coefs]
 
-            for feature_name, coef in zip(feature_names, coefs):
+            for feature_name, coef in zip(feature_names, coefs, strict=True):
                 coefficients_df.loc[feature_name, action] = coef
 
             curr_coef += num_coefs

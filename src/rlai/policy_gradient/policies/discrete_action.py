@@ -123,7 +123,7 @@ class SoftMaxInActionPreferencesPolicy(ParameterizedPolicy):
             np.add,
             [
                 addend * x_s_aa
-                for addend, x_s_aa in zip(soft_max_denominator_addends, x_s_aa_list)
+                for addend, x_s_aa in zip(soft_max_denominator_addends, x_s_aa_list, strict=True)
             ]
         )
 
@@ -146,7 +146,8 @@ class SoftMaxInActionPreferencesPolicy(ParameterizedPolicy):
             self.update_batch_a,
             self.update_batch_s,
             self.update_batch_alpha,
-            self.update_batch_target
+            self.update_batch_target,
+            strict=True
         )
 
         for a, s, alpha, target in updates:
@@ -394,7 +395,8 @@ class SoftMaxInActionPreferencesJaxPolicy(ParameterizedPolicy):
             self.update_batch_a,
             self.update_batch_s,
             self.update_batch_alpha,
-            self.update_batch_target
+            self.update_batch_target,
+            strict=True
         )
 
         for a, s, alpha, target in updates:

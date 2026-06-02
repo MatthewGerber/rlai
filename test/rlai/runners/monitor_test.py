@@ -35,7 +35,7 @@ def test_monitor():
         ],
         [
             1 if action == optimal else 0
-            for action, optimal in zip(actions, optimal_actions)
+            for action, optimal in zip(actions, optimal_actions, strict=True)
         ]
     )
 

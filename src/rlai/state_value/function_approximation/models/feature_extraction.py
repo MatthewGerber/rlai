@@ -174,7 +174,7 @@ class StateDimensionSegment(StateDimensionIndicator):
         return [
             StateDimensionSegment(dimension, low, high)
             for dimension, breakpoints in dimension_breakpoints.items()
-            for low, high in zip([None] + breakpoints[:-1], breakpoints)  # type: ignore[operator]
+            for low, high in zip([None] + breakpoints[:-1], breakpoints, strict=True)  # type: ignore[operator]
         ]
 
     def __init__(
@@ -311,7 +311,8 @@ class OneHotStateIndicatorFeatureInteracter:
 
         :param state_matrix: State matrix (#obs, #state_dimensionality), from which to derive indicators.
         :param state_feature_matrix: State-feature matrix (#obs, #features).
-        :param refit_scaler: Whether to refit the scaler.
+        :param refit_scaler: Whether to refit the scaler. Only has an effect if `scale_features` was True when
+        initializing the current interacter.
         :return: Interacted state-feature matrix (#obs, #features * #joint_indicators).
         """
 
@@ -324,7 +325,6 @@ class OneHotStateIndicatorFeatureInteracter:
             for state_vector in state_matrix
         ]
 
-        # use optional scaling
         interacted_state_feature_matrix = self.interacter.interact(
             feature_matrix=state_feature_matrix,
             categorical_values=state_categories,

@@ -328,10 +328,10 @@ class OneHotCategoricalFeatureInteracter:
         if num_rows != num_cats:
             raise ValueError(f'Expected {num_rows} categorical values but got {num_cats}')
 
-        # partition feature matrix by categorical values
+        # partition feature matrix rows by categorical values
         category_feature_matrix: Dict[Any, np.ndarray] = {}
         feature_matrix_row_category_row = []
-        for feature_vector, categorical_value in zip(feature_matrix, categorical_values):
+        for feature_vector, categorical_value in zip(feature_matrix, categorical_values, strict=True):
 
             # append a row to the category's feature matrix if we've already seen the category
             if categorical_value in category_feature_matrix:
@@ -427,6 +427,8 @@ class OneHotCategory:
 
         self.id = '_'.join(str(arg) for arg in args)
 
+        self.id_hash = hash(self.id)
+
     def __eq__(
             self,
             other: object
@@ -465,7 +467,7 @@ class OneHotCategory:
         :return: Hash code.
         """
 
-        return hash(self.id)
+        return self.id_hash
 
     def __str__(
             self

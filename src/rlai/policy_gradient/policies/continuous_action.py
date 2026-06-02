@@ -338,7 +338,8 @@ class ContinuousActionNormalDistributionPolicy(ContinuousActionPolicy):
             self.update_batch_alpha,
             self.update_batch_target,
             action_density_gradients_wrt_theta_mean,
-            action_density_gradients_wrt_theta_cov
+            action_density_gradients_wrt_theta_cov,
+            strict=True
         )
 
         for state_features, alpha, target, action_density_gradient_wrt_theta_mean, action_density_gradient_wrt_theta_cov in updates:
@@ -597,7 +598,8 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
             zip(
                 self.action_theta_a,
                 self.action_theta_b,
-                action_matrix.T
+                action_matrix.T,
+                strict=True
             )
         ):
             # calculate per-update gradients for the current action dimension with respect to the action's policy
@@ -625,7 +627,8 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
                 self.update_batch_alpha,
                 self.update_batch_target,
                 action_density_gradients_wrt_theta_a,
-                action_density_gradients_wrt_theta_b
+                action_density_gradients_wrt_theta_b,
+                strict=True
             ):
 
                 # step the theta-a and theta-b coefficient vectors in the direction of the target according to the
@@ -663,7 +666,9 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
             action_min_b = np.amin(self.action_theta_b, 1)
             action_max_b = np.amax(self.action_theta_b, 1)
             logging.info(f'State dimensions:  {self.action_theta_a.shape[1]}')
-            for i, (min_a, max_a, min_b, max_b) in enumerate(zip(action_min_a, action_max_a, action_min_b, action_max_b)):
+            for i, (min_a, max_a, min_b, max_b) in enumerate(zip(
+                action_min_a, action_max_a, action_min_b, action_max_b, strict=True
+            )):
                 logging.info(f'Action {i} [min,max]:\n\ta:  [{min_a},{max_a}]\n\tb:  [{min_b},{max_b}]\n')
 
         # only output the hyperparameter table if we have a state-dimension name for each feature. some feature
@@ -682,7 +687,7 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
             col_names = ['intercept'] + self.environment.get_state_dimension_names()
             theta_df = pd.DataFrame([
                 row
-                for theta_a_row, theta_b_row in zip(self.action_theta_a, self.action_theta_b)
+                for theta_a_row, theta_b_row in zip(self.action_theta_a, self.action_theta_b, strict=True)
                 for row in [theta_a_row, theta_b_row]
             ], index=row_names, columns=col_names)
             logging.info(
@@ -741,12 +746,12 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
 
         value_ranges = [
             max_value - min_value
-            for min_value, max_value in zip(self.action.min_values, self.action.max_values)
+            for min_value, max_value in zip(self.action.min_values, self.action.max_values, strict=True)
         ]
 
         rescaled_action_value = np.array([
             min_value + value * value_range
-            for value, min_value, value_range in zip(action_value, self.action.min_values, value_ranges)
+            for value, min_value, value_range in zip(action_value, self.action.min_values, value_ranges, strict=True)
         ])
 
         return rescaled_action_value
@@ -769,12 +774,14 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
 
         value_ranges = [
             max_value - min_value
-            for min_value, max_value in zip(self.action.min_values, self.action.max_values)
+            for min_value, max_value in zip(self.action.min_values, self.action.max_values, strict=True)
         ]
 
         action_value = np.array([
             (value - min_value) / value_range
-            for value, min_value, value_range in zip(rescaled_action_value, self.action.min_values, value_ranges)
+            for value, min_value, value_range in zip(
+                rescaled_action_value, self.action.min_values, value_ranges, strict=True
+            )
         ])
 
         return action_value
@@ -889,7 +896,7 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
             action_value = self.rescale(
                 np.array([
                     stats.beta.rvs(a=a, b=b, loc=0.0, scale=1.0, random_state=self.random_state)
-                    for a, b in zip(action_a, action_b)
+                    for a, b in zip(action_a, action_b, strict=True)
                 ])
             )
 
@@ -900,7 +907,7 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
                 action_value = self.rescale(
                     np.array([
                         stats.beta.rvs(a=a, b=b, loc=0.0, scale=1.0, random_state=self.random_state)
-                        for a, b in zip(np.ones_like(action_a), np.ones_like(action_b))
+                        for a, b in zip(np.ones_like(action_a), np.ones_like(action_b), strict=True)
                     ])
                 )
                 logging.error(f'Caught {e} while setting action to {action_value}.')
@@ -919,7 +926,7 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
             assert self.beta_shape_scatter_plot is not None
             self.beta_shape_scatter_plot.update(np.array([
                 v
-                for a, b in zip(action_a, action_b)
+                for a, b in zip(action_a, action_b, strict=True)
                 for v in [a, b]
             ]))
 

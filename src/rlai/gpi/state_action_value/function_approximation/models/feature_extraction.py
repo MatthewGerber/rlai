@@ -242,7 +242,7 @@ class StateActionIdentityFeatureExtractor(StateActionFeatureExtractor):
 
         return pd.DataFrame([
             (state.i, action.i)
-            for state, action in zip(states, actions)
+            for state, action in zip(states, actions, strict=True)
         ], columns=['s', 'a'])
 
     def __init__(

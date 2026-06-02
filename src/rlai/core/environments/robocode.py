@@ -695,7 +695,7 @@ class RobocodeFeatureExtractor(StateActionFeatureExtractor):
             ]
 
             # the state and actions come to us in pairs
-            for state, action in zip(states, actions)
+            for state, action in zip(states, actions, strict=True)
         ])
 
         return x
@@ -997,7 +997,7 @@ class RobocodeFeatureExtractor(StateActionFeatureExtractor):
             feature_names = action_feature_names[action_to_extract.name]
             logging.debug(action_to_extract.name)
             feature_name_padding_width = max([len(s) for s in feature_names]) + 2
-            for feature_name, feature_value in zip(feature_names, feature_values):
+            for feature_name, feature_value in zip(feature_names, feature_values, strict=True):
                 logging.debug(
                     f'{feature_name.rjust(feature_name_padding_width)}:  {feature_value}'
                 )

@@ -668,7 +668,7 @@ class FunctionApproximationPolicy(Policy):
         s = ''
         for state in states:
             s += f'{state}\n'
-            for action, value in zip(state.AA, self.estimator.evaluate(state, state.AA)):
+            for action, value in zip(state.AA, self.estimator.evaluate(state, state.AA), strict=True):
                 s += f'\tq(S={state}, A={action.name}):  {value}\n'
 
         return s
@@ -721,7 +721,7 @@ class FunctionApproximationPolicy(Policy):
                 ((1.0 - self.estimator.epsilon) / num_maximizers) if value == max_value
                 else 0.0
             ) + self.estimator.epsilon / len(values)
-            for action, value in zip(state.AA, values)
+            for action, value in zip(state.AA, values, strict=True)
         }
 
         return action_prob

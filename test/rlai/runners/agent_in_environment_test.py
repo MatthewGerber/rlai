@@ -251,7 +251,7 @@ def assert_monitors(
 
     assert len(monitors) == len(monitors_fixture)
 
-    for monitor, monitor_fixture in zip(monitors, monitors_fixture):
+    for monitor, monitor_fixture in zip(monitors, monitors_fixture, strict=True):
 
         assert np.isclose(monitor.cumulative_reward, monitor_fixture.cumulative_reward)
 

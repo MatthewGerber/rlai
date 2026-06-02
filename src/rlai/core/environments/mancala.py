@@ -487,6 +487,10 @@ class Mancala(MdpEnvironment):
             assert pit.action is not None
             pit.action.name = str(i)
 
-        for player_1_pocket, opposing_player_2_pocket in zip(self.player_1_pockets, reversed(self.player_2_pockets)):
+        for player_1_pocket, opposing_player_2_pocket in zip(
+            self.player_1_pockets,
+            reversed(self.player_2_pockets),
+            strict=True
+        ):
             player_1_pocket.opposing_pocket = opposing_player_2_pocket
             opposing_player_2_pocket.opposing_pocket = player_1_pocket

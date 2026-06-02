@@ -264,7 +264,11 @@ class Gym(ContinuousMdpEnvironment):
                     i=i,
                     name=name
                 )
-                for i, name in zip(range(action_space.n), self.gym_customizer.get_action_names(self.gym_native))
+                for i, name in zip(
+                    range(action_space.n),
+                    self.gym_customizer.get_action_names(self.gym_native),
+                    strict=True
+                )
             ]
 
         # action space is continuous, and we lack a discretization resolution:  initialize a single, multidimensional
@@ -286,7 +290,7 @@ class Gym(ContinuousMdpEnvironment):
             if len(action_space.shape) == 1:
                 action_discretizations = [
                     np.linspace(low, high, math.ceil((high - low) / self.continuous_action_discretization_resolution))
-                    for low, high in zip(action_space.low, action_space.high)
+                    for low, high in zip(action_space.low, action_space.high, strict=True)
                 ]
             else:  # pragma no cover
                 raise ValueError(f'Unknown format of continuous action space:  {action_space}')

@@ -70,7 +70,7 @@ def test_sample_list_item():
 
     x_cnt = {
         x: cnt
-        for x, cnt in zip(xs, cnts)
+        for x, cnt in zip(xs, cnts, strict=True)
     }
 
     total = sum(x_cnt.values())
