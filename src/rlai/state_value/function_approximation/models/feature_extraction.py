@@ -46,7 +46,12 @@ class StateFeatureExtractor(FeatureExtractor, ABC):
 
 class StateIndicator(ABC):
     """
-    Abstract state indicator for one-hot feature encoding.
+    Abstract state indicator for one-hot state encoding. This is similar to other one-hot encoding schemes in which a
+    single block of low-level features is hot (turned on) and all others are turned off. Here, the on/off status is
+    determined by some property of the aggregated state (feature vector). For example, in a policy gradient setup, one
+    might partition the feature space by high-level properties, thus partitioning the policy and enabling the use of
+    separate control policies depending on the state of the system. Concrete derived classes determine how the
+    indicators are specified.
     """
 
     @abstractmethod
@@ -84,7 +89,7 @@ class StateIndicator(ABC):
 
 class StateLambdaIndicator(StateIndicator):
     """
-    State indicator via lambda function.
+    Returns an indicator based on a lambda function applied to a state's feature vector.
     """
 
     def __init__(
@@ -140,7 +145,7 @@ class StateLambdaIndicator(StateIndicator):
 
 class StateDimensionIndicator(StateIndicator, ABC):
     """
-    State-dimension indicator.
+    Returns an indicator based on the value of a particular dimension within the state.
     """
 
     def __init__(
@@ -158,7 +163,7 @@ class StateDimensionIndicator(StateIndicator, ABC):
 
 class StateDimensionSegment(StateDimensionIndicator):
     """
-    Indicates a segment of a state dimension.
+    Returns an indicator based on breakpoints across a dimension of the state.
     """
 
     @staticmethod
@@ -239,7 +244,7 @@ class StateDimensionSegment(StateDimensionIndicator):
 
 class StateDimensionLambda(StateDimensionIndicator):
     """
-    Lambda applied to a state dimension.
+    Returns an indicator based on a lambda function applied to a state dimension.
     """
 
     def __init__(
