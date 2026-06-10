@@ -16,7 +16,7 @@ packages = [
 repository = 'https://github.com/MatthewGerber/rlai'
 
 [tool.poetry.dependencies]
-python = '>=3.11,<3.13'
+python = '^3.11'
 scipy = '^1.16'
 matplotlib = '^3.10'
 numpy = '^2.3'
