@@ -20,7 +20,17 @@ python = '^3.11'
 scipy = '^1.16'
 matplotlib = '^3.10'
 numpy = '^2.3'
-gymnasium = { version = '^1.2', extras = ['classic-control', 'box2d', 'mujoco'] }
+gymnasium = { version = '^1.2', extras = ['classic-control', 'mujoco'] }
+
+box2d = [
+
+  # the latest version of box2d in pypi is not available for raspberry pi. build from source.
+  { git = 'https://github.com/pybox2d/pybox2d.git', tag = '2.3.10', markers = 'platform_machine == "aarch64"' },
+  
+  # include latest from pypi on other architectures
+  { version = '^2.3.10', markers = 'platform_machine != "aarch64"' }
+]
+
 moviepy = '^2.2'
 scikit-learn = '^1.7'
 pandas = '^2.3'
