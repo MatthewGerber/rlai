@@ -265,7 +265,7 @@ class Gym(ContinuousMdpEnvironment):
                     name=name
                 )
                 for i, name in zip(
-                    range(action_space.n),
+                    range(int(action_space.n)),
                     self.gym_customizer.get_action_names(self.gym_native),
                     strict=True
                 )
@@ -703,7 +703,7 @@ class DiscreteActionGymCustomizer(GymCustomizer, ABC):
         action_space = gym.action_space
         assert isinstance(action_space, Discrete)
 
-        return [None] * action_space.n  # type: ignore[return-value]
+        return [None] * int(action_space.n)  # type: ignore[return-value]
 
 
 class ContinuousActionGymCustomizer(GymCustomizer):
