@@ -30,7 +30,7 @@ jobs:
     - name: Install RLAI
       run: |
         curl -sSL https://install.python-poetry.org | python3 -
-        poetry install --with 'dev'
+        poetry install --with 'dev,test'
 
     - name: Run linters
       run: |

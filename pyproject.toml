@@ -18,40 +18,48 @@ repository = 'https://github.com/MatthewGerber/rlai'
 [tool.poetry.dependencies]
 python = '^3.11'
 scipy = '^1.16'
-matplotlib = '^3.10'
+matplotlib = "^3.11.0"
 numpy = '^2.3'
 gymnasium = { version = '^1.2', extras = ['classic-control', 'mujoco'] }
 
+# add box2d for gymnasim
 box2d = [
 
-  # the latest version of box2d in pypi is not available for raspberry pi. build from source.
-  { git = 'https://github.com/pybox2d/pybox2d.git', tag = '2.3.10', markers = 'platform_machine == "aarch64"' },
-  
-  # include latest from pypi on other architectures
-  { version = '^2.3.10', markers = 'platform_machine != "aarch64"' }
+    # include latest from pypi for windows, linux (e.g., github ubuntu runner), and mac.
+    { version = '^2.3.10', platform = 'win32' },
+    { version = '^2.3.10', platform = 'linux', markers = 'platform_machine == "amd64"' },
+    { version = '^2.3.10', platform = 'darwin' },
+
+    # the latest version of box2d in pypi is not available for raspberry pi. build from source.
+    { git = 'https://github.com/pybox2d/pybox2d.git', tag = '2.3.10', platform = 'linux', markers = 'platform_machine == "aarch64"' }
 ]
 
 moviepy = '^2.2'
 scikit-learn = '^1.7'
-pandas = '^2.3'
+pandas = "^3.0.3"
 patsy = '^1.0'
-pyqtgraph = '^0.13'
-tabulate = '^0.9'
+pyqtgraph = "^0.14.0"
+tabulate = "^0.10.0"
 jupyterlab = '^4.4'
 ipython = '^9.4'
-jax = { version = '^0.7', extras = ['cpu'] }
+jax = { version = '^0.10.1', extras = ['cpu'] }
 # can't get Qt6 to compile on raspberry pi. exclude this architecture.
 PyQt6 = { version = '^6.9', markers = 'platform_machine != "aarch64"' }
 types-requests = "^2.32"
-types-tabulate = "^0.9"
+types-tabulate = "^0.10.0.20260508"
+
+[tool.poetry.group.test]
+optional = true
+
+[tool.poetry.group.test.dependencies]
+pytest = '^8.4'
+pytest-cov = '^6.2'
+pytest-xdist = '^3.8'
 
 [tool.poetry.group.dev]
 optional = true
 
 [tool.poetry.group.dev.dependencies]
-pytest = '^8.4'
-pytest-cov = '^6.2'
-pytest-xdist = '^3.8'
 flake8 = '^7.3'
 flake8-annotations = '^3.1'
 flake8-docstrings = '^1.7'

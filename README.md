@@ -34,6 +34,12 @@ an environment variable pointing to ffmpeg as follows:
 echo 'export IMAGEIO_FFMPEG_EXE="/opt/homebrew/bin/ffmpeg"' >> ~/.bash_profile
 ```
 
+In order to use the `HEADLESS=True` environment variable locally, install `Xvfb` using Homebrew:
+```shell
+brew install --cask xquartz
+sudo ln -s /opt/X11/bin/Xvfb /usr/local/bin/Xvfb
+```
+
 The RLAI code is distributed via [PyPI](https://pypi.org/project/rlai/). There are several ways to use the package.
 
 * JupyterLab notebook:  Most of the RLAI functionality is exposed via the companion JupyterLab notebook. See the 

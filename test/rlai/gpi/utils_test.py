@@ -30,7 +30,7 @@ def test_resume_from_checkpoint():
     run_args = (
         '--random-seed 12345 --agent rlai.gpi.state_action_value.ActionValueMdpAgent '
         '--continuous-state-discretization-resolution 0.005 --gamma 0.95 '
-        '--environment rlai.core.environments.gymnasium.Gym --gym-id CartPole-v1 --render-every-nth-episode 2 '
+        '--environment rlai.core.environments.gymnasium.Gym --gym-id CartPole-v1 '
         '--train-function rlai.gpi.monte_carlo.iteration.iterate_value_q_pi --num-improvements 2 '
         '--num-episodes-per-improvement 2 --update-upon-every-visit True --epsilon 0.2 '
         '--q-S-A rlai.gpi.state_action_value.tabular.TabularStateActionValueEstimator '
@@ -63,7 +63,7 @@ def test_resume_from_checkpoint():
     run_args = (
         '--random-seed 12345 --agent rlai.gpi.state_action_value.ActionValueMdpAgent '
         '--continuous-state-discretization-resolution 0.005 --gamma 0.95 '
-        '--environment rlai.core.environments.gymnasium.Gym --gym-id CartPole-v1 --render-every-nth-episode 2 '
+        '--environment rlai.core.environments.gymnasium.Gym --gym-id CartPole-v1 '
         '--train-function rlai.gpi.monte_carlo.iteration.iterate_value_q_pi --num-improvements 5 '
         '--num-episodes-per-improvement 2 --update-upon-every-visit True --epsilon 0.2 '
         '--q-S-A rlai.gpi.state_action_value.tabular.TabularStateActionValueEstimator '
