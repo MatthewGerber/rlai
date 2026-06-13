@@ -72,16 +72,6 @@ def test_resume():
     with open(resumed_agent_path, 'rb') as f:
         agent = pickle.load(f)
 
-    # uncomment the following line and run test to update fixture
-    # with open(f'{os.path.dirname(__file__)}/fixtures/test_resume.pickle', 'wb') as file:
-    #     pickle.dump(agent, file)
-
-    # with open(f'{os.path.dirname(__file__)}/fixtures/test_resume.pickle', 'rb') as file:
-    #     agent_fixture = pickle.load(file)
-
-    # assert that we get the expected result
-    # assert agent.pi == agent_fixture.pi
-
     # run the full number of episodes and check equal agents
     full_run_checkpoint_path, full_agent_path = run(shlex.split(
         '--random-seed 12345 --agent rlai.policy_gradient.ParameterizedMdpAgent --gamma 1.0 '
