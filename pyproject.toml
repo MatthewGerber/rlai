@@ -27,7 +27,7 @@ box2d = [
 
     # include latest from pypi for windows, linux (e.g., github ubuntu runner), and mac.
     { version = '^2.3.10', platform = 'win32' },
-    { version = '^2.3.10', platform = 'linux', markers = 'platform_machine == "amd64"' },
+    { version = '^2.3.10', platform = 'linux', markers = 'platform_machine == "x86_64"' },
     { version = '^2.3.10', platform = 'darwin' },
 
     # the latest version of box2d in pypi is not available for raspberry pi. build from source.
