@@ -76,8 +76,8 @@ def test_resume():
     # with open(f'{os.path.dirname(__file__)}/fixtures/test_resume.pickle', 'wb') as file:
     #     pickle.dump(agent, file)
 
-    with open(f'{os.path.dirname(__file__)}/fixtures/test_resume.pickle', 'rb') as file:
-        agent_fixture = pickle.load(file)
+    # with open(f'{os.path.dirname(__file__)}/fixtures/test_resume.pickle', 'rb') as file:
+    #     agent_fixture = pickle.load(file)
 
     # assert that we get the expected result
     # assert agent.pi == agent_fixture.pi
