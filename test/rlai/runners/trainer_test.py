@@ -295,7 +295,7 @@ def test_gym_continuous_mountain_car():
         '--policy-feature-extractor rlai.core.environments.gymnasium.ContinuousMountainCarFeatureExtractor '
         '--alpha 0.01 --update-upon-every-visit True '
         f'--checkpoint-path {tempfile.NamedTemporaryFile().name} --num-episodes-per-checkpoint 1 '
-        f'--save-agent-path {tempfile.NamedTemporaryFile().name} --log DEBUG')
+        f'--save-agent-path {tempfile.NamedTemporaryFile().name} --log INFO')
     )
 
     _, agent = load_checkpoint_and_agent(checkpoint_path, agent_path)
@@ -344,7 +344,7 @@ def test_policy_gradient_reinforce_beta_with_baseline():
 
     start_virtual_display_if_headless()
 
-    checkpoint_path, agent_path = run(shlex.split(f'--random-seed 12345 --agent rlai.policy_gradient.ParameterizedMdpAgent --gamma 0.99 --environment rlai.core.environments.gymnasium.Gym --gym-id LunarLanderContinuous-v3 --T 2000 --train-function rlai.policy_gradient.monte_carlo.reinforce.improve --num-episodes 4 --v-S rlai.state_value.function_approximation.ApproximateStateValueEstimator --feature-extractor rlai.core.environments.gymnasium.ContinuousLunarLanderFeatureExtractor --function-approximation-model rlai.models.sklearn.SKLearnSGD --loss squared_error --sgd-alpha 0.0 --learning-rate constant --eta0 0.00001 --policy rlai.policy_gradient.policies.continuous_action.ContinuousActionBetaDistributionPolicy --policy-feature-extractor rlai.core.environments.gymnasium.ContinuousLunarLanderFeatureExtractor --alpha 0.00001 --update-upon-every-visit True --save-agent-path {tempfile.NamedTemporaryFile().name} --log DEBUG'))
+    checkpoint_path, agent_path = run(shlex.split(f'--random-seed 12345 --agent rlai.policy_gradient.ParameterizedMdpAgent --gamma 0.99 --environment rlai.core.environments.gymnasium.Gym --gym-id LunarLanderContinuous-v3 --T 2000 --train-function rlai.policy_gradient.monte_carlo.reinforce.improve --num-episodes 4 --v-S rlai.state_value.function_approximation.ApproximateStateValueEstimator --feature-extractor rlai.core.environments.gymnasium.ContinuousLunarLanderFeatureExtractor --function-approximation-model rlai.models.sklearn.SKLearnSGD --loss squared_error --sgd-alpha 0.0 --learning-rate constant --eta0 0.00001 --policy rlai.policy_gradient.policies.continuous_action.ContinuousActionBetaDistributionPolicy --policy-feature-extractor rlai.core.environments.gymnasium.ContinuousLunarLanderFeatureExtractor --alpha 0.00001 --update-upon-every-visit True --save-agent-path {tempfile.NamedTemporaryFile().name} --log INFO'))
 
     _, agent = load_checkpoint_and_agent(checkpoint_path, agent_path)
 
