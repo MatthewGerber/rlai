@@ -237,7 +237,7 @@ description = "Python Box2D"
 optional = false
 python-versions = "*"
 groups = ["main"]
-markers = "sys_platform == \"win32\" or sys_platform == \"darwin\" or platform_machine == \"amd64\" and sys_platform == \"linux\""
+markers = "sys_platform == \"win32\" or sys_platform == \"darwin\" or platform_machine == \"x86_64\" and sys_platform == \"linux\""
 files = [
     {file = "Box2D-2.3.10-cp27-cp27m-win32.whl", hash = "sha256:d7ec7cc89e0f6eef5fe713c5b6ff767725e4ff61a5a3cc15babf42563a842e80"},
     {file = "Box2D-2.3.10-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:a6e967009d658f9d92c1d44339a6d3c456ab97678526d998f54a7b7cb6e8034b"},
@@ -3083,7 +3083,7 @@ description = "Pexpect allows easy control of interactive console applications."
 optional = false
 python-versions = "*"
 groups = ["main"]
-markers = "sys_platform == \"darwin\" or sys_platform == \"linux\" or sys_platform != \"win32\" and sys_platform != \"emscripten\" and sys_platform != \"darwin\" and sys_platform != \"linux\" or sys_platform != \"win32\" and sys_platform != \"emscripten\" and sys_platform != \"darwin\" and platform_machine != \"amd64\" and platform_machine != \"aarch64\""
+markers = "sys_platform == \"darwin\" or sys_platform == \"linux\" or sys_platform != \"win32\" and sys_platform != \"emscripten\" and sys_platform != \"darwin\" and sys_platform != \"linux\" or sys_platform != \"win32\" and sys_platform != \"emscripten\" and sys_platform != \"darwin\" and platform_machine != \"x86_64\" and platform_machine != \"aarch64\""
 files = [
     {file = "pexpect-4.9.0-py2.py3-none-any.whl", hash = "sha256:7236d1e080e4936be2dc3e326cec0af72acf9212a7e1d060210e70a47e253523"},
     {file = "pexpect-4.9.0.tar.gz", hash = "sha256:ee7d41123f3c9911050ea2c2dac107568dc43b2d3b0c7557a33212c398ead30f"},
@@ -3334,7 +3334,7 @@ description = "Run a subprocess in a pseudo terminal"
 optional = false
 python-versions = "*"
 groups = ["main"]
-markers = "os_name != \"nt\" or platform_machine != \"aarch64\" and sys_platform != \"emscripten\" and sys_platform != \"win32\" or sys_platform == \"darwin\" or sys_platform == \"linux\" or sys_platform != \"emscripten\" and sys_platform != \"win32\" and sys_platform != \"linux\""
+markers = "os_name != \"nt\" or sys_platform == \"darwin\" or sys_platform == \"linux\" or sys_platform != \"win32\" and sys_platform != \"emscripten\" and sys_platform != \"linux\" or platform_machine != \"x86_64\" and platform_machine != \"aarch64\" and sys_platform != \"win32\" and sys_platform != \"emscripten\""
 files = [
     {file = "ptyprocess-0.7.0-py2.py3-none-any.whl", hash = "sha256:4b41f3967fce3af57cc7e94b888626c18bf37a083e3651ca8feeb66d492fef35"},
     {file = "ptyprocess-0.7.0.tar.gz", hash = "sha256:5c5d0a3b48ceee0b48485e0c26037c0acd7d29765ca3fbb5cb3831d347423220"},
@@ -4727,4 +4727,4 @@ type = ["pytest-mypy (>=1.0.1) ; platform_python_implementation != \"PyPy\""]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "1509c7aee2997f16a3f920b755445abdabcadbc975540172d3ba800fecee4b9a"
+content-hash = "82995292a042d5ae0cfbc4a48df87ce0de75f16ce5339134850d5a3e54654a91"
