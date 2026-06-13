@@ -874,13 +874,15 @@ class ContinuousActionBetaDistributionPolicy(ContinuousActionPolicy):
         if not self.feature_extractor.extracts_intercept():
             state_feature_vector = np.append([1.0], state_feature_vector)
 
-        # initialize coefficients for each action's a-shape parameter
+        # initialize coefficients for each action's a-shape parameter. by using zeros with an intercept of 1.0 above, we
+        # obtain initial a-shape of 1.0 corresponding to a uniform distribution across the action space.
         if self.action_theta_a is None:
             self.action_theta_a = np.zeros(
                 shape=(self.environment.get_action_space_dimensionality(), state_feature_vector.shape[0])
             )
 
-        # initialize coefficients for each action's b-shape parameter
+        # initialize coefficients for each action's b-shape parameter. by using zeros with an intercept of 1.0 above, we
+        # obtain initial b-shape of 1.0 corresponding to a uniform distribution across the action space.
         if self.action_theta_b is None:
             self.action_theta_b = np.zeros(
                 shape=(self.environment.get_action_space_dimensionality(), state_feature_vector.shape[0])
