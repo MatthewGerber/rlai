@@ -427,8 +427,6 @@ class OneHotCategory:
 
         self.id = '_'.join(str(arg) for arg in args)
 
-        self.id_hash = hash(self.id)
-
     def __eq__(
             self,
             other: object
@@ -467,7 +465,7 @@ class OneHotCategory:
         :return: Hash code.
         """
 
-        return self.id_hash
+        return hash(self.id)  # string hashes change run to run, so we can't store them as attributes
 
     def __str__(
             self
