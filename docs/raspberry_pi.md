@@ -15,10 +15,15 @@ system on the Raspberry Pi. Installing and using RLAI on the Pi is similar to us
 3. Add RLAI as a dependency to the project on the Pi, either from [PyPI](https://pypi.org/project/rlai/) (e.g., 
 with `poetry add rlai`) or as a submodule as shown in the cart-pole system described 
 [here](https://matthewgerber.github.io/cart-pole).
-4. Install the project.
+4. RLAI depends on [box2d](https://pypi.org/project/Box2D/), which needs to be compiled from source for the Raspberry 
+   Pi. Add a direct dependency on the repo:
+   ```
+   poetry add git+https://github.com/pybox2d/pybox2d.git#2.3.10
+   ```
+5. Install the project.
 Note that RLAI depends on Qt6 for graphical rendering of certain simulations and plots. These renderings will not be 
 possible on the Pi, since Qt6 isn't installed.
-5. If poetry installations hang, you might require the following:
+6. If poetry installations hang, you might require the following:
    ```shell
    export PYTHON_KEYRING_BACKEND=keyring.backends.fail.Keyring
    ```

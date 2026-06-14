@@ -237,7 +237,6 @@ description = "Python Box2D"
 optional = false
 python-versions = "*"
 groups = ["main"]
-markers = "sys_platform == \"win32\" or sys_platform == \"darwin\" or platform_machine == \"x86_64\" and sys_platform == \"linux\""
 files = [
     {file = "Box2D-2.3.10-cp27-cp27m-win32.whl", hash = "sha256:d7ec7cc89e0f6eef5fe713c5b6ff767725e4ff61a5a3cc15babf42563a842e80"},
     {file = "Box2D-2.3.10-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:a6e967009d658f9d92c1d44339a6d3c456ab97678526d998f54a7b7cb6e8034b"},
@@ -331,23 +330,6 @@ files = [
     {file = "Box2D-2.3.10-pp39-pypy39_pp73-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:f5563d459fa9b83db17512cef38d8f340556a31feb9e529deca06b44ee24a121"},
     {file = "Box2D-2.3.10-pp39-pypy39_pp73-win_amd64.whl", hash = "sha256:cca1fbe79996f43f01bcdce5a877ee40ebd815b1b7ae1e8dc4a97624103306fa"},
 ]
-
-[[package]]
-name = "Box2D"
-version = "2.3.10"
-description = "Python Box2D"
-optional = false
-python-versions = "*"
-groups = ["main"]
-markers = "platform_machine == \"aarch64\" and sys_platform == \"linux\""
-files = []
-develop = false
-
-[package.source]
-type = "git"
-url = "https://github.com/pybox2d/pybox2d.git"
-reference = "2.3.10"
-resolved_reference = "ed9d7b04f7099a15984c727dbce46c13abd64409"
 
 [[package]]
 name = "certifi"
@@ -1298,13 +1280,15 @@ files = [
 ]
 
 [package.dependencies]
+box2d = {version = "2.3.10", optional = true, markers = "extra == \"box2d\""}
 cloudpickle = ">=1.2.0"
 farama-notifications = ">=0.0.1"
 imageio = {version = ">=2.14.1", optional = true, markers = "extra == \"mujoco\""}
 mujoco = {version = ">=2.1.5", optional = true, markers = "extra == \"mujoco\""}
 numpy = ">=1.21.0"
 packaging = {version = ">=23.0", optional = true, markers = "extra == \"mujoco\""}
-pygame-ce = {version = ">=2.1.3", optional = true, markers = "extra == \"classic-control\""}
+pygame-ce = {version = ">=2.1.3", optional = true, markers = "extra == \"box2d\" or extra == \"classic-control\""}
+swig = {version = "==4.*", optional = true, markers = "extra == \"box2d\""}
 typing-extensions = ">=4.3.0"
 
 [package.extras]
@@ -3083,7 +3067,7 @@ description = "Pexpect allows easy control of interactive console applications."
 optional = false
 python-versions = "*"
 groups = ["main"]
-markers = "sys_platform == \"darwin\" or sys_platform == \"linux\" or sys_platform != \"win32\" and sys_platform != \"emscripten\" and sys_platform != \"darwin\" and sys_platform != \"linux\" or sys_platform != \"win32\" and sys_platform != \"emscripten\" and sys_platform != \"darwin\" and platform_machine != \"x86_64\" and platform_machine != \"aarch64\""
+markers = "sys_platform != \"win32\" and sys_platform != \"emscripten\""
 files = [
     {file = "pexpect-4.9.0-py2.py3-none-any.whl", hash = "sha256:7236d1e080e4936be2dc3e326cec0af72acf9212a7e1d060210e70a47e253523"},
     {file = "pexpect-4.9.0.tar.gz", hash = "sha256:ee7d41123f3c9911050ea2c2dac107568dc43b2d3b0c7557a33212c398ead30f"},
@@ -3334,7 +3318,7 @@ description = "Run a subprocess in a pseudo terminal"
 optional = false
 python-versions = "*"
 groups = ["main"]
-markers = "os_name != \"nt\" or sys_platform == \"darwin\" or sys_platform == \"linux\" or sys_platform != \"win32\" and sys_platform != \"emscripten\" and sys_platform != \"linux\" or platform_machine != \"x86_64\" and platform_machine != \"aarch64\" and sys_platform != \"win32\" and sys_platform != \"emscripten\""
+markers = "os_name != \"nt\" or sys_platform != \"win32\" and sys_platform != \"emscripten\""
 files = [
     {file = "ptyprocess-0.7.0-py2.py3-none-any.whl", hash = "sha256:4b41f3967fce3af57cc7e94b888626c18bf37a083e3651ca8feeb66d492fef35"},
     {file = "ptyprocess-0.7.0.tar.gz", hash = "sha256:5c5d0a3b48ceee0b48485e0c26037c0acd7d29765ca3fbb5cb3831d347423220"},
@@ -4412,6 +4396,34 @@ pure-eval = "*"
 tests = ["cython", "littleutils", "pygments", "pytest", "typeguard"]
 
 [[package]]
+name = "swig"
+version = "4.4.1"
+description = "SWIG is a software development tool that connects programs written in C and C++ with a variety of high-level programming languages."
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "swig-4.4.1-py3-none-macosx_10_9_universal2.whl", hash = "sha256:c185b217d2ed96ef475c48956e52dd3572a63d3aa3344bc45ee3fb4dc339ada0"},
+    {file = "swig-4.4.1-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:520fde8805b4775ef3814576929b8c44d666220b06d8da625f292192f9e74fe8"},
+    {file = "swig-4.4.1-py3-none-manylinux2014_ppc64le.manylinux_2_17_ppc64le.whl", hash = "sha256:d8cca45a0e8d1e045a1490ea2d05bc1c49e2c266dbbe5954048e2a93d125ee07"},
+    {file = "swig-4.4.1-py3-none-manylinux2014_s390x.manylinux_2_17_s390x.whl", hash = "sha256:bfe6ce6189fc8b983f65f5ed3db8e1d8be03accb0ec3869f986a8343f014e4d9"},
+    {file = "swig-4.4.1-py3-none-manylinux_2_12_i686.manylinux2010_i686.whl", hash = "sha256:9c98d7b882b6debe3cbb87e6503858e104162d7ce5ab4cfc23425da2e26e51b5"},
+    {file = "swig-4.4.1-py3-none-manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:ae3da2bf679a4c942a2c100789395d4d167e7da8286018124e4665f5eff43e31"},
+    {file = "swig-4.4.1-py3-none-manylinux_2_24_armv7l.manylinux_2_31_armv7l.whl", hash = "sha256:7945f153f7fc93f1ab280f44a3740d6bbfeec3829f954784ba83990fc61a11a8"},
+    {file = "swig-4.4.1-py3-none-manylinux_2_31_riscv64.whl", hash = "sha256:5a9c74b87151d8247d802bda33f78cab9f27c759f0605b760a8f9c9893b5606b"},
+    {file = "swig-4.4.1-py3-none-musllinux_1_2_aarch64.whl", hash = "sha256:a95ae66aebb8ccce4c50febd496e6927b888d98aba272dd5642fe9312bf61a3b"},
+    {file = "swig-4.4.1-py3-none-musllinux_1_2_armv7l.whl", hash = "sha256:a8f06227e6472832dad3ae34d5bd88710b7bbb109f2927e14a21e6725146e944"},
+    {file = "swig-4.4.1-py3-none-musllinux_1_2_i686.whl", hash = "sha256:98d61b45215982dd3a71745dfc31599176ed79d286b58bc712c10ed031432fdf"},
+    {file = "swig-4.4.1-py3-none-musllinux_1_2_ppc64le.whl", hash = "sha256:b6909a8bd68037ea0df061a52c664431b062dbdfb1eb90768719518c120139d1"},
+    {file = "swig-4.4.1-py3-none-musllinux_1_2_riscv64.whl", hash = "sha256:6a6a6331a5c7759ba5a910aa83aa5d33022b8e691b6cb466635c7fc2238facd2"},
+    {file = "swig-4.4.1-py3-none-musllinux_1_2_s390x.whl", hash = "sha256:2d076358cded172d2f44b3c617923c593dbae664b3fa45051641f028f7f74010"},
+    {file = "swig-4.4.1-py3-none-musllinux_1_2_x86_64.whl", hash = "sha256:43a0a876b4660f6addb6ae72d14a72324dc1388e1c168ed38bb00fd123048749"},
+    {file = "swig-4.4.1-py3-none-win_amd64.whl", hash = "sha256:4548c06ea2ed60c91f003bbc3892db58e185f572705653ab1470ca770f70495d"},
+    {file = "swig-4.4.1-py3-none-win_arm64.whl", hash = "sha256:063224fe9a2f22fffc7d3b9add250112630f0e00f5f8dd9b9591ac106560177a"},
+    {file = "swig-4.4.1.tar.gz", hash = "sha256:db9a625653f6454530a6c6553d17cf576d7aa2d253c76dc8cdd5979f0cb15012"},
+]
+
+[[package]]
 name = "tabulate"
 version = "0.10.0"
 description = "Pretty-print tabular data"
@@ -4727,4 +4739,4 @@ type = ["pytest-mypy (>=1.0.1) ; platform_python_implementation != \"PyPy\""]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "82995292a042d5ae0cfbc4a48df87ce0de75f16ce5339134850d5a3e54654a91"
+content-hash = "73ea007a776c56be4ff844eb30b4c9d9b76b98c54aa8ad300e1e9da8694b32bd"
