@@ -119,52 +119,88 @@ not shown in the text.
 # Links to Code
 See [here](https://matthewgerber.github.io/rlai/links_to_code.html).
 
-# Incrementing and Tagging Versions with Poetry
-1. Begin the next prerelease number within the current prerelease phase (e.g., `0.1.0a0` → `0.1.0a1`):
-   ```shell
-   OLD_VERSION=$(poetry version --short)
-   poetry version prerelease
-   VERSION=$(poetry version --short)
-   git commit -a -m "Next prerelease number:  ${OLD_VERSION} → ${VERSION}"
-   git push
-   ```
-2. Begin the next prerelease phase (e.g., `0.1.0a1` → `0.1.0b0`):
-   ```shell
-   OLD_VERSION=$(poetry version --short)
-   poetry version prerelease --next-phase
-   VERSION=$(poetry version --short)
-   git commit -a -m "Next prerelease phase:  ${OLD_VERSION} → ${VERSION}"
-   git push
-   ```
-   The phases progress as alpha (`a`), beta (`b`), and release candidate (`rc`), each time resetting to a prerelease 
-   number of 0. After `rc`, the prerelease suffix (e.g., `rc3`) is stripped, leaving the `major.minor.patch` version.
-3. Release the next minor version (e.g., `0.1.0b1` → `0.1.0`):
-   ```shell
-   OLD_VERSION=$(poetry version --short)
-   poetry version minor
-   VERSION=$(poetry version --short)
-   git commit -a -m "New minor release:  ${OLD_VERSION} → ${VERSION}"
-   git push
-   ```
-4. Release the next major version (e.g., `0.1.0a0` → `2.0.0`):
-   ```shell
-   OLD_VERSION=$(poetry version --short)
-   poetry version major
-   VERSION=$(poetry version --short)
-   git commit -a -m "New major release:  ${OLD_VERSION} → ${VERSION}"
-   git push
-   ```
-5. Tag the current version:
-   ```shell
-   VERSION=$(poetry version --short)
-   git tag -a -m "rlai v${VERSION}" "v${VERSION}"
-   git push --follow-tags
-   ```
-6. Begin the next minor prerelease (e.g., `0.1.0` → `0.2.0a0`):
-   ```shell
-   OLD_VERSION=$(poetry version --short)
-   poetry version preminor
-   VERSION=$(poetry version --short)
-   git commit -a -m "Next minor prerelease:  ${OLD_VERSION} → ${VERSION}"
-   git push
-   ```
+# Bumping, Tagging, and Releasing Versions with Poetry
+We follow 
+[semantic versioning](https://semver.org/) and [Python Packaging](https://packaging.python.org/en/latest/specifications/version-specifiers/#version-specifiers)
+specifications when bumping and releasing.
+
+## Prerelease
+Prereleases are useful for testing changes prior to an official release. These releases include alpha (`a`), beta (`b`), 
+and release candidate (`rc`) versions, which are successively mature release phases on the path to an official release.
+
+Bump the minor prerelease (e.g., `0.2.0` → `0.3.0a0`):
+```shell
+OLD_VERSION=$(poetry version --short)
+poetry version preminor
+VERSION=$(poetry version --short)
+git commit -a -m "Bump minor prerelease:  ${OLD_VERSION} → ${VERSION}"
+git push
+```
+
+Bump the prerelease number within the current prerelease phase (e.g., `0.1.0a0` → `0.1.0a1`):
+```shell
+OLD_VERSION=$(poetry version --short)
+poetry version prerelease
+VERSION=$(poetry version --short)
+git commit -a -m "Bump prerelease number:  ${OLD_VERSION} → ${VERSION}"
+git push
+```
+
+Bump the prerelease phase (e.g., `0.1.0a1` → `0.1.0b0`):
+```shell
+OLD_VERSION=$(poetry version --short)
+poetry version prerelease --next-phase
+VERSION=$(poetry version --short)
+git commit -a -m "Bump prerelease phase:  ${OLD_VERSION} → ${VERSION}"
+git push
+```
+The prerelease phases progress as alpha (`a`), beta (`b`), and release candidate (`rc`), each time resetting to a 
+prerelease number of 0. After `rc`, the prerelease suffix (e.g., `rc3`) is stripped, leaving the 
+`major.minor.patch` release version.
+
+## Patch
+A patch release fixes one or more issues in a previous release.
+
+Bump the patch version (e.g., `0.1.0b1` → `0.1.1`):
+```shell
+OLD_VERSION=$(poetry version --short)
+poetry version patch
+VERSION=$(poetry version --short)
+git commit -a -m "Bump patch:  ${OLD_VERSION} → ${VERSION}"
+git push
+```
+
+## Minor
+A minor release adds functionality in a backwards compatible fashion.
+
+Bump the minor version (e.g., `0.1.0b1` → `0.1.0`):
+```shell
+OLD_VERSION=$(poetry version --short)
+poetry version minor
+VERSION=$(poetry version --short)
+git commit -a -m "Bump minor:  ${OLD_VERSION} → ${VERSION}"
+git push
+```
+
+## Major
+A major release adds functionality in a backwards incompatible fashion.
+
+Bump the major version (e.g., `0.1.0a0` → `2.0.0`):
+```shell
+OLD_VERSION=$(poetry version --short)
+poetry version major
+VERSION=$(poetry version --short)
+git commit -a -m "Bump major:  ${OLD_VERSION} → ${VERSION}"
+git push
+```
+
+## Tagging
+Tagging the current version enables the publication of a new release to PyPI via GitHub workflow. Tag the current 
+version (e.g., `v2.0.0`):
+```shell
+VERSION=$(poetry version --short)
+git tag -a -m "version ${VERSION}" "v${VERSION}"
+git push --follow-tags
+```
+Then create a new release from the tag. Doing this will trigger the publication workflow to run, which builds a 
+new release and uploads it to PyPI.
