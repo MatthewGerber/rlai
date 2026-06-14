@@ -20,9 +20,8 @@ with `poetry add rlai`) or as a submodule as shown in the cart-pole system descr
    ```
    poetry add git+https://github.com/pybox2d/pybox2d.git#2.3.10
    ```
-5. Install the project.
-Note that RLAI depends on Qt6 for graphical rendering of certain simulations and plots. These renderings will not be 
-possible on the Pi, since Qt6 isn't installed.
+5. Install the project (`poetry install`). Note that RLAI depends on Qt6 for graphical rendering of certain simulations 
+   and plots. These renderings will not be possible on the Pi, since Qt6 isn't installed.
 6. If poetry installations hang, you might require the following:
    ```shell
    export PYTHON_KEYRING_BACKEND=keyring.backends.fail.Keyring
