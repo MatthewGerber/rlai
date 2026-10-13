@@ -409,6 +409,7 @@ class Gym(ContinuousMdpEnvironment):
             terminal=terminated,
             truncated=truncated
         )
+        assert self.state is not None
 
         return self.state, Reward(i=None, r=reward)
 
@@ -1023,14 +1024,14 @@ class CartpoleCustomizer(DiscreteActionGymCustomizer):
         """
 
         return (
-            np.exp(
+            float(np.exp(
                 -(
                     np.abs([
                         observation[0],  # position
                         observation[2] * 7.5,  # angle:  equalize with the position's scale
                     ]).sum()
                 )
-            ),
+            )),
             terminated
         )
 
